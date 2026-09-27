@@ -48,6 +48,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import os
+import shutil
 import subprocess
 import urllib.request
 from pathlib import Path
@@ -217,24 +218,35 @@ def link_ca_bundle() -> None:
             subprocess.run(["sudo", "ln", "-sf", UBUNTU_CA_BUNDLE, path], check=True)
 
 
-# Velox's own file cache, the counterpart of DuckDB's: 8GB on local disk -- the whole SF=10 working
-# set, the same budget pyspark_alluxio_iceberg gives Alluxio -- in front of a 1GB memory tier,
-# Gluten's default, since heap and off-heap already hold 12 of the runner's 16GB. It caches only
-# what Velox reads itself; a scan Gluten hands back to the JVM still goes through hadoop-azure.
-SSD_CACHE_SIZE = "8GB"
+# Velox's own file cache, the counterpart of DuckDB's and StarRocks' Data Cache: an SSD tier sized
+# from the FREE DISK at setup, in front of a 1GB memory tier, Gluten's default, since heap and
+# off-heap already hold 12 of the runner's 16GB. It caches only what Velox reads itself; a scan
+# Gluten hands back to the JVM still goes through hadoop-azure.
+#
+# WAS A FIXED 8GB, sized to the SF=10 working set and never revisited: at SF=200 that is a sixth of
+# lineitem, while StarRocks' Data Cache held 33.6GB of the same data (run 36318638699). Half the
+# free disk, not all of it: shuffle and Velox spill write to the same disk, and the cache does not
+# give space back to them.
+SSD_CACHE_FREE_FRACTION = 0.5
+SSD_CACHE_MIN_GIB = 8
 MEM_CACHE_SIZE = "1GB"
 
 
 def cache_conf() -> dict[str, str]:
     cache_dir = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "velox-cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    scrub.safe_print(f"  velox cache {SSD_CACHE_SIZE} ssd at {cache_dir} + {MEM_CACHE_SIZE} memory")
+    free_gib = shutil.disk_usage(cache_dir).free / 2**30
+    ssd_gib = max(SSD_CACHE_MIN_GIB, int(free_gib * SSD_CACHE_FREE_FRACTION))
+    scrub.safe_print(
+        f"  velox cache {ssd_gib}GB ssd ({free_gib:.0f}GB free) at {cache_dir} "
+        f"+ {MEM_CACHE_SIZE} memory"
+    )
     prefix = "spark.gluten.sql.columnar.backend.velox"
     return {
         f"{prefix}.cacheEnabled": "true",
         f"{prefix}.memCacheSize": MEM_CACHE_SIZE,
         f"{prefix}.ssdCachePath": str(cache_dir),
-        f"{prefix}.ssdCacheSize": SSD_CACHE_SIZE,
+        f"{prefix}.ssdCacheSize": f"{ssd_gib}GB",
         f"{prefix}.ssdCacheShards": "4",
         # The SSD tier refuses to start above an 8MB read unit ("Velox currently only support up
         # to 8MB load quantum size on SSD cache"); Gluten's default is 256MB.
