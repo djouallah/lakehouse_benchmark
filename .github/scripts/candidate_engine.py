@@ -553,6 +553,37 @@ class Trino(Candidate):
         except Exception as exc:  # noqa: BLE001
             _say(f"    listing Tables/{WRITE_NS} failed: {scrub.scrub_exc(exc, 500)}")
 
+    def _unstaged_probe(self, source: str) -> None:
+        """Can Trino create WITHOUT stage-create on OneLake?
+
+        TrinoRestCatalog.newCreateTableTransaction (483) stages the create whenever it has a
+        location, and it has one whenever the namespace reports a `location` property
+        (`defaultTableLocation`); with none it calls `create()` -- a plain, unstaged create -- and
+        also skips the empty-location check. So: what location does OneLake report per namespace,
+        and does a namespace Trino creates without one take the unstaged path?
+        """
+        ns = "trino_unstaged"
+        _say("\n[unstaged create probe]")
+        for schema in (WRITE_NS, self.cfg.schema.lower()):
+            _try(self, f"namespace {schema}", [f"SHOW CREATE SCHEMA onelake.{schema}"])
+        directory = onelake.file_system(self.cfg).get_directory_client(
+            f"{self.cfg.lakehouse_id}/Tables/{ns}"
+        )
+        if directory.exists():
+            directory.delete_directory()
+        _try(self, "drop leftover", [f"DROP TABLE IF EXISTS onelake.{ns}.nation"])
+        _try(self, f"create namespace {ns}", [f"CREATE SCHEMA IF NOT EXISTS onelake.{ns}"])
+        _try(self, f"namespace {ns}", [f"SHOW CREATE SCHEMA onelake.{ns}"])
+        created, _ = _try(
+            self,
+            f"CTAS into {ns}, no location",
+            [f"CREATE TABLE onelake.{ns}.nation AS SELECT * FROM {source}"],
+        )
+        if created:
+            _try(self, "read back", [f"SELECT count(*) FROM onelake.{ns}.nation"])
+            _try(self, "table location", [f"SHOW CREATE TABLE onelake.{ns}.nation"])
+            _try(self, "drop", [f"DROP TABLE onelake.{ns}.nation"])
+
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
         # Trino refuses to create a table on a non-empty location (run 36326766643), and a failed
         # attempt leaves files that DROP TABLE cannot reach. Each variant gets its own cleared
@@ -561,6 +592,7 @@ class Trino(Candidate):
         for name in (table, inserted):
             self._clear(name)
         self.write_diagnostics()
+        self._unstaged_probe(source)
 
         def at(name: str) -> str:
             return f"{self.cfg.base_path}/Tables/{WRITE_NS}/{name}"
