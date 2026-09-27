@@ -570,6 +570,14 @@ class Trino(Candidate):
             f"DROP TABLE IF EXISTS onelake.{WRITE_NS}.{table}",
         ]
         return {
+            # Trino skips its empty-location check only for a REPLACE (IcebergMetadata.
+            # beginCreateTable, 483: `!replace && listFiles(location).hasNext()`), and OneLake's
+            # staged create has already written metadata/00000-*.metadata.json there by the time
+            # it checks -- every plain CREATE failed on that file (run 36327806785).
+            "CREATE OR REPLACE TABLE AS": [
+                f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
+                f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}",
+            ],
             "CTAS with location": prep
             + [
                 f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{at(table)}') "
