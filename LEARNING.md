@@ -75,7 +75,7 @@ Largest scale each engine completes, cold, every statement answered:
 
 | Engine | TPC-H | TPC-DS | What breaks it next |
 |---|---|---|---|
-| Gluten/Velox | SF=100 (1,008 s) | **SF=100** (6,757 s) | nothing on memory; only expired credentials |
+| Gluten/Velox | SF=100 (1,008 s) | **SF=100** (6,757 s) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
 | DuckDB | SF=100 (500 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit |
 | StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases don't parse, Q71 (sail#2642) |
@@ -85,8 +85,9 @@ Largest scale each engine completes, cold, every statement answered:
 
 - **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap, and it
   is the only engine that finished TPC-DS at SF=100. Not one of its failures at any scale came
-  from memory. Every one was an expired credential. Where both finish, DuckDB is faster:
-  TPC-H SF=100 in 500 s against 1,008 s.
+  from memory: up to SF=100 every one was an expired credential, and at TPC-H SF=300 it is the
+  disk (see Gluten/Velox below). Where both finish, DuckDB is faster: TPC-H SF=100 in 500 s
+  against 1,008 s.
 - **An engine with no memory bound dies; it does not slow down.** Polars (streaming engine, no
   limit, no spill directory) and Sail (DataFusion's pool, unbounded by default) run normally and
   then take the whole runner with them.
@@ -145,6 +146,19 @@ Largest scale each engine completes, cold, every statement answered:
   Spark's CBO.
 - **More reads in flight didn't help.** IO threads 4→16 with row-group prefetch 1→4 was slower on
   every query: 31.7 s against 20.4 s (914a548, reverted).
+- **At TPC-H SF=300, spill to disk is the ceiling.** Memory holds: Velox spills inside its 9 GB
+  budget, and the runner has ~105 GB of free disk for it. What runs out is that disk.
+  - Run 36304713315: `/` filled about 15 minutes into the queries, and the runner itself died
+    (`No space left on device` on the runner's own log file, so no job log survived). Spark keeps a
+    finished query's shuffle files until the JVM collects the shuffle (forced every 30 minutes),
+    so every earlier query's shuffle was still on disk.
+  - `spark.sql.classic.shuffleDependency.fileCleanup.enabled` (Spark 4.1) now deletes them at the
+    end of each query. Run 36306511351 then failed inside a single query, about 19 minutes in,
+    with the runner still alive:
+    `GlutenException: Native shuffle write: ShuffleWriter stop failed - IOError: Error writing
+    bytes to file. Detail: [errno 28] No space left on device`.
+  - `/mnt` is not a second disk on these runners. `df` shows the same `/dev/root` for `/` and
+    `/mnt`, so moving the spill there changes nothing.
 
 ### The ETL's CSV read runs on plain Spark, not Velox
 
