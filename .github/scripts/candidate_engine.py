@@ -574,6 +574,13 @@ class Trino(Candidate):
             # beginCreateTable, 483: `!replace && listFiles(location).hasNext()`), and OneLake's
             # staged create has already written metadata/00000-*.metadata.json there by the time
             # it checks -- every plain CREATE failed on that file (run 36327806785).
+            # Trino commits the table's Puffin statistics with the data (`set-statistics`), which
+            # Spark's CTAS never sends; with them the commit came back 400 "Malformed request".
+            "CREATE OR REPLACE TABLE AS, no extended statistics": [
+                "SET SESSION onelake.collect_extended_statistics_on_write = false",
+                f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
+                f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}",
+            ],
             "CREATE OR REPLACE TABLE AS": [
                 f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
                 f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}",
