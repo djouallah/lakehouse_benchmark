@@ -79,8 +79,8 @@ Largest scale each engine completes, cold, every statement answered:
 | DuckDB | SF=100 (500 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit |
 | StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases don't parse, Q71 (sail#2642) |
-| Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: a broadcast that doesn't fit the 11 GB heap |
-| chDB | SF=30 (382 s) | — | TPC-H SF=60: 9.31 GiB query memory limit; TPC-DS aborts in glibc at any SF |
+| Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
+| chDB | SF=60 (834 s) | — | TPC-H SF=100 not run yet; TPC-DS aborts in glibc at any SF |
 | Polars | SF=10 (82–106 s) | — | TPC-H SF=30: runner OOM-killed at Q7; TPC-DS SF=10: runner lost at 55 min |
 
 - **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap, and it
@@ -196,11 +196,15 @@ Largest scale each engine completes, cold, every statement answered:
 - **TPC-H SF=100 Q21 fails twice, 21/22** (runs 36016179553, 36151085980). The error is
   `STAGE_MATERIALIZATION_MULTIPLE_FAILURES`, "Not enough memory to build and broadcast the table",
   after ~3.5 minutes. It passes at SF=60 in 280 s.
-  - AQE picks a broadcast from the shuffle size, which is measured compressed. At SF=100 the table
-    it actually builds doesn't fit in the 11 GB driver heap, and in `local[4]` every task shares
-    that heap.
-  - Known workarounds, not applied: `spark.sql.autoBroadcastJoinThreshold=-1`, a lower
-    `spark.sql.adaptive.autoBroadcastJoinThreshold`, or a bigger heap.
+  - It's not AQE's choice. Q21 is written `l_orderkey NOT IN (subquery)`, and every Iceberg
+    column here is nullable, so Spark must plan a *null-aware* anti join. Spark always broadcasts
+    those (`BroadcastHashJoin LeftAnti ... true`), whatever the thresholds say. The build side at
+    SF=100 is ~100M order keys.
+  - Nothing in config holds it (temp-CI runs 36287446363, 36289407788): both broadcast thresholds
+    at -1, `spark.memory.fraction` 0.8, a 13 GB heap, and both together all fail the same way at
+    ~230 s. The build needs more than one JVM on a 16 GB box can have.
+  - The fix would be the query: `NOT EXISTS` is a plain anti join and sort-merges. The SQL stays as
+    written, so this stays a failure. Gluten passes it, building off-heap in Velox.
   - An engine gets a totals bar at a scale only when every statement completes, so Spark-OSS has
     no TPC-H SF=100 bar.
 - **Its catalog bearer cannot be refreshed.** Iceberg's `token` property sends a fixed header, and
@@ -236,12 +240,17 @@ Largest scale each engine completes, cold, every statement answered:
   - Every published chDB result was wrong until then, at every scale, and invisible to a timing
     chart. It now runs `SET join_use_nulls = 1`, plus `union_default_mode = 'DISTINCT'`, which
     TPC-DS needs.
-- **TPC-H SF=60, 14/22** (run 36016149239). Three kinds of error:
-  - `MEMORY_LIMIT_EXCEEDED` against the 9.31 GiB query cap: Q3 in the Parquet read, Q7 and Q9
-    building the right side of a join, Q21 inside the Iceberg iterator.
-  - `JSONDecodeError` on Q4, Q8, Q10 and Q22. Each is the query right after a memory error, so
-    it is most likely leftover output from the failed query, not four more failures.
-  - This happened even with external group-by and sort at 5 GB and `grace_hash` joins.
+- **TPC-H SF=60 went from 14/22 to 22/22 (834 s)** with three changes (runs 36016149239,
+  36287421972, 36289383167):
+  - `JSONDecodeError` on Q4, Q8, Q10 and Q22 was the bench's bug. Each followed a memory error,
+    and the failed statement's JSON came back in front of the next one's. A throwaway `SELECT 1`
+    after an error now takes the leftover.
+  - The bench forced `join_algorithm='grace_hash,hash'` and 5 GB spill thresholds, from before
+    ClickHouse had its own. The 26.x defaults (`max_bytes_ratio_before_external_*` = 0.5, the join
+    one switching to grace hash only when memory runs short) recovered Q3, Q7 and Q9.
+  - Q21 needed 10.41 GiB against a 9.31 GiB cap: its `IN`/`NOT IN` subqueries are hash sets of
+    ~100M keys, which don't spill. The cap is now 12 GB a query and 13 GB the process, DuckDB's
+    default share of this runner.
 - **TPC-DS aborts in glibc on its first query:** `pthread_mutex_lock.c:94 assertion failed`,
   exit 134, no rows. It happened at SF=1 and SF=10, against tables from two different writers,
   so it is chDB 4.4.0, not the data. TPC-H is unaffected.
