@@ -83,6 +83,7 @@ def _say(text: str) -> None:
 class Candidate:
     name = ""
     default_image = ""
+    list_namespaces = "SHOW DATABASES FROM onelake"
 
     def __init__(self, cfg) -> None:
         self.cfg = cfg
@@ -323,7 +324,163 @@ class StarRocks(Candidate):
         }
 
 
-CANDIDATES = {"starrocks": StarRocks}
+class Trino(Candidate):
+    """Trino: one JVM, coordinator and worker in the same process, in the official image.
+
+    CATALOGS ARE CREATED IN SQL. `catalog.management=dynamic` (mounted config.properties) enables
+    `CREATE CATALOG ... USING iceberg WITH (...)`, so each variant is a statement list like
+    StarRocks' rather than a properties file and a restart.
+
+    CASE. Trino folds unquoted identifiers to lower case, and OneLake's namespaces are CH0010:
+    `iceberg.rest-catalog.case-insensitive-name-matching` maps `ch0010` back to the real name.
+
+    STORAGE is Trino's native Azure filesystem. `azure.auth-type=DEFAULT` is the Azure SDK's
+    DefaultAzureCredential, whose workload-identity leg reads AZURE_FEDERATED_TOKEN_FILE -- the
+    same refreshable OIDC assertion file Spark-OSS and StarRocks read, re-read on every refresh.
+    """
+
+    name = "trino"
+    default_image = "trinodb/trino:latest"
+    # Plain schema-qualified SQL; the connection's default catalog resolves `CH0010.lineitem`.
+    dialect = "duckdb_iceberg"
+    list_namespaces = "SHOW SCHEMAS FROM onelake"
+
+    CONFIG = "\n".join(
+        [
+            "coordinator=true",
+            "node-scheduler.include-coordinator=true",
+            "http-server.http.port=8080",
+            "discovery.uri=http://localhost:8080",
+            "catalog.management=dynamic",
+            "catalog.store=memory",
+        ]
+    )
+
+    def start(self) -> None:
+        _keep_assertion_fresh()
+        config = ASSERTION_DIR.parent / "candidate-trino.properties"
+        config.write_text(self.CONFIG + "\n", encoding="utf-8")
+        config.chmod(0o644)
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                CONTAINER,
+                "-v",
+                f"{ASSERTION_DIR}:{Path(ASSERTION_IN_CONTAINER).parent}:ro",
+                "-v",
+                f"{config}:/etc/trino/config.properties:ro",
+                "-e",
+                f"AZURE_CLIENT_ID={os.environ.get('AZURE_CLIENT_ID', '')}",
+                "-e",
+                f"AZURE_TENANT_ID={os.environ.get('AZURE_TENANT_ID', '')}",
+                "-e",
+                f"AZURE_FEDERATED_TOKEN_FILE={ASSERTION_IN_CONTAINER}",
+                "-p",
+                "127.0.0.1:8080:8080",
+                self.image,
+            ],
+            check=True,
+        )
+        digest = subprocess.run(
+            ["docker", "image", "inspect", "--format", "{{index .RepoDigests 0}}", self.image],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        _say(f"image {self.image}  {digest}")
+        # The coordinator answers SERVER_STARTING_UP until it has registered itself as a worker.
+        deadline = time.time() + 300
+        while True:
+            try:
+                self.sql("SELECT 1")
+                return
+            except Exception:  # noqa: BLE001 - not up yet
+                self._c = None
+            if time.time() > deadline:
+                raise RuntimeError("Trino not answering after 300s")
+            time.sleep(5)
+
+    def _conn(self):
+        import trino
+
+        if getattr(self, "_c", None) is None:
+            self._c = trino.dbapi.connect(
+                host="127.0.0.1",
+                port=8080,
+                user="bench",
+                catalog="onelake",
+                schema=self.cfg.schema.lower(),
+                request_timeout=3600,
+            )
+        return self._c
+
+    def sql(self, statement: str) -> list[tuple]:
+        cur = self._conn().cursor()
+        cur.execute(statement)
+        return [tuple(r) for r in cur.fetchall()]
+
+    def version(self) -> str:
+        return str(self.sql("SELECT version()")[0][0])
+
+    def attach_variants(self, token: str, sas: str) -> dict[str, list[str]]:
+        base = {
+            "iceberg.catalog.type": "rest",
+            "iceberg.rest-catalog.uri": ICEBERG_ENDPOINT,
+            "iceberg.rest-catalog.warehouse": self.cfg.warehouse,
+            "iceberg.rest-catalog.security": "OAUTH2",
+            "iceberg.rest-catalog.oauth2.token": token,
+            "iceberg.rest-catalog.case-insensitive-name-matching": "true",
+            "fs.native-azure.enabled": "true",
+        }
+
+        def ddl(props: dict[str, str]) -> list[str]:
+            body = ", ".join(f'"{k}" = \'{v}\'' for k, v in (base | props).items())
+            return [
+                "DROP CATALOG IF EXISTS onelake",
+                f"CREATE CATALOG onelake USING iceberg WITH ({body})",
+            ]
+
+        no_vending = {"iceberg.rest-catalog.vended-credentials-enabled": "false"}
+        return {
+            "oauth2 token + workload identity (azure.auth-type DEFAULT)": ddl(
+                no_vending | {"azure.auth-type": "DEFAULT"}
+            ),
+            "oauth2 token + vended credentials": ddl(
+                {"iceberg.rest-catalog.vended-credentials-enabled": "true"}
+            ),
+        }
+
+    def use_catalog(self) -> list[str]:
+        return []
+
+    # The Files/csv gate is the ETL's; Trino has no path-based CSV reader, only a Hive table over
+    # a location. Left unprobed until the query benchmark result says Trino is worth the ETL.
+    def files_variants(self, path: str, sas: str) -> dict[str, str]:
+        return {}
+
+    def files_diagnostics(self, path: str, sas: str) -> dict[str, str]:
+        return {}
+
+    def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
+        location = f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}"
+        prep = [
+            f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
+            f"DROP TABLE IF EXISTS onelake.{WRITE_NS}.{table}",
+        ]
+        return {
+            "CTAS with location": prep
+            + [
+                f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{location}') "
+                f"AS SELECT * FROM {source}"
+            ],
+            "CTAS": prep + [f"CREATE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"],
+        }
+
+
+CANDIDATES = {"starrocks": StarRocks, "trino": Trino}
 
 
 def _try(engine: Candidate, label: str, statements: list[str]) -> tuple[bool, list[tuple]]:
@@ -400,8 +557,9 @@ def main() -> int:
         ok, _ = _try(engine, label, statements)
         if not ok:
             continue
-        listed, rows = _try(engine, f"{label}: list namespaces", ["SHOW DATABASES FROM onelake"])
-        if not (listed and any(cfg.schema in map(str, r) for r in rows)):
+        listed, rows = _try(engine, f"{label}: list namespaces", [engine.list_namespaces])
+        # Case-insensitive: Trino lists OneLake's CH0010 as ch0010.
+        if not (listed and any(cfg.schema.lower() in str(r).lower() for r in rows)):
             continue
         read, rows = _try(
             engine, f"{label}: nation", [f"SELECT count(*) FROM onelake.{cfg.schema}.nation"]
