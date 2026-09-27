@@ -93,7 +93,7 @@ class Candidate:
     def sql(self, statement: str) -> list[tuple]: ...
     def version(self) -> str: ...
     def attach_variants(self, token: str, sas: str) -> dict[str, list[str]]: ...
-    def files_variants(self, path: str, sas: str) -> dict[str, str]: ...
+    def files_variants(self, path: str, sas: str) -> dict[str, str | list[str]]: ...
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]: ...
     def use_catalog(self) -> list[str]: ...
 
@@ -473,23 +473,98 @@ class Trino(Candidate):
     def use_catalog(self) -> list[str]:
         return []
 
-    # The Files/csv gate is the ETL's; Trino has no path-based CSV reader, only a Hive table over
-    # a location. Left unprobed until the query benchmark result says Trino is worth the ETL.
-    def files_variants(self, path: str, sas: str) -> dict[str, str]:
-        return {}
+    # The storage properties the passing attach variant needed (run 36326766643).
+    AZURE = {
+        "fs.native-azure.enabled": "true",
+        "azure.auth-type": "DEFAULT",
+        "azure.endpoint": "fabric.microsoft.com",
+    }
+
+    def files_variants(self, path: str, sas: str) -> dict[str, list[str]]:
+        """The ETL's read of one AEMO file, through a Hive EXTERNAL CSV table over Files/csv.
+
+        Trino has no path-based file reader: a CSV is a Hive table whose `external_location` is
+        the folder. Every column VARCHAR (Trino's CSV format allows nothing else), 120 of them so
+        no row is longer than the schema; a short row reads NULL past its end. `"$path"` picks
+        the one file out of the folder. The Hive catalog needs a metastore for that one table
+        definition: in the container, or in the lakehouse.
+        """
+        folder, name = path.rsplit("/", 1)
+        declared = [c.lower() for c in COLUMNS] + [
+            f"c{i}" for i in range(len(COLUMNS), CSV_MAX_WIDTH)
+        ]
+        columns = ", ".join(f'"{c}" varchar' for c in declared)
+        where = " AND ".join(f"\"{c.lower()}\" = '{v}'" for c, v in FILTER)
+        query = [
+            "CREATE SCHEMA IF NOT EXISTS files.etl",
+            "DROP TABLE IF EXISTS files.etl.aemo",
+            f"CREATE TABLE files.etl.aemo ({columns}) WITH (external_location = '{folder}', "
+            "format = 'CSV', skip_header_line_count = 1)",
+            'SELECT count(*), sum(CAST("totalcleared" AS double)) FROM files.etl.aemo '
+            f"WHERE {where} AND \"$path\" LIKE '%/{name}'",
+        ]
+
+        def catalog(metastore: dict[str, str]) -> list[str]:
+            props = {"hive.metastore": "file"} | metastore | self.AZURE
+            body = ", ".join(f"\"{k}\" = '{v}'" for k, v in props.items())
+            return [
+                "DROP CATALOG IF EXISTS files",
+                f"CREATE CATALOG files USING hive WITH ({body})",
+            ]
+
+        return {
+            "hive CSV table, metastore in the container": catalog(
+                {
+                    "hive.metastore.catalog.dir": "local:///trino-metastore",
+                    "fs.native-local.enabled": "true",
+                    "local.location": "/tmp",
+                }
+            )
+            + query,
+            "hive CSV table, metastore in the lakehouse": catalog(
+                {"hive.metastore.catalog.dir": f"{self.cfg.base_path}/Files/_trino_metastore"}
+            )
+            + query,
+        }
 
     def files_diagnostics(self, path: str, sas: str) -> dict[str, str]:
-        return {}
+        return {
+            "rows per record type in that file": (
+                'SELECT "i", "unit", "version", count(*) FROM files.etl.aemo '
+                f"WHERE \"$path\" LIKE '%/{path.rsplit('/', 1)[1]}' "
+                "GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 12"
+            )
+        }
 
-    def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
-        location = f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}"
-        # Trino refuses a CTAS onto a non-empty location, and a failed CTAS leaves files behind
-        # that DROP TABLE cannot reach (run 36326766643). Clear the directory first.
+    def _clear(self, table: str) -> None:
         directory = onelake.file_system(self.cfg).get_directory_client(
             f"{self.cfg.lakehouse_id}/Tables/{WRITE_NS}/{table}"
         )
         if directory.exists():
             directory.delete_directory()
+
+    def write_diagnostics(self) -> None:
+        """What sits under Tables/candidate after the write gate: what Trino called non-empty."""
+        fs = onelake.file_system(self.cfg)
+        prefix = f"{self.cfg.lakehouse_id}/Tables/{WRITE_NS}"
+        try:
+            paths = [p.name[len(prefix) :] for p in fs.get_paths(prefix, recursive=True)]
+            _say(f"    Tables/{WRITE_NS} holds {len(paths)} paths: {paths[:40]}")
+        except Exception as exc:  # noqa: BLE001
+            _say(f"    listing Tables/{WRITE_NS} failed: {scrub.scrub_exc(exc, 500)}")
+
+    def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
+        # Trino refuses to create a table on a non-empty location (run 36326766643), and a failed
+        # attempt leaves files that DROP TABLE cannot reach. Each variant gets its own cleared
+        # location, and the listing afterwards says what made a location non-empty.
+        inserted = f"{table}_ci"
+        for name in (table, inserted):
+            self._clear(name)
+        self.write_diagnostics()
+
+        def at(name: str) -> str:
+            return f"{self.cfg.base_path}/Tables/{WRITE_NS}/{name}"
+
         prep = [
             f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
             f"DROP TABLE IF EXISTS onelake.{WRITE_NS}.{table}",
@@ -497,8 +572,14 @@ class Trino(Candidate):
         return {
             "CTAS with location": prep
             + [
-                f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{location}') "
+                f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{at(table)}') "
                 f"AS SELECT * FROM {source}"
+            ],
+            "CREATE + INSERT with location": prep
+            + [
+                f"CREATE TABLE onelake.{WRITE_NS}.{table} (n_nationkey bigint, n_name varchar, "
+                f"n_regionkey bigint, n_comment varchar) WITH (location = '{at(inserted)}')",
+                f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}",
             ],
             "CTAS": prep + [f"CREATE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"],
         }
@@ -621,7 +702,10 @@ def main() -> int:
         files = _first_passing(
             engine,
             "parse Files/csv (ragged AEMO, DUNIT v3)",
-            {label: [stmt] for label, stmt in engine.files_variants(path, sas).items()},
+            {
+                label: stmt if isinstance(stmt, list) else [stmt]
+                for label, stmt in engine.files_variants(path, sas).items()
+            },
             matches,
         )
         # Always, pass or fail: the declared-schema reads' behaviour is a finding either way.
@@ -665,6 +749,8 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             _say(f"    FAIL  pyiceberg read-back  {scrub.scrub_exc(exc, 1500)}")
         _try(engine, "drop", [f"DROP TABLE IF EXISTS {WRITE_NS}.{table}"])
+    if hasattr(engine, "write_diagnostics"):
+        engine.write_diagnostics()
     results["write Iceberg (+ pyiceberg read-back = 25)"] = readback
 
     _say(f"\nSUMMARY  {name}  {engine.image}")
