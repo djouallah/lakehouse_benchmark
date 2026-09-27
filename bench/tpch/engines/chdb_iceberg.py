@@ -105,7 +105,7 @@ class ChdbIceberg:
         cfg_path.write_text(
             f"""<clickhouse>
     <tmp_path>{tmp_dir}/</tmp_path>
-    <max_server_memory_usage>11000000000</max_server_memory_usage>
+    <max_server_memory_usage>13000000000</max_server_memory_usage>
     <filesystem_caches>
         <onelake_cache>
             <path>{cache_dir}/onelake</path>
@@ -133,7 +133,11 @@ class ChdbIceberg:
             f"SET iceberg_metadata_staleness_ms = {CATALOG_CACHE_SECONDS * 1000}",
             *SEMANTIC_SETTINGS,
             "SET max_threads = 4",
-            "SET max_memory_usage = 10000000000",
+            # 12 GB A QUERY, 13 GB THE PROCESS -- DuckDB's default share of this runner (80% of RAM,
+            # 12.5 GB) and under StarRocks' BE (13.5 GB). It was 10 GB / 11 GB, and TPC-H SF=60 Q21
+            # was the one statement past it: "would use 10.41 GiB" against 9.31 (run 36287421972),
+            # its IN and NOT IN subqueries each a hash set of ~100M order keys, which cannot spill.
+            "SET max_memory_usage = 12000000000",
             # SPILL IS LEFT TO THE DEFAULTS, which since 25.x spill by themselves:
             # max_bytes_ratio_before_external_group_by / _sort / _join are all 0.5, and the join
             # one turns a hash join into a grace hash join only once memory runs short (it needs a

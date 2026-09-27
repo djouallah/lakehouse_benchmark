@@ -2,7 +2,7 @@ name: tmp spark q21
 
 # TEMPORARY, deleted once read. TPC-H SF=100 Q21 fails on Spark-OSS with "Not enough memory to
 # build and broadcast the table" (runs 36016179553, 36151085980). This prints Q21's plan and runs
-# it once per broadcast setting, to see which join broadcasts and which setting keeps it off.
+# it once per memory setting, to see which lets the forced broadcast build.
 
 on:
   workflow_dispatch:
@@ -68,38 +68,33 @@ jobs:
         shell: bash
         run: |
           python - <<'EOF'
-          import time
+          import os, time
           from bench.suite import suite_class
-          from bench.tpch.engines.pyspark_iceberg import PysparkIceberg
+          from bench.tpch.engines import pyspark_iceberg as mod
           from bench.tpch.queries import load
 
+          # Q21's NOT IN over a nullable key is a null-aware anti join, which Spark always
+          # broadcasts: thresholds cannot turn it off (run 36287446363). So the variants are
+          # memory: heap size and the execution share, each in a fresh JVM (both are static).
           cfg = suite_class().from_env()
-          eng = PysparkIceberg(cfg)
-          eng.setup()
-          spark = eng.session
-          q21 = load(eng.name, cfg.schema, cfg.sf, cfg.SQL_PATH, cfg.N_QUERIES)[20]
-          print("=== static plan, defaults")
-          spark.sql(q21).explain(mode="formatted")
-
           variants = [
-              ("defaults", {}),
-              ("adaptive threshold -1", {"spark.sql.adaptive.autoBroadcastJoinThreshold": "-1"}),
-              ("both thresholds -1", {"spark.sql.adaptive.autoBroadcastJoinThreshold": "-1",
-                                      "spark.sql.autoBroadcastJoinThreshold": "-1"}),
+              ("11g, fraction 0.8", "11g", {"spark.memory.fraction": "0.8"}),
+              ("13g, fraction 0.6", "13g", {}),
+              ("13g, fraction 0.8", "13g", {"spark.memory.fraction": "0.8"}),
           ]
-          for name, conf in variants:
-              for key in ("spark.sql.adaptive.autoBroadcastJoinThreshold",
-                          "spark.sql.autoBroadcastJoinThreshold"):
-                  spark.conf.unset(key)
-              for key, value in conf.items():
-                  spark.conf.set(key, value)
-              df = spark.sql(q21)
+          for name, heap, extra in variants:
+              os.environ["SPARK_DRIVER_MEMORY"] = heap
+              mod.PysparkIceberg._extra_config = lambda self, extra=extra: dict(extra)
+              eng = mod.PysparkIceberg(cfg)
+              eng.setup()
+              q21 = load(eng.name, cfg.schema, cfg.sf, cfg.SQL_PATH, cfg.N_QUERIES)[20]
               start = time.perf_counter()
               try:
-                  rows = len(df.collect())
+                  rows = len(eng.session.sql(q21).collect())
                   print(f"=== {name}: OK {time.perf_counter() - start:.1f}s {rows} rows")
               except Exception as exc:
                   print(f"=== {name}: FAILED {time.perf_counter() - start:.1f}s {str(exc)[:300]}")
-              print(df._jdf.queryExecution().executedPlan().toString())
-          eng.close()
+              os.system("free -m | sed -n 2p")
+              eng.close()
+              mod._shutdown_gateway()
           EOF
