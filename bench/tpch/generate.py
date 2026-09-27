@@ -235,7 +235,7 @@ def generate(cfg: TpchConfig, force: bool = False) -> dict:
         """Field ids, then upload, for one part's files. Runs on a pool thread."""
         try:
             rewrites = [procs.submit(add_field_ids, local, id_schema) for local, _ in files]
-            for (local, remote), rewrite in zip(files, rewrites):
+            for (local, remote), rewrite in zip(files, rewrites, strict=True):
                 waited = time.perf_counter()
                 nrows, nbytes = rewrite.result()
                 uploading = time.perf_counter()
