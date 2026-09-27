@@ -75,9 +75,10 @@ jobs:
       engines: ${{ steps.plan.outputs.engines }}
       started: ${{ steps.plan.outputs.started }}
     steps:
-      # BIG SCALES NEED THE DISK THE RUNNER HIDES. The documented 14 GB is what is left on `/`;
-      # deleting the preinstalled toolchains nobody here uses frees ~30 GB more, and the VM's
-      # temporary disk at /mnt (~70 GB, normally unused) takes the scratch. SF=1/10 skip this.
+      # BIG SCALES NEED THE DISK THE RUNNER HIDES. `/` is one 145 GB volume with ~87 GB free;
+      # deleting the preinstalled toolchains nobody here uses brings that to ~105 GB. /mnt is a
+      # directory on that same volume (`df` shows /dev/root for both), not a separate disk -- the
+      # scratch sits there only because it is outside the workspace. SF=1/10 skip this.
       - name: Free runner disk (SF >= 30)
         if: contains(fromJSON('["30","60","100"]'), inputs.sf || '60')
         run: |

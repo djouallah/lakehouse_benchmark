@@ -87,7 +87,8 @@ class DuckDBIceberg:
         temp_dir = os.path.abspath(temp_dir)
         free = shutil.disk_usage(os.path.dirname(temp_dir) or ".").free / 2**30
         scrub.safe_print(
-            f"  spill: temp_directory {temp_dir}, max_temp_directory_size {cap}, disk free {free:.1f} GiB"
+            f"  spill: temp_directory {temp_dir}, max_temp_directory_size {cap}, "
+            f"disk free {free:.1f} GiB"
         )
         self._spill = _SpillProbe(temp_dir)
 

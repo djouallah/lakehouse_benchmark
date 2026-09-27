@@ -161,15 +161,11 @@ jobs:
       # BIG SCALES NEED THE DISK THE RUNNER HIDES, as in tpcds.yml. DuckDB spills beside the
       # workspace and the engines' local caches live under $RUNNER_TEMP, both on `/`; deleting the
       # preinstalled toolchains nobody here uses frees ~30 GB. SF=1/10 skip this.
-      # Spark and Gluten/Velox spill under SPARK_LOCAL_DIRS, which defaults to /tmp on `/`; the
-      # temporary disk at /mnt (~70 GB, otherwise unused) takes it instead, as in tpcds.yml.
       - name: Free runner disk (SF >= 30)
         if: contains(fromJSON('["30","60","100","300"]'), inputs.sf || '10')
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          sudo mkdir -p /mnt/spark && sudo chown "$USER" /mnt/spark
-          echo "SPARK_LOCAL_DIRS=/mnt/spark" >> "$GITHUB_ENV"
-          df -h / /mnt
+          df -h /
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:

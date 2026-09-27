@@ -269,7 +269,21 @@ class PysparkIceberg:
             # Iceberg's adaptive split sizing targets
             # max(spark.default.parallelism, spark.sql.shuffle.partitions) -- so raising that one
             # would ALSO multiply the scan task count and shrink every split. One knob, one job.
-            .config("spark.sql.adaptive.coalescePartitions.initialPartitionNum", "64")
+            #
+            # Past SF=100 the count grows with the data, so each task's slice of a shuffle --
+            # the hash table Q18 aggregates and Q21 joins into -- stays the size it is at SF=100,
+            # the largest scale Spark and Gluten are known to finish TPC-H at.
+            .config(
+                "spark.sql.adaptive.coalescePartitions.initialPartitionNum",
+                str(max(64, 64 * self.cfg.sf // 100)),
+            )
+            # SHUFFLE FILES GO WHEN THE QUERY DOES. Spark otherwise deletes them only when the JVM
+            # garbage-collects the shuffle, forced every 30 minutes, so a session running one
+            # query after another keeps every finished query's shuffle on disk: Gluten at TPC-H
+            # SF=300 filled the runner's ~105 GB 15 minutes into the queries and took the runner
+            # down with it (run 36304713315). Gluten's ColumnarShuffleManager deletes its files on
+            # the same unregister call.
+            .config("spark.sql.classic.shuffleDependency.fileCleanup.enabled", "true")
             # DOUBLE QUOTES ARE IDENTIFIERS, as in the SQL standard and every other engine here.
             # Spark's default reads "order count" as a STRING literal, so eight TPC-DS statements
             # that alias a column `AS "order count"` or `AS "30 days"` -- the spec's own text --
