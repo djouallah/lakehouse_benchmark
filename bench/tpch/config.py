@@ -64,7 +64,9 @@ TARGET_PART_MB = 200
 # Floors, so the smoke path still exercises multi-file reading. At SF=1 a size rule alone would
 # give one part for everything and the SF=1 run would not resemble the SF=10 run it is screening.
 PART_FLOOR = {"lineitem": 2, "orders": 2}
-MAX_PARTS = 64
+# 192, RAISED FROM 64 for SF=300: 64 would make lineitem parts ~850MB there. The data already in
+# OneLake at SF<=100 is not regenerated (prepare is idempotent), so its layout does not move.
+MAX_PARTS = 192
 
 
 def parts_for(table: str, sf: int) -> int:
