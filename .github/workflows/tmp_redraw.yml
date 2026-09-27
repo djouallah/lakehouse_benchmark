@@ -1,0 +1,38 @@
+# TEMPORARY: redraw the TPC-H docs from stored results after TOTALS_SFS gained 200. Deleted after.
+name: tmp redraw
+on: workflow_dispatch
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  BENCH_SUITE: tpch
+jobs:
+  redraw:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements/report.txt
+      - name: Redraw
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, ".github/scripts")
+          import publish as p
+          suite = p.suite_class()
+          results = Path(suite.RESULTS_DIR)
+          table = p.load_all(results)
+          headline = p.read_run(sorted(results.glob(f"*_sf{suite.HEADLINE_SF}_*.json"))[-1])
+          latest = p.only_passes(p.latest_per_engine(results, suite.HEADLINE_SF, suite.ENGINES, headline), suite.PASSES)
+          p.write_headline_docs(latest, p.summarize(latest, suite.ENGINES), table, suite)
+          p.leak_check([Path(suite.DOCS_DIR) / "RESULTS.md", Path(suite.CSV)])
+          PY
+      - run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git diff --cached --stat
+          git commit -m "docs: TPC-H totals chart adds SF=200" && git push
