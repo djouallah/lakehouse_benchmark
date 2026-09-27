@@ -449,7 +449,7 @@ class Trino(Candidate):
         }
 
         def ddl(props: dict[str, str]) -> list[str]:
-            body = ", ".join(f'"{k}" = \'{v}\'' for k, v in (base | props).items())
+            body = ", ".join(f"\"{k}\" = '{v}'" for k, v in (base | props).items())
             return [
                 "DROP CATALOG IF EXISTS onelake",
                 f"CREATE CATALOG onelake USING iceberg WITH ({body})",
