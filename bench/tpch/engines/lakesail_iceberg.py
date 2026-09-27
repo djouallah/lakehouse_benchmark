@@ -62,7 +62,7 @@ class LakesailIceberg:
         token = auth.onelake_token()
 
         # Sail is configured by environment, read once at server start -- so the token is captured
-        # here and never refreshed, the same ceiling DuckDB and chDB have.
+        # here and never refreshed, the same ceiling chDB has.
         os.environ["SAIL_OPTIMIZER__ENABLE_JOIN_REORDER"] = "true"
         os.environ["SAIL_EXECUTION__COLLECT_STATISTICS"] = "true"
         # A BOUNDED POOL, SO SAIL SPILLS (module docstring). `runtime.memory_pool.type` and

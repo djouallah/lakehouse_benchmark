@@ -19,13 +19,13 @@ configuration -- same app registration, same federated credential, same
 `api://AzureADTokenExchange` audience that `azure/login` itself uses -- and it removes the Azure
 CLI from the Python process, so `bench/` behaves identically on a laptop.
 
-WHAT THIS STILL CANNOT FIX, and why etl.yml sets `timeout-minutes: 50`. DuckDB bakes the token
-into `ATTACH`, chDB into `CREATE DATABASE`, LakeSail into an env var read once at server start.
-Those three capture a STRING and never ask again. Refreshing the credential does not reach inside
-them, so an engine session is hard-bounded by the lifetime of the token it was handed. Mint late
-(right before engine setup), never at job start. Gluten is the one that outlives it -- TPC-DS
-SF=100 runs past its one-hour SAS -- and it restarts its JVM on fresh credentials instead; see
-bench/tpch/engines/pyspark_gluten_iceberg.py and `fresh` below.
+AN ENGINE HOLDS A STRING, NOT THIS CREDENTIAL, so refreshing here does not reach inside it. The
+engines that outlive the token renew it themselves: the runner calls each engine's `refresh`
+before every statement, and DuckDB re-creates its storage secret, Spark and Gluten restart their
+JVM, StarRocks re-attaches, once less than config.TOKEN_MIN_LIFETIME_SECONDS remain (see
+bench/tpch/engines/base.py and `fresh` below). chDB (`CREATE DATABASE`) and LakeSail (an env var
+read once at server start) have no `refresh`: their sessions are still bounded by the token they
+were handed, which is why etl.yml sets `timeout-minutes: 50`. Mint late, never at job start.
 """
 
 from __future__ import annotations
