@@ -18,6 +18,8 @@ to be worth writing down:
 
 from __future__ import annotations
 
+import contextlib
+import json
 import os
 import pathlib
 
@@ -55,6 +57,23 @@ SEMANTIC_SETTINGS = (
     # tells it the standard's answer; no TPC-H statement has a UNION.
     "SET union_default_mode = 'DISTINCT'",
 )
+
+
+def _last_document(text: str) -> dict:
+    """The last JSON document in `text`, which normally holds exactly one.
+
+    Belt and braces for `execute`'s flush: if a failed statement's output still precedes this
+    one's, this statement's result is the document that comes last.
+    """
+    decoder = json.JSONDecoder()
+    position, last = 0, {}
+    while position < len(text):
+        while position < len(text) and text[position].isspace():
+            position += 1
+        if position == len(text):
+            break
+        last, position = decoder.raw_decode(text, position)
+    return last
 
 
 class ChdbIceberg:
@@ -147,11 +166,17 @@ class ChdbIceberg:
         window, and echoes the statement back on error -- which for the attach would put the
         token in the log.
         """
-        import json
-
-        result = self._session.query(sql, "JSONCompact")
-        payload = json.loads(str(result))
-        return len(payload.get("data", []))
+        try:
+            result = self._session.query(sql, "JSONCompact")
+        except Exception:
+            # A FAILED STATEMENT LEAVES OUTPUT BEHIND. At SF=60 every query right after a
+            # MEMORY_LIMIT_EXCEEDED -- Q4, Q8, Q10, Q22 -- came back as two JSON documents, the
+            # failed one's and its own, and died "JSONDecodeError: Extra data" (run 36016149239).
+            # A throwaway statement takes the leftover, so the next timed query starts clean.
+            with contextlib.suppress(Exception):
+                self._session.query("SELECT 1", "JSONCompact")
+            raise
+        return len(_last_document(str(result)).get("data", []))
 
     def close(self) -> None:
         if self._session is not None:
