@@ -115,7 +115,7 @@ SELECT
     n_name,
     SUM(l_extendedprice * (1 - l_discount)) AS revenue
 FROM `{schema}.lineitem`
-inner join (select * from `{schema}.orders` where o_orderdate >= '1994-01-01' AND o_orderdate < '1995-01-01') as x
+inner join (select * from `{schema}.orders` where o_orderdate >= CAST('1994-01-01' AS date) AND o_orderdate < CAST('1995-01-01' AS date)) as x
 on l_orderkey = x.o_orderkey
 left join `{schema}.supplier`
 on l_suppkey = s_suppkey
@@ -215,7 +215,7 @@ SELECT
 
 
 GROUP BY
-    o_year
+    EXTRACT( year  FROM  o_orderdate )
 ORDER BY
     o_year;
 
@@ -248,7 +248,7 @@ SELECT
 
 GROUP BY
     n_name,
-    o_year
+    EXTRACT( year  FROM o_orderdate )
 ORDER BY
     n_name,
     o_year DESC;
@@ -266,7 +266,7 @@ SELECT
     c_phone,
     c_comment
 FROM  `{schema}.lineitem`
-inner join ( select * from `{schema}.orders` where o_orderdate >= '1993-10-01' AND o_orderdate < '1994-01-01') as xx
+inner join ( select * from `{schema}.orders` where o_orderdate >= CAST('1993-10-01' AS date) AND o_orderdate < CAST('1994-01-01' AS date)) as xx
 on l_orderkey = xx.o_orderkey
 left join `{schema}.customer`
 on xx.o_custkey = c_custkey
@@ -348,7 +348,7 @@ on o_orderkey = l_orderkey
 WHERE  l_shipmode IN ('MAIL', 'SHIP')
        AND l_commitdate < l_receiptdate
        AND l_shipdate < l_commitdate
-       AND l_receiptdate >=  '1994-01-01'  AND l_receiptdate < '1995-01-01'
+       AND l_receiptdate >= CAST('1994-01-01' AS date) AND l_receiptdate < CAST('1995-01-01' AS date)
 GROUP BY
     l_shipmode
 ORDER BY

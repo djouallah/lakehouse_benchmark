@@ -483,6 +483,13 @@ class Trino(Candidate):
 
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
         location = f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}"
+        # Trino refuses a CTAS onto a non-empty location, and a failed CTAS leaves files behind
+        # that DROP TABLE cannot reach (run 36326766643). Clear the directory first.
+        directory = onelake.file_system(self.cfg).get_directory_client(
+            f"{self.cfg.lakehouse_id}/Tables/{WRITE_NS}/{table}"
+        )
+        if directory.exists():
+            directory.delete_directory()
         prep = [
             f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
             f"DROP TABLE IF EXISTS onelake.{WRITE_NS}.{table}",
