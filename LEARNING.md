@@ -101,7 +101,7 @@ Largest scale each engine completes, cold, every statement answered:
     Sail switches to them only once the dataset passes half the pool.
   - Giving Polars a budget (`POLARS_OOC_MEMORY_BUDGET_MB`, experimental) stopped the runner dying
     but did not finish: SF=30 stalled and was cancelled (run 36238938131).
-- **A hard limit fails the query, not the runner.** chDB's `max_memory_usage` (10 GB) raises
+- **A hard limit fails the query, not the runner.** chDB's `max_memory_usage` (12 GB) raises
   `MEMORY_LIMIT_EXCEEDED`, and the run carries on to the next statement.
 - **Spilling is only as good as the plan.** DuckDB's Q64 takes 24.9 s at SF=60. At SF=100 the
   same bad join order spills until it hits 90.6 GiB.
