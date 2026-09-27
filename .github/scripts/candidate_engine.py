@@ -622,6 +622,117 @@ class Trino(Candidate):
         except Exception as exc:  # noqa: BLE001
             _say(f"    listing Tables/{WRITE_NS} failed: {scrub.scrub_exc(exc, 500)}")
 
+    def _commit_bisect(self) -> None:
+        """Which update in Trino's staged-create commit does OneLake call "Malformed request"?
+
+        Replays the exact commit the REST proxy captured (run 36329873292) straight against
+        OneLake, minus the snapshot (so no data files are needed), dropping one suspect at a time.
+        Each attempt stages its own table first, as Trino does, and is dropped after.
+        """
+        import requests
+
+        _say("\n[staged-create commit bisect]")
+        headers = {"Authorization": f"Bearer {auth.onelake_token()}"}
+        config = requests.get(
+            f"{ICEBERG_ENDPOINT}/v1/config",
+            params={"warehouse": self.cfg.warehouse},
+            headers=headers,
+            timeout=60,
+        ).json()
+        prefix = (config.get("overrides") or {}).get("prefix") or (
+            config.get("defaults") or {}
+        ).get("prefix")
+        tables = f"{ICEBERG_ENDPOINT}/v1/{prefix}/namespaces/{WRITE_NS}/tables"
+        schema = {
+            "type": "struct",
+            "schema-id": 0,
+            "fields": [
+                {"id": 1, "name": "n_nationkey", "required": False, "type": "long"},
+                {"id": 2, "name": "n_name", "required": False, "type": "string"},
+                {"id": 3, "name": "n_regionkey", "required": False, "type": "long"},
+                {"id": 4, "name": "n_comment", "required": False, "type": "string"},
+            ],
+        }
+        trino_props = {
+            "format-version": "2",
+            "write.format.default": "PARQUET",
+            "write.parquet.compression-codec": "",
+        }
+
+        def updates(meta: dict, drop=(), props=None) -> list[dict]:
+            every = [
+                {"action": "assign-uuid", "uuid": meta["table-uuid"]},
+                {"action": "upgrade-format-version", "format-version": 2},
+                {"action": "add-schema", "schema": schema, "last-column-id": 4},
+                {"action": "set-current-schema", "schema-id": -1},
+                {"action": "add-spec", "spec": {"spec-id": 0, "fields": []}},
+                {"action": "set-default-spec", "spec-id": -1},
+                {"action": "add-sort-order", "sort-order": {"order-id": 0, "fields": []}},
+                {"action": "set-default-sort-order", "sort-order-id": -1},
+                {"action": "set-location", "location": meta["location"]},
+                {"action": "set-properties", "updates": trino_props if props is None else props},
+                {
+                    "action": "remove-properties",
+                    "removals": ["write.parquet.compression-codec", "format-version"],
+                },
+            ]
+            return [u for u in every if u["action"] not in drop]
+
+        no_version = {"write.format.default": "PARQUET", "write.parquet.compression-codec": ""}
+        variants = {
+            "trino's commit (no snapshot)": {},
+            "without remove-properties": {"drop": {"remove-properties"}},
+            "set-properties without format-version": {"props": no_version},
+            "set-properties without the empty codec": {
+                "props": {"format-version": "2", "write.format.default": "PARQUET"}
+            },
+            "neither format-version nor remove-properties": {
+                "props": no_version,
+                "drop": {"remove-properties"},
+            },
+            "without set-location": {"drop": {"set-location"}},
+            "without set-properties and remove-properties": {
+                "drop": {"set-properties", "remove-properties"}
+            },
+            "without upgrade-format-version": {"drop": {"upgrade-format-version"}},
+        }
+        for index, (label, change) in enumerate(variants.items()):
+            name = f"bisect{index}"
+            requests.delete(
+                f"{tables}/{name}", params={"purgeRequested": "true"}, headers=headers, timeout=120
+            )
+            self._clear(name)
+            staged = requests.post(
+                tables,
+                json={
+                    "name": name,
+                    "schema": schema,
+                    "partition-spec": {"spec-id": 0, "fields": []},
+                    "write-order": {"order-id": 0, "fields": []},
+                    "properties": trino_props,
+                    "stage-create": True,
+                },
+                headers=headers,
+                timeout=120,
+            )
+            if not staged.ok:
+                _say(f"    stage {staged.status_code}  {label}  {staged.text[:300]}")
+                continue
+            commit = requests.post(
+                f"{tables}/{name}",
+                json={
+                    "requirements": [{"type": "assert-create"}],
+                    "updates": updates(staged.json()["metadata"], **change),
+                },
+                headers=headers,
+                timeout=120,
+            )
+            _say(f"    commit {commit.status_code}  {label}  {commit.text[:200]}")
+            requests.delete(
+                f"{tables}/{name}", params={"purgeRequested": "true"}, headers=headers, timeout=120
+            )
+            self._clear(name)
+
     def _unstaged_probe(self, source: str) -> None:
         """Can Trino create WITHOUT stage-create on OneLake?
 
@@ -661,7 +772,7 @@ class Trino(Candidate):
         for name in (table, inserted):
             self._clear(name)
         self.write_diagnostics()
-        self._unstaged_probe(source)
+        self._commit_bisect()
 
         def at(name: str) -> str:
             return f"{self.cfg.base_path}/Tables/{WRITE_NS}/{name}"
