@@ -80,7 +80,7 @@ Largest scale each engine completes, cold, every statement answered:
 | StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases don't parse, Q71 (sail#2642) |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
-| chDB | SF=60 (834 s) | — | TPC-H SF=100 not run yet; TPC-DS aborts in glibc at any SF |
+| chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS aborts in glibc at any SF |
 | Polars | SF=10 (82–106 s) | — | TPC-H SF=30: runner OOM-killed at Q7; TPC-DS SF=10: runner lost at 55 min |
 
 - **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap, and it
