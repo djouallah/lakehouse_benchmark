@@ -418,9 +418,21 @@ class Trino(Candidate):
         return self._c
 
     def sql(self, statement: str) -> list[tuple]:
+        from trino.exceptions import TrinoQueryError
+
         cur = self._conn().cursor()
-        cur.execute(statement)
-        return [tuple(r) for r in cur.fetchall()]
+        try:
+            cur.execute(statement)
+            return [tuple(r) for r in cur.fetchall()]
+        except TrinoQueryError as exc:
+            # The message is only the outermost wrapper ("Error processing metadata for table");
+            # the reason is in the cause chain of failureInfo.
+            chain, info = [], exc.failure_info or {}
+            while info:
+                frame = (info.get("stack") or [""])[0]
+                chain.append(f"{info.get('type')}: {info.get('message')} @ {frame}")
+                info = info.get("cause") or {}
+            raise RuntimeError(" <- ".join(chain) or str(exc)) from exc
 
     def version(self) -> str:
         return str(self.sql("SELECT version()")[0][0])
@@ -447,6 +459,11 @@ class Trino(Candidate):
         return {
             "oauth2 token + workload identity (azure.auth-type DEFAULT)": ddl(
                 no_vending | {"azure.auth-type": "DEFAULT"}
+            ),
+            # OneLake's host is onelake.dfs.fabric.microsoft.com, not <acct>.dfs.core.windows.net.
+            "oauth2 token + workload identity + azure.endpoint fabric.microsoft.com": ddl(
+                no_vending
+                | {"azure.auth-type": "DEFAULT", "azure.endpoint": "fabric.microsoft.com"}
             ),
             "oauth2 token + vended credentials": ddl(
                 {"iceberg.rest-catalog.vended-credentials-enabled": "true"}
