@@ -197,7 +197,12 @@ def main() -> int:
             "the CSV are committed; docs/etl/charts and docs/etl/RESULTS.md are left as they are."
         )
     leak_check(
-        [run_path, docs / "etl" / "RESULTS.md", docs / "data" / "etl_results.csv", Path("README.md")]
+        [
+            run_path,
+            docs / "etl" / "RESULTS.md",
+            docs / "data" / "etl_results.csv",
+            Path("README.md"),
+        ]
     )
     write_step_summary(run, rows)
 
