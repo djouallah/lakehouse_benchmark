@@ -17,6 +17,13 @@ it was chosen to pass CVD and the normal-vision floor against every one of the s
 both modes (a scan of OKLCH for the hue that clears them all; only plum does in both). The dark
 step carries a contrast WARN (2.61:1), under the same relief rule as light aqua and yellow.
 
+Slot 9, indigo, is Trino, chosen the same way against all eight -- Daft included, since the ETL
+charts still draw it -- by a scan of OKLCH with the dataviz validator's own Delta E: worst pair
+19.0 normal / 10.0 CVD in light, 15.2 / 8.5 in dark, contrast 9.0:1 and 3.07:1. An olive cleared
+light mode and failed dark (CVD 3.5). Checked on ALL pairs, which the older slots are not: brown
+sits 12.6 from orange in light and 4.7 from yellow in dark, both under the 15 normal-vision floor,
+which is what the per-bar value labels are for.
+
 The palette is validated, not eyeballed (dataviz `scripts/validate_palette.js`), and re-validated
 whenever a slot is added -- every subset that can actually render has to pass, not just the full
 set. Light passes every gate with a contrast WARN on aqua and yellow, which obligates the relief
@@ -48,6 +55,7 @@ LIGHT = {
     "pyspark_iceberg": "#d6468f",  # slot 6 magenta
     "pyspark_gluten_iceberg": "#a8642a",  # slot 7 brown
     "starrocks_iceberg": "#980067",  # slot 8 plum
+    "trino_iceberg": "#3c0fd9",  # slot 9 indigo
 }
 DARK = {
     "duckdb_iceberg": "#3987e5",
@@ -58,6 +66,7 @@ DARK = {
     "pyspark_iceberg": "#e05a9c",
     "pyspark_gluten_iceberg": "#c07a3a",
     "starrocks_iceberg": "#a0268b",
+    "trino_iceberg": "#5c43ff",
 }
 
 THEMES = {
@@ -100,6 +109,7 @@ LABEL = {
     "pyspark_iceberg": "Spark-OSS",
     "pyspark_gluten_iceberg": "Gluten/Velox",
     "starrocks_iceberg": "StarRocks",
+    "trino_iceberg": "Trino",
 }
 
 

@@ -30,6 +30,8 @@ ENGINES = (
     "pyspark_gluten_iceberg",
     # A server rather than a library: the allin1 container, driven over MySQL (bench/starrocks.py).
     "starrocks_iceberg",
+    # A server too: the official image, driven over Trino's HTTP protocol (bench/trino.py).
+    "trino_iceberg",
 )
 
 TABLES = ("lineitem", "orders", "partsupp", "part", "customer", "nation", "region", "supplier")

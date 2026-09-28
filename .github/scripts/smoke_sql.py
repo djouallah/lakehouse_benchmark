@@ -341,6 +341,74 @@ def _starrocks(cfg: Config, paths: dict[str, Path]):
     return engine
 
 
+def _trino_type(arrow_type) -> str:
+    import pyarrow as pa
+
+    if pa.types.is_int32(arrow_type):
+        return "integer"
+    if pa.types.is_int64(arrow_type):
+        return "bigint"
+    if pa.types.is_decimal(arrow_type):
+        return f"decimal({arrow_type.precision}, {arrow_type.scale})"
+    if pa.types.is_date(arrow_type):
+        return "date"
+    if pa.types.is_floating(arrow_type):
+        return "double"
+    if pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
+        return "varchar"
+    raise ValueError(f"no Trino type for {arrow_type}")
+
+
+def _trino(cfg: Config, paths: dict[str, Path]):
+    """The benchmark's container, one Hive table per parquet, under a catalog named `onelake`.
+
+    Trino reads files only as tables, and a Hive table's `external_location` is a DIRECTORY, so
+    each file gets its own (a hard link, not a copy). The Hive file metastore sits beside them in
+    the same writable mount. The catalog takes the Iceberg one's name so the suites'
+    `CH0001.lineitem` resolves through the same default catalog and schema as on OneLake.
+    """
+    import pyarrow.parquet as pq
+
+    from bench import trino
+    from bench.tpch.engines.trino_iceberg import TrinoIceberg
+
+    root = Path(next(iter(paths.values()))).resolve().parent / "trino-smoke"
+    shutil.rmtree(root, ignore_errors=True)
+    for table, path in paths.items():
+        (root / table).mkdir(parents=True)
+        os.link(Path(path).resolve(), root / table / Path(path).name)
+    (root / "metastore").mkdir()
+    for directory in [root, *root.iterdir()]:
+        directory.chmod(0o777)  # the container's user is not the runner's
+    trino.start(mounts={root: "/smoke"})
+    schema = cfg.schema.lower()
+    engine = TrinoIceberg(cfg)
+    engine._conn = trino.connect(schema=schema)
+    engine._version = trino.version(engine._conn)
+    trino.create_catalog(
+        engine._conn,
+        trino.CATALOG,
+        "hive",
+        {
+            "hive.metastore": "file",
+            "hive.metastore.catalog.dir": "local:///metastore",
+            "fs.native-local.enabled": "true",
+            "local.location": "/smoke",
+        },
+    )
+    trino.sql(engine._conn, f"CREATE SCHEMA IF NOT EXISTS {trino.CATALOG}.{schema}")
+    for table, path in paths.items():
+        columns = ", ".join(
+            f'"{field.name}" {_trino_type(field.type)}' for field in pq.read_schema(path)
+        )
+        trino.sql(
+            engine._conn,
+            f"CREATE TABLE {trino.CATALOG}.{schema}.{table} ({columns}) "
+            f"WITH (external_location = 'local:///{table}', format = 'PARQUET')",
+        )
+    return engine
+
+
 ADAPTERS = {
     "duckdb_iceberg": _duckdb,
     "chdb_iceberg": _chdb,
@@ -352,6 +420,7 @@ ADAPTERS = {
     "pyspark_alluxio_iceberg": _pyspark,
     "pyspark_gluten_iceberg": _pyspark_gluten,
     "starrocks_iceberg": _starrocks,
+    "trino_iceberg": _trino,
 }
 
 

@@ -29,7 +29,7 @@ on:
       engines:
         description: Comma-separated engines to smoke.
         type: string
-        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg
+        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg
       catalog:
         description: Also run phase 2 against OneLake. Off runs the local SQL phase only.
         type: boolean
@@ -77,7 +77,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "engines: $ENGINES"
@@ -158,6 +158,11 @@ jobs:
         if: matrix.engine == 'starrocks_iceberg'
         run: docker pull "$(python -c 'from bench.starrocks import IMAGE; print(IMAGE)')"
 
+      # Trino too: the official image (bench/trino.py pins it), pulled outside the timer.
+      - name: Pull the Trino image
+        if: matrix.engine == 'trino_iceberg'
+        run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
+
       - name: Run the suite's queries against local parquet
         run: python .github/scripts/smoke_sql.py "${{ matrix.engine }}"
 
@@ -167,6 +172,13 @@ jobs:
         if: always() && matrix.engine == 'starrocks_iceberg'
         run: |
           docker logs starrocks 2>&1 | tail -n 300 \
+            | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
+
+      # Trino's catalog DDL carries the bearer the same way.
+      - name: Trino server log
+        if: always() && matrix.engine == 'trino_iceberg'
+        run: |
+          docker logs trino 2>&1 | tail -n 300 \
             | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
 
       - uses: actions/upload-artifact@v6
