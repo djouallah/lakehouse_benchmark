@@ -193,9 +193,14 @@ Largest scale each engine completes, cold, every statement answered:
   - Q18 is `GROUP BY l_orderkey HAVING sum(l_quantity) > 300` over 1.8 B rows, ~450 M groups.
   - That shape is an open DuckDB problem. Past ~1 M groups the hash aggregate's local states are
     never compacted, so memory and spill grow with the input rows, not the groups
-    (duckdb/duckdb#22474). A high-cardinality `GROUP BY` on lineitem that passed on 1.3.2 runs
-    out of memory on 1.5.2 (duckdb/duckdb#22578). Q18 at SF=100 hit it before
+    (duckdb/duckdb#22474, open, no PR as of 2026-09-28). Its repro is Q18's shape: 1 B rows into
+    2 M groups fails at 4 GB with an 8 GB spill cap. Q18 at SF=100 hit an OOM before
     (duckdb/duckdb#10192).
+  - Not a regression. A high-cardinality `GROUP BY` on lineitem that passed on 1.3.2 fails on
+    1.5.2, and DuckDB closed it as expected: 1.3.2 undercounted and ran 50% over its limit; the
+    query just needs that much memory (duckdb/duckdb#22578).
+  - Merged spill work doesn't cover it: #24499 spills arena-backed states (strings, `first`,
+    `list`), and Q18's `sum` state is fixed-size.
   - A dead runner, not an `OutOfMemoryException`, is the sign of memory the buffer manager doesn't
     count: `memory_limit` (80% of RAM by default) never trips, and the box runs out first.
 - **The azure extension's default transport fails OneLake's TLS handshake on Linux**, while the
