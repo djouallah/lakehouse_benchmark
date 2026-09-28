@@ -17,7 +17,9 @@ CREATE, THEN ONE INSERT. The catalog does not support staged creates, and Trino 
 CREATE TABLE and CTAS: the stage is accepted, the commit that finishes it is refused with a bare
 400 "Malformed request". So the empty table is created unstaged through the catalog --
 bench/etl/iceberg.py `recreate`, the create chDB and Polars already make -- and Trino fills it
-with one INSERT ... SELECT: one statement, one commit. No partitioning, as for every engine.
+with one INSERT ... SELECT: one statement, one commit -- with Trino's extended statistics off,
+since the catalog also refuses a commit that carries them (setup). No partitioning, as for every
+engine.
 """
 
 from __future__ import annotations
@@ -66,6 +68,11 @@ class TrinoIceberg:
         self._conn = trino.connect()
         self._version = f"{trino.version(self._conn)} ({trino.IMAGE})"
         trino.attach(self._conn, self.cfg, auth.onelake_token())
+        # NO EXTENDED STATISTICS ON WRITE. Trino's default puts Puffin statistics into the INSERT's
+        # commit, and the catalog refuses that commit with a bare 400 "Malformed request"; without
+        # them the commit is add-snapshot + set-snapshot-ref, which it accepts. No other engine
+        # here writes Puffin statistics either.
+        trino.sql(self._conn, "SET SESSION onelake.collect_extended_statistics_on_write = false")
         trino.create_catalog(
             self._conn,
             FILES,

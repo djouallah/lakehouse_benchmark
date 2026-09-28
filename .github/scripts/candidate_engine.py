@@ -30,7 +30,6 @@ import threading
 import time
 from collections import Counter
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from bench import auth, onelake, scrub
 from bench.config import ICEBERG_ENDPOINT, ONELAKE_DFS
@@ -357,62 +356,8 @@ class Trino(Candidate):
         ]
     )
 
-    PROXY_PORT = 8181
-
-    def _start_rest_proxy(self) -> None:
-        """A pass-through between Trino and OneLake's REST catalog that logs every write.
-
-        OneLake answers Trino's create commit with a bare 400 "Malformed request" and no detail,
-        while Spark's staged CTAS commits fine; the difference is in the request body, which only
-        a man in the middle sees. GETs pass silently; every other call prints its body and the
-        reply. Auth headers are forwarded, never printed, and output goes through `scrub`.
-        """
-        import http.server
-        from urllib.parse import urlsplit
-
-        import requests
-
-        upstream = "{0.scheme}://{0.netloc}".format(urlsplit(ICEBERG_ENDPOINT))
-        skip = {"content-length", "content-encoding", "transfer-encoding", "connection"}
-
-        class Handler(http.server.BaseHTTPRequestHandler):
-            def forward(self) -> None:
-                length = int(self.headers.get("Content-Length") or 0)
-                body = self.rfile.read(length) if length else None
-                headers = {
-                    k: v
-                    for k, v in self.headers.items()
-                    if k.lower() not in {"host", "content-length", "accept-encoding"}
-                }
-                resp = requests.request(
-                    self.command, upstream + self.path, headers=headers, data=body, timeout=600
-                )
-                if self.command != "GET":
-                    _say(
-                        f"    [rest] {self.command} {self.path} -> {resp.status_code}\n"
-                        f"      request:  {(body or b'').decode(errors='replace')[:12000]}\n"
-                        f"      response: {resp.text[:4000]}"
-                    )
-                self.send_response(resp.status_code)
-                for k, v in resp.headers.items():
-                    if k.lower() not in skip:
-                        self.send_header(k, v)
-                self.send_header("Content-Length", str(len(resp.content)))
-                self.end_headers()
-                if self.command != "HEAD":
-                    self.wfile.write(resp.content)
-
-            do_GET = do_POST = do_PUT = do_DELETE = do_HEAD = forward
-
-            def log_message(self, *args) -> None:
-                pass
-
-        server = http.server.ThreadingHTTPServer(("0.0.0.0", self.PROXY_PORT), Handler)
-        threading.Thread(target=server.serve_forever, daemon=True).start()
-
     def start(self) -> None:
         _keep_assertion_fresh()
-        self._start_rest_proxy()
         config = ASSERTION_DIR.parent / "candidate-trino.properties"
         config.write_text(self.CONFIG + "\n", encoding="utf-8")
         config.chmod(0o644)
@@ -433,8 +378,6 @@ class Trino(Candidate):
                 f"AZURE_TENANT_ID={os.environ.get('AZURE_TENANT_ID', '')}",
                 "-e",
                 f"AZURE_FEDERATED_TOKEN_FILE={ASSERTION_IN_CONTAINER}",
-                # The REST logging proxy runs on the runner, outside the container.
-                "--add-host=host.docker.internal:host-gateway",
                 "-p",
                 "127.0.0.1:8080:8080",
                 self.image,
@@ -514,19 +457,6 @@ class Trino(Candidate):
 
         no_vending = {"iceberg.rest-catalog.vended-credentials-enabled": "false"}
         return {
-            # First, so it is the catalog every later gate uses: the passing storage settings,
-            # with the catalog reached through a logging proxy -- the write commits are refused
-            # with a bare 400, and only the request body says what the catalog objects to.
-            "via REST logging proxy + workload identity + azure.endpoint": ddl(
-                no_vending
-                | self.AZURE
-                | {
-                    "iceberg.rest-catalog.uri": (
-                        f"http://host.docker.internal:{self.PROXY_PORT}"
-                        f"{urlsplit(ICEBERG_ENDPOINT).path}"
-                    )
-                }
-            ),
             "oauth2 token + workload identity (azure.auth-type DEFAULT)": ddl(
                 no_vending | {"azure.auth-type": "DEFAULT"}
             ),
@@ -630,9 +560,8 @@ class Trino(Candidate):
         one from the namespace, which this catalog always reports. The stage is accepted; the
         commit that finishes it is refused with a bare 400 "Malformed request". So a NEW table
         is created unstaged through the catalog -- bench/etl/iceberg.py `recreate`, the create
-        chDB and Polars already use -- and Trino fills it with one INSERT, one commit. An
-        EXISTING table is Trino's own CREATE OR REPLACE ... AS SELECT: an ordinary commit to
-        that table, which the catalog accepts.
+        chDB and Polars already use -- and Trino fills it with one INSERT, one commit, with its
+        extended statistics off (below).
         """
         from bench.tpch.generate import _all_optional
 
@@ -650,16 +579,13 @@ class Trino(Candidate):
             location=f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}",
         )
         return {
-            # Trino writes Puffin statistics with an INSERT by default (`set-statistics`).
+            # With extended statistics off. Trino's default writes Puffin statistics into the
+            # same commit, and the catalog refuses that commit with a bare 400 (run 36362007273);
+            # without them the commit is add-snapshot + set-snapshot-ref and is accepted (run
+            # 36362665394). The same 400 hit CREATE OR REPLACE on the existing table.
             "catalog create + Trino INSERT, no extended statistics": [
                 "SET SESSION onelake.collect_extended_statistics_on_write = false",
                 f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}",
-            ],
-            "catalog create + Trino INSERT": [
-                f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}"
-            ],
-            "CREATE OR REPLACE TABLE AS (table exists)": [
-                f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"
             ],
         }
 
