@@ -22,7 +22,7 @@ Most benchmarks are big data using big compute. Here we are testing small to med
 
 ## Adding an engine
 
-A candidate engine must pass all three, checked by the `candidate engine` workflow:
+A candidate engine must be open source under an OSI licence; source-available licences such as Elastic 2.0 or BSL don't count. It must then pass all three, checked by the `candidate engine` workflow:
 
 1. **SQL**: it runs the TPC-H suite as SQL.
 2. **Read from Azure**: it reads the OneLake Iceberg tables through the REST catalog, and raw files in the lakehouse Files section.
