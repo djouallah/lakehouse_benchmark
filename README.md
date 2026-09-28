@@ -22,11 +22,17 @@ Most benchmarks are big data using big compute. Here we are testing small to med
 
 ## Adding an engine
 
-A candidate engine must be open source under an OSI licence; source-available licences such as Elastic 2.0 or BSL don't count. It must then pass all three, checked by the `candidate engine` workflow:
+A candidate engine must pass all four; the `candidate engine` workflow checks 2 to 4:
 
-1. **SQL**: it runs the TPC-H suite as SQL.
-2. **Read from Azure**: it reads the OneLake Iceberg tables through the REST catalog, and raw files in the lakehouse Files section.
-3. **Write Iceberg**: it creates and fills an Iceberg table through the same catalog.
+1. **Open source**: an OSI licence. Source-available licences such as Elastic 2.0 or BSL don't count.
+2. **SQL**: it runs the TPC-H suite as SQL.
+3. **Read from Azure**: it reads the OneLake Iceberg tables through the REST catalog, and raw files in the lakehouse Files section.
+4. **Write Iceberg**: it creates and fills an Iceberg table through the same catalog.
+
+Bonus:
+
+- It finishes TPC-DS.
+- More complex Iceberg DML (coming soon).
 
 ## Gluten/Velox vs Spark-OSS
 
