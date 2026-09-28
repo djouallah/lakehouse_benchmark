@@ -517,6 +517,18 @@ class Trino(Candidate):
         return {
             # First, so it is the catalog every later gate uses: the passing storage settings,
             # with the catalog reached through the logging proxy (`_start_rest_proxy`).
+            # With `server-assigned-table-location-enabled` (Trino master; see write_variants).
+            # A 483 image rejects the unknown property here and falls through to the next one.
+            "via REST logging proxy, server-assigned table locations": ddl(
+                no_vending
+                | self.AZURE
+                | {"iceberg.rest-catalog.server-assigned-table-location-enabled": "true"}
+                | {
+                    "iceberg.rest-catalog.uri": (
+                        f"http://host.docker.internal:{self.PROXY_PORT}{proxied}"
+                    )
+                }
+            ),
             "via REST logging proxy + workload identity + azure.endpoint": ddl(
                 no_vending
                 | self.AZURE
@@ -622,193 +634,39 @@ class Trino(Candidate):
         except Exception as exc:  # noqa: BLE001
             _say(f"    listing Tables/{WRITE_NS} failed: {scrub.scrub_exc(exc, 500)}")
 
-    def _commit_bisect(self) -> None:
-        """Which update in Trino's staged-create commit does OneLake call "Malformed request"?
-
-        Replays the exact commit the REST proxy captured (run 36329873292) straight against
-        OneLake, minus the snapshot (so no data files are needed), dropping one suspect at a time.
-        Each attempt stages its own table first, as Trino does, and is dropped after.
-        """
-        import requests
-
-        _say("\n[staged-create commit bisect]")
-        headers = {"Authorization": f"Bearer {auth.onelake_token()}"}
-        config = requests.get(
-            f"{ICEBERG_ENDPOINT}/v1/config",
-            params={"warehouse": self.cfg.warehouse},
-            headers=headers,
-            timeout=60,
-        ).json()
-        prefix = (config.get("overrides") or {}).get("prefix") or (
-            config.get("defaults") or {}
-        ).get("prefix")
-        tables = f"{ICEBERG_ENDPOINT}/v1/{prefix}/namespaces/{WRITE_NS}/tables"
-        schema = {
-            "type": "struct",
-            "schema-id": 0,
-            "fields": [
-                {"id": 1, "name": "n_nationkey", "required": False, "type": "long"},
-                {"id": 2, "name": "n_name", "required": False, "type": "string"},
-                {"id": 3, "name": "n_regionkey", "required": False, "type": "long"},
-                {"id": 4, "name": "n_comment", "required": False, "type": "string"},
-            ],
-        }
-        trino_props = {
-            "format-version": "2",
-            "write.format.default": "PARQUET",
-            "write.parquet.compression-codec": "",
-        }
-
-        def updates(meta: dict, drop=(), props=None) -> list[dict]:
-            every = [
-                {"action": "assign-uuid", "uuid": meta["table-uuid"]},
-                {"action": "upgrade-format-version", "format-version": 2},
-                {"action": "add-schema", "schema": schema, "last-column-id": 4},
-                {"action": "set-current-schema", "schema-id": -1},
-                {"action": "add-spec", "spec": {"spec-id": 0, "fields": []}},
-                {"action": "set-default-spec", "spec-id": -1},
-                {"action": "add-sort-order", "sort-order": {"order-id": 0, "fields": []}},
-                {"action": "set-default-sort-order", "sort-order-id": -1},
-                {"action": "set-location", "location": meta["location"]},
-                {"action": "set-properties", "updates": trino_props if props is None else props},
-                {
-                    "action": "remove-properties",
-                    "removals": ["write.parquet.compression-codec", "format-version"],
-                },
-            ]
-            return [u for u in every if u["action"] not in drop]
-
-        no_version = {"write.format.default": "PARQUET", "write.parquet.compression-codec": ""}
-        variants = {
-            "trino's commit (no snapshot)": {},
-            "without remove-properties": {"drop": {"remove-properties"}},
-            "set-properties without format-version": {"props": no_version},
-            "set-properties without the empty codec": {
-                "props": {"format-version": "2", "write.format.default": "PARQUET"}
-            },
-            "neither format-version nor remove-properties": {
-                "props": no_version,
-                "drop": {"remove-properties"},
-            },
-            "without set-location": {"drop": {"set-location"}},
-            "without set-properties and remove-properties": {
-                "drop": {"set-properties", "remove-properties"}
-            },
-            "without upgrade-format-version": {"drop": {"upgrade-format-version"}},
-        }
-        for index, (label, change) in enumerate(variants.items()):
-            name = f"bisect{index}"
-            requests.delete(
-                f"{tables}/{name}", params={"purgeRequested": "true"}, headers=headers, timeout=120
-            )
-            self._clear(name)
-            staged = requests.post(
-                tables,
-                json={
-                    "name": name,
-                    "schema": schema,
-                    "partition-spec": {"spec-id": 0, "fields": []},
-                    "write-order": {"order-id": 0, "fields": []},
-                    "properties": trino_props,
-                    "stage-create": True,
-                },
-                headers=headers,
-                timeout=120,
-            )
-            if not staged.ok:
-                _say(f"    stage {staged.status_code}  {label}  {staged.text[:300]}")
-                continue
-            commit = requests.post(
-                f"{tables}/{name}",
-                json={
-                    "requirements": [{"type": "assert-create"}],
-                    "updates": updates(staged.json()["metadata"], **change),
-                },
-                headers=headers,
-                timeout=120,
-            )
-            _say(f"    commit {commit.status_code}  {label}  {commit.text[:200]}")
-            requests.delete(
-                f"{tables}/{name}", params={"purgeRequested": "true"}, headers=headers, timeout=120
-            )
-            self._clear(name)
-
-    def _unstaged_probe(self, source: str) -> None:
-        """Can Trino create WITHOUT stage-create on OneLake?
-
-        TrinoRestCatalog.newCreateTableTransaction (483) stages the create whenever it has a
-        location, and it has one whenever the namespace reports a `location` property
-        (`defaultTableLocation`); with none it calls `create()` -- a plain, unstaged create -- and
-        also skips the empty-location check. So: what location does OneLake report per namespace,
-        and does a namespace Trino creates without one take the unstaged path?
-        """
-        ns = "trino_unstaged"
-        _say("\n[unstaged create probe]")
-        for schema in (WRITE_NS, self.cfg.schema.lower()):
-            _try(self, f"namespace {schema}", [f"SHOW CREATE SCHEMA onelake.{schema}"])
-        directory = onelake.file_system(self.cfg).get_directory_client(
-            f"{self.cfg.lakehouse_id}/Tables/{ns}"
-        )
-        if directory.exists():
-            directory.delete_directory()
-        _try(self, "drop leftover", [f"DROP TABLE IF EXISTS onelake.{ns}.nation"])
-        _try(self, f"create namespace {ns}", [f"CREATE SCHEMA IF NOT EXISTS onelake.{ns}"])
-        _try(self, f"namespace {ns}", [f"SHOW CREATE SCHEMA onelake.{ns}"])
-        created, _ = _try(
-            self,
-            f"CTAS into {ns}, no location",
-            [f"CREATE TABLE onelake.{ns}.nation AS SELECT * FROM {source}"],
-        )
-        if created:
-            _try(self, "read back", [f"SELECT count(*) FROM onelake.{ns}.nation"])
-            _try(self, "table location", [f"SHOW CREATE TABLE onelake.{ns}.nation"])
-            _try(self, "drop", [f"DROP TABLE onelake.{ns}.nation"])
-
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
-        # Trino refuses to create a table on a non-empty location (run 36326766643), and a failed
-        # attempt leaves files that DROP TABLE cannot reach. Each variant gets its own cleared
-        # location, and the listing afterwards says what made a location non-empty.
-        inserted = f"{table}_ci"
-        for name in (table, inserted):
+        """OneLake's REST catalog does NOT implement staged creates, and Trino stages every create.
+
+        Found through the logging proxy (run 36329873292) and a replay straight at the endpoint
+        (run 36330975553): OneLake accepts `stage-create: true` -- and writes
+        metadata/00000-*.metadata.json at the table location right away -- then answers the
+        `assert-create` commit that finishes it with a bare 400 "Malformed request", whatever the
+        commit carries (each of Trino's updates was dropped in turn; every attempt was refused).
+        The early metadata file is also why Trino's non-empty-location check fired first.
+        DuckDB's writer says the same thing with `STAGE_CREATE_TABLES false`; Spark avoids it by
+        calling the Iceberg API's plain `create()`.
+
+        Trino 483 stages whenever the table has a location, and it takes one from the namespace,
+        which OneLake always reports -- even for a namespace created without one. Trino master
+        (b88d341, 2026-07-23, after 483) adds `iceberg.rest-catalog.server-assigned-table-location-
+        enabled`: no location computed, so `newCreateTableTransaction` takes its unstaged
+        `create().newTransaction()` branch and skips the empty-location check. Hence the plain
+        CTAS first, with no WITH (location).
+        """
+        for name in (table, f"{table}_loc"):
             self._clear(name)
-        self.write_diagnostics()
-        self._commit_bisect()
-
-        def at(name: str) -> str:
-            return f"{self.cfg.base_path}/Tables/{WRITE_NS}/{name}"
-
         prep = [
             f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
             f"DROP TABLE IF EXISTS onelake.{WRITE_NS}.{table}",
         ]
+        located = f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}_loc"
         return {
-            # Trino skips its empty-location check only for a REPLACE (IcebergMetadata.
-            # beginCreateTable, 483: `!replace && listFiles(location).hasNext()`), and OneLake's
-            # staged create has already written metadata/00000-*.metadata.json there by the time
-            # it checks -- every plain CREATE failed on that file (run 36327806785).
-            # Trino commits the table's Puffin statistics with the data (`set-statistics`), which
-            # Spark's CTAS never sends; with them the commit came back 400 "Malformed request".
-            "CREATE OR REPLACE TABLE AS, no extended statistics": [
-                "SET SESSION onelake.collect_extended_statistics_on_write = false",
-                f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
-                f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}",
-            ],
-            "CREATE OR REPLACE TABLE AS": [
-                f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
-                f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}",
-            ],
+            "CTAS": prep + [f"CREATE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"],
             "CTAS with location": prep
             + [
-                f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{at(table)}') "
+                f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{located}') "
                 f"AS SELECT * FROM {source}"
             ],
-            "CREATE + INSERT with location": prep
-            + [
-                f"CREATE TABLE onelake.{WRITE_NS}.{table} (n_nationkey bigint, n_name varchar, "
-                f"n_regionkey bigint, n_comment varchar) WITH (location = '{at(inserted)}')",
-                f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}",
-            ],
-            "CTAS": prep + [f"CREATE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"],
         }
 
 
