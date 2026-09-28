@@ -5,6 +5,8 @@ OneLake. Free disk is ~14 GB, or ~105 GB once `bench.yml` clears the toolchains 
 numbers come from `docs/data/*.csv`, the job logs and the commits cited. The general lessons come
 first, then one section per engine.
 
+<img alt="Who reads and writes what: the runner jobs and engines, the OneLake Iceberg REST catalog, and the lakehouse Files and Tables" src="docs/architecture.png">
+
 ## The bottleneck is getting bytes off OneLake, not compute
 
 - A query engine here spends most of its time waiting on remote reads. DuckDB with its file cache

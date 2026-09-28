@@ -1,7 +1,5 @@
 ## Small Data Benchmark
-Most benchmarks are big data using big compute, which does not reflect the majority of actual usage. Here we are testing small data with small compute.
-
-<img alt="Who reads and writes what: the runner jobs and engines, the OneLake Iceberg REST catalog, and the lakehouse Files and Tables" src="docs/architecture.png">
+Most benchmarks are big data using big compute. Here we are testing small to medium data with small compute. The purpose is to stress test: spill to disk, bad join orders, being hard on engines. Adding more compute just hides the issues.
 
 
 
