@@ -34,12 +34,12 @@ jobs:
           cache: maven
       # EVERYTHING, not `-pl core/trino-server -am`: the server's provisio assembly bundles every
       # plugin without depending on it, so -am built none and the assembly could not resolve them.
-      # Trino CI's own fast install (MAVEN_FAST_INSTALL), minus the docs and the RPM.
+      # Trino CI's own fast install (MAVEN_FAST_INSTALL), minus the docs.
       - name: Build Trino (no tests)
         working-directory: trino
         run: |
           ./mvnw -B -V --no-transfer-progress -T 1C install -DskipTests -Dmaven.source.skip=true \
-            -Dair.check.skip-all -Dmaven.javadoc.skip=true -pl '!:trino-docs,!:trino-server-rpm'
+            -Dair.check.skip-all -Dmaven.javadoc.skip=true -pl '!:trino-docs'
           df -h /
       - name: Build the image (amd64)
         working-directory: trino
