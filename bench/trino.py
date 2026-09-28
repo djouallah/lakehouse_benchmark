@@ -22,20 +22,10 @@ HOW IT READS ONELAKE, each line found by a failed candidate_engine.yml run (2026
   OneLake's host is onelake.dfs.fabric.microsoft.com: "Location does not match configured Azure
   endpoint" (run 36326766643). The catalog attaches and lists either way.
 
-MEMORY. The image sizes the heap at 80% of the container's 15 GB: 12 GB. Queries may use 8 GB of
-it, and 4 GB -- a third, Trino's own default share -- stays as headroom for everything else in the
-JVM: page buffers, spill streams, the collector's room to work. It was 2 GB, and TPC-H SF=100 Q18
-then took the whole JVM down with "OutOfMemoryError: Java heap space" once spilling let it run
-on (run 36381112832). Spill is off by default in Trino, as in StarRocks, and on here: a join or
-aggregation that outgrows its memory spills rather than failing, as in DuckDB, Gluten and
-StarRocks.
-
-SPILL HAS TO START EARLY. Spilled state is "revocable" memory, and Trino revokes it only once the
-node's pool passes `memory-revoking-threshold` -- 90% by default, which on the ~10 GB pool it had
-then was the 9 GB the query could use at all. TPC-H SF=100 Q18 died of exactly that (run
-36374585642): a hash join's build side held 6.76 GB and asked for 3.4 GB more in one step,
-"exceeded per-node memory limit of 9GB", before a single build partition had been spilled.
-Revoking from half the pool, down to 30%, leaves the room a partition needs to be rebuilt.
+MEMORY. The image sizes the heap at 80% of the container's 15 GB: 12 GB. Queries may use 9 GB of
+it, and 2 GB stays as headroom for everything else in the JVM. Spill is off by default in Trino,
+as in StarRocks, and on here: a join or aggregation that outgrows its 9 GB spills rather than
+failing, as it does in DuckDB, Gluten and StarRocks.
 
 THE FILE CACHE, every engine's where it has one. Trino's is the filesystem cache (Alluxio's
 library, `fs.cache.*`): what it reads from OneLake lands on local disk, and a later scan of the
@@ -83,14 +73,11 @@ CONFIG = "\n".join(
         f"discovery.uri=http://localhost:{PORT}",
         "catalog.management=dynamic",
         "catalog.store=memory",
-        "query.max-memory=8GB",
-        "query.max-memory-per-node=8GB",
-        "memory.heap-headroom-per-node=4GB",
+        "query.max-memory=9GB",
+        "query.max-memory-per-node=9GB",
+        "memory.heap-headroom-per-node=2GB",
         "spill-enabled=true",
         "spiller-spill-path=/tmp/trino-spill",
-        # Spill STARTS at half the pool, not 90%: see the module docstring (TPC-H SF=100 Q18).
-        "memory-revoking-threshold=0.5",
-        "memory-revoking-target=0.3",
     ]
 )
 
