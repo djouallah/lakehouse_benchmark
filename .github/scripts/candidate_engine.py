@@ -115,6 +115,8 @@ class StarRocks(Candidate):
     default_image = "starrocks/allin1-ubuntu:4.1-latest"
     # The bench engine's spelling of the TPC-H table names (bench.tpch.queries.IDENT_STYLE).
     dialect = "starrocks_iceberg"
+    # Extra `docker run` arguments, before the image.
+    run_args: tuple[str, ...] = ()
 
     def start(self) -> None:
         _keep_assertion_fresh()
@@ -133,6 +135,7 @@ class StarRocks(Candidate):
                 "127.0.0.1:8030:8030",
                 "-p",
                 "127.0.0.1:8040:8040",
+                *self.run_args,
                 self.image,
             ],
             check=True,
@@ -154,7 +157,7 @@ class StarRocks(Candidate):
             except Exception:  # noqa: BLE001 - not up yet
                 pass
             if time.time() > deadline:
-                raise RuntimeError("StarRocks BE not alive after 300s")
+                raise RuntimeError(f"{self.name} BE not alive after 300s")
             time.sleep(5)
 
     def _conn(self):
@@ -590,7 +593,157 @@ class Trino(Candidate):
         }
 
 
-CANDIDATES = {"starrocks": StarRocks, "trino": Trino}
+class Doris(StarRocks):
+    """Apache Doris all-in-one: one FE (Java: planner, catalog) and one BE (C++) in one container.
+
+    Same shape and protocol as StarRocks (MySQL on 9030, user root), which forked from it in 2020.
+
+    ONELAKE IS A DOCUMENTED PATH (docs: lakehouse/best-practices/doris-onelake, 3.1.4+), but only
+    with a client secret, and this app registration has none. Doris routes
+    `abfss://...dfs.fabric.microsoft.com` to hadoop-azure over JNI and hands it the catalog's raw
+    `fs.*` properties, the user's last so they win (AzureFileSystemProperties
+    .oauth2BackendProperties). So the storage credential is hadoop-azure's workload identity, the
+    one Spark-OSS and StarRocks use, set as raw `fs.azure.*` keys scoped to OneLake's host. The
+    client-secret keys Doris insists on for `azure.auth_type=OAuth2` are then scoped to a host
+    nothing reads -- on the FE they are written AFTER the raw keys, so on OneLake's host they
+    would win there.
+    """
+
+    name = "doris"
+    # 4.1.4 has component images but no all-in-one yet.
+    default_image = "apache/doris:all-in-one-4.1.3"
+    list_namespaces = "SHOW DATABASES FROM onelake"
+    # The image is tuned for CI fixtures (BE mem_limit 40%); the bench runner is 16 GB.
+    run_args = ("-e", "BE_CONFIG_EXTRA=mem_limit = 80%")
+
+    HOST = ONELAKE_DFS
+    UNUSED_HOST = "unused.dfs.core.windows.net"
+
+    def version(self) -> str:
+        return str(self.sql("SELECT @@version_comment")[0][0])
+
+    def _workload_identity(self, host: str) -> dict[str, str]:
+        return {
+            f"fs.azure.account.auth.type.{host}": "OAuth",
+            f"fs.azure.account.oauth.provider.type.{host}": (
+                "org.apache.hadoop.fs.azurebfs.oauth2.WorkloadIdentityTokenProvider"
+            ),
+            f"fs.azure.account.oauth2.msi.tenant.{host}": os.environ.get("AZURE_TENANT_ID", ""),
+            f"fs.azure.account.oauth2.client.id.{host}": os.environ.get("AZURE_CLIENT_ID", ""),
+            f"fs.azure.account.oauth2.token.file.{host}": ASSERTION_IN_CONTAINER,
+        }
+
+    def storage(self, sas: str) -> dict[str, dict[str, str]]:
+        """Azure storage for OneLake, as Doris catalog / TVF properties."""
+        tenant = os.environ.get("AZURE_TENANT_ID", "")
+        # What Doris validates for OAuth2, pointed at a host no path uses.
+        oauth2_unused = {
+            "fs.azure.support": "true",
+            "azure.endpoint": f"https://{ONELAKE_DFS}",
+            "azure.auth_type": "OAuth2",
+            "azure.oauth2_account_host": self.UNUSED_HOST,
+            "azure.oauth2_server_uri": f"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+            "azure.oauth2_client_id": os.environ.get("AZURE_CLIENT_ID", ""),
+            "azure.oauth2_client_secret": "unused",
+        }
+        return {
+            "workload identity (raw fs.azure keys) + OAuth2 on an unused host": oauth2_unused
+            | self._workload_identity(self.HOST),
+            "workload identity (raw fs.azure keys) alone": self._workload_identity(self.HOST),
+            # Gluten's credential: a user-delegation SAS on OneLake's host. One hour.
+            "fixed SAS (raw fs.azure keys) + OAuth2 on an unused host": oauth2_unused
+            | {
+                f"fs.azure.account.auth.type.{self.HOST}": "SAS",
+                f"fs.azure.sas.fixed.token.{self.HOST}": sas,
+            },
+        }
+
+    @staticmethod
+    def _props(props: dict[str, str]) -> str:
+        return ", ".join(f"'{k}' = '{v}'" for k, v in props.items())
+
+    def attach_variants(self, token: str, sas: str) -> dict[str, list[str]]:
+        base = {
+            "type": "iceberg",
+            "iceberg.catalog.type": "rest",
+            "uri": ICEBERG_ENDPOINT,
+            "warehouse": self.cfg.warehouse,
+            "iceberg.rest.security.type": "oauth2",
+            "iceberg.rest.oauth2.token": token,
+        }
+
+        def ddl(props: dict[str, str]) -> list[str]:
+            return [
+                "DROP CATALOG IF EXISTS onelake",
+                f"CREATE CATALOG onelake PROPERTIES ({self._props(base | props)})",
+            ]
+
+        no_vending = {"iceberg.rest.vended-credentials-enabled": "false"}
+        variants = {
+            f"oauth2 token + {label}": ddl(no_vending | props)
+            for label, props in self.storage(sas).items()
+        }
+        variants["oauth2 token + vended credentials"] = ddl(
+            {"iceberg.rest.vended-credentials-enabled": "true"}
+        )
+        return variants
+
+    def use_catalog(self) -> list[str]:
+        return ["SWITCH onelake", "SET query_timeout = 3600"]
+
+    def _csv_sources(self, path: str, sas: str) -> dict[str, tuple[str, dict[str, str]]]:
+        """Each read as (hdfs() TVF source, ETL column name -> expression in that source).
+
+        OneLake paths go through hadoop-azure, so the TVF is `hdfs()`, not `s3()`/Azure Blob.
+        Doris names TVF CSV columns c1..cN unless `csv_schema` declares them.
+        """
+        storage = self.storage(sas)[
+            "workload identity (raw fs.azure keys) + OAuth2 on an unused host"
+        ]
+        fs = path.split("/", 3)
+        common = {
+            "uri": path,
+            "fs.defaultFS": f"{fs[0]}//{fs[2]}",
+            "format": "csv",
+            "skip_lines": "1",
+        } | storage
+
+        def tvf(props: dict[str, str]) -> str:
+            return f"hdfs({self._props(common | props)})"
+
+        named = {c: c.lower() for c in COLUMNS}
+
+        def declared(width: int) -> tuple[str, dict[str, str]]:
+            names = [c.lower() for c in COLUMNS] + [f"c{i}" for i in range(len(COLUMNS), width)]
+            schema = ";".join(f"{n}:string" for n in names)
+            props = {"column_separator": ",", "enclose": '"', "csv_schema": schema}
+            return tvf(props), named
+
+        lines = tvf({"column_separator": "|~|", "csv_schema": "line:string"})
+        split = {c: f"split_part(line, ',', {i + 1})" for i, c in enumerate(COLUMNS)}
+        return {
+            "53 string columns (csv_schema)": declared(len(COLUMNS)),
+            "120 string columns (csv_schema)": declared(CSV_MAX_WIDTH),
+            "one string per line, split_part": (lines, split),
+        }
+
+    def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
+        prep = [
+            f"CREATE DATABASE IF NOT EXISTS {WRITE_NS}",
+            f"DROP TABLE IF EXISTS {WRITE_NS}.{table}",
+        ]
+        return {
+            "CTAS": prep + [f"CREATE TABLE {WRITE_NS}.{table} AS SELECT * FROM {source}"],
+            "CREATE + INSERT": prep
+            + [
+                f"CREATE TABLE {WRITE_NS}.{table} (n_nationkey INT, n_name STRING, "
+                f"n_regionkey INT, n_comment STRING)",
+                f"INSERT INTO {WRITE_NS}.{table} SELECT * FROM {source}",
+            ],
+        }
+
+
+CANDIDATES = {"starrocks": StarRocks, "trino": Trino, "doris": Doris}
 
 
 def _try(engine: Candidate, label: str, statements: list[str]) -> tuple[bool, list[tuple]]:
