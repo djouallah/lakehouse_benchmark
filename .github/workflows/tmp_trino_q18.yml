@@ -1,4 +1,4 @@
-# TEMPORARY: TPC-H SF=100 Q18 on the bench's Trino, default vs PARTITIONED joins. Deleted after.
+# TEMPORARY: TPC-H SF=100 Q18 on the bench's Trino, more build partitions. Deleted after.
 name: tmp trino q18
 on: workflow_dispatch
 
@@ -38,7 +38,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
       - run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
-      - name: Q18, default then PARTITIONED
+      - name: Q18, task_concurrency 16 then 32
         run: |
           python - <<'PY'
           import time
@@ -51,9 +51,8 @@ jobs:
           engine = TrinoIceberg(cfg)
           engine.setup()
           q18 = queries.load("trino_iceberg", cfg.schema, cfg.sf)[17]
-          for label, setting in (("default", None), ("PARTITIONED", "PARTITIONED")):
-              if setting:
-                  trino.sql(engine._conn, f"SET SESSION join_distribution_type = '{setting}'")
+          for label, setting in (("task_concurrency 16", 16), ("task_concurrency 32", 32)):
+              trino.sql(engine._conn, f"SET SESSION task_concurrency = {setting}")
               plan = trino.sql(engine._conn, f"EXPLAIN (TYPE DISTRIBUTED) {q18}")[0][0]
               joins = [l.strip() for l in plan.splitlines() if "Join[" in l or "SemiJoin" in l or "LocalExchange" in l]
               print(f"== {label}: joins/exchanges in plan", flush=True)
