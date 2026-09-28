@@ -27,3 +27,11 @@ A candidate engine must pass all three, checked by the `candidate engine` workfl
 1. **SQL**: it runs the TPC-H suite as SQL.
 2. **Read from Azure**: it reads the OneLake Iceberg tables through the REST catalog, and raw files in the lakehouse Files section.
 3. **Write Iceberg**: it creates and fills an Iceberg table through the same catalog.
+
+## Gluten/Velox vs Spark-OSS
+
+| Test | Spark-OSS | Gluten/Velox | Speedup |
+|---|---:|---:|---:|
+| Light ETL, 1000 CSVs | 982.2s | 728.8s | 1.3x |
+| TPC-H SF=10 | 429.8s | 160.4s | 2.7x |
+| TPC-DS SF=60 | 9,303.4s | 2,117.1s | 4.4x |
