@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT))
 
 from bench.tpcds.config import TABLES, TpcdsConfig  # noqa: E402
 from bench.tpcds.generate import load_tpcds_extension  # noqa: E402
-from bench.tpcds.rewrite import qualify  # noqa: E402
+from bench.tpcds.rewrite import portable, qualify  # noqa: E402
 from bench.tpch import queries  # noqa: E402
 
 OUT = Path(__file__).resolve().with_name("tpcds.sql")
@@ -51,7 +51,7 @@ def build(rows: list[tuple[int, str]]) -> str:
         body = sql.strip().rstrip(";").strip()
         assert ";" not in body, f"q{number} has a semicolon inside it; the loader splits on `;`"
         assert "{" not in body and "}" not in body, f"q{number} has a brace; render() uses format"
-        chunks.append(f"-- Query {number:02d}\n{qualify(body)};\n")
+        chunks.append(f"-- Query {number:02d}\n{portable(qualify(body))};\n")
     return "\n".join(chunks)
 
 
@@ -95,6 +95,7 @@ def main() -> int:
     rows = fetch(con)
     text = build(rows)
     assert qualify(text) == text, "the rewrite is not idempotent on its own output"
+    assert portable(text) == text, "portable() is not idempotent on its own output"
     print(f"checking {len(rows)} rewritten statements against the originals at SF=1")
     check(con, rows, text)
     OUT.write_text(text, encoding="utf-8", newline="\n")

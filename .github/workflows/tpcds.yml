@@ -28,7 +28,7 @@ on:
       engines:
         description: Comma-separated engines to run.
         type: string
-        default: duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg
+        default: duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg
       regenerate:
         description: Drop and rewrite the namespace even if it is marked complete.
         type: boolean
@@ -105,7 +105,7 @@ jobs:
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
         # once here so every artifact in the run shares one timestamp.
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
@@ -133,6 +133,7 @@ jobs:
       || matrix.engine == 'pyspark_iceberg' && '✨ Spark-OSS'
       || matrix.engine == 'pyspark_gluten_iceberg' && '🚀 Gluten/Velox'
       || matrix.engine == 'starrocks_iceberg' && '⭐ StarRocks'
+      || matrix.engine == 'trino_iceberg' && '🐰 Trino'
       || matrix.engine }}
     runs-on: ubuntu-latest
     # LONGER THAN bench.yml's 50, and longer than the 85 that cost run 35732997698 its Spark
@@ -219,6 +220,11 @@ jobs:
         if: matrix.engine == 'starrocks_iceberg'
         run: docker pull "$(python -c 'from bench.starrocks import IMAGE; print(IMAGE)')"
 
+      # Trino too: the official image (bench/trino.py pins it), pulled outside the timer.
+      - name: Pull the Trino image
+        if: matrix.engine == 'trino_iceberg'
+        run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
+
       - name: Run 99 queries, one cold pass
         # `shell: bash` is pipefail. Without it `... | tee` exits 0 whatever the script did, and
         # run_engine.py's "attached but completed 0 statements" guard is silently defeated.
@@ -231,6 +237,13 @@ jobs:
         if: always() && matrix.engine == 'starrocks_iceberg'
         run: |
           docker logs starrocks 2>&1 | tail -n 300 \
+            | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
+
+      # Trino's catalog DDL carries the bearer the same way.
+      - name: Trino server log
+        if: always() && matrix.engine == 'trino_iceberg'
+        run: |
+          docker logs trino 2>&1 | tail -n 300 \
             | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
 
       - uses: actions/upload-artifact@v6

@@ -114,3 +114,38 @@ def qualify(sql: str) -> str:
         last = end
     out.append(sql[last:])
     return "".join(out)
+
+
+# A 'YYYY-MM-DD' literal and what sits before it, so one already inside cast( is left alone.
+_DATE_LITERAL = re.compile(r"'\d{4}-\d{2}-\d{2}'")
+_CAST_OPEN = re.compile(r"cast\s*\(\s*$", re.IGNORECASE)
+# ORDER BY's grouping() sum in q70 and q86, where the select list names it `lochierarchy`.
+_ORDER_BY_GROUPING = re.compile(r"WHEN grouping\(\w+\)\+grouping\(\w+\) = 0 THEN", re.IGNORECASE)
+
+
+def portable(sql: str) -> str:
+    """`sql` in standard SQL where DuckDB's copy leans on leniency Trino does not have.
+
+    Same answers on every engine (sql/build_tpcds_sql.py checks the row counts against the
+    originals); each rule is a statement Trino rejected at SF=1 (smoke run 36371429297):
+
+    1. A bare date literal compared with a date -- `d_date BETWEEN '2002-02-01' AND ...`,
+       `d_date = '2000-01-03'`, `d_date IN ('2000-06-30', ...)` (q16, q32, q58, q83, q92, q94,
+       q95) -- becomes `cast('...' AS date)`, the spelling the other end of those BETWEENs
+       already uses. Trino compares no date with a varchar.
+    2. q72's `d1.d_date + 5` becomes `+ INTERVAL '5' DAY`: date plus integer is not SQL.
+    3. q70 and q86 order by `grouping(a)+grouping(b)` inside a CASE; the spec writes it
+       `lochierarchy`, the select list's own name for it, and Trino (like StarRocks, #79806)
+       rejects the grouping() form in ORDER BY.
+
+    Idempotent, like `qualify`.
+    """
+
+    def date(match: re.Match) -> str:
+        if _CAST_OPEN.search(sql[: match.start()]):
+            return match.group(0)
+        return f"cast({match.group(0)} AS date)"
+
+    sql = _DATE_LITERAL.sub(date, sql)
+    sql = sql.replace("d1.d_date + 5 ", "d1.d_date + INTERVAL '5' DAY ")
+    return _ORDER_BY_GROUPING.sub("WHEN lochierarchy = 0 THEN", sql)

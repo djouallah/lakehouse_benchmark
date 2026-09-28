@@ -1303,7 +1303,7 @@ FROM `{schema}.catalog_sales` cs1,
      `{schema}.date_dim` AS date_dim,
      `{schema}.customer_address` AS customer_address,
      `{schema}.call_center` AS call_center
-WHERE d_date BETWEEN '2002-02-01' AND cast('2002-04-02' AS date)
+WHERE d_date BETWEEN cast('2002-02-01' AS date) AND cast('2002-04-02' AS date)
   AND cs1.cs_ship_date_sk = d_date_sk
   AND cs1.cs_ship_addr_sk = ca_address_sk
   AND ca_state = 'GA'
@@ -2029,14 +2029,14 @@ FROM `{schema}.catalog_sales` AS catalog_sales ,
      `{schema}.date_dim` AS date_dim
 WHERE i_manufact_id = 977
   AND i_item_sk = cs_item_sk
-  AND d_date BETWEEN '2000-01-27' AND cast('2000-04-26' AS date)
+  AND d_date BETWEEN cast('2000-01-27' AS date) AND cast('2000-04-26' AS date)
   AND d_date_sk = cs_sold_date_sk
   AND cs_ext_discount_amt >
     ( SELECT 1.3 * avg(cs_ext_discount_amt)
      FROM `{schema}.catalog_sales` AS catalog_sales ,
           `{schema}.date_dim` AS date_dim
      WHERE cs_item_sk = i_item_sk
-       AND d_date BETWEEN '2000-01-27' AND cast('2000-04-26' AS date)
+       AND d_date BETWEEN cast('2000-01-27' AS date) AND cast('2000-04-26' AS date)
        AND d_date_sk = cs_sold_date_sk )
 LIMIT 100;
 
@@ -3335,7 +3335,7 @@ WITH ss_items AS
         WHERE d_week_seq =
             (SELECT d_week_seq
              FROM `{schema}.date_dim` AS date_dim
-             WHERE d_date = '2000-01-03'))
+             WHERE d_date = cast('2000-01-03' AS date)))
      AND ss_sold_date_sk = d_date_sk
    GROUP BY i_item_id),
      cs_items AS
@@ -3351,7 +3351,7 @@ WITH ss_items AS
         WHERE d_week_seq =
             (SELECT d_week_seq
              FROM `{schema}.date_dim` AS date_dim
-             WHERE d_date = '2000-01-03'))
+             WHERE d_date = cast('2000-01-03' AS date)))
      AND cs_sold_date_sk = d_date_sk
    GROUP BY i_item_id),
      ws_items AS
@@ -3367,7 +3367,7 @@ WITH ss_items AS
         WHERE d_week_seq =
             (SELECT d_week_seq
              FROM `{schema}.date_dim` AS date_dim
-             WHERE d_date = '2000-01-03'))
+             WHERE d_date = cast('2000-01-03' AS date)))
      AND ws_sold_date_sk = d_date_sk
    GROUP BY i_item_id)
 SELECT ss_items.item_id,
@@ -4255,7 +4255,7 @@ WHERE d1.d_month_seq BETWEEN 1200 AND 1200+11
 GROUP BY rollup(s_state,s_county)
 ORDER BY lochierarchy DESC ,
          CASE
-             WHEN grouping(s_state)+grouping(s_county) = 0 THEN s_state
+             WHEN lochierarchy = 0 THEN s_state
          END ,
          rank_within_parent
 LIMIT 100;
@@ -4335,7 +4335,7 @@ LEFT OUTER JOIN `{schema}.catalog_returns` AS catalog_returns ON (cr_item_sk = c
                                     AND cr_order_number = cs_order_number)
 WHERE d1.d_week_seq = d2.d_week_seq
   AND inv_quantity_on_hand < cs_quantity
-  AND d3.d_date > d1.d_date + 5 -- SQL Server: DATEADD(day, 5, d1.d_date)
+  AND d3.d_date > d1.d_date + INTERVAL '5' DAY -- SQL Server: DATEADD(day, 5, d1.d_date)
   AND hd_buy_potential = '>10000'
   AND d1.d_year = 1999
   AND cd_marital_status = 'D'
@@ -4987,9 +4987,9 @@ WITH sr_items AS
         WHERE d_week_seq IN
             (SELECT d_week_seq
              FROM `{schema}.date_dim` AS date_dim
-             WHERE d_date IN ('2000-06-30',
-                              '2000-09-27',
-                              '2000-11-17')))
+             WHERE d_date IN (cast('2000-06-30' AS date),
+                              cast('2000-09-27' AS date),
+                              cast('2000-11-17' AS date))))
      AND sr_returned_date_sk = d_date_sk
    GROUP BY i_item_id),
      cr_items AS
@@ -5005,9 +5005,9 @@ WITH sr_items AS
         WHERE d_week_seq IN
             (SELECT d_week_seq
              FROM `{schema}.date_dim` AS date_dim
-             WHERE d_date IN ('2000-06-30',
-                              '2000-09-27',
-                              '2000-11-17')))
+             WHERE d_date IN (cast('2000-06-30' AS date),
+                              cast('2000-09-27' AS date),
+                              cast('2000-11-17' AS date))))
      AND cr_returned_date_sk = d_date_sk
    GROUP BY i_item_id),
      wr_items AS
@@ -5023,9 +5023,9 @@ WITH sr_items AS
         WHERE d_week_seq IN
             (SELECT d_week_seq
              FROM `{schema}.date_dim` AS date_dim
-             WHERE d_date IN ('2000-06-30',
-                              '2000-09-27',
-                              '2000-11-17')))
+             WHERE d_date IN (cast('2000-06-30' AS date),
+                              cast('2000-09-27' AS date),
+                              cast('2000-11-17' AS date))))
      AND wr_returned_date_sk = d_date_sk
    GROUP BY i_item_id)
 SELECT sr_items.item_id ,
@@ -5143,7 +5143,7 @@ WHERE d1.d_month_seq BETWEEN 1200 AND 1200+11
 GROUP BY rollup(i_category,i_class)
 ORDER BY lochierarchy DESC NULLS FIRST,
          CASE
-             WHEN grouping(i_category)+grouping(i_class) = 0 THEN i_category
+             WHEN lochierarchy = 0 THEN i_category
          END NULLS FIRST,
          rank_within_parent NULLS FIRST
 LIMIT 100;
@@ -5408,14 +5408,14 @@ FROM `{schema}.web_sales` AS web_sales,
      `{schema}.date_dim` AS date_dim
 WHERE i_manufact_id = 350
   AND i_item_sk = ws_item_sk
-  AND d_date BETWEEN '2000-01-27' AND cast('2000-04-26' AS date)
+  AND d_date BETWEEN cast('2000-01-27' AS date) AND cast('2000-04-26' AS date)
   AND d_date_sk = ws_sold_date_sk
   AND ws_ext_discount_amt >
     (SELECT 1.3 * avg(ws_ext_discount_amt)
      FROM `{schema}.web_sales` AS web_sales,
           `{schema}.date_dim` AS date_dim
      WHERE ws_item_sk = i_item_sk
-       AND d_date BETWEEN '2000-01-27' AND cast('2000-04-26' AS date)
+       AND d_date BETWEEN cast('2000-01-27' AS date) AND cast('2000-04-26' AS date)
        AND d_date_sk = ws_sold_date_sk )
 ORDER BY sum(ws_ext_discount_amt)
 LIMIT 100;
@@ -5449,7 +5449,7 @@ FROM `{schema}.web_sales` ws1 ,
      `{schema}.date_dim` AS date_dim ,
      `{schema}.customer_address` AS customer_address ,
      `{schema}.web_site` AS web_site
-WHERE d_date BETWEEN '1999-02-01' AND cast('1999-04-02' AS date)
+WHERE d_date BETWEEN cast('1999-02-01' AS date) AND cast('1999-04-02' AS date)
   AND ws1.ws_ship_date_sk = d_date_sk
   AND ws1.ws_ship_addr_sk = ca_address_sk
   AND ca_state = 'IL'
@@ -5483,7 +5483,7 @@ FROM `{schema}.web_sales` ws1 ,
      `{schema}.date_dim` AS date_dim ,
      `{schema}.customer_address` AS customer_address ,
      `{schema}.web_site` AS web_site
-WHERE d_date BETWEEN '1999-02-01' AND cast('1999-04-02' AS date)
+WHERE d_date BETWEEN cast('1999-02-01' AS date) AND cast('1999-04-02' AS date)
   AND ws1.ws_ship_date_sk = d_date_sk
   AND ws1.ws_ship_addr_sk = ca_address_sk
   AND ca_state = 'IL'

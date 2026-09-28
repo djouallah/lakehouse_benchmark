@@ -123,6 +123,17 @@ def test_tpcds_is_a_fixed_point_of_the_rewrite():
     assert text.count("`{schema}.") >= TpcdsConfig.N_QUERIES
 
 
+def test_tpcds_is_a_fixed_point_of_portable():
+    """sql/tpcds.sql carries bench/tpcds/rewrite.py `portable()`: no bare date literal, no
+    date + integer, no grouping() sum in ORDER BY -- each a statement Trino rejected."""
+    from bench.tpcds.rewrite import portable
+
+    text = TpcdsConfig.SQL_PATH.read_text(encoding="utf-8")
+    assert portable(text) == text
+    assert "d_date + 5 " not in text
+    assert "INTERVAL '5' DAY" in text
+
+
 def test_tpcds_only_uses_the_schema_placeholder():
     """render() is str.format: any other brace in the file is a KeyError at load time."""
     text = TpcdsConfig.SQL_PATH.read_text(encoding="utf-8")

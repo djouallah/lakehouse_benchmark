@@ -50,6 +50,10 @@ ENGINES = (
     # StarRocks: added 2026-09-26 after passing candidate_engine.yml (22/22 TPC-H, OneLake reads
     # and writes). Its TPC-DS coverage is whatever its first runs show.
     "starrocks_iceberg",
+    # Trino: added 2026-09-28. 89/99 at SF=1 on its first smoke; the ten were query text, not
+    # Trino, and read the same on every engine once written as standard SQL (bench/tpcds/
+    # rewrite.py `portable`).
+    "trino_iceberg",
 )
 
 # The 24 tables of the spec (dsdgen also emits `dbgen_version`, which is not one), LARGEST FIRST
