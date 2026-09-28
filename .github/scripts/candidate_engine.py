@@ -80,6 +80,31 @@ def _say(text: str) -> None:
     print(scrub.scrub(text), flush=True)
 
 
+def _create_unstaged(cfg, table: str) -> None:
+    """`candidate.<table>` with nation's schema, created through the catalog in one request.
+
+    The unstaged create bench/etl/iceberg.py `recreate` makes for the ETL -- the way around the
+    catalog's refusal of an engine's own create (staged, or field ids from 0). Drops any previous
+    table and its folder first.
+    """
+    from bench.tpch.generate import _all_optional
+
+    catalog = auth.catalog(cfg)
+    identifier = f"{WRITE_NS}.{table}"
+    if catalog.table_exists(identifier):
+        catalog.drop_table(identifier)
+    directory = onelake.file_system(cfg).get_directory_client(
+        f"{cfg.lakehouse_id}/Tables/{WRITE_NS}/{table}"
+    )
+    if directory.exists():
+        directory.delete_directory()
+    catalog.create_table(
+        identifier,
+        schema=_all_optional(catalog.load_table(f"{cfg.schema}.nation").schema().as_arrow()),
+        location=f"{cfg.base_path}/Tables/{WRITE_NS}/{table}",
+    )
+
+
 class Candidate:
     name = ""
     default_image = ""
@@ -96,6 +121,9 @@ class Candidate:
     def files_variants(self, path: str, sas: str) -> dict[str, str | list[str]]: ...
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]: ...
     def use_catalog(self) -> list[str]: ...
+
+    def recover(self) -> None:
+        """After a failed read: bring a dead worker back so the next variant is a real test."""
 
 
 class StarRocks(Candidate):
@@ -147,6 +175,9 @@ class StarRocks(Candidate):
             check=False,
         ).stdout.strip()
         _say(f"image {self.image}  {digest}")
+        self._wait_for_backend()
+
+    def _wait_for_backend(self) -> None:
         # The FE answers SELECT 1 before the BE has registered; a query needs a live BE.
         deadline = time.time() + 300
         while True:
@@ -159,6 +190,29 @@ class StarRocks(Candidate):
             if time.time() > deadline:
                 raise RuntimeError(f"{self.name} BE not alive after 300s")
             time.sleep(5)
+
+    # BE log files inside the container, printed when the BE dies.
+    be_logs: tuple[str, ...] = ()
+
+    def recover(self) -> None:
+        try:
+            if any("true" in map(str, r) for r in self.sql("SHOW BACKENDS")):
+                return
+        except Exception:  # noqa: BLE001 - FE down too: restart below
+            pass
+        _say("    BE not alive: its log, then a container restart")
+        for log in self.be_logs:
+            tail = subprocess.run(
+                ["docker", "exec", CONTAINER, "tail", "-n", "60", log],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            _say(f"    --- {log}")
+            _say((tail.stdout + tail.stderr)[-6000:])
+        subprocess.run(["docker", "restart", CONTAINER], check=False)
+        self._c = None
+        self._wait_for_backend()
 
     def _conn(self):
         import pymysql
@@ -539,13 +593,6 @@ class Trino(Candidate):
             )
         }
 
-    def _clear(self, table: str) -> None:
-        directory = onelake.file_system(self.cfg).get_directory_client(
-            f"{self.cfg.lakehouse_id}/Tables/{WRITE_NS}/{table}"
-        )
-        if directory.exists():
-            directory.delete_directory()
-
     def write_diagnostics(self) -> None:
         """What sits under Tables/candidate after the write gate: what Trino called non-empty."""
         fs = onelake.file_system(self.cfg)
@@ -566,21 +613,7 @@ class Trino(Candidate):
         chDB and Polars already use -- and Trino fills it with one INSERT, one commit, with its
         extended statistics off (below).
         """
-        from bench.tpch.generate import _all_optional
-
-        catalog = auth.catalog(self.cfg)
-        identifier = f"{WRITE_NS}.{table}"
-        if catalog.table_exists(identifier):
-            catalog.drop_table(identifier)
-        self._clear(table)
-        # The unstaged create bench/etl/iceberg.py `recreate` makes for the ETL: one request.
-        catalog.create_table(
-            identifier,
-            schema=_all_optional(
-                catalog.load_table(f"{self.cfg.schema}.nation").schema().as_arrow()
-            ),
-            location=f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}",
-        )
+        _create_unstaged(self.cfg, table)
         return {
             # With extended statistics off. Trino's default writes Puffin statistics into the
             # same commit, and the catalog refuses that commit with a bare 400 (run 36362007273);
@@ -615,6 +648,9 @@ class Doris(StarRocks):
     list_namespaces = "SHOW DATABASES FROM onelake"
     # The image is tuned for CI fixtures (BE mem_limit 40%); the bench runner is 16 GB.
     run_args = ("-e", "BE_CONFIG_EXTRA=mem_limit = 80%")
+    be_logs = tuple(
+        f"/opt/apache-doris/be/log/{name}" for name in ("be.out", "be.WARNING", "be.INFO")
+    )
 
     HOST = ONELAKE_DFS
     UNUSED_HOST = "unused.dfs.core.windows.net"
@@ -697,9 +733,9 @@ class Doris(StarRocks):
         OneLake paths go through hadoop-azure, so the TVF is `hdfs()`, not `s3()`/Azure Blob.
         Doris names TVF CSV columns c1..cN unless `csv_schema` declares them.
         """
-        storage = self.storage(sas)[
-            "workload identity (raw fs.azure keys) + OAuth2 on an unused host"
-        ]
+        # Not the OAuth2 set: hdfs() refuses it ("OAuth2 auth type is only supported for iceberg
+        # rest catalog", run 36400638699).
+        storage = self.storage(sas)["workload identity (raw fs.azure keys) alone"]
         fs = path.split("/", 3)
         common = {
             "uri": path,
@@ -728,16 +764,13 @@ class Doris(StarRocks):
         }
 
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
-        prep = [
-            f"CREATE DATABASE IF NOT EXISTS {WRITE_NS}",
-            f"DROP TABLE IF EXISTS {WRITE_NS}.{table}",
-        ]
+        """Doris' own CREATE TABLE and CTAS are refused with the catalog's bare 400 "Malformed
+        request" (run 36400638699), as Spark's and Trino's are. So the create goes through the
+        catalog and Doris fills the table with one INSERT."""
+        _create_unstaged(self.cfg, table)
         return {
-            "CTAS": prep + [f"CREATE TABLE {WRITE_NS}.{table} AS SELECT * FROM {source}"],
-            "CREATE + INSERT": prep
-            + [
-                f"CREATE TABLE {WRITE_NS}.{table} (n_nationkey INT, n_name STRING, "
-                f"n_regionkey INT, n_comment STRING)",
+            "catalog create + Doris INSERT": [
+                f"REFRESH DATABASE {WRITE_NS}",
                 f"INSERT INTO {WRITE_NS}.{table} SELECT * FROM {source}",
             ],
         }
@@ -830,6 +863,7 @@ def main() -> int:
         if read and rows and int(rows[0][0]) == NATION_ROWS:
             attached = label
             break
+        engine.recover()
     results["attach catalog"] = attached is not None
     # Even with no variant listing the namespace, carry on: each later gate's error is diagnosis.
     for statement in engine.use_catalog():
