@@ -1,0 +1,9 @@
+# trino_iceberg.txt's client and credential, plus azure-storage-file-datalake (bench/etl/data.py
+# lists Files/csv over ADLS before the engine starts) and pyiceberg: the catalog does not support
+# staged creates, so the empty table is created through it (bench/etl/iceberg.py `recreate`) and
+# Trino fills it with one INSERT (bench/etl/engines/trino_iceberg.py).
+azure-identity>=1.19
+azure-storage-file-datalake>=12.17
+psutil>=6
+pyiceberg[pyarrow,adlfs]>=0.12.0
+trino>=0.330

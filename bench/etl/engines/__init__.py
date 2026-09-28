@@ -46,4 +46,8 @@ def get_engine(name: str, cfg: EtlConfig):
         from bench.etl.engines.starrocks_iceberg import StarrocksIceberg
 
         return StarrocksIceberg(cfg)
+    if name == "trino_iceberg":
+        from bench.etl.engines.trino_iceberg import TrinoIceberg
+
+        return TrinoIceberg(cfg)
     raise ValueError(f"unknown engine {name!r}; expected one of {list(ETL_ENGINES)}")

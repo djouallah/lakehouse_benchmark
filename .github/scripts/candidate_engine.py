@@ -30,7 +30,6 @@ import threading
 import time
 from collections import Counter
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from bench import auth, onelake, scrub
 from bench.config import ICEBERG_ENDPOINT, ONELAKE_DFS
@@ -357,62 +356,8 @@ class Trino(Candidate):
         ]
     )
 
-    PROXY_PORT = 8181
-
-    def _start_rest_proxy(self) -> None:
-        """A pass-through between Trino and OneLake's REST catalog that logs every write.
-
-        OneLake answers Trino's create commit with a bare 400 "Malformed request" and no detail,
-        while Spark's staged CTAS commits fine; the difference is in the request body, which only
-        a man in the middle sees. GETs pass silently; every other call prints its body and the
-        reply. Auth headers are forwarded, never printed, and output goes through `scrub`.
-        """
-        import http.server
-        from urllib.parse import urlsplit
-
-        import requests
-
-        upstream = "{0.scheme}://{0.netloc}".format(urlsplit(ICEBERG_ENDPOINT))
-        skip = {"content-length", "content-encoding", "transfer-encoding", "connection"}
-
-        class Handler(http.server.BaseHTTPRequestHandler):
-            def forward(self) -> None:
-                length = int(self.headers.get("Content-Length") or 0)
-                body = self.rfile.read(length) if length else None
-                headers = {
-                    k: v
-                    for k, v in self.headers.items()
-                    if k.lower() not in {"host", "content-length", "accept-encoding"}
-                }
-                resp = requests.request(
-                    self.command, upstream + self.path, headers=headers, data=body, timeout=600
-                )
-                if self.command != "GET":
-                    _say(
-                        f"    [rest] {self.command} {self.path} -> {resp.status_code}\n"
-                        f"      request:  {(body or b'').decode(errors='replace')[:12000]}\n"
-                        f"      response: {resp.text[:4000]}"
-                    )
-                self.send_response(resp.status_code)
-                for k, v in resp.headers.items():
-                    if k.lower() not in skip:
-                        self.send_header(k, v)
-                self.send_header("Content-Length", str(len(resp.content)))
-                self.end_headers()
-                if self.command != "HEAD":
-                    self.wfile.write(resp.content)
-
-            do_GET = do_POST = do_PUT = do_DELETE = do_HEAD = forward
-
-            def log_message(self, *args) -> None:
-                pass
-
-        server = http.server.ThreadingHTTPServer(("0.0.0.0", self.PROXY_PORT), Handler)
-        threading.Thread(target=server.serve_forever, daemon=True).start()
-
     def start(self) -> None:
         _keep_assertion_fresh()
-        self._start_rest_proxy()
         config = ASSERTION_DIR.parent / "candidate-trino.properties"
         config.write_text(self.CONFIG + "\n", encoding="utf-8")
         config.chmod(0o644)
@@ -433,8 +378,6 @@ class Trino(Candidate):
                 f"AZURE_TENANT_ID={os.environ.get('AZURE_TENANT_ID', '')}",
                 "-e",
                 f"AZURE_FEDERATED_TOKEN_FILE={ASSERTION_IN_CONTAINER}",
-                # The REST logging proxy runs on the runner, outside the container.
-                "--add-host=host.docker.internal:host-gateway",
                 "-p",
                 "127.0.0.1:8080:8080",
                 self.image,
@@ -513,31 +456,7 @@ class Trino(Candidate):
             ]
 
         no_vending = {"iceberg.rest-catalog.vended-credentials-enabled": "false"}
-        proxied = urlsplit(ICEBERG_ENDPOINT).path
         return {
-            # First, so it is the catalog every later gate uses: the passing storage settings,
-            # with the catalog reached through the logging proxy (`_start_rest_proxy`).
-            # With `server-assigned-table-location-enabled` (Trino master; see write_variants).
-            # A 483 image rejects the unknown property here and falls through to the next one.
-            "via REST logging proxy, server-assigned table locations": ddl(
-                no_vending
-                | self.AZURE
-                | {"iceberg.rest-catalog.server-assigned-table-location-enabled": "true"}
-                | {
-                    "iceberg.rest-catalog.uri": (
-                        f"http://host.docker.internal:{self.PROXY_PORT}{proxied}"
-                    )
-                }
-            ),
-            "via REST logging proxy + workload identity + azure.endpoint": ddl(
-                no_vending
-                | self.AZURE
-                | {
-                    "iceberg.rest-catalog.uri": (
-                        f"http://host.docker.internal:{self.PROXY_PORT}{proxied}"
-                    )
-                }
-            ),
             "oauth2 token + workload identity (azure.auth-type DEFAULT)": ddl(
                 no_vending | {"azure.auth-type": "DEFAULT"}
             ),
@@ -635,37 +554,37 @@ class Trino(Candidate):
             _say(f"    listing Tables/{WRITE_NS} failed: {scrub.scrub_exc(exc, 500)}")
 
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
-        """OneLake's REST catalog does NOT implement staged creates, and Trino stages every create.
+        """The catalog does not support staged creates, and Trino stages every create.
 
-        Found through the logging proxy (run 36329873292) and a replay straight at the endpoint
-        (run 36330975553): OneLake accepts `stage-create: true` -- and writes
-        metadata/00000-*.metadata.json at the table location right away -- then answers the
-        `assert-create` commit that finishes it with a bare 400 "Malformed request", whatever the
-        commit carries (each of Trino's updates was dropped in turn; every attempt was refused).
-        The early metadata file is also why Trino's non-empty-location check fired first.
-        DuckDB's writer says the same thing with `STAGE_CREATE_TABLES false`; Spark avoids it by
-        calling the Iceberg API's plain `create()`.
-
-        Trino 483 stages whenever the table has a location, and it takes one from the namespace,
-        which OneLake always reports -- even for a namespace created without one. Trino master
-        (b88d341, 2026-07-23, after 483) adds `iceberg.rest-catalog.server-assigned-table-location-
-        enabled`: no location computed, so `newCreateTableTransaction` takes its unstaged
-        `create().newTransaction()` branch and skips the empty-location check. Hence the plain
-        CTAS first, with no WITH (location).
+        Trino (483) stages a CREATE TABLE or CTAS whenever the table has a location, and it takes
+        one from the namespace, which this catalog always reports. The stage is accepted; the
+        commit that finishes it is refused with a bare 400 "Malformed request". So a NEW table
+        is created unstaged through the catalog -- bench/etl/iceberg.py `recreate`, the create
+        chDB and Polars already use -- and Trino fills it with one INSERT, one commit. An
+        EXISTING table is Trino's own CREATE OR REPLACE ... AS SELECT: an ordinary commit to
+        that table, which the catalog accepts.
         """
-        for name in (table, f"{table}_loc"):
-            self._clear(name)
-        prep = [
-            f"CREATE SCHEMA IF NOT EXISTS onelake.{WRITE_NS}",
-            f"DROP TABLE IF EXISTS onelake.{WRITE_NS}.{table}",
-        ]
-        located = f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}_loc"
+        from bench.tpch.generate import _all_optional
+
+        catalog = auth.catalog(self.cfg)
+        identifier = f"{WRITE_NS}.{table}"
+        if catalog.table_exists(identifier):
+            catalog.drop_table(identifier)
+        self._clear(table)
+        # The unstaged create bench/etl/iceberg.py `recreate` makes for the ETL: one request.
+        catalog.create_table(
+            identifier,
+            schema=_all_optional(
+                catalog.load_table(f"{self.cfg.schema}.nation").schema().as_arrow()
+            ),
+            location=f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}",
+        )
         return {
-            "CTAS": prep + [f"CREATE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"],
-            "CTAS with location": prep
-            + [
-                f"CREATE TABLE onelake.{WRITE_NS}.{table} WITH (location = '{located}') "
-                f"AS SELECT * FROM {source}"
+            "catalog create + Trino INSERT": [
+                f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}"
+            ],
+            "CREATE OR REPLACE TABLE AS (table exists)": [
+                f"CREATE OR REPLACE TABLE onelake.{WRITE_NS}.{table} AS SELECT * FROM {source}"
             ],
         }
 
