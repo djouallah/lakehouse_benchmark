@@ -26,11 +26,19 @@ MEMORY. The image sizes the heap at 80% of the container's 15 GB: 12 GB. Queries
 it, and 2 GB stays as headroom for everything else in the JVM. Spill is off by default in Trino,
 as in StarRocks, and on here: a join or aggregation that outgrows its 9 GB spills rather than
 failing, as it does in DuckDB, Gluten and StarRocks.
+
+THE FILE CACHE, every engine's where it has one. Trino's is the filesystem cache (Alluxio's
+library, `fs.cache.*`): what it reads from OneLake lands on local disk, and a later scan of the
+same file reads it there. Off by default; on here, on a host directory mounted into the container,
+sized like Velox's -- half the free disk at setup, since spill writes to the same disk and a
+cache does not give space back. StarRocks' Data Cache (60 GB) and Velox's do the same job. The
+first Trino runs (TPC-H SF=10, ETL 1000 files, 2026-09-28) went without it.
 """
 
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import threading
 import time
@@ -50,6 +58,12 @@ CATALOG = "onelake"
 PORT = 8080
 # The container's memory ceiling, of the runner's 15.6 GB; the same cgroup as StarRocks'.
 CONTAINER_MEMORY = "15g"
+
+# The filesystem cache (see the module docstring): a host directory, and its share of free disk.
+CACHE_DIR = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "trino-cache"
+CACHE_IN_CONTAINER = "/trino-cache"
+CACHE_FREE_FRACTION = 0.5
+CACHE_MIN_GIB = 8
 
 CONFIG = "\n".join(
     [
@@ -128,9 +142,12 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
         config = ASSERTION_DIR.parent / "trino-config.properties"
         config.write_text(CONFIG + "\n", encoding="utf-8")
         config.chmod(0o644)
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        CACHE_DIR.chmod(0o777)  # the container's user is not the runner's
         volumes = [
             f"{ASSERTION_DIR}:{Path(ASSERTION_IN_CONTAINER).parent}:ro",
             f"{config}:/etc/trino/config.properties:ro",
+            f"{CACHE_DIR}:{CACHE_IN_CONTAINER}",
             *[f"{host}:{inside}" for host, inside in (mounts or {}).items()],
         ]
         subprocess.run(
@@ -206,6 +223,25 @@ def storage_properties() -> dict[str, str]:
     }
 
 
+def cache_properties() -> dict[str, str]:
+    """The filesystem cache, sized from the free disk now (see the module docstring)."""
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    free_gib = shutil.disk_usage(CACHE_DIR).free / 2**30
+    size_gib = max(CACHE_MIN_GIB, int(free_gib * CACHE_FREE_FRACTION))
+    scrub.safe_print(f"  trino file cache {size_gib}GB ({free_gib:.0f}GB free) at {CACHE_DIR}")
+    return {
+        "fs.cache.enabled": "true",
+        "fs.cache.directories": CACHE_IN_CONTAINER,
+        "fs.cache.max-sizes": f"{size_gib}GB",
+    }
+
+
+def cache_usage() -> str:
+    """How much the cache holds on disk: the proof it engaged, read at close."""
+    total = sum(p.stat().st_size for p in CACHE_DIR.rglob("*") if p.is_file())
+    return f"{total / 2**30:.1f} GiB in {CACHE_DIR}"
+
+
 def create_catalog(conn, name: str, connector: str, properties: dict[str, str]) -> None:
     body = ", ".join(f"\"{key}\" = '{value}'" for key, value in properties.items())
     sql(conn, f"DROP CATALOG IF EXISTS {name}")
@@ -230,6 +266,7 @@ def attach(conn, cfg: Config, token: str) -> None:
                 f"{CATALOG_CACHE_SECONDS}s"
             ),
             **storage_properties(),
+            **cache_properties(),
         },
     )
 

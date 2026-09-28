@@ -55,6 +55,10 @@ class TrinoIceberg:
     def close(self) -> None:
         if self._conn is not None:
             try:
+                scrub.safe_print(f"  trino file cache: {trino.cache_usage()}")
+            except Exception as exc:  # noqa: BLE001 - a readout must never fail teardown
+                scrub.safe_print(f"  warning: file cache readout failed: {exc}")
+            try:
                 self._conn.close()
             finally:
                 self._conn = None
