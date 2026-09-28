@@ -27,6 +27,13 @@ SPARK, GLUTEN = "pyspark_iceberg", "pyspark_gluten_iceberg"
 START, END = "<!-- speedup:start -->", "<!-- speedup:end -->"
 ETL_CSV = "docs/data/etl_results.csv"
 
+# Failures the CSVs cannot show: a CANCELLED run publishes nothing, so an engine that was stopped
+# part-way leaves no row at that scale and would read as never run. Each entry names its run.
+KNOWN_FAILED = {
+    # Run 36131888999: Spark-OSS was cancelled 3 h in, at Q27 of 99 (Q23 alone took 985 s).
+    ("tpcds", 100, SPARK),
+}
+
 
 def _read(path: Path) -> list[dict]:
     if not path.exists():
@@ -49,7 +56,10 @@ def _mean_recent(runs: dict[tuple[str, int], list[tuple[str, float | None]]]) ->
 
 
 def query_totals(rows: list[dict], test: str, n_queries: int) -> dict:
-    """{(engine, sf): mean cold total} over the last complete runs, as `totals_by_sf`."""
+    """{(engine, sf): mean cold total} over the last complete runs, as `totals_by_sf`.
+
+    KNOWN_FAILED entries with no stored run at all come back as None, as a failed one does.
+    """
     runs: dict[tuple, dict] = defaultdict(lambda: {"started": "", "dur": 0.0, "ok": 0})
     for r in rows:
         if r["test"] != test or r["run_type"] != "cold" or r["phase"] != "query":
@@ -65,6 +75,9 @@ def query_totals(rows: list[dict], test: str, n_queries: int) -> dict:
         kept = complete.setdefault((engine, sf), [])
         if run["ok"] == n_queries:
             kept.append((run["started"], run["dur"]))
+    for suite, sf, engine in KNOWN_FAILED:
+        if suite == test:
+            complete.setdefault((engine, sf), [])
     return _mean_recent(complete)
 
 
@@ -118,7 +131,8 @@ def write_readme(path: Path = Path("README.md"), root: Path = Path(".")) -> None
     _, tail = rest.split(END, 1)
     note = (
         f"Mean of each engine's last {RECENT_RUNS} runs at each scale; the query suites count "
-        "only runs that completed every query. Regenerated on every publish."
+        "only runs that completed every query, and `failed` means none did. `—` = not run. "
+        "Regenerated on every publish."
     )
     body = "\n".join([START, *table_lines(root), "", note, END])
     path.write_text(head + body + tail, encoding="utf-8")
