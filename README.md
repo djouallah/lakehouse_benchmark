@@ -34,6 +34,12 @@ Bonus:
 - It finishes TPC-DS.
 - More complex Iceberg DML (coming soon).
 
+Tried and not added:
+
+- **Apache Doris**: can't read OneLake without a client secret (condition 3).
+- **Firebolt Core**: Elastic 2.0 licence (condition 1).
+- **CedarDB**: not open source (condition 1).
+
 ## Gluten/Velox vs Spark-OSS
 
 <!-- speedup:start -->
