@@ -32,11 +32,15 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Build the server and CLI (no tests)
+      # EVERYTHING, not `-pl core/trino-server -am`: the server's provisio assembly bundles every
+      # plugin without depending on it, so -am built none and the assembly could not resolve them.
+      # Trino CI's own fast install (MAVEN_FAST_INSTALL), minus the docs and the RPM.
+      - name: Build Trino (no tests)
         working-directory: trino
         run: |
-          ./mvnw -B --no-transfer-progress -T 1C install -pl core/trino-server,client/trino-cli -am \
-            -DskipTests -Dair.check.skip-all -Dmaven.javadoc.skip=true -Dmaven.source.skip=true
+          ./mvnw -B -V --no-transfer-progress -T 1C install -DskipTests -Dmaven.source.skip=true \
+            -Dair.check.skip-all -Dmaven.javadoc.skip=true -pl '!:trino-docs,!:trino-server-rpm'
+          df -h /
       - name: Build the image (amd64)
         working-directory: trino
         run: core/docker/build.sh -a amd64 -x
