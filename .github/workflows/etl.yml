@@ -273,7 +273,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3; do
-            git add results docs
+            git add results docs README.md
             if git diff --cached --quiet; then
               echo "nothing to commit"
               exit 0

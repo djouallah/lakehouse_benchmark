@@ -30,8 +30,19 @@ A candidate engine must pass all three, checked by the `candidate engine` workfl
 
 ## Gluten/Velox vs Spark-OSS
 
-| Test | Spark-OSS | Gluten/Velox | Speedup |
-|---|---:|---:|---:|
-| Light ETL, 1000 CSVs | 982.2s | 728.8s | 1.3x |
-| TPC-H SF=10 | 429.8s | 160.4s | 2.7x |
-| TPC-DS SF=60 | 9,303.4s | 2,117.1s | 4.4x |
+<!-- speedup:start -->
+| Test | Scale | Spark-OSS | Gluten/Velox | Speedup |
+|---|---:|---:|---:|---:|
+| Light ETL | 100 files | 136.5s | — | — |
+| Light ETL | 1,000 files | 982.2s | 728.8s | 1.3x |
+| TPC-H | SF=10 | 513.8s | 139.7s | 3.7x |
+| TPC-H | SF=30 | 1,439.5s | 385.3s | 3.7x |
+| TPC-H | SF=60 | 2,318.3s | 677.7s | 3.4x |
+| TPC-H | SF=100 | failed | 1,007.5s | — |
+| TPC-DS | SF=10 | 2,170.3s | 675.2s | 3.2x |
+| TPC-DS | SF=30 | 9,280.4s | 951.5s | 9.8x |
+| TPC-DS | SF=60 | 9,303.4s | 2,117.1s | 4.4x |
+| TPC-DS | SF=100 | — | 6,757.3s | — |
+
+Mean of each engine's last 3 runs at each scale; the query suites count only runs that completed every query. Regenerated on every publish.
+<!-- speedup:end -->

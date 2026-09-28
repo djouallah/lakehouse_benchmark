@@ -9,6 +9,7 @@ Outputs: results/etl/<run>.json     -- the immutable record, committed
          docs/etl/charts/*.png      -- light and dark, committed
          docs/etl/RESULTS.md        -- the table view, committed
          docs/data/etl_results.csv  -- flattened history, committed
+         README.md                  -- the Gluten/Velox vs Spark-OSS block only (bench/speedup.py)
          $GITHUB_STEP_SUMMARY
 
 SEPARATE DIRECTORIES, ON PURPOSE. `store.load_all` globs `*.json` in one directory,
@@ -32,6 +33,7 @@ from bench.etl import charts
 from bench.etl.config import DEFAULT_FILES, ETL_ENGINES, HEADLINE_FILES
 from bench.etl.runner import load_row
 from bench.report import leak_check, merge, write_csv
+from bench.speedup import write_readme
 from bench.store import Run, load_all, write_run
 
 # Printed under the table whenever Gluten is on it. LEARNING.md has the upstream PRs.
@@ -177,6 +179,7 @@ def main() -> int:
 
     table = load_all(results_dir)
     write_csv(table, docs / "data" / "etl_results.csv")
+    write_readme()
 
     if files == HEADLINE_FILES:
         subtitle = (
@@ -193,7 +196,9 @@ def main() -> int:
             f"::notice::FILES={files} is not the headline count ({HEADLINE_FILES}): the run and "
             "the CSV are committed; docs/etl/charts and docs/etl/RESULTS.md are left as they are."
         )
-    leak_check([run_path, docs / "etl" / "RESULTS.md", docs / "data" / "etl_results.csv"])
+    leak_check(
+        [run_path, docs / "etl" / "RESULTS.md", docs / "data" / "etl_results.csv", Path("README.md")]
+    )
     write_step_summary(run, rows)
 
     best = rows[0]

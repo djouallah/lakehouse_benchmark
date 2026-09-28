@@ -10,6 +10,7 @@ Outputs: <RESULTS_DIR>/<run>.json   -- the immutable record, committed (results/
          <DOCS_DIR>/charts/*.png    -- light and dark, committed (docs/charts/, docs/tpcds/charts/)
          <DOCS_DIR>/RESULTS.md      -- the table view, committed
          <CSV>                      -- flattened history, committed (docs/data/<suite>_results.csv)
+         README.md                  -- the Gluten/Velox vs Spark-OSS block only (bench/speedup.py)
          $GITHUB_STEP_SUMMARY       -- the per-run signal on the Actions page
 
 SEPARATE DIRECTORIES PER SUITE, ON PURPOSE. `store.load_all` globs `*.json` in one directory,
@@ -32,6 +33,7 @@ import sys
 from pathlib import Path
 
 from bench.report import leak_check, merge, write_csv
+from bench.speedup import write_readme
 from bench.store import Run, latest_per_engine, load_all, read_run, write_run
 from bench.suite import suite_class
 from bench.tpch import charts
@@ -271,6 +273,7 @@ def main() -> int:
 
     table = load_all(results_dir)
     write_csv(table, csv)
+    write_readme()
 
     # RESULTS.md and the per-query chart are the HEADLINE_SF view. The totals chart spans
     # TOTALS_SFS, so a run at any of those scales redraws the docs too -- from the latest stored
@@ -289,7 +292,7 @@ def main() -> int:
             f"::notice::SF={sf} is not the headline scale ({suite.HEADLINE_SF}): the run and the "
             f"CSV are committed; {docs}/charts and {docs}/RESULTS.md are left as they are."
         )
-    leak_check([run_path, docs / "RESULTS.md", csv])
+    leak_check([run_path, docs / "RESULTS.md", csv, Path("README.md")])
     write_step_summary(run, rows, suite)
 
     best = rows[0]
