@@ -33,7 +33,7 @@ A candidate engine must pass all three, checked by the `candidate engine` workfl
 <!-- speedup:start -->
 | Test | Scale | Spark-OSS | Gluten/Velox | Speedup |
 |---|---:|---:|---:|---:|
-| Light ETL | 100 files | 136.5s | — | — |
+| Light ETL | 100 files | 136.5s | 81.8s | 1.7x |
 | Light ETL | 1,000 files | 982.2s | 728.8s | 1.3x |
 | TPC-H | SF=10 | 513.8s | 139.7s | 3.7x |
 | TPC-H | SF=30 | 1,439.5s | 385.3s | 3.7x |
