@@ -27,6 +27,13 @@ it, and 2 GB stays as headroom for everything else in the JVM. Spill is off by d
 as in StarRocks, and on here: a join or aggregation that outgrows its 9 GB spills rather than
 failing, as it does in DuckDB, Gluten and StarRocks.
 
+SPILL HAS TO START EARLY. Spilled state is "revocable" memory, and Trino revokes it only once the
+node's pool passes `memory-revoking-threshold` -- 90% by default, which on a ~10 GB pool is the
+9 GB the query may use at all. TPC-H SF=100 Q18 died of exactly that (run 36374585642): a hash
+join's build side held 6.76 GB and asked for 3.4 GB more in one step, "exceeded per-node memory
+limit of 9GB", before a single build partition had been spilled. Revoking from half the pool,
+down to 30%, leaves the room a partition needs to be rebuilt in memory.
+
 THE FILE CACHE, every engine's where it has one. Trino's is the filesystem cache (Alluxio's
 library, `fs.cache.*`): what it reads from OneLake lands on local disk, and a later scan of the
 same file reads it there. Off by default; on here, on a host directory mounted into the container,
@@ -78,6 +85,9 @@ CONFIG = "\n".join(
         "memory.heap-headroom-per-node=2GB",
         "spill-enabled=true",
         "spiller-spill-path=/tmp/trino-spill",
+        # Spill STARTS at half the pool, not 90%: see the module docstring (TPC-H SF=100 Q18).
+        "memory-revoking-threshold=0.5",
+        "memory-revoking-target=0.3",
     ]
 )
 
