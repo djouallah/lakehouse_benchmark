@@ -1,10 +1,10 @@
 """TEMPORARY. Upstream repro: Databend misreads Iceberg decimals stored as FIXED_LEN_BYTE_ARRAY.
 
 Local only: an Iceberg REST catalog (apache/iceberg-rest-fixture) on a file:// warehouse that the
-catalog, pyiceberg and Databend all see at /tmp/wh. pyiceberg writes a decimal(15,2) table --
-pyarrow stores it as FIXED_LEN_BYTE_ARRAY(7), which the Iceberg spec allows. A second table holds
-the same rows in a parquet written with INT64 decimals (add_files). Databend reads both through the
-Iceberg catalog, and the FLBA file as plain parquet through a stage.
+catalog, pyiceberg and Databend all see at /tmp/wh. A decimal(15,2) table gets a parquet written
+with pyarrow's defaults -- FIXED_LEN_BYTE_ARRAY(7), which the Iceberg spec allows -- via add_files.
+A second table holds the same rows written by pyiceberg's append (INT64). Databend reads both
+through the Iceberg catalog, and the FLBA file as plain parquet through a stage.
 """
 
 from __future__ import annotations
@@ -41,13 +41,15 @@ def iceberg() -> None:
             "d": pa.array([123.45, -7.01, 99999.99]).cast(pa.decimal128(15, 2)),
         }
     )
+    # pyarrow's default layout for decimal(15,2): FIXED_LEN_BYTE_ARRAY(7).
     flba = catalog.create_table("demo.dec_flba", schema=schema)
-    flba.append(rows)
+    path = f"{WH}/dec_flba.parquet"
+    pq.write_table(rows, path)
+    flba.add_files([f"file://{path}"])
 
+    # pyiceberg's own write: INT64.
     int64 = catalog.create_table("demo.dec_int64", schema=schema)
-    path = f"{WH}/dec_int64.parquet"
-    pq.write_table(rows, path, store_decimal_as_integer=True)
-    int64.add_files([f"file://{path}"])
+    int64.append(rows)
 
     for table in (flba, int64):
         for task in table.scan().plan_files():
@@ -86,14 +88,14 @@ def main() -> int:
     query(
         conn,
         "CREATE CATALOG ice TYPE=ICEBERG CONNECTION=(TYPE='rest' "
-        f"ADDRESS='http://localhost:8181' WAREHOUSE='file://{WH}')",
+        f"ADDRESS='http://localhost:8181' WAREHOUSE='file://{WH}' \"root\"='/')",
     )
     for table in ("dec_int64", "dec_flba"):
         query(conn, f"SELECT k FROM ice.demo.{table} ORDER BY k")
         query(conn, f"SELECT k, d FROM ice.demo.{table} ORDER BY k")
     # The same FLBA data file, read as plain parquet through a stage.
-    query(conn, f"CREATE STAGE s URL='fs://{WH}/demo/dec_flba/data/'")
-    query(conn, "SELECT k, d FROM @s (FILE_FORMAT => 'parquet') ORDER BY k")
+    query(conn, f"CREATE STAGE s URL='fs://{WH}/'")
+    query(conn, "SELECT k, d FROM @s/dec_flba.parquet (FILE_FORMAT => 'parquet') ORDER BY k")
     return 0
 
 
