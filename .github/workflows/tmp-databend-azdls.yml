@@ -13,13 +13,19 @@ on:
         description: Branch of djouallah/databend to build.
         type: string
         default: fix/iceberg-azure-file-io
+      binary_run:
+        description: Reuse databend-query from this earlier run's artifact; empty builds it.
+        type: string
+        default: ""
 
 permissions:
   id-token: write
   contents: read
+  actions: read
 
 jobs:
   build:
+    if: inputs.binary_run == ''
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
@@ -64,6 +70,7 @@ jobs:
 
   probe:
     needs: build
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # The shared lakehouse queue, as candidate_engine.yml.
@@ -86,6 +93,8 @@ jobs:
         with:
           name: databend-query
           path: fix
+          run-id: ${{ inputs.binary_run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Image with the fixed binary
         run: |
           chmod +x fix/databend-query

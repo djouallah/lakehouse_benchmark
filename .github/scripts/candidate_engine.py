@@ -788,9 +788,9 @@ class Databend(Candidate):
     location goes to opendal's Azdls service (src/common/storage/src/operator.rs IcebergFileIO).
     Catalog properties reach both, `adls.sas-token` mapped to opendal's `sas_token` and every key
     it does not know passed through raw -- so opendal's own `filesystem`/`endpoint` can be set.
-    With no key, opendal's Azure signer falls back to the AZURE_* environment, whose
-    workload-identity leg reads AZURE_FEDERATED_TOKEN_FILE: the refreshable assertion file Trino
-    and Spark-OSS read.
+    With the fix (djouallah/databend fix/iceberg-azure-file-io, run 36520116389) the SAS reads
+    nation; the AZURE_* environment does NOT reach Azdls -- its signer goes to IMDS and fails --
+    though it does reach the azblob reader below.
 
     Files/csv: Databend's azblob:// location takes only an account key, which OneLake has none
     of, so the reads are azblob with the environment credential. An https:// URL carrying the SAS
@@ -891,9 +891,11 @@ class Databend(Candidate):
             ]
 
         azdls = {"filesystem": self.cfg.workspace_id, "endpoint": f"https://{ONELAKE_DFS}"}
+        # The same SAS signs the INSERT's data files, so it needs create/write, not read+list.
+        write_sas, _ = onelake_sas(self.cfg.workspace_id, self.cfg.lakehouse_id, write=True)
         return {
             "oauth2 token + workload identity (AZURE_* env)": ddl(azdls),
-            "oauth2 token + SAS (adls.sas-token)": ddl(azdls | {"adls.sas-token": sas}),
+            "oauth2 token + SAS (adls.sas-token)": ddl(azdls | {"adls.sas-token": write_sas}),
             "oauth2 token + vended credentials": ddl(
                 {"header.X-Iceberg-Access-Delegation": "vended-credentials"}
             ),
