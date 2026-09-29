@@ -779,6 +779,11 @@ class Doris(StarRocks):
 class Databend(Candidate):
     """Databend all-in-one: meta and query in one container, a Rust engine end to end.
 
+    NO ICEBERG DATA READ ON AZURE in v1.2.949: Databend builds iceberg-rust with `storage-all`,
+    which there means memory/fs/s3/gcs, not `storage-azdls` -- every table load fails with
+    "Constructing file io from scheme: azdls not supported now" (run 36516949156). The catalog
+    itself attaches and lists namespaces with the bearer.
+
     The Iceberg catalog is iceberg-rust (Databend's fork) and its FileIO is opendal: an abfss://
     location goes to opendal's Azdls service (src/common/storage/src/operator.rs IcebergFileIO).
     Catalog properties reach both, `adls.sas-token` mapped to opendal's `sas_token` and every key
@@ -788,8 +793,8 @@ class Databend(Candidate):
     and Spark-OSS read.
 
     Files/csv: Databend's azblob:// location takes only an account key, which OneLake has none
-    of, so the reads are azblob with the environment credential, and an https:// URL carrying
-    the SAS.
+    of, so the reads are azblob with the environment credential. An https:// URL carrying the SAS
+    is no way round it: Databend drops the query string and OneLake answers 401 (run 36516949156).
 
     Speaks MySQL on 3307. The core is Apache-2.0; the Elastic-2.0 enterprise features are not used.
     """
@@ -913,16 +918,12 @@ class Databend(Candidate):
         blob = ONELAKE_DFS.replace(".dfs.", ".blob.")
         azblob = (
             f"'azblob://{self.cfg.workspace_id}/{relative}' "
-            f"(CONNECTION => (ENDPOINT_URL => 'https://{blob}'), FILE_FORMAT => '{{fmt}}')"
-        )
-        https = (
-            f"'https://{blob}/{self.cfg.workspace_id}/{relative}?{sas}' (FILE_FORMAT => '{{fmt}}')"
+            f"(CONNECTION => (ENDPOINT_URL = 'https://{blob}'), FILE_FORMAT => '{{fmt}}')"
         )
         by_position = {c: f"${i + 1}" for i, c in enumerate(COLUMNS)}
         split = {c: f"split_part($1, ',', {i + 1})" for i, c in enumerate(COLUMNS)}
         return {
             "azblob, env credential, positional columns": (azblob, "aemo_csv", by_position),
-            "https + SAS, positional columns": (https, "aemo_csv", by_position),
             "azblob, env credential, one field per line, split_part": (azblob, "aemo_lines", split),
         }
 
