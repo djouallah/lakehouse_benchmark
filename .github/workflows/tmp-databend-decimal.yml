@@ -1,7 +1,7 @@
 name: tmp databend decimal
 
-# TEMPORARY. .github/scripts/tmp_databend_decimal.py: upstream repro, local Iceberg (Databend's
-# own docker/it-iceberg-catalogs compose), no lakehouse. Delete once read.
+# TEMPORARY. .github/scripts/tmp_databend_decimal.py: upstream repro, a local Iceberg REST catalog
+# on a file:// warehouse, no lakehouse. Delete once read.
 
 on:
   workflow_dispatch:
@@ -21,12 +21,15 @@ jobs:
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v5
-      - name: Iceberg REST + MinIO (databendlabs/databend docker/it-iceberg-catalogs)
+      # Same path in every container; the catalog runs as the runner user so pyiceberg can write
+      # into the directories it creates.
+      - name: Iceberg REST catalog, warehouse file:///tmp/wh
         run: |
-          curl -fsSL https://raw.githubusercontent.com/databendlabs/databend/main/docker/it-iceberg-catalogs/docker-compose.yaml -o compose.yaml
-          # minio/* left Docker Hub; the same tags are on quay.io.
-          sed -i 's#image: minio/#image: quay.io/minio/#' compose.yaml
-          docker compose -f compose.yaml up -d rest minio
+          mkdir -p /tmp/wh
+          docker run -d --name rest --user "$(id -u):$(id -g)" -p 8181:8181 -v /tmp/wh:/tmp/wh \
+            -e CATALOG_WAREHOUSE=file:///tmp/wh \
+            -e CATALOG_IO__IMPL=org.apache.iceberg.hadoop.HadoopFileIO \
+            apache/iceberg-rest-fixture:1.9.2
           until curl -fs http://localhost:8181/v1/config; do sleep 2; done
       - uses: actions/setup-python@v6
         with:
@@ -34,4 +37,6 @@ jobs:
       - run: pip install "pyiceberg[pyarrow]>=0.12" pymysql
       - run: python .github/scripts/tmp_databend_decimal.py "${{ inputs.image }}"
       - if: always()
-        run: docker logs db 2>&1 | grep -i -E "error|panic" | tail -n 30 || true
+        run: |
+          docker logs rest 2>&1 | tail -n 20 || true
+          docker logs db 2>&1 | grep -i -E "error|panic" | tail -n 30 || true
