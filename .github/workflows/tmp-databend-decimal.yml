@@ -24,6 +24,8 @@ jobs:
       - name: Iceberg REST + MinIO (databendlabs/databend docker/it-iceberg-catalogs)
         run: |
           curl -fsSL https://raw.githubusercontent.com/databendlabs/databend/main/docker/it-iceberg-catalogs/docker-compose.yaml -o compose.yaml
+          # minio/* left Docker Hub; the same tags are on quay.io.
+          sed -i 's#image: minio/#image: quay.io/minio/#' compose.yaml
           docker compose -f compose.yaml up -d rest minio mc
           until curl -fs http://localhost:8181/v1/config; do sleep 2; done
       - uses: actions/setup-python@v6
