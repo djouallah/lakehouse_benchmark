@@ -17,7 +17,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from bench import onelake
+from bench import auth, onelake
 from bench.suite import suite_class
 
 IMAGE = sys.argv[1] if len(sys.argv) > 1 else "datafuselabs/databend:v1.2.949-nightly"
@@ -26,8 +26,9 @@ DATA = Path("/tmp/dec")
 
 def download(cfg, table: str) -> Path:
     fs = onelake.file_system(cfg)
-    prefix = f"{cfg.lakehouse_id}/Tables/{cfg.schema}/{table}/data"
-    name = next(p.name for p in fs.get_paths(prefix, recursive=True) if p.name.endswith(".parquet"))
+    task = next(iter(auth.catalog(cfg).load_table(f"{cfg.schema}.{table}").scan().plan_files()))
+    # abfss://<ws>@<host>/<lh>/... -> <lh>/..., relative to the workspace filesystem.
+    name = task.file.file_path.split("/", 3)[3]
     out = DATA / f"{table}.parquet"
     out.write_bytes(fs.get_file_client(name).download_file().readall())
     meta = pq.ParquetFile(out).metadata
