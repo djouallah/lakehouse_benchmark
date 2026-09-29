@@ -3,6 +3,8 @@ name: tmp databend azdls
 # TEMPORARY. Builds databend-query from djouallah/databend@fix/iceberg-azure-file-io (Iceberg reads
 # on abfss: iceberg-rust storage-azdls + IcebergFileIO authority fix), then runs the candidate
 # probe on the stock nightly image with that binary swapped in. Delete once read.
+# DATABEND_RELEASE_VERSION: the build refuses to guess a version without git tags, and the query
+# must handshake with the image's v1.2.949 databend-meta.
 
 on:
   workflow_dispatch:
@@ -37,6 +39,7 @@ jobs:
         run: |
           docker run --rm -v "$PWD/databend:/workspace" -v /mnt/target:/target -w /workspace \
             -e CARGO_TARGET_DIR=/target -e CARGO_INCREMENTAL=0 -e CARGO_TERM_COLOR=always \
+            -e DATABEND_RELEASE_VERSION=v1.2.949-nightly \
             -e CARGO_PROFILE_RELEASE_DEBUG=0 -e CARGO_PROFILE_RELEASE_LTO=off \
             -e CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 -e CARGO_PROFILE_RELEASE_OPT_LEVEL=2 \
             -e RUSTFLAGS="-C target-feature=+sse4.2 -C link-arg=-fuse-ld=mold" \
@@ -52,6 +55,7 @@ jobs:
         run: |
           docker run --rm -v "$PWD/databend:/workspace" -v /mnt/target:/target -w /workspace \
             -e CARGO_TARGET_DIR=/target -e CARGO_INCREMENTAL=0 -e CARGO_TERM_COLOR=always \
+            -e DATABEND_RELEASE_VERSION=v1.2.949-nightly \
             -e CARGO_PROFILE_RELEASE_DEBUG=0 -e CARGO_PROFILE_RELEASE_LTO=off \
             -e CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 -e CARGO_PROFILE_RELEASE_OPT_LEVEL=2 \
             -e RUSTFLAGS="-C target-feature=+sse4.2 -C link-arg=-fuse-ld=mold" \
