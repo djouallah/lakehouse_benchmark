@@ -1,7 +1,7 @@
 name: tmp databend decimal
 
-# TEMPORARY. .github/scripts/tmp_databend_decimal.py: does Databend misread pyarrow's
-# FIXED_LEN_BYTE_ARRAY decimals? Delete once read.
+# TEMPORARY. .github/scripts/tmp_databend_decimal.py: upstream repro, local Iceberg (Databend's
+# own docker/it-iceberg-catalogs compose), no lakehouse. Delete once read.
 
 on:
   workflow_dispatch:
@@ -11,7 +11,6 @@ on:
         default: datafuselabs/databend:v1.2.949-nightly
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -19,25 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      PYTHONPATH: ${{ github.workspace }}
       PYTHONUNBUFFERED: "1"
-      BENCH_SUITE: tpch
-      TPCH_SF: "10"
-      FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
-      FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
     steps:
       - uses: actions/checkout@v5
+      - name: Iceberg REST + MinIO (databendlabs/databend docker/it-iceberg-catalogs)
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databendlabs/databend/main/docker/it-iceberg-catalogs/docker-compose.yaml -o compose.yaml
+          docker compose -f compose.yaml up -d rest minio mc
+          until curl -fs http://localhost:8181/v1/config; do sleep 2; done
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install -r requirements/catalog.txt -r requirements/candidate.txt
-      - uses: azure/login@v3
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          allow-no-subscriptions: true
+      - run: pip install "pyiceberg[pyarrow]>=0.12" pymysql
       - run: python .github/scripts/tmp_databend_decimal.py "${{ inputs.image }}"
       - if: always()
-        run: docker logs db 2>&1 | grep -i -E "error|panic" | tail -n 40 || true
+        run: docker logs db 2>&1 | grep -i -E "error|panic" | tail -n 30 || true
