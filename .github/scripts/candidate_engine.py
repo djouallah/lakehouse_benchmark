@@ -776,7 +776,188 @@ class Doris(StarRocks):
         }
 
 
-CANDIDATES = {"starrocks": StarRocks, "trino": Trino, "doris": Doris}
+class Databend(Candidate):
+    """Databend all-in-one: meta and query in one container, a Rust engine end to end.
+
+    The Iceberg catalog is iceberg-rust (Databend's fork) and its FileIO is opendal: an abfss://
+    location goes to opendal's Azdls service (src/common/storage/src/operator.rs IcebergFileIO).
+    Catalog properties reach both, `adls.sas-token` mapped to opendal's `sas_token` and every key
+    it does not know passed through raw -- so opendal's own `filesystem`/`endpoint` can be set.
+    With no key, opendal's Azure signer falls back to the AZURE_* environment, whose
+    workload-identity leg reads AZURE_FEDERATED_TOKEN_FILE: the refreshable assertion file Trino
+    and Spark-OSS read.
+
+    Files/csv: Databend's azblob:// location takes only an account key, which OneLake has none
+    of, so the reads are azblob with the environment credential, and an https:// URL carrying
+    the SAS.
+
+    Speaks MySQL on 3307. The core is Apache-2.0; the Elastic-2.0 enterprise features are not used.
+    """
+
+    name = "databend"
+    default_image = "datafuselabs/databend:v1.2.949-nightly"
+    dialect = "starrocks_iceberg"
+    list_namespaces = "SHOW DATABASES FROM onelake"
+    USER = "databend"
+
+    def start(self) -> None:
+        _keep_assertion_fresh()
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                CONTAINER,
+                "-v",
+                f"{ASSERTION_DIR}:{Path(ASSERTION_IN_CONTAINER).parent}:ro",
+                "-e",
+                f"QUERY_DEFAULT_USER={self.USER}",
+                "-e",
+                f"QUERY_DEFAULT_PASSWORD={self.USER}",
+                "-e",
+                f"AZURE_CLIENT_ID={os.environ.get('AZURE_CLIENT_ID', '')}",
+                "-e",
+                f"AZURE_TENANT_ID={os.environ.get('AZURE_TENANT_ID', '')}",
+                "-e",
+                f"AZURE_FEDERATED_TOKEN_FILE={ASSERTION_IN_CONTAINER}",
+                "-p",
+                "127.0.0.1:3307:3307",
+                self.image,
+            ],
+            check=True,
+        )
+        digest = subprocess.run(
+            ["docker", "image", "inspect", "--format", "{{index .RepoDigests 0}}", self.image],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        _say(f"image {self.image}  {digest}")
+        deadline = time.time() + 300
+        while True:
+            try:
+                # Unquoted identifiers fold to lower case by default; OneLake's namespace is
+                # CH0010. GLOBAL, so a reconnect keeps it.
+                self.sql("SET GLOBAL unquoted_ident_case_sensitive = 1")
+                return
+            except Exception:  # noqa: BLE001 - not up yet
+                self._c = None
+            if time.time() > deadline:
+                raise RuntimeError("Databend not answering after 300s")
+            time.sleep(5)
+
+    def _conn(self):
+        import pymysql
+
+        if getattr(self, "_c", None) is None:
+            self._c = pymysql.connect(
+                host="127.0.0.1",
+                port=3307,
+                user=self.USER,
+                password=self.USER,
+                autocommit=True,
+                read_timeout=3600,
+            )
+        return self._c
+
+    def sql(self, statement: str) -> list[tuple]:
+        try:
+            with self._conn().cursor() as cur:
+                cur.execute(statement)
+                return list(cur.fetchall())
+        except Exception:
+            if getattr(self, "_c", None) is not None and not self._c.open:
+                self._c = None
+            raise
+
+    def version(self) -> str:
+        return str(self.sql("SELECT version()")[0][0])
+
+    def attach_variants(self, token: str, sas: str) -> dict[str, list[str]]:
+        base = {"token": token}
+
+        def ddl(props: dict[str, str]) -> list[str]:
+            body = " ".join(f"\"{k}\"='{v}'" for k, v in (base | props).items())
+            return [
+                "DROP CATALOG IF EXISTS onelake",
+                f"CREATE CATALOG onelake TYPE=ICEBERG CONNECTION=(TYPE='rest' "
+                f"ADDRESS='{ICEBERG_ENDPOINT}' WAREHOUSE='{self.cfg.warehouse}' {body})",
+            ]
+
+        azdls = {"filesystem": self.cfg.workspace_id, "endpoint": f"https://{ONELAKE_DFS}"}
+        return {
+            "oauth2 token + workload identity (AZURE_* env)": ddl(azdls),
+            "oauth2 token + SAS (adls.sas-token)": ddl(azdls | {"adls.sas-token": sas}),
+            "oauth2 token + vended credentials": ddl(
+                {"header.X-Iceberg-Access-Delegation": "vended-credentials"}
+            ),
+        }
+
+    def use_catalog(self) -> list[str]:
+        return ["USE CATALOG onelake"]
+
+    FORMATS = (
+        # Ragged AEMO rows: short ones NULL-padded, long ones cut, rather than an error.
+        "CREATE OR REPLACE FILE FORMAT aemo_csv TYPE = CSV SKIP_HEADER = 1 "
+        "FIELD_DELIMITER = ',' QUOTE = '\"' ERROR_ON_COLUMN_COUNT_MISMATCH = false",
+        # One field per line: a delimiter and a quote that never occur.
+        "CREATE OR REPLACE FILE FORMAT aemo_lines TYPE = CSV SKIP_HEADER = 1 "
+        "FIELD_DELIMITER = '|' QUOTE = '`' ERROR_ON_COLUMN_COUNT_MISMATCH = false",
+    )
+
+    def _csv_sources(self, path: str, sas: str) -> dict[str, tuple[str, str, dict[str, str]]]:
+        """Each read as (location, file format, ETL column name -> expression in that source)."""
+        # abfss://<ws>@onelake.dfs.fabric.microsoft.com/<lh>/Files/csv/<file>
+        relative = path.split("/", 3)[3]
+        blob = ONELAKE_DFS.replace(".dfs.", ".blob.")
+        azblob = (
+            f"'azblob://{self.cfg.workspace_id}/{relative}' "
+            f"(CONNECTION => (ENDPOINT_URL => 'https://{blob}'), FILE_FORMAT => '{{fmt}}')"
+        )
+        https = (
+            f"'https://{blob}/{self.cfg.workspace_id}/{relative}?{sas}' (FILE_FORMAT => '{{fmt}}')"
+        )
+        by_position = {c: f"${i + 1}" for i, c in enumerate(COLUMNS)}
+        split = {c: f"split_part($1, ',', {i + 1})" for i, c in enumerate(COLUMNS)}
+        return {
+            "azblob, env credential, positional columns": (azblob, "aemo_csv", by_position),
+            "https + SAS, positional columns": (https, "aemo_csv", by_position),
+            "azblob, env credential, one field per line, split_part": (azblob, "aemo_lines", split),
+        }
+
+    def files_variants(self, path: str, sas: str) -> dict[str, list[str]]:
+        out = {}
+        for label, (source, fmt, cols) in self._csv_sources(path, sas).items():
+            where = " AND ".join(f"{cols[c]} = '{v}'" for c, v in FILTER)
+            out[label] = [
+                *self.FORMATS,
+                f"SELECT count(*), sum(TRY_CAST({cols['TOTALCLEARED']} AS DOUBLE)) "
+                f"FROM {source.format(fmt=fmt)} WHERE {where}",
+            ]
+        return out
+
+    def files_diagnostics(self, path: str, sas: str) -> dict[str, str]:
+        out = {}
+        for label, (source, fmt, cols) in self._csv_sources(path, sas).items():
+            out[f"{label}: I/UNIT/VERSION"] = (
+                f"SELECT {cols['I']}, {cols['UNIT']}, {cols['VERSION']}, count(*) "
+                f"FROM {source.format(fmt=fmt)} GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 12"
+            )
+        return out
+
+    def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
+        """Created through the catalog unstaged, filled by one Databend INSERT, as for Trino and
+        Doris: the catalog refuses staged creates."""
+        _create_unstaged(self.cfg, table)
+        return {
+            "catalog create + Databend INSERT": [
+                f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}",
+            ],
+        }
+
+
+CANDIDATES = {"starrocks": StarRocks, "trino": Trino, "doris": Doris, "databend": Databend}
 
 
 def _try(engine: Candidate, label: str, statements: list[str]) -> tuple[bool, list[tuple]]:
