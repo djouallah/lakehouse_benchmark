@@ -41,6 +41,14 @@ def physical(path: str) -> str:
 
 
 def iceberg() -> None:
+    # The compose's `mc` bucket setup is not pullable any more; create the bucket here.
+    pafs.S3FileSystem(
+        endpoint_override="localhost:9000",
+        scheme="http",
+        access_key="admin",
+        secret_key="password",
+        region="us-east-1",
+    ).create_dir("warehouse")
     catalog = load_catalog("rest", uri="http://localhost:8181", **S3)
     catalog.create_namespace_if_not_exists("demo")
     schema = Schema(

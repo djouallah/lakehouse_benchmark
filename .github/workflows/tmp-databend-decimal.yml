@@ -26,7 +26,7 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/databendlabs/databend/main/docker/it-iceberg-catalogs/docker-compose.yaml -o compose.yaml
           # minio/* left Docker Hub; the same tags are on quay.io.
           sed -i 's#image: minio/#image: quay.io/minio/#' compose.yaml
-          docker compose -f compose.yaml up -d rest minio mc
+          docker compose -f compose.yaml up -d rest minio
           until curl -fs http://localhost:8181/v1/config; do sleep 2; done
       - uses: actions/setup-python@v6
         with:
