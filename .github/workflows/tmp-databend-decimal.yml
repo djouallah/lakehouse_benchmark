@@ -25,7 +25,7 @@ jobs:
       # so the repro script runs as root to write data files into them.
       - name: Iceberg REST catalog, warehouse file:///tmp/wh
         run: |
-          mkdir -p /tmp/wh
+          mkdir -p /tmp/wh && chmod 777 /tmp/wh
           docker run -d --name rest -p 8181:8181 -v /tmp/wh:/tmp/wh \
             -e CATALOG_WAREHOUSE=file:///tmp/wh \
             -e CATALOG_IO__IMPL=org.apache.iceberg.hadoop.HadoopFileIO \
