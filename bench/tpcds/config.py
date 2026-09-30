@@ -56,6 +56,9 @@ ENGINES = (
     # Trino, and read the same on every engine once written as standard SQL (bench/tpcds/
     # rewrite.py `portable`).
     "trino_iceberg",
+    # LakeSail: back 2026-09-30. 0.7.2 answers 99/99 at SF=10 (run 36652684303) once its
+    # double-quoted aliases are backticked (bench/tpch/queries.py BACKTICK_ALIASES).
+    "lakesail_iceberg",
 )
 
 # The 24 tables of the spec (dsdgen also emits `dbgen_version`, which is not one), LARGEST FIRST
