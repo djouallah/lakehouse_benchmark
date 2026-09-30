@@ -32,7 +32,9 @@ from bench.config import SQL_DIR, Config
 #                     to pola-rs/polars#29449 -- negative decimal bounds decoded as unsigned.)
 #   lakesail_iceberg  38 MINUTES COLD for 90 of 99 statements, then 50 of 99 failed warm. Its
 #                     parser rejects the spec's double-quoted aliases (`AS "order count"`), which
-#                     is 8 statements at SF=1 already; the rest is scale.
+#                     is 8 statements at SF=1 already; the rest is scale. On 0.7.2 (run
+#                     36648458503) cold is 24 minutes and Q71 passes (lakehq/sail#2642), and
+#                     bench/tpch/queries.py now backticks those aliases for it (BACKTICK_ALIASES).
 #   daft_iceberg      never ran here: TPC-H already excludes it from the query benchmark
 #                     (Eventual-Inc/Daft#7532).
 #

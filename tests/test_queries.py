@@ -14,6 +14,7 @@ import pytest
 from bench.tpcds.config import TpcdsConfig
 from bench.tpch.config import ENGINES, TpchConfig
 from bench.tpch.queries import (
+    BACKTICK_ALIASES,
     IDENT_STYLE,
     N_QUERIES,
     SQL_PATH,
@@ -70,7 +71,22 @@ def test_every_table_reference_is_rewritten(suite, engine):
         assert not re.search(rf'(?<!"){re.escape(SCHEMA)}\.\w+(?!")', joined)
     else:
         assert f"{SCHEMA}.{first}" in joined
-        assert "`" not in joined
+        if engine in BACKTICK_ALIASES:
+            assert f"`{SCHEMA}." not in joined  # its aliases are backticked, its tables not
+        else:
+            assert "`" not in joined
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_double_quoted_aliases_reach_only_engines_that_parse_them(engine):
+    """Sail reads `AS "order count"` as a string and fails eight TPC-DS statements on it."""
+    joined = "\n".join(_load(TpcdsConfig, engine))
+    if engine in BACKTICK_ALIASES:
+        assert '"' not in joined
+        assert "AS `order count`" in joined
+        assert "AS `>120 days`" in joined
+    else:
+        assert 'AS "order count"' in joined
 
 
 def test_polars_and_chdb_keep_the_qualified_name_quoted():

@@ -80,7 +80,7 @@ Largest scale each engine completes, cold, every statement answered:
 | Gluten/Velox | SF=100 (1,008 s) | **SF=100** (6,757 s) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
 | DuckDB | SF=200 (1,302 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit. TPC-H SF=300 Q18: the runner dies in its 450M-group aggregate |
 | StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
-| LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases don't parse, Q71 (sail#2642) |
+| LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases didn't parse (now backticked for it); Q71 passes on 0.7.2 |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
 | chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS aborts in glibc at any SF |
 | Polars | SF=10 (82–106 s) | — | TPC-H SF=30: runner OOM-killed at Q7; TPC-DS SF=10: runner lost at 55 min |
@@ -342,6 +342,18 @@ Largest scale each engine completes, cold, every statement answered:
   - The warm pass then lost 42 statements to `400 Bad Request` once the token baked into its
     environment expired.
   - It was dropped from TPC-DS and kept in TPC-H and the ETL.
+- **0.7.2 (DataFusion 55) made TPC-DS 37% faster.** SF=10 cold, run 36648458503: 91/99 in
+  1,458 s. On the 90 statements both versions answer, 2,289 s became 1,444 s. 74 of them got
+  more than 20% faster, and the scan-bound ones by 3–7× (Q39 65→9 s, Q21 66→9 s, Q37 68→10 s).
+  4 got more than 20% slower (Q59 21→44 s, Q63 20→35 s, Q79 21→35 s, Q24 29→39 s).
+  - Q71 passes (9,669 rows), so #2642 is fixed by the DataFusion upgrade.
+  - The 8 double-quoted aliases still fail. Sail's parser has an `allow_double_quote_identifier`
+    switch, but its analyzer always builds `ParserOptions::default()`, which leaves it off.
+    `spark.sql.ansi.doubleQuotedIdentifiers` appears in Sail's config list but never reaches the
+    parser. `bench/tpch/queries.py` hands Sail those aliases in backticks, which gives the same
+    column names.
+  - TPC-H SF=10 did not move: 221 s, inside 0.7.1's 118–236 s spread. Every statement still
+    reloads its tables (#2629), and Q22 absorbed a 23 s loadTable stall.
 - **Its ETL table has no `filename` column.** The DataFrame transform it shares with Spark
   (`_spark_df.py`) leaves it out because Sail can't provide it.
 - **Late materialization made it slower.** `SAIL_PARQUET__PUSHDOWN_FILTERS` should help Q6, Q12

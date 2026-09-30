@@ -70,6 +70,19 @@ IDENT_STYLE = {
 }
 
 
+# Engines whose parser reads a double-quoted name as a STRING, so `AS "order count"` -- the
+# TPC-DS spec's own alias in Q16, Q32, Q50, Q62, Q92, Q94, Q95 and Q99 -- is a parse error.
+#   LakeSail: its parser has an `allow_double_quote_identifier` switch, but the analyzer always
+#   builds ParserOptions::default() (off), and `spark.sql.ansi.doubleQuotedIdentifiers` (the
+#   setting Spark takes, bench/tpch/engines/pyspark_iceberg.py) is listed in Sail's config but
+#   never reaches it (sail-sql-analyzer/src/parser.rs at v0.7.2). The same alias in backticks is
+#   the same column name, so only the quoting changes.
+BACKTICK_ALIASES = frozenset({"lakesail_iceberg"})
+
+# `AS "..."`: in sql/tpch.sql and sql/tpcds.sql a double quote only ever opens a column alias.
+_QUOTED_ALIAS = re.compile(r'\bAS\s+"([^"`]+)"', re.IGNORECASE)
+
+
 def render(sql: str, schema: str, sf: int) -> str:
     """Substitute the two placeholders.
 
@@ -119,6 +132,8 @@ def load(
     """
     raw = (path or SQL_PATH).read_text(encoding="utf-8")
     rendered = rewrite_identifiers(render(raw, schema, sf), engine, schema)
+    if engine in BACKTICK_ALIASES:
+        rendered = _QUOTED_ALIAS.sub(r"AS `\1`", rendered)
     statements = [s.strip() for s in rendered.split(";") if s.strip()]
     if len(statements) != expected:
         raise ValueError(

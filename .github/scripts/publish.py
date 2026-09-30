@@ -258,7 +258,11 @@ def main() -> int:
 
     run = merge(parts_dir, sf)
     run.test = suite.TEST
-    rows = summarize(run, suite.ENGINES)
+    # Every engine this run measured, not just the suite's roster: a dispatch with an engine the
+    # suite leaves out (Sail on TPC-DS, run 36648458503) otherwise summarized to nothing and
+    # crashed on rows[0] below, after the measurement and before the commit.
+    ran = suite.ENGINES + tuple(e for e in run.engines if e not in suite.ENGINES)
+    rows = summarize(run, ran)
 
     if not any_engine_produced_a_measurement(run):
         write_step_summary(run, rows, suite)
