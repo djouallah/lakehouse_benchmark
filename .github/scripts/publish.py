@@ -145,7 +145,6 @@ def write_results_md(run: Run, rows: list[dict], table, path: Path, suite) -> No
     failures = [
         (engine, row)
         for engine, result in run.engines.items()
-        if engine in suite.ENGINES
         for row in result.rows
         if row.status == "error"
     ]
@@ -197,19 +196,15 @@ def write_results_md(run: Run, rows: list[dict], table, path: Path, suite) -> No
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_headline_docs(run: Run, rows: list[dict], table, suite) -> None:
-    """Charts and RESULTS.md, drawn from the suite's CURRENT engine roll only.
-
-    The history keeps every engine that ever ran; the headline does not. An engine dropped from
-    a suite would otherwise stay on the charts until it aged out of the recent-runs window.
-    """
+def write_headline_docs(run: Run, rows: list[dict], table, suite, engines: tuple[str, ...]) -> None:
+    """Charts and RESULTS.md, drawn from every engine with a stored run."""
     import pyarrow as pa
     import pyarrow.compute as pc
 
     docs = Path(suite.DOCS_DIR)
     shown = table.filter(
         pc.and_(
-            pc.is_in(table["engine"], value_set=pa.array(list(suite.ENGINES))),
+            pc.is_in(table["engine"], value_set=pa.array(list(engines))),
             pc.is_in(table["run_type"], value_set=pa.array(list(suite.PASSES))),
         )
     )
@@ -277,6 +272,9 @@ def main() -> int:
 
     table = load_all(results_dir)
     write_csv(table, csv)
+    # Every engine with a stored run is on the charts, the suite's roster first.
+    stored = set(table.column("engine").to_pylist())
+    every = suite.ENGINES + tuple(sorted(stored - set(suite.ENGINES)))
     write_readme()
 
     # RESULTS.md and the per-query chart are the HEADLINE_SF view. The totals chart spans
@@ -288,9 +286,9 @@ def main() -> int:
         stored = sorted(results_dir.glob(f"*_sf{suite.HEADLINE_SF}_*.json"))
         headline = read_run(stored[-1]) if stored else None
     if headline is not None:
-        latest = latest_per_engine(results_dir, suite.HEADLINE_SF, suite.ENGINES, headline)
+        latest = latest_per_engine(results_dir, suite.HEADLINE_SF, every, headline)
         latest = only_passes(latest, suite.PASSES)
-        write_headline_docs(latest, summarize(latest, suite.ENGINES), table, suite)
+        write_headline_docs(latest, summarize(latest, every), table, suite, every)
     else:
         print(
             f"::notice::SF={sf} is not the headline scale ({suite.HEADLINE_SF}): the run and the "
