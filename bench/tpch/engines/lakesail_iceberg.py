@@ -28,9 +28,10 @@ pyspark-client, which declares its own floors.
 from __future__ import annotations
 
 import os
+import time
 
 from bench import auth, scrub
-from bench.config import CATALOG_CACHE_SECONDS, Config
+from bench.config import CATALOG_CACHE_SECONDS, TOKEN_MIN_LIFETIME_SECONDS, Config
 
 # DataFusion's memory pool ceiling. See setup().
 POOL_BYTES = 10 * 1024**3
@@ -43,6 +44,7 @@ class LakesailIceberg:
         self.cfg = cfg
         self._server = None
         self._spark = None
+        self._expires = float("inf")
 
     @property
     def version(self) -> str:
@@ -60,9 +62,10 @@ class LakesailIceberg:
         from pyspark.sql import SparkSession
 
         token = auth.onelake_token()
+        self._expires = auth.token_expires_on()
 
         # Sail is configured by environment, read once at server start -- so the token is captured
-        # here and never refreshed, the same ceiling chDB has.
+        # here, and `refresh` renews it by starting a new server.
         os.environ["SAIL_OPTIMIZER__ENABLE_JOIN_REORDER"] = "true"
         os.environ["SAIL_EXECUTION__COLLECT_STATISTICS"] = "true"
         # A BOUNDED POOL, SO SAIL SPILLS (module docstring). `runtime.memory_pool.type` and
@@ -138,6 +141,24 @@ class LakesailIceberg:
         # style in bench/tpch/queries.py), so the catalog resolves them without a
         # current schema.
         scrub.safe_print(f"  pysail {self.version} listening on {port}")
+
+    def refresh(self) -> None:
+        """Restart the server on a fresh token once the current one has under 15 minutes left.
+
+        The token lives in env vars Sail reads once at start, so a new server is the only way to
+        renew it. Without this, TPC-DS SF=60 lost Q32-Q99 to `Failed to load table ...: 400 Bad
+        Request` an hour in (run 36658601681).
+        """
+        if self._expires - time.time() > TOKEN_MIN_LIFETIME_SECONDS:
+            return
+        start = time.perf_counter()
+        self.close()
+        auth.onelake_token(fresh=True)
+        self.setup()
+        scrub.safe_print(
+            f"  credentials within {TOKEN_MIN_LIFETIME_SECONDS // 60} min of expiry: "
+            f"Sail restarted in {time.perf_counter() - start:.1f}s"
+        )
 
     def execute(self, sql: str) -> int:
         """Run and count.
