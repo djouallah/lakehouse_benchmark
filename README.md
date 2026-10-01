@@ -22,7 +22,7 @@ Most benchmarks are big data using big compute. Here we are testing small to med
 
 ## Adding an engine
 
-A candidate engine must pass all four; the `candidate engine` workflow checks 2 to 4:
+A candidate engine must pass all three; the `candidate engine` workflow checks them:
 
 1. **SQL**: it runs the TPC-H suite as SQL.
 2. **Read from Azure**: it reads the OneLake Iceberg tables through the REST catalog, and raw files in the lakehouse Files section.
