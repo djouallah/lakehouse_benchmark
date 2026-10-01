@@ -37,7 +37,6 @@ Tried and not added:
 
 - **Apache Doris**: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes (condition 2).
 - **Firebolt Core**: attaches the catalog, but only reads data from `s3://`, `gs://` or `file://`. It rejects OneLake's `abfss://` paths, and its `azure://` location takes no Azure token (condition 2).
-- **CedarDB**: no Iceberg support yet, it's on their roadmap (condition 2).
 
 ## Gluten/Velox vs Spark-OSS
 
