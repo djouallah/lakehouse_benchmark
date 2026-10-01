@@ -27,6 +27,7 @@ import os
 
 from bench import auth, scrub
 from bench.config import Config
+from bench.tpch.engines.base import restart_on_fresh_token
 
 
 class PolarsIceberg:
@@ -35,6 +36,7 @@ class PolarsIceberg:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self._ctx = None
+        self._expires = float("inf")
 
     @property
     def version(self) -> str:
@@ -51,6 +53,7 @@ class PolarsIceberg:
 
         catalog = auth.catalog(self.cfg)
         token = auth.onelake_token()
+        self._expires = auth.token_expires_on()
 
         # Reading the data FILES is a separate credential path from reading the catalog: pyiceberg
         # resolves the manifest, then Polars opens the parquet itself and needs its own token.
@@ -78,6 +81,10 @@ class PolarsIceberg:
         runner. Streaming spills for group-bys and joins, though its coverage is not total.
         """
         return self._ctx.execute(sql).collect(engine="streaming").height
+
+    def refresh(self) -> None:
+        """Re-register on a fresh token: each scan holds it in its storage_options."""
+        restart_on_fresh_token(self, self._expires)
 
     def close(self) -> None:
         self._ctx = None

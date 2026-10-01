@@ -28,10 +28,10 @@ pyspark-client, which declares its own floors.
 from __future__ import annotations
 
 import os
-import time
 
 from bench import auth, scrub
-from bench.config import CATALOG_CACHE_SECONDS, TOKEN_MIN_LIFETIME_SECONDS, Config
+from bench.config import CATALOG_CACHE_SECONDS, Config
+from bench.tpch.engines.base import restart_on_fresh_token
 
 # DataFusion's memory pool ceiling. See setup().
 POOL_BYTES = 10 * 1024**3
@@ -143,22 +143,8 @@ class LakesailIceberg:
         scrub.safe_print(f"  pysail {self.version} listening on {port}")
 
     def refresh(self) -> None:
-        """Restart the server on a fresh token once the current one has under 15 minutes left.
-
-        The token lives in env vars Sail reads once at start, so a new server is the only way to
-        renew it. Without this, TPC-DS SF=60 lost Q32-Q99 to `Failed to load table ...: 400 Bad
-        Request` an hour in (run 36658601681).
-        """
-        if self._expires - time.time() > TOKEN_MIN_LIFETIME_SECONDS:
-            return
-        start = time.perf_counter()
-        self.close()
-        auth.onelake_token(fresh=True)
-        self.setup()
-        scrub.safe_print(
-            f"  credentials within {TOKEN_MIN_LIFETIME_SECONDS // 60} min of expiry: "
-            f"Sail restarted in {time.perf_counter() - start:.1f}s"
-        )
+        """A new server on a fresh token: Sail reads it from env vars once, at start."""
+        restart_on_fresh_token(self, self._expires)
 
     def execute(self, sql: str) -> int:
         """Run and count.

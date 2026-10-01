@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from bench import auth, scrub
 from bench.config import Config
+from bench.tpch.engines.base import restart_on_fresh_token
 
 
 class DaftIceberg:
@@ -31,6 +32,7 @@ class DaftIceberg:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self._sess = None
+        self._expires = float("inf")
 
     @property
     def version(self) -> str:
@@ -44,6 +46,7 @@ class DaftIceberg:
         from daft.io import AzureConfig, IOConfig
 
         token = auth.onelake_token()
+        self._expires = auth.token_expires_on()
         io_config = IOConfig(
             azure=AzureConfig(
                 storage_account="onelake",
@@ -76,6 +79,10 @@ class DaftIceberg:
         partitions rather than planning a second query.
         """
         return self._sess.sql(sql).collect().count_rows()
+
+    def refresh(self) -> None:
+        """Re-register on a fresh token: each read holds it in its IOConfig."""
+        restart_on_fresh_token(self, self._expires)
 
     def close(self) -> None:
         self._sess = None

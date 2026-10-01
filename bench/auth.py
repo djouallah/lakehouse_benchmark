@@ -20,12 +20,12 @@ configuration -- same app registration, same federated credential, same
 CLI from the Python process, so `bench/` behaves identically on a laptop.
 
 AN ENGINE HOLDS A STRING, NOT THIS CREDENTIAL, so refreshing here does not reach inside it. The
-engines that outlive the token renew it themselves: the runner calls each engine's `refresh`
-before every statement, and DuckDB re-creates its storage secret, Spark and Gluten restart their
-JVM, StarRocks re-attaches, LakeSail restarts its server, once less than
-config.TOKEN_MIN_LIFETIME_SECONDS remain (see bench/tpch/engines/base.py and `fresh` below). chDB
-(`CREATE DATABASE`) has no `refresh`: its session is still bounded by the token it was handed,
-which is why etl.yml sets `timeout-minutes: 50`. Mint late, never at job start.
+engines renew it themselves: the runner calls each engine's `refresh` before every statement, and
+once less than config.TOKEN_MIN_LIFETIME_SECONDS remain DuckDB re-creates its storage secret,
+StarRocks and Trino re-attach, and the rest restart on a fresh token -- Spark and Gluten their JVM,
+LakeSail, chDB, Polars and Daft through base.restart_on_fresh_token. Every engine has one (see
+bench/tpch/engines/base.py and `fresh` below). The ETL engines are one write each and are still
+bounded by the token they were handed, which is why etl.yml sets `timeout-minutes: 50`. Mint late, never at job start.
 """
 
 from __future__ import annotations

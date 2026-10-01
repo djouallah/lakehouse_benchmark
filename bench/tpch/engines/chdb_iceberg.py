@@ -26,6 +26,7 @@ import pathlib
 from bench import auth, scrub
 from bench.config import CATALOG_CACHE_SECONDS, ICEBERG_ENDPOINT, Config
 from bench.tpch.config import chdb_cache_gib
+from bench.tpch.engines.base import restart_on_fresh_token
 
 # The attached catalog's name inside chDB.
 DB = "onelake"
@@ -82,6 +83,8 @@ class ChdbIceberg:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self._session = None
+        self._expires = float("inf")
+        self._attach = 0
 
     @property
     def version(self) -> str:
@@ -122,7 +125,11 @@ class ChdbIceberg:
 
         scratch = pathlib.Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "chdb"
         cfg_path = self._write_config(scratch)
-        self._session = session.Session(f"{scratch}/bench?config-file={cfg_path}")
+        # A new session directory per setup: a session keeps its databases on disk, so a refresh's
+        # second `CREATE DATABASE onelake` in the old one would fail "already exists". The file
+        # cache is config.xml's own path and survives the restart.
+        self._attach += 1
+        self._session = session.Session(f"{scratch}/bench-{self._attach}?config-file={cfg_path}")
 
         for statement in (
             f"SET {GATE} = 1",
@@ -150,6 +157,7 @@ class ChdbIceberg:
 
         # NOT logged, at any verbosity: this statement contains the bearer token.
         token = auth.onelake_token()
+        self._expires = auth.token_expires_on()
         self._session.query(
             f"""
             CREATE DATABASE {DB}
@@ -181,6 +189,10 @@ class ChdbIceberg:
                 self._session.query("SELECT 1", "JSONCompact")
             raise
         return len(_last_document(str(result)).get("data", []))
+
+    def refresh(self) -> None:
+        """A new session on a fresh token: the attach (`CREATE DATABASE`) holds it as a string."""
+        restart_on_fresh_token(self, self._expires)
 
     def close(self) -> None:
         if self._session is not None:

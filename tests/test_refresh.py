@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import importlib
 from types import SimpleNamespace
 
 import pytest
 
 from bench import auth
 from bench.config import TOKEN_MIN_LIFETIME_SECONDS
+from bench.tpch.config import ENGINES
 from bench.tpch.engines import pyspark_gluten_iceberg as gluten
 from bench.tpch.engines import pyspark_iceberg as spark
 
@@ -101,3 +103,18 @@ def test_gluten_watches_whichever_of_bearer_and_sas_expires_first(monkeypatch):
     engine._expires = 500.0
     engine._storage_conf({}, "onelake.dfs.fabric.microsoft.com")
     assert engine._expires == 500.0
+
+
+@pytest.mark.parametrize("name", ENGINES)
+def test_every_engine_renews_its_token(name):
+    """No engine is left bounded by the hour-long token it was set up with.
+
+    LakeSail had no `refresh`, and TPC-DS SF=60 lost Q32-Q99 to `400 Bad Request` an hour in
+    (run 36658601681). One rule for all of them, so the next engine cannot repeat it.
+    """
+    module = importlib.import_module(f"bench.tpch.engines.{name}")
+    classes = [
+        c for c in vars(module).values() if isinstance(c, type) and getattr(c, "name", None) == name
+    ]
+    assert classes, f"{name}: no engine class"
+    assert callable(getattr(classes[0], "refresh", None)), f"{name} has no refresh()"

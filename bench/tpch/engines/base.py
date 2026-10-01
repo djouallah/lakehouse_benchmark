@@ -24,7 +24,11 @@ timing chart can never give you: if two engines disagree about cardinality, one 
 
 from __future__ import annotations
 
+import time
 from typing import Protocol
+
+from bench import auth, scrub
+from bench.config import TOKEN_MIN_LIFETIME_SECONDS
 
 
 class Engine(Protocol):
@@ -55,15 +59,36 @@ class Engine(Protocol):
         """Run one statement to completion and return its row count."""
         ...
 
-    # OPTIONAL, and not declared here so the engines without one still satisfy the protocol:
-    #
-    #     def refresh(self) -> None
-    #
-    # Called by the runner before every statement, OUTSIDE the timer. An engine that captured a
-    # credential string at setup renews it here once less than config.TOKEN_MIN_LIFETIME_SECONDS
-    # of it remains, so a pass longer than the credential's hour does not die `Unauthorized`
-    # partway through. Above that threshold it must cost nothing -- a clock comparison.
+    def refresh(self) -> None:
+        """Renew the OneLake token. EVERY engine has one (tests/test_refresh.py checks).
+
+        Called by the runner before every statement, OUTSIDE the timer. An engine holds the token
+        as a string from setup, so once less than config.TOKEN_MIN_LIFETIME_SECONDS of it
+        remains it must put a fresh one in place, or a pass longer than the token's hour dies
+        `Unauthorized` partway through. Above that threshold it must cost nothing -- a clock
+        comparison. An engine that can swap the token in place does (DuckDB's secret, StarRocks'
+        and Trino's catalog); one that cannot restarts with `restart_on_fresh_token`.
+        """
+        ...
 
     def close(self) -> None:
         """Release whatever the engine holds. Must be safe to call twice."""
         ...
+
+
+def restart_on_fresh_token(engine, expires: float) -> None:
+    """`refresh` for an engine that can only take a token at setup: close, re-mint, set up again.
+
+    `expires` is the token's expiry as setup saw it (`auth.token_expires_on()` right after
+    minting). The restart is untimed, like every refresh.
+    """
+    if expires - time.time() > TOKEN_MIN_LIFETIME_SECONDS:
+        return
+    start = time.perf_counter()
+    engine.close()
+    auth.onelake_token(fresh=True)
+    engine.setup()
+    scrub.safe_print(
+        f"  credentials within {TOKEN_MIN_LIFETIME_SECONDS // 60} min of expiry: "
+        f"{engine.name} restarted in {time.perf_counter() - start:.1f}s"
+    )
