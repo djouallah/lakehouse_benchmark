@@ -960,15 +960,215 @@ class Databend(Candidate):
         }
 
 
-CANDIDATES = {"starrocks": StarRocks, "trino": Trino, "doris": Doris, "databend": Databend}
+class PgLake(Candidate):
+    """pg_lake: Postgres plans, pgduck_server (DuckDB) scans. Two containers, bench/pg_lake.py.
+
+    CATALOG LOGIN is pg_lake's OAuth2 client-credentials grant pointed at bench/pg_lake.py's token
+    shim, which answers with the workload-identity bearer: pg_lake has no static-bearer option
+    (pg_lake#209) and the bench has no client secret. STORAGE is a DuckDB Azure secret inside
+    pgduck_server. Existing catalog tables attach `read_only`, columns from their metadata.
+
+    NAMES. The Postgres database is `onelake`, so the probes' `onelake.CH0010.nation` is
+    database.schema.table; CH0010 folds to the schema ch0010 the attach creates.
+
+    Steps that are Python rather than SQL (the secret, the server, a catalog registration) are
+    callables in the variant lists.
+    """
+
+    name = "pg_lake"
+    default_image = ""
+    dialect = "duckdb_iceberg"
+    list_namespaces = "SELECT nspname FROM pg_namespace"
+
+    def __init__(self, cfg) -> None:
+        super().__init__(cfg)
+        from bench import pg_lake
+
+        self.pg = pg_lake
+        self.image = f"{pg_lake.IMAGE_PG} + {pg_lake.IMAGE_DUCK}"
+        self._c = None
+        self._token = ""
+
+    def start(self) -> None:
+        self.pg.start()
+        for image in (self.pg.IMAGE_PG, self.pg.IMAGE_DUCK):
+            digest = subprocess.run(
+                ["docker", "image", "inspect", "--format", "{{index .RepoDigests 0}}", image],
+                capture_output=True,
+                text=True,
+                check=False,
+            ).stdout.strip()
+            _say(f"image {image}  {digest}")
+
+    def sql(self, statement: str) -> list[tuple]:
+        import psycopg
+
+        if self._c is None or self._c.closed:
+            self._c = self.pg.connect()
+        try:
+            return self.pg.sql(self._c, statement)
+        except psycopg.OperationalError:
+            self._c = None
+            raise
+
+    def version(self) -> str:
+        return self.pg.version(self.pg.connect())
+
+    def recover(self) -> None:
+        self.pg.start()
+        self._c = None
+        if self._token:
+            self.pg.storage_secret(self._token)
+
+    def _secret(self, token: str) -> None:
+        self._token = token
+        self.pg.storage_secret(token)
+
+    def _show_config(self, token: str) -> None:
+        """What OneLake's /v1/config says, with and without the warehouse: pg_lake reads its
+        catalog prefix from there when `catalog_name` is not given."""
+        import urllib.request
+
+        for query in ("", f"?warehouse={self.cfg.warehouse}"):
+            request = urllib.request.Request(
+                f"{ICEBERG_ENDPOINT}/v1/config{query}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    _say(f"    /v1/config{query}: {response.read().decode()[:600]}")
+            except Exception as exc:  # noqa: BLE001 - a diagnostic
+                _say(f"    /v1/config{query}: {scrub.scrub_exc(exc, 400)}")
+
+    def _attach(self, token: str, catalog_name: str | None, server: dict[str, str]) -> list:
+        tables = [t[-1] for t in auth.catalog(self.cfg).list_tables(self.cfg.schema)]
+        schema = self.cfg.schema.lower()
+        return [
+            lambda: self._secret(token),
+            lambda: self._show_config(token),
+            lambda: self.pg.attach(
+                self._c or self.pg.connect(),
+                ICEBERG_ENDPOINT,
+                {"location_prefix": f"{self.cfg.base_path}/Tables", **server},
+            ),
+            f"DROP SCHEMA IF EXISTS {schema} CASCADE",
+            f"CREATE SCHEMA {schema}",
+            *[self.pg.read_only_table(self.cfg.schema, t, catalog_name) for t in tables],
+        ]
+
+    def attach_variants(self, token: str, sas: str) -> dict[str, list]:
+        return {
+            "shim bearer, catalog_name = <workspace>/<lakehouse>": self._attach(
+                token, self.cfg.warehouse, {}
+            ),
+            "shim bearer, prefix from /v1/config": self._attach(token, None, {}),
+            "shim bearer, server catalog_name = <workspace>/<lakehouse>": self._attach(
+                token, None, {"catalog_name": self.cfg.warehouse}
+            ),
+        }
+
+    def use_catalog(self) -> list[str]:
+        return []
+
+    def files_variants(self, path: str, sas: str) -> dict[str, list[str]]:
+        """The ETL's read of one AEMO file: a pg_lake foreign table over the CSV, 120 text
+        columns by position, the `C` line skipped as the header, short rows padded with NULL."""
+        declared = [c.lower() for c in COLUMNS] + [
+            f"c{i}" for i in range(len(COLUMNS), CSV_MAX_WIDTH)
+        ]
+        columns = ", ".join(f'"{c}" text' for c in declared)
+        where = " AND ".join(f"\"{c.lower()}\" = '{v}'" for c, v in FILTER)
+        return {
+            "foreign table, csv, header + null_padding": [
+                "DROP FOREIGN TABLE IF EXISTS etl_aemo",
+                f"CREATE FOREIGN TABLE etl_aemo ({columns}) SERVER pg_lake OPTIONS "
+                f"(path '{path}', format 'csv', header 'true', null_padding 'true')",
+                'SELECT count(*), sum(CAST("totalcleared" AS double precision)) FROM etl_aemo '
+                f"WHERE {where}",
+            ],
+        }
+
+    def files_diagnostics(self, path: str, sas: str) -> dict[str, str]:
+        return {
+            "rows per record type in that file": (
+                'SELECT "i", "unit", "version", count(*) FROM etl_aemo '
+                "GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 12"
+            )
+        }
+
+    def _clear(self, table: str) -> None:
+        """No candidate.<table> in the catalog, and no folder under Tables/candidate."""
+        catalog = auth.catalog(self.cfg)
+        if catalog.table_exists(f"{WRITE_NS}.{table}"):
+            catalog.drop_table(f"{WRITE_NS}.{table}")
+        directory = onelake.file_system(self.cfg).get_directory_client(
+            f"{self.cfg.lakehouse_id}/Tables/{WRITE_NS}/{table}"
+        )
+        if directory.exists():
+            directory.delete_directory()
+
+    def _publish(self, table: str) -> None:
+        """Make pg_lake's own Iceberg table under Tables/ visible through the catalog: wait for
+        OneLake to discover the folder, else register its metadata file through the catalog."""
+        catalog = auth.catalog(self.cfg)
+        identifier = f"{WRITE_NS}.{table}"
+        deadline = time.time() + 180
+        while time.time() < deadline:
+            if catalog.table_exists(identifier):
+                _say(f"    OneLake discovered {identifier} on its own")
+                return
+            time.sleep(15)
+        location = self.sql(
+            "SELECT metadata_location FROM iceberg_tables "
+            f"WHERE table_namespace = '{WRITE_NS}' AND table_name = '{table}'"
+        )[0][0]
+        _say(f"    not discovered in 180s; registering {location}")
+        catalog.register_table(identifier, location)
+
+    def write_variants(self, table: str, source: str) -> dict[str, list]:
+        location = f"{self.cfg.base_path}/Tables/{WRITE_NS}/{table}"
+        reset = [
+            lambda: self._clear(table),
+            f"CREATE SCHEMA IF NOT EXISTS {WRITE_NS}",
+            f"DROP TABLE IF EXISTS {WRITE_NS}.{table}",
+        ]
+        return {
+            # pg_lake creates and commits the table through the REST catalog itself.
+            "CTAS into the REST catalog": [
+                *reset,
+                f"CREATE TABLE {WRITE_NS}.{table} USING iceberg "
+                f"WITH (catalog = '{self.pg.SERVER}') AS SELECT * FROM {source}",
+            ],
+            # pg_lake writes the Iceberg table into the lakehouse's Tables section under its own
+            # (Postgres) catalog; the REST catalog then has to see it.
+            "CTAS to Tables/ in storage, then the catalog": [
+                *reset,
+                f"CREATE TABLE {WRITE_NS}.{table} USING iceberg "
+                f"WITH (location = '{location}') AS SELECT * FROM {source}",
+                lambda: self._publish(table),
+            ],
+        }
+
+    def write_diagnostics(self) -> None:
+        Trino.write_diagnostics(self)
 
 
-def _try(engine: Candidate, label: str, statements: list[str]) -> tuple[bool, list[tuple]]:
+CANDIDATES = {
+    "starrocks": StarRocks,
+    "trino": Trino,
+    "doris": Doris,
+    "databend": Databend,
+    "pg_lake": PgLake,
+}
+
+
+def _try(engine: Candidate, label: str, statements: list) -> tuple[bool, list[tuple]]:
+    """Run a variant's steps in order: SQL strings through the engine, callables in Python."""
     started = time.perf_counter()
     rows: list[tuple] = []
     try:
         for statement in statements:
-            rows = engine.sql(statement)
+            rows = (statement() or []) if callable(statement) else engine.sql(statement)
     except Exception as exc:  # noqa: BLE001 - reporting failures is this script's job
         took = time.perf_counter() - started
         _say(f"    FAIL  {label}  ({took:.1f}s)  {scrub.scrub_exc(exc, 1500)}")
