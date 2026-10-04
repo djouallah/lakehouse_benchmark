@@ -1071,47 +1071,21 @@ class PgLake(Candidate):
         return []
 
     def files_variants(self, path: str, sas: str) -> dict[str, list[str]]:
-        """The ETL's read of one AEMO file through a pg_lake foreign table, the `C` line skipped
-        as the header.
-
-        DuckDB's own ETL read skips rows wider than the declared columns with `ignore_errors`;
-        pg_lake passes no such option (its CSV options are header, delimiter, quote, escape,
-        new_line, null, null_padding, force_quote), and the first run failed on line 1732, a
-        DREGION `I` record wider than 120 columns. So: declare wider, or read each line whole and
-        split it in SQL.
-        """
+        """The ETL's read of one AEMO file: a pg_lake foreign table over the CSV, 120 text
+        columns by position, the `C` line skipped as the header, short rows padded with NULL
+        (`null_padding`, pg_lake#152 / PR #155)."""
+        declared = [c.lower() for c in COLUMNS] + [
+            f"c{i}" for i in range(len(COLUMNS), CSV_MAX_WIDTH)
+        ]
+        columns = ", ".join(f'"{c}" text' for c in declared)
         where = " AND ".join(f"\"{c.lower()}\" = '{v}'" for c, v in FILTER)
-
-        def by_position(width: int) -> list[str]:
-            declared = [c.lower() for c in COLUMNS] + [f"c{i}" for i in range(len(COLUMNS), width)]
-            columns = ", ".join(f'"{c}" text' for c in declared)
-            return [
+        return {
+            "foreign table, csv, header + null_padding": [
                 "DROP FOREIGN TABLE IF EXISTS etl_aemo",
                 f"CREATE FOREIGN TABLE etl_aemo ({columns}) SERVER pg_lake OPTIONS "
                 f"(path '{path}', format 'csv', header 'true', null_padding 'true')",
                 'SELECT count(*), sum(CAST("totalcleared" AS double precision)) FROM etl_aemo '
                 f"WHERE {where}",
-            ]
-
-        position = {c: i + 1 for i, c in enumerate(COLUMNS)}
-
-        def field(column: str) -> str:
-            return f"replace(split_part(line, ',', {position[column]}), '\"', '')"
-
-        split_where = " AND ".join(f"{field(c)} = '{v}'" for c, v in FILTER)
-        return {
-            f"foreign table, {CSV_MAX_WIDTH} columns, header + null_padding": by_position(
-                CSV_MAX_WIDTH
-            ),
-            "foreign table, 400 columns, header + null_padding": by_position(400),
-            # One column per line: delimiter and quote are control characters absent from AEMO.
-            "foreign table, one column per line, split_part in SQL": [
-                "DROP FOREIGN TABLE IF EXISTS etl_lines",
-                "CREATE FOREIGN TABLE etl_lines (line text) SERVER pg_lake OPTIONS "
-                f"(path '{path}', format 'csv', header 'true', delimiter E'\x01', "
-                "quote E'\x02', escape E'\x02')",
-                f"SELECT count(*), sum(CAST({field('TOTALCLEARED')} AS double precision)) "
-                f"FROM etl_lines WHERE {split_where}",
             ],
         }
 
