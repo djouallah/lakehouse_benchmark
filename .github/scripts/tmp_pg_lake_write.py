@@ -14,6 +14,7 @@ Delete once read.
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 import urllib.parse
 import urllib.request
@@ -31,12 +32,17 @@ def say(text: object) -> None:
 
 
 def duck(statement: str) -> None:
-    try:
-        with pg_lake.connect_duck() as conn:
-            rows = pg_lake.sql(conn, statement)
-        say(f"PASS  {statement}\n      -> {len(rows)} rows {rows[:3]}")
-    except Exception as exc:  # noqa: BLE001 - reporting is the point
-        say(f"FAIL  {statement}\n      -> {scrub.scrub_exc(exc, 800)}")
+    """Through psql inside the pgduck container: psycopg's C extension segfaulted the Python
+    process on the first blob listing in run 37187539188. These statements carry no token."""
+    out = subprocess.run(
+        ["docker", "exec", pg_lake.DUCK_CONTAINER, "psql", "-h", pg_lake.INSIDE[pg_lake.SOCKET_DIR],
+         "-p", str(pg_lake.DUCK_PORT), "-U", "postgres", "-At", "-c", statement],
+        capture_output=True,
+        text=True,
+        check=False,
+    )  # fmt: skip
+    status = "PASS" if out.returncode == 0 else "FAIL"
+    say(f"{status}  {statement}\n      -> {(out.stdout + out.stderr).strip()[:800]}")
 
 
 def rest(path: str, token: str) -> dict:
