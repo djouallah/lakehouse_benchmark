@@ -1209,7 +1209,7 @@ def _try(engine: Candidate, label: str, statements: list) -> tuple[bool, list[tu
             rows = (statement() or []) if callable(statement) else engine.sql(statement)
     except Exception as exc:  # noqa: BLE001 - reporting failures is this script's job
         took = time.perf_counter() - started
-        _say(f"    FAIL  {label}  ({took:.1f}s)  {scrub.scrub_exc(exc, 1500)}")
+        _say(f"    FAIL  {label}  ({took:.1f}s)  {scrub.scrub_exc(exc, 6000)}")
         return False, []
     _say(f"    PASS  {label}  ({time.perf_counter() - started:.1f}s)  {str(rows[:5])[:300]}")
     return True, rows
