@@ -46,6 +46,10 @@ NATION_ROWS = 25
 # The widest AEMO record in the landed files, from StarRocks' own inference error in run
 # 36213949272 ("Schema column count: 120").
 CSV_MAX_WIDTH = 120
+# The widest record in the probed file, measured by `_reference` before the engine reads it. A
+# reader without ignore_errors (pg_lake) has to declare at least this many columns: line 1732 of
+# the probed file is a 121-field DREGION record (run 37184581905).
+CSV_WIDEST = 0
 # The GitHub OIDC assertion, on the host and as the container sees it. Hadoop's
 # WorkloadIdentityTokenProvider re-reads the file on every token refresh, so a thread rewrites it
 # well inside the assertion's ~5-minute life -- the scheme bench/tpch/engines/pyspark_iceberg.py
@@ -1071,12 +1075,12 @@ class PgLake(Candidate):
         return []
 
     def files_variants(self, path: str, sas: str) -> dict[str, list[str]]:
-        """The ETL's read of one AEMO file: a pg_lake foreign table over the CSV, 120 text
-        columns by position, the `C` line skipped as the header, short rows padded with NULL
-        (`null_padding`, pg_lake#152 / PR #155)."""
-        declared = [c.lower() for c in COLUMNS] + [
-            f"c{i}" for i in range(len(COLUMNS), CSV_MAX_WIDTH)
-        ]
+        """The ETL's read of one AEMO file: a pg_lake foreign table over the CSV, text columns by
+        position, the `C` line skipped as the header, short rows padded with NULL (`null_padding`,
+        pg_lake#152 / PR #155). pg_lake passes no `ignore_errors` (pg_lake#74), so a row wider
+        than the declared columns fails the read: declare as many as the widest record."""
+        width = max(CSV_MAX_WIDTH, CSV_WIDEST)
+        declared = [c.lower() for c in COLUMNS] + [f"c{i}" for i in range(len(COLUMNS), width)]
         columns = ", ".join(f'"{c}" text' for c in declared)
         where = " AND ".join(f"\"{c.lower()}\" = '{v}'" for c, v in FILTER)
         return {
@@ -1230,9 +1234,11 @@ def _reference(etl: EtlConfig, name: str) -> tuple[int, float]:
     )
     position = {c: i for i, c in enumerate(COLUMNS)}
     cleared = position["TOTALCLEARED"]
+    global CSV_WIDEST
     rows, total = 0, 0.0
     widths: Counter[int] = Counter()
     for record in csv.reader(io.StringIO(raw).readlines()[1:]):
+        CSV_WIDEST = max(CSV_WIDEST, len(record))
         if all(len(record) > position[c] and record[position[c]] == v for c, v in FILTER):
             rows += 1
             widths[len(record)] += 1
@@ -1240,6 +1246,7 @@ def _reference(etl: EtlConfig, name: str) -> tuple[int, float]:
                 total += float(record[cleared])
     # The field count of the rows kept: what a schema-by-position reader has to cope with.
     _say(f"  reference: DUNIT v3 row widths {dict(widths)} (COLUMNS has {len(COLUMNS)})")
+    _say(f"  reference: widest record in the file has {CSV_WIDEST} fields")
     return rows, total
 
 
