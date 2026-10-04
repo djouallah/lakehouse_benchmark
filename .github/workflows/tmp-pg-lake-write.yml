@@ -1,0 +1,52 @@
+name: tmp pg_lake write
+
+# TEMPORARY. .github/scripts/tmp_pg_lake_write.py: where pg_lake's Iceberg write to OneLake fails
+# (the abfss:// 404, the https:// paths pyiceberg refuses). Delete once read.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: onelake
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+  packages: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONUNBUFFERED: "1"
+      BENCH_SUITE: tpch
+      TPCH_SF: "10"
+      FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+      FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements/catalog.txt -r requirements/candidate.txt
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: python .github/scripts/tmp_pg_lake_write.py
+      - name: Server logs
+        if: always()
+        run: |
+          for c in $(docker ps -a --format '{{.Names}}'); do echo "=== $c"; docker logs "$c" 2>&1 | tail -n 200; done \
+            | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g'
