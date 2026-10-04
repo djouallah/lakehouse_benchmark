@@ -85,5 +85,5 @@ jobs:
       - name: Candidate server log
         if: always()
         run: |
-          docker logs candidate 2>&1 | tail -n 300 \
+          for c in $(docker ps -a --format '{{.Names}}'); do echo "=== $c"; docker logs "$c" 2>&1 | tail -n 300; done \
             | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g'

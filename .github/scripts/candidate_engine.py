@@ -32,7 +32,7 @@ from collections import Counter
 from pathlib import Path
 
 from bench import auth, onelake, scrub
-from bench.config import ICEBERG_ENDPOINT, ONELAKE_DFS
+from bench.config import ICEBERG_ENDPOINT, ONELAKE_BLOB, ONELAKE_DFS
 from bench.etl.config import EtlConfig
 from bench.etl.data import csv_names
 from bench.etl.schema import COLUMNS, FILTER
@@ -1071,20 +1071,47 @@ class PgLake(Candidate):
         return []
 
     def files_variants(self, path: str, sas: str) -> dict[str, list[str]]:
-        """The ETL's read of one AEMO file: a pg_lake foreign table over the CSV, 120 text
-        columns by position, the `C` line skipped as the header, short rows padded with NULL."""
-        declared = [c.lower() for c in COLUMNS] + [
-            f"c{i}" for i in range(len(COLUMNS), CSV_MAX_WIDTH)
-        ]
-        columns = ", ".join(f'"{c}" text' for c in declared)
+        """The ETL's read of one AEMO file through a pg_lake foreign table, the `C` line skipped
+        as the header.
+
+        DuckDB's own ETL read skips rows wider than the declared columns with `ignore_errors`;
+        pg_lake passes no such option (its CSV options are header, delimiter, quote, escape,
+        new_line, null, null_padding, force_quote), and the first run failed on line 1732, a
+        DREGION `I` record wider than 120 columns. So: declare wider, or read each line whole and
+        split it in SQL.
+        """
         where = " AND ".join(f"\"{c.lower()}\" = '{v}'" for c, v in FILTER)
-        return {
-            "foreign table, csv, header + null_padding": [
+
+        def by_position(width: int) -> list[str]:
+            declared = [c.lower() for c in COLUMNS] + [f"c{i}" for i in range(len(COLUMNS), width)]
+            columns = ", ".join(f'"{c}" text' for c in declared)
+            return [
                 "DROP FOREIGN TABLE IF EXISTS etl_aemo",
                 f"CREATE FOREIGN TABLE etl_aemo ({columns}) SERVER pg_lake OPTIONS "
                 f"(path '{path}', format 'csv', header 'true', null_padding 'true')",
                 'SELECT count(*), sum(CAST("totalcleared" AS double precision)) FROM etl_aemo '
                 f"WHERE {where}",
+            ]
+
+        position = {c: i + 1 for i, c in enumerate(COLUMNS)}
+
+        def field(column: str) -> str:
+            return f"replace(split_part(line, ',', {position[column]}), '\"', '')"
+
+        split_where = " AND ".join(f"{field(c)} = '{v}'" for c, v in FILTER)
+        return {
+            f"foreign table, {CSV_MAX_WIDTH} columns, header + null_padding": by_position(
+                CSV_MAX_WIDTH
+            ),
+            "foreign table, 400 columns, header + null_padding": by_position(400),
+            # One column per line: delimiter and quote are control characters absent from AEMO.
+            "foreign table, one column per line, split_part in SQL": [
+                "DROP FOREIGN TABLE IF EXISTS etl_lines",
+                "CREATE FOREIGN TABLE etl_lines (line text) SERVER pg_lake OPTIONS "
+                f"(path '{path}', format 'csv', header 'true', delimiter E'\x01', "
+                "quote E'\x02', escape E'\x02')",
+                f"SELECT count(*), sum(CAST({field('TOTALCLEARED')} AS double precision)) "
+                f"FROM etl_lines WHERE {split_where}",
             ],
         }
 
@@ -1147,10 +1174,47 @@ class PgLake(Candidate):
                 f"WITH (location = '{location}') AS SELECT * FROM {source}",
                 lambda: self._publish(table),
             ],
+            # The same through the blob endpoint: pg_lake's own Azure write tests run against an
+            # emulator with no DataLake API, so its abfss:// (dfs) write path is the untested one.
+            "CTAS to Tables/ via the blob endpoint (az://), then the catalog": [
+                *reset,
+                f"CREATE TABLE {WRITE_NS}.{table} USING iceberg WITH (location = "
+                f"'az://{ONELAKE_BLOB}/{self.cfg.workspace_id}/{self.cfg.lakehouse_id}"
+                f"/Tables/{WRITE_NS}/{table}') AS SELECT * FROM {source}",
+                lambda: self._publish(table),
+            ],
         }
 
     def write_diagnostics(self) -> None:
+        """Which layer refuses the write: one-row COPYs straight into pgduck_server (DuckDB's
+        Azure filesystem alone) and through Postgres (pg_lake's COPY), dfs and blob, into Tables/
+        and Files/."""
         Trino.write_diagnostics(self)
+        ws, lh = self.cfg.workspace_id, self.cfg.lakehouse_id
+        roots = {
+            "abfss Tables": f"abfss://{ws}@{ONELAKE_DFS}/{lh}/Tables/{WRITE_NS}/_pg_lake_probe",
+            "abfss Files": f"abfss://{ws}@{ONELAKE_DFS}/{lh}/Files/_pg_lake_probe",
+            "az Files": f"az://{ONELAKE_BLOB}/{ws}/{lh}/Files/_pg_lake_probe",
+        }
+        for label, root in roots.items():
+            target = f"{root}/duck.parquet"
+            for step, statement in (
+                ("pgduck COPY TO", f"COPY (SELECT 42 AS x) TO '{target}' (FORMAT parquet)"),
+                ("pgduck read back", f"SELECT * FROM read_parquet('{target}')"),
+            ):
+                try:
+                    with self.pg.connect_duck() as duck:
+                        rows = self.pg.sql(duck, statement)
+                    _say(f"    PASS  {step} {label}  {rows[:3]}")
+                except Exception as exc:  # noqa: BLE001 - a diagnostic
+                    _say(f"    FAIL  {step} {label}  {scrub.scrub_exc(exc, 800)}")
+            copy = f"COPY (SELECT 42 AS x) TO '{root}/pg.parquet' WITH (format 'parquet')"
+            _try(self, f"postgres COPY TO {label}", [copy])
+        fs = onelake.file_system(self.cfg)
+        for folder in (f"{lh}/Files/_pg_lake_probe", f"{lh}/Tables/{WRITE_NS}/_pg_lake_probe"):
+            directory = fs.get_directory_client(folder)
+            if directory.exists():
+                directory.delete_directory()
 
 
 CANDIDATES = {
