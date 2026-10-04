@@ -84,7 +84,7 @@ CATALOG = "onelake"
 # it and Spark's bundled hadoop-client-api and reads die with NoSuchMethodError. 3.4.2 also clears
 # the 3.4.1 floor where WorkloadIdentityTokenProvider was backported.
 PACKAGES = (
-    "org.apache.iceberg:iceberg-spark-runtime-4.1_2.13:1.11.0,org.apache.hadoop:hadoop-azure:3.4.2"
+    "org.apache.iceberg:iceberg-spark-runtime-4.1_2.13:1.12.0,org.apache.hadoop:hadoop-azure:3.4.2"
 )
 
 ASSERTION_REFRESH_S = 240
