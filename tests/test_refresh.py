@@ -118,3 +118,24 @@ def test_every_engine_renews_its_token(name):
     ]
     assert classes, f"{name}: no engine class"
     assert callable(getattr(classes[0], "refresh", None)), f"{name} has no refresh()"
+
+
+def test_duckdb_re_attaches_the_catalog_with_a_fresh_token(monkeypatch):
+    """The storage secret alone is not enough: a table first loaded after the hour is a catalog
+    call, and TPC-DS first touches web_page at Q77 (run 37437748581, `Access token validation
+    failed`). A new token must reach the ATTACH too -- and nothing is resent while it is unchanged.
+    """
+    from bench.tpch.engines import duckdb_iceberg
+
+    sent = []
+    engine = duckdb_iceberg.DuckDBIceberg(SimpleNamespace(warehouse="ws/lh", schema="DS0100"))
+    engine._conn = SimpleNamespace(sql=sent.append)
+    engine._token = "old-token"
+    monkeypatch.setattr(duckdb_iceberg.auth, "onelake_token", lambda **kw: "old-token")
+    engine.refresh()
+    assert sent == []
+
+    monkeypatch.setattr(duckdb_iceberg.auth, "onelake_token", lambda **kw: "new-token")
+    engine.refresh()
+    assert any("CREATE OR REPLACE SECRET" in s and "new-token" in s for s in sent)
+    assert any("ATTACH OR REPLACE" in s and "TOKEN 'new-token'" in s for s in sent)

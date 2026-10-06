@@ -9,15 +9,17 @@ parquet file the session has already read does not go back to OneLake for it. It
 cache DuckDB turns on by itself -- `enable_object_cache`, `enable_http_metadata_cache` and
 `parquet_metadata_cache` all default to off. Left at its default.
 
-THE STORAGE SECRET IS REPLACED WHEN THE TOKEN IS. It holds a token STRING, good for about an hour,
-and TPC-DS at SF=100 runs DuckDB longer than that: run 35862492772 read fine for 65 minutes, then
-failed Q88 onwards `Unauthorized` on store_sales. `refresh`, which the runner calls before every
-statement and outside the timer, asks bench.auth for a token with at least
-TOKEN_MIN_LIFETIME_SECONDS left and re-creates the secret only when the string changed: one
-comparison per statement, one CREATE SECRET an hour. The catalog token in ATTACH is left alone:
-table metadata is cached for CATALOG_CACHE_SECONDS (six hours), so the REST catalog is not called
-again inside a run. (Removed once, in 994c96a, while Q64 killed the SF=100 run before the hour;
-back for the run where Q64 does not.)
+THE STORAGE SECRET AND THE CATALOG ATTACH ARE BOTH REPLACED WHEN THE TOKEN IS. Each holds a token
+STRING, good for about an hour, and TPC-DS at SF=100 runs DuckDB longer than that: run 35862492772
+read fine for 65 minutes, then failed Q88 onwards `Unauthorized` on store_sales. `refresh`, which
+the runner calls before every statement and outside the timer, asks bench.auth for a token with at
+least TOKEN_MIN_LIFETIME_SECONDS left and, only when the string changed, re-creates the secret and
+re-attaches the catalog: one comparison per statement, one swap an hour. The catalog token used to
+be left alone on the theory that table metadata is cached for CATALOG_CACHE_SECONDS -- but a table
+the run has not loaded yet is a catalog call, and TPC-DS first touches web_page at Q77: run
+37437748581 failed it `Access token validation failed` 70 minutes in. The re-attach drops the
+catalog's metadata cache, the price every engine that restarts on a fresh token pays too; the
+external file cache is the buffer pool's and survives it.
 
 THE SPILL PROBE. What stops DuckDB at big scales is the disk, not memory: TPC-DS SF=100 Q64 died
 at `90.6 GiB/90.6 GiB used`, and `max_temp_directory_size` defaults to 90% of the free disk under
@@ -70,17 +72,7 @@ class DuckDBIceberg:
             SET GLOBAL azure_transport_option_type = '{azure_transport() or "default"}';
         """)
         self._storage_secret(token)
-        self._conn.sql(f"""
-            ATTACH OR REPLACE '{self.cfg.warehouse}' AS onelake (
-                TYPE ICEBERG,
-                URI '{ICEBERG_ENDPOINT}',
-                TOKEN '{token}',
-                ACCESS_DELEGATION_MODE 'none',
-                MAX_TABLE_STALENESS '{CATALOG_CACHE_SECONDS // 60} minutes',
-                DEFAULT_SCHEMA '{self.cfg.schema}');
-
-            USE onelake;
-        """)
+        self._attach(token)
         scrub.safe_print(f"  duckdb {self.version} attached to {self.cfg.schema}")
         scrub.safe_print(f"  extensions: {self._conn.extensions()}")
         temp_dir, cap = self._conn.sql(
@@ -93,6 +85,23 @@ class DuckDBIceberg:
             f"disk free {free:.1f} GiB"
         )
         self._spill = _SpillProbe(temp_dir)
+
+    def _attach(self, token: str) -> None:
+        """(Re-)attach the catalog with `token`. Off `onelake` first: the database in use cannot
+        be replaced."""
+        self._conn.sql(f"""
+            USE memory;
+
+            ATTACH OR REPLACE '{self.cfg.warehouse}' AS onelake (
+                TYPE ICEBERG,
+                URI '{ICEBERG_ENDPOINT}',
+                TOKEN '{token}',
+                ACCESS_DELEGATION_MODE 'none',
+                MAX_TABLE_STALENESS '{CATALOG_CACHE_SECONDS // 60} minutes',
+                DEFAULT_SCHEMA '{self.cfg.schema}');
+
+            USE onelake;
+        """)
 
     def _storage_secret(self, token: str) -> None:
         self._conn.sql(f"""
@@ -109,13 +118,14 @@ class DuckDBIceberg:
             scrub.safe_print(f"  Q{self._statement:<2} spill peak {peak:.2f} GiB")
 
     def refresh(self) -> None:
-        """Outside the timer: a new secret once the token has under 15 minutes left."""
+        """Outside the timer: a new secret and attach once the token has under 15 minutes left."""
         self._report_spill()  # also starts the next statement's peak from zero
         self._statement += 1
         token = auth.onelake_token(skew=TOKEN_MIN_LIFETIME_SECONDS)
         if self._conn is not None and token != self._token:
             self._storage_secret(token)
-            scrub.safe_print("  storage token re-minted, secret replaced")
+            self._attach(token)
+            scrub.safe_print("  token re-minted, storage secret and catalog attach replaced")
 
     def execute(self, sql: str) -> int:
         return len(self._conn.sql(sql).fetchall())
