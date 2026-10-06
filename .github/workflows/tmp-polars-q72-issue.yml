@@ -1,0 +1,22 @@
+name: tmp polars q72 issue
+
+# TEMPORARY: confirm the standalone repro before filing it on pola-rs/polars. Delete after.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install polars duckdb "pyiceberg[sql-sqlite,pyarrow]" psutil
+      - working-directory: ${{ runner.temp }}
+        run: python "$GITHUB_WORKSPACE/.github/scripts/tmp_polars_q72_issue.py"
