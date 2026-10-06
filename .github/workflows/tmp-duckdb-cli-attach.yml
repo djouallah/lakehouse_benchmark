@@ -1,0 +1,52 @@
+name: tmp duckdb cli attach
+
+# TEMPORARY: find where the nightly DuckDB CLI hangs on OneLake (smoke 37425114956, ETL
+# 37425193969 both stuck in setup). Delete with .github/scripts/tmp_duckdb_cli_attach.py.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONUNBUFFERED: "1"
+      AZURE_TRANSPORT_OPTION_TYPE: curl
+      CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
+      TPCH_SF: "1"
+      FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+      FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements/catalog.txt -r requirements/duckdb_iceberg.txt
+      - uses: ./.github/actions/duckdb-nightly
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Plain CLI, one stage at a time
+        timeout-minutes: 15
+        continue-on-error: true
+        run: python .github/scripts/tmp_duckdb_cli_attach.py cli
+      - name: Through bench.duckdb_cli
+        timeout-minutes: 12
+        continue-on-error: true
+        run: python .github/scripts/tmp_duckdb_cli_attach.py protocol
+      - name: Through the pip wheel
+        timeout-minutes: 12
+        continue-on-error: true
+        run: |
+          pip install "duckdb==2.0.0.dev2610011535"
+          python .github/scripts/tmp_duckdb_cli_attach.py wheel
