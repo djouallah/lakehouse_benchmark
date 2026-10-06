@@ -48,13 +48,49 @@ def generate(sf: int) -> None:
     print(f"sf={sf}: generated in {time.perf_counter() - started:.0f}s; MB {sizes}", flush=True)
 
 
+def iceberg(sf: int) -> None:
+    """The same tables as Iceberg in a local SqlCatalog, landed the way bench/tpcds/generate.py
+    lands them: table created from a 0-row sample, ~200 MB parquet parts COPYed with the table's
+    FIELD_IDS, registered with one add_files per table."""
+    import pyarrow.parquet as pq
+    from pyiceberg.catalog.sql import SqlCatalog
+
+    from bench.duckdb_cli import DuckDBCli
+    from bench.tpcds.generate import field_ids_clause
+
+    root = data_dir(sf) / "warehouse"
+    root.mkdir(parents=True, exist_ok=True)
+    catalog = SqlCatalog(
+        "local", uri=f"sqlite:///{root / 'catalog.db'}", warehouse=root.resolve().as_uri()
+    )
+    cfg = TpcdsConfig("", "", sf)
+    catalog.create_namespace_if_not_exists(cfg.schema)
+    con = DuckDBCli()
+    for table in TABLES:
+        src = (data_dir(sf) / f"{table}.parquet").as_posix()
+        identifier = f"{cfg.schema}.{table}"
+        if catalog.table_exists(identifier):
+            catalog.drop_table(identifier)
+        tbl = catalog.create_table(identifier, schema=pq.read_schema(src))
+        ids = {f.name: f.field_id for f in tbl.schema().fields}
+        out = root / "data" / table
+        con.sql(
+            f"COPY (SELECT * FROM read_parquet('{src}')) TO '{out.as_posix()}' "
+            f"(FORMAT parquet, FILE_SIZE_BYTES '200MB', FIELD_IDS {field_ids_clause(ids)})"
+        )
+        tbl.add_files([p.resolve().as_uri() for p in sorted(out.glob("*.parquet"))])
+    con.close()
+    print(f"sf={sf}: iceberg tables in {root}", flush=True)
+
+
 def q72(engine: str, sf: int) -> str:
     cfg = TpcdsConfig("", "", sf)
     return load(engine, cfg.schema, sf, TpcdsConfig.SQL_PATH, TpcdsConfig.N_QUERIES)[71]
 
 
-def child(sf: int) -> None:
-    """Q72 exactly as the bench runs it on Polars."""
+def child(sf: int, source: str) -> None:
+    """Q72 exactly as the bench runs it on Polars, over parquet or over the local Iceberg."""
+    os.environ.setdefault("POLARS_MAX_THREADS", "4")
     import polars as pl
 
     from bench.tpch.engines.polars_iceberg import PolarsIceberg
@@ -62,17 +98,27 @@ def child(sf: int) -> None:
     cfg = TpcdsConfig("", "", sf)
     engine = PolarsIceberg(cfg)
     engine._ctx = pl.SQLContext()
-    for table in TABLES:
-        engine._ctx.register(
-            f"{cfg.schema}.{table}", pl.scan_parquet(data_dir(sf) / f"{table}.parquet")
+    if source == "iceberg":
+        from pyiceberg.catalog.sql import SqlCatalog
+
+        root = data_dir(sf) / "warehouse"
+        catalog = SqlCatalog(
+            "local", uri=f"sqlite:///{root / 'catalog.db'}", warehouse=root.resolve().as_uri()
         )
+    for table in TABLES:
+        if source == "iceberg":
+            frame = pl.scan_iceberg(catalog.load_table(f"{cfg.schema}.{table}"))
+        else:
+            frame = pl.scan_parquet(data_dir(sf) / f"{table}.parquet")
+        engine._ctx.register(f"{cfg.schema}.{table}", frame)
     started = time.perf_counter()
     rows = engine.execute(q72("polars_iceberg", sf))
-    print(f"  polars {pl.__version__}: {rows} rows in {time.perf_counter() - started:.1f}s")
+    took = time.perf_counter() - started
+    print(f"  polars {pl.__version__} over {source}: {rows} rows in {took:.1f}s")
 
 
-def polars(sf: int) -> None:
-    proc = psutil.Popen([sys.executable, __file__, "child", str(sf)])
+def polars(sf: int, source: str) -> None:
+    proc = psutil.Popen([sys.executable, __file__, "child", str(sf), source])
     peak, started, outcome = 0, time.perf_counter(), None
     while proc.poll() is None:
         try:
@@ -87,10 +133,10 @@ def polars(sf: int) -> None:
         elif took > TIMEOUT_S:
             outcome = f"KILLED after {TIMEOUT_S}s, RSS {rss / 2**30:.1f} GiB"
             proc.kill()
-        time.sleep(0.5)
+        time.sleep(0.2)
     took = time.perf_counter() - started
     outcome = outcome or f"exit {proc.returncode} after {took:.0f}s"
-    print(f"sf={sf} polars Q72: {outcome}; peak RSS {peak / 2**30:.2f} GiB", flush=True)
+    print(f"sf={sf} polars Q72 over {source}: {outcome}; peak RSS {peak / 2**30:.2f} GiB")
 
 
 def duckdb(sf: int) -> None:
@@ -111,11 +157,13 @@ def duckdb(sf: int) -> None:
 
 if __name__ == "__main__":
     if sys.argv[1] == "child":
-        child(int(sys.argv[2]))
+        child(int(sys.argv[2]), sys.argv[3])
     elif sys.argv[1] == "sql":
         print(q72("polars_iceberg", 10))
     else:
         sf = int(sys.argv[1])
         generate(sf)
         duckdb(sf)
-        polars(sf)
+        polars(sf, "parquet")
+        iceberg(sf)
+        polars(sf, "iceberg")
