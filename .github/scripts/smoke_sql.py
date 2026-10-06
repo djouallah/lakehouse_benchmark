@@ -136,8 +136,8 @@ def _dsdgen(dest: Path, tables: tuple[str, ...]) -> dict[str, Path]:
     dsdgen builds every table at once, so one call fills an in-memory database and each table is
     then COPYed out to its own parquet, under the exact filename the adapters register.
 
-    The existence check comes BEFORE the duckdb import, on purpose: the engine jobs call this
-    with a full cache and no duckdb installed (only the plan job has the generator), and the
+    The existence check comes BEFORE DuckDB is started, on purpose: the engine jobs call this
+    with a full cache and no DuckDB installed (only the plan job has the generator), and the
     first version imported first -- four of six TPC-DS smoke jobs died on ModuleNotFoundError
     with every file already on disk.
     """
@@ -146,12 +146,11 @@ def _dsdgen(dest: Path, tables: tuple[str, ...]) -> dict[str, Path]:
     if not missing:
         return paths
 
-    import duckdb
-
+    from bench.duckdb_cli import DuckDBCli
     from bench.tpcds.generate import load_tpcds_extension
 
     started = time.perf_counter()
-    con = duckdb.connect()
+    con = DuckDBCli()
     load_tpcds_extension(con)
     con.sql(f"CALL dsdgen(sf = {SMOKE_SF})")
     print(f"  dsdgen SF={SMOKE_SF} in {time.perf_counter() - started:.1f}s", flush=True)
@@ -175,12 +174,11 @@ def _dsdgen(dest: Path, tables: tuple[str, ...]) -> dict[str, Path]:
 
 
 def _duckdb(cfg: Config, paths: dict[str, Path]):
-    import duckdb
-
+    from bench.duckdb_cli import DuckDBCli
     from bench.tpch.engines.duckdb_iceberg import DuckDBIceberg
 
     engine = DuckDBIceberg(cfg)
-    engine._conn = duckdb.connect()
+    engine._conn = DuckDBCli()
     engine._conn.sql(f"CREATE SCHEMA IF NOT EXISTS {cfg.schema}")
     for table, path in paths.items():
         engine._conn.sql(

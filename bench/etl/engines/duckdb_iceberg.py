@@ -10,11 +10,15 @@ THE ATTACH IS bench/duckdb_onelake.py: the two write flags the TPC-H read engine
 storage path, explained there. It moved out of this module when the TPC-DS generator became its
 second caller; `attach` and `CATALOG` are re-exported here so the concurrency benchmark, which
 opens a fresh connection per writer through this name, keeps working.
+
+THE ENGINE IS THE NIGHTLY CLI, as for the read benchmark: bench/duckdb_cli.py.
 """
 
 from __future__ import annotations
 
 from bench import auth, scrub
+from bench.duckdb_cli import DuckDBCli
+from bench.duckdb_cli import version as cli_version
 from bench.duckdb_onelake import CATALOG, attach
 from bench.etl.config import TABLE, EtlConfig
 from bench.etl.schema import COLUMNS
@@ -31,20 +35,17 @@ class DuckDBIceberg:
 
     @property
     def version(self) -> str:
-        import duckdb
-
-        return duckdb.__version__
+        return cli_version()
 
     @property
     def qualified(self) -> str:
         return f"{CATALOG}.{self.cfg.schema}.{TABLE[self.name]}"
 
     def setup(self) -> None:
-        import duckdb
-
-        self._conn = duckdb.connect()
+        self._conn = DuckDBCli()
         attach(self._conn, self.cfg, auth.onelake_token())
         scrub.safe_print(f"  duckdb {self.version} attached")
+        scrub.safe_print(f"  extensions: {self._conn.extensions()}")
 
     def load(self, files: list[str]) -> None:
         uris = [f"{self.cfg.csv_abfss}/{name}" for name in files]
@@ -74,7 +75,7 @@ class DuckDBIceberg:
         """)
 
     def row_count(self) -> int:
-        return self._conn.sql(f"SELECT count(*) FROM {self.qualified}").fetchone()[0]
+        return int(self._conn.sql(f"SELECT count(*) FROM {self.qualified}").fetchone()[0])
 
     def close(self) -> None:
         if self._conn is not None:

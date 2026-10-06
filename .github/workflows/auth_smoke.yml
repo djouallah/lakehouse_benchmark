@@ -42,11 +42,12 @@ jobs:
           cache-dependency-path: |
             requirements/catalog.txt
             requirements/duckdb_iceberg.txt
-      # catalog.txt for probes 1-4. duckdb_iceberg.txt for probe 5, which reads a real parquet
-      # through DuckDB -- installing the ENGINE's own file rather than putting duckdb in
-      # catalog.txt keeps the catalog-write environment engine-neutral, and means the probe
-      # exercises exactly the environment the bench job will use.
+      # catalog.txt for probes 1-4. duckdb_iceberg.txt and the nightly CLI for probe 5, which
+      # reads a real parquet through DuckDB -- installing the ENGINE's own environment rather
+      # than putting duckdb in catalog.txt keeps the catalog-write environment engine-neutral,
+      # and means the probe exercises exactly the build the bench job will use.
       - run: pip install -r requirements/catalog.txt -r requirements/duckdb_iceberg.txt
+      - uses: ./.github/actions/duckdb-nightly
       - uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}

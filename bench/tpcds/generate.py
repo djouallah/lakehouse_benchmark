@@ -24,12 +24,12 @@ does not, an explicit map lands exactly). So the Iceberg table is created FIRST,
 sample, and its ids are handed to COPY. add_files validates the ids against the table schema:
 a mismatch is a loud failure, never a silently mis-registered file.
 
-THE GENERATOR IS THE DUCKDB ENGINE'S WHEEL, and that is load-bearing. dsdgen's output is not the
+THE GENERATOR IS THE DUCKDB ENGINE'S BUILD, and that is load-bearing. dsdgen's output is not the
 same across DuckDB builds: measured 2026-09-22, stable 1.5.5 and the 2.0 nightly the DuckDB
 engine runs give identical row counts and DIFFERENT values (prices, dates, text), so 18 of the 99
-queries return different row counts on the two datasets. tpcds.yml installs the DuckDB engine's
-own requirements file here, and smoke.yml generates its SF=1 copy from the same file -- one
-generator per dataset, never two.
+queries return different row counts on the two datasets. tpcds.yml's prepare job installs the
+nightly CLI with the duckdb-nightly action and hands its run id to the DuckDB engine job, and
+smoke.yml does the same for its SF=1 copy -- one generator per dataset, never two.
 
 RUNNER BUDGET. dsdgen(sf=10) is ~3-4 GB of DuckDB storage on a 14 GB disk / 16 GB RAM runner.
 The database is FILE-BACKED so generation spills instead of dying, memory_limit sits below the
@@ -83,9 +83,9 @@ def _scratch() -> Path:
 def load_tpcds_extension(con) -> None:
     """INSTALL and LOAD `tpcds`, falling back to the nightly repository.
 
-    The DuckDB engine jobs pin a pre-release wheel (`duckdb>=2.0.0.dev0`), and a dev build's
-    extensions are served from `core_nightly` rather than the default repository. Trying the
-    default first keeps a stable wheel -- a laptop's -- on the release extension. Shared with
+    The DuckDB jobs run a nightly CLI (bench/duckdb_cli.py), and a dev build's extensions may be
+    served from `core_nightly` rather than the default repository. Trying the
+    default first keeps a stable build on the release extension. Shared with
     .github/scripts/smoke_sql.py, which generates SF=1 locally.
     """
     try:
@@ -143,7 +143,7 @@ def build_table(con, catalog, fs, cfg: TpcdsConfig, table: str, tmp: Path, pool)
     started = time.perf_counter()
     out_dir = tmp / table
     out_dir.mkdir(parents=True, exist_ok=True)
-    rows = con.sql(f"SELECT count(*) FROM main.{table}").fetchone()[0]
+    rows = int(con.sql(f"SELECT count(*) FROM main.{table}").fetchone()[0])
     _log(f"--- {table} ({rows:,} rows) ---")
 
     # A 0-row file carries the schema; the Iceberg table comes from it, and its ids go to COPY.
@@ -198,7 +198,7 @@ def build_table(con, catalog, fs, cfg: TpcdsConfig, table: str, tmp: Path, pool)
 
 def generate(cfg: TpcdsConfig, force: bool = False) -> dict:
     """Generate every TPC-DS table for `cfg.sf` into OneLake. Idempotent; `force` regenerates."""
-    import duckdb
+    from bench.duckdb_cli import DuckDBCli
 
     os.environ.setdefault("PYICEBERG_MAX_WORKERS", str(cfg.pyiceberg_workers))
     catalog = auth.catalog(cfg)
@@ -207,7 +207,7 @@ def generate(cfg: TpcdsConfig, force: bool = False) -> dict:
         return {"sf": cfg.sf, "skipped": True, "namespace": cfg.schema, "tables": {}}
 
     scratch = _scratch()
-    con = duckdb.connect(str(scratch / f"sf{cfg.sf}.duckdb"))
+    con = DuckDBCli(str(scratch / f"sf{cfg.sf}.duckdb"))
     con.sql(
         f"SET memory_limit = '{MEMORY_LIMIT}'; SET threads = {THREADS}; "
         f"SET temp_directory = '{(scratch / 'tmp').as_posix()}'"

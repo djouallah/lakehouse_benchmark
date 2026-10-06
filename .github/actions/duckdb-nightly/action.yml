@@ -1,0 +1,30 @@
+name: DuckDB nightly CLI
+description: >-
+  Put the newest DuckDB 2.0 nightly CLI whose extensions are published on PATH
+  (.github/scripts/duckdb_nightly.py says why not simply the latest one).
+
+inputs:
+  run-id:
+    description: A duckdb/duckdb nightly run to pin. Empty picks the newest usable one.
+    required: false
+    default: ""
+
+outputs:
+  run-id:
+    description: The duckdb/duckdb run the CLI came from. Pass it to a later job to get the same build.
+    value: ${{ steps.resolve.outputs.run-id }}
+  version:
+    description: The CLI's version, e.g. v2.0.0-alpha44357.
+    value: ${{ steps.resolve.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        DUCKDB_RUN_ID: ${{ inputs.run-id }}
+      run: python3 "$GITHUB_WORKSPACE/.github/scripts/duckdb_nightly.py"
+    - shell: bash
+      run: duckdb --version

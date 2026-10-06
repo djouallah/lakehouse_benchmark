@@ -121,8 +121,10 @@ def main() -> int:
 
         It also reports WHICH transports work, because that is the fact worth knowing: if DuckDB
         ever fixes its default, this log says so.
+
+        Through the nightly CLI the bench runs (bench/duckdb_cli.py), not a wheel.
         """
-        import duckdb
+        from bench.duckdb_cli import DuckDBCli
 
         catalog = auth.catalog(cfg)
         data_file = namespace_name = None
@@ -145,7 +147,7 @@ def main() -> int:
 
         outcomes, winner = [], None
         for transport in candidates:
-            con = duckdb.connect()
+            con = DuckDBCli()
             try:
                 con.sql("INSTALL azure; LOAD azure;")
                 con.sql(f"SET GLOBAL azure_transport_option_type = '{transport}'")
@@ -153,7 +155,9 @@ def main() -> int:
                     f"CREATE OR REPLACE SECRET s (TYPE azure, PROVIDER access_token, "
                     f"ACCESS_TOKEN '{token}')"
                 )
-                rows = con.sql(f"SELECT count(*) FROM read_parquet('{data_file}')").fetchone()[0]
+                rows = int(
+                    con.sql(f"SELECT count(*) FROM read_parquet('{data_file}')").fetchone()[0]
+                )
                 outcomes.append(f"{transport}=OK({rows:,} rows)")
                 winner = winner or transport
             except Exception as exc:  # noqa: BLE001 - the outcome per transport IS the result

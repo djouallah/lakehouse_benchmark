@@ -214,8 +214,16 @@ Largest scale each engine completes, cold, every statement answered:
   35726316639). Generation now writes parquet with DuckDB and registers it with pyiceberg
   `add_files`, the same path as TPC-H.
 - **dsdgen output differs between DuckDB 1.5.5 and the 2.0 nightly**: same row counts, different
-  values. The generator must be the DuckDB engine's own wheel, or engines on different wheels
-  compare different data.
+  values. The generator must be the DuckDB engine's own build, or engines on different builds
+  compare different data. The workflows pass the generator's nightly run id to the DuckDB job.
+- **The engine is the nightly CLI, not the PyPI dev wheel** (2026-10-06). The wheel only moves to
+  a new core when duckdb-python merges a submodule bump, a manual PR: `2.0.0.dev2610011535` was on
+  `alpha43763` while the nightly was at `alpha44578`. But the newest nightly CLI usually cannot load
+  iceberg: DuckDB publishes a nightly's extensions only when its "Deploy extensions" job runs, which
+  is skipped if any extension build fails (1 of the last 10 nightlies). So
+  `.github/scripts/duckdb_nightly.py` takes the newest nightly whose iceberg, avro, azure, httpfs
+  and tpcds are on extensions.duckdb.org. `bench/duckdb_cli.py` drives one CLI process per run
+  over stdin.
 
 ## Spark-OSS
 

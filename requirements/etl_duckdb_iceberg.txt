@@ -1,8 +1,7 @@
 # The ETL job's DuckDB: duckdb_iceberg.txt plus azure-storage-file-datalake, which every ETL
 # engine job carries because bench/etl/data.py lists Files/csv over ADLS before the engine
 # starts. DuckDB reads the CSVs and writes the Iceberg table itself, so nothing else is added.
-# The duckdb spec is the read benchmark's, for the same reasons given there.
+# DuckDB itself is the nightly CLI from the duckdb-nightly action, as for the read benchmark.
 azure-identity>=1.19
 azure-storage-file-datalake>=12.17
 psutil>=6
-duckdb>=2.0.0.dev0

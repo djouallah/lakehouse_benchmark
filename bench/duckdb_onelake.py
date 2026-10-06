@@ -4,8 +4,9 @@ Born in bench/etl/engines/duckdb_iceberg.py, where the ETL's DuckDB engine write
 through it; moved here for a second caller. (That caller, the TPC-DS generator, used it for one
 day and went back to the TPC-H upload path -- bench/tpcds/generate.py says why.) The ETL engine
 imports it from here, and the concurrency benchmark opens a fresh connection per writer -- every
-`duckdb.connect()` is its own database, with its own secrets and its own catalog attach -- so
-the attach has to be byte-for-byte this one wherever it happens.
+connection (a `bench.duckdb_cli.DuckDBCli` process, or a `duckdb.connect()`) is its own database,
+with its own secrets and its own catalog attach -- so the attach has to be byte-for-byte this one
+wherever it happens.
 
 TWO ATTACH FLAGS the TPC-H read engine does not carry, both about writing:
 

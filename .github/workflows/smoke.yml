@@ -51,6 +51,8 @@ on:
       - "sql/**"
       - "requirements/**"
       - ".github/scripts/smoke_*.py"
+      - ".github/scripts/duckdb_nightly.py"
+      - ".github/actions/duckdb-nightly/**"
       - ".github/workflows/smoke.yml"
 
 concurrency:
@@ -74,6 +76,7 @@ jobs:
       contents: read
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
+      duckdb-run-id: ${{ steps.duckdb.outputs.run-id }}
     steps:
       - id: plan
         run: |
@@ -87,11 +90,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      # THE GENERATOR IS THE WRITER'S WHEEL. TPC-H: tpchgen-cli, deterministic at any version.
-      # TPC-DS: DuckDB's dsdgen from the DuckDB ENGINE's own requirements file -- the same
-      # pre-release line tpcds.yml's prepare job generates SF=10 with -- because dsdgen's output
-      # is not the same across DuckDB builds (see the header). Two suites, two generators, each
-      # pinned by the file that already pins it.
+      # THE GENERATOR IS THE WRITER'S BUILD. TPC-H: tpchgen-cli, deterministic at any version.
+      # TPC-DS: DuckDB's dsdgen from the DuckDB ENGINE's nightly CLI -- the same line tpcds.yml's
+      # prepare job generates with -- because dsdgen's output is not the same across DuckDB
+      # builds (see the header). Resolved once here, for every suite: its run id pins the DuckDB
+      # sql and catalog jobs to this same build.
+      - id: duckdb
+        uses: ./.github/actions/duckdb-nightly
       - if: (inputs.suite || 'tpch') == 'tpcds'
         run: pip install -r requirements/duckdb_iceberg.txt
       - if: (inputs.suite || 'tpch') != 'tpcds'
@@ -144,6 +149,13 @@ jobs:
 
       # The ENGINE's file only. No generator here: the data comes from the cache `plan` filled.
       - run: pip install -r "requirements/${{ matrix.engine }}.txt"
+
+      # The nightly CLI `plan` generated with, so the DuckDB jobs read with the generator's build.
+      - name: Install the DuckDB nightly CLI
+        if: matrix.engine == 'duckdb_iceberg'
+        uses: ./.github/actions/duckdb-nightly
+        with:
+          run-id: ${{ needs.plan.outputs.duckdb-run-id }}
 
       # Restored, never generated here (see the header): `plan` ran first and saved this key.
       - uses: actions/cache@v4
@@ -267,6 +279,13 @@ jobs:
           key: ivy-spark41-iceberg111-v1
 
       - run: pip install -r "requirements/${{ matrix.engine }}.txt"
+
+      # The nightly CLI `plan` generated with, so the DuckDB jobs read with the generator's build.
+      - name: Install the DuckDB nightly CLI
+        if: matrix.engine == 'duckdb_iceberg'
+        uses: ./.github/actions/duckdb-nightly
+        with:
+          run-id: ${{ needs.plan.outputs.duckdb-run-id }}
 
       # OIDC only. No client secret exists on this app registration.
       - uses: azure/login@v3

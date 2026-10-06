@@ -74,6 +74,7 @@ jobs:
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
       started: ${{ steps.plan.outputs.started }}
+      duckdb-run-id: ${{ steps.duckdb.outputs.run-id }}
     steps:
       # BIG SCALES NEED THE DISK THE RUNNER HIDES. `/` is one 145 GB volume with ~87 GB free;
       # deleting the preinstalled toolchains nobody here uses brings that to ~105 GB. /mnt is a
@@ -96,10 +97,12 @@ jobs:
             requirements/catalog.txt
             requirements/duckdb_iceberg.txt
       # catalog.txt is the TPC-H landing environment (pyiceberg, the ADLS client, the credential).
-      # duckdb_iceberg.txt is the DuckDB that runs dsdgen -- the ENGINE's own file, on purpose:
-      # dsdgen's output differs between DuckDB builds, so the generator has to be the build the
-      # DuckDB bench job reads with, and smoke.yml generates SF=1 from the same file.
       - run: pip install -r requirements/catalog.txt -r requirements/duckdb_iceberg.txt
+      # The DuckDB that runs dsdgen is the nightly CLI, and its run id goes to the DuckDB bench
+      # job: dsdgen's output differs between DuckDB builds, so the generator has to be the build
+      # the DuckDB bench job reads with, even if a newer nightly lands mid-run.
+      - id: duckdb
+        uses: ./.github/actions/duckdb-nightly
 
       - id: plan
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
@@ -190,6 +193,13 @@ jobs:
         run: |
           pip install -r "requirements/${BENCH_ENGINE}.txt"
           pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pysail|pyiceberg|pyarrow)=' || true
+
+      # The nightly CLI prepare generated with (see prepare).
+      - name: Install the DuckDB nightly CLI
+        if: matrix.engine == 'duckdb_iceberg'
+        uses: ./.github/actions/duckdb-nightly
+        with:
+          run-id: ${{ needs.prepare.outputs.duckdb-run-id }}
 
       - uses: actions/setup-java@v5
         if: startsWith(matrix.engine, 'pyspark')

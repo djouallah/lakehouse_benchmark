@@ -134,7 +134,7 @@ Credential vending is **off** on purpose (`ACCESS_DELEGATION_MODE 'none'` plus a
 where the others returned 42, because `join_use_nulls=0` fills an unmatched outer-join cell with
 `0` rather than `NULL`.
 
-Locally, with no credentials:
+Locally, with no credentials (DuckDB is a CLI on PATH, not a wheel: `bench/duckdb_cli.py`):
 
 ```bash
 pip install -r requirements/smoke.txt -r requirements/duckdb_iceberg.txt

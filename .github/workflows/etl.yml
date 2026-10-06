@@ -157,6 +157,12 @@ jobs:
           pip install -r "requirements/etl_${BENCH_ENGINE}.txt"
           pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|daft|pysail|pyspark|pyiceberg|pyarrow)=' || true
 
+      # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
+      # .github/scripts/duckdb_nightly.py which nightly.
+      - name: Install the DuckDB nightly CLI
+        if: matrix.engine == 'duckdb_iceberg'
+        uses: ./.github/actions/duckdb-nightly
+
       - uses: actions/setup-java@v5
         if: startsWith(matrix.engine, 'pyspark')
         with:

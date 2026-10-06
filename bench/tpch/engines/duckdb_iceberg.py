@@ -1,5 +1,8 @@
 """DuckDB: the iceberg extension attaches the catalog, the azure extension reads the files.
 
+THE ENGINE IS THE NIGHTLY CLI, not the PyPI wheel: one `duckdb` process per run, statements in
+on stdin (bench/duckdb_cli.py says how, and why the CLI).
+
 THE EXTERNAL FILE CACHE. Since 1.3 DuckDB keeps the byte ranges it reads from remote files in
 its buffer pool (`enable_external_file_cache`, on by default), so a statement that touches a
 parquet file the session has already read does not go back to OneLake for it. It is the only
@@ -38,6 +41,8 @@ from bench.config import (
     Config,
     azure_transport,
 )
+from bench.duckdb_cli import DuckDBCli
+from bench.duckdb_cli import version as cli_version
 
 
 class DuckDBIceberg:
@@ -52,19 +57,15 @@ class DuckDBIceberg:
 
     @property
     def version(self) -> str:
-        import duckdb
-
-        return duckdb.__version__
+        return cli_version()
 
     def setup(self) -> None:
-        import duckdb
-
         # curl transport: DuckDB's default one fails the OneLake TLS handshake on Linux, and the
         # ATTACH still succeeds (plain HTTPS) so every read fails instead, with an error that
         # reads like a bad credential. ACCESS_DELEGATION_MODE 'none' turns vending off -- it costs
         # ~7s per table cold, and the other three engines authenticate storage with one token too.
         token = auth.onelake_token()
-        self._conn = duckdb.connect()
+        self._conn = DuckDBCli()
         self._conn.sql(f"""
             SET GLOBAL azure_transport_option_type = '{azure_transport() or "default"}';
         """)
@@ -81,6 +82,7 @@ class DuckDBIceberg:
             USE onelake;
         """)
         scrub.safe_print(f"  duckdb {self.version} attached to {self.cfg.schema}")
+        scrub.safe_print(f"  extensions: {self._conn.extensions()}")
         temp_dir, cap = self._conn.sql(
             "SELECT current_setting('temp_directory'), current_setting('max_temp_directory_size')"
         ).fetchone()
