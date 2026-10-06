@@ -49,7 +49,7 @@ def generate(sf: int) -> None:
 
 
 def q72(engine: str, sf: int) -> str:
-    cfg = TpcdsConfig(sf=sf)
+    cfg = TpcdsConfig("", "", sf)
     return load(engine, cfg.schema, sf, TpcdsConfig.SQL_PATH, TpcdsConfig.N_QUERIES)[71]
 
 
@@ -59,7 +59,7 @@ def child(sf: int) -> None:
 
     from bench.tpch.engines.polars_iceberg import PolarsIceberg
 
-    cfg = TpcdsConfig(sf=sf)
+    cfg = TpcdsConfig("", "", sf)
     engine = PolarsIceberg(cfg)
     engine._ctx = pl.SQLContext()
     for table in TABLES:
@@ -96,7 +96,7 @@ def polars(sf: int) -> None:
 def duckdb(sf: int) -> None:
     from bench.duckdb_cli import DuckDBCli
 
-    cfg = TpcdsConfig(sf=sf)
+    cfg = TpcdsConfig("", "", sf)
     con = DuckDBCli()
     con.sql(f"CREATE SCHEMA {cfg.schema}")
     for table in TABLES:
