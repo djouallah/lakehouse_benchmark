@@ -53,7 +53,7 @@ Tried and not added:
 | TPC-DS | SF=10 | 2,170.3s | 675.2s | 3.2x |
 | TPC-DS | SF=30 | 9,280.4s | 951.5s | 9.8x |
 | TPC-DS | SF=60 | 9,303.4s | 2,117.1s | 4.4x |
-| TPC-DS | SF=100 | failed | 6,757.3s | — |
+| TPC-DS | SF=100 | failed | 5,762.4s | — |
 
 Mean of each engine's last 3 runs at each scale; the query suites count only runs that completed every query, and `failed` means none did. `—` = not run. Regenerated on every publish.
 <!-- speedup:end -->
