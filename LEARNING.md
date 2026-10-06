@@ -188,8 +188,12 @@ Largest scale each engine completes, cold, every statement answered:
   the token baked into its `CREATE SECRET` had expired.
 - **TPC-H SF=300 now completes on the nightly CLI** (run 37429290996, 2026-10-06,
   `v2.0.0-alpha44357`): 22/22 cold in 3,227 s, Q18 in 155 s, Q21 the slowest at 614 s.
-  duckdb/duckdb#22474 is still open, so what changed is somewhere else in the core between the
-  `2.0.0.dev2609250715` wheel and alpha44357. Row counts match StarRocks' SF=300 run except Q11
+  duckdb/duckdb#22474 is still open; the change is almost certainly duckdb/duckdb#26246 (merged
+  2026-09-30, in alpha44357, not in any 2.0 wheel yet -- the Oct 1 wheel's core is 101 commits
+  behind it). `memory_limit` bounded live buffers but not RSS: jemalloc keeps freed spill buffers
+  resident as dirty pages until its decay runs, so a spilling aggregate grew RSS past the box while
+  the buffer manager stayed under its limit -- the dead runner below. The buffer pool now purges
+  the allocator once freed-but-resident bytes would push usage past the limit. Not A/B-tested. Row counts match StarRocks' SF=300 run except Q11
   (280,546 vs 280,725): Q11 keeps groups above a fraction of the total, so groups at the threshold
   flip with float summation order, and StarRocks was a few rows off at SF=30 and 60 too, where
   DuckDB, chDB and Trino agreed. The history of the failure, before that:
