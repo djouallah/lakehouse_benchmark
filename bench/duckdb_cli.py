@@ -17,6 +17,13 @@ stdout before S is the result (CSV, no header); anything on stderr before S is t
 stdout's sentinel is not stuck in a block buffer. The pipe round trip is inside the runner's timer,
 the same way Trino's and StarRocks' HTTP round trips are inside theirs.
 
+TERMINAL NOISE. A statement that runs for more than a moment makes the CLI write an ANSI reset
+(`ESC[00m`) with no newline, even with no terminal attached, so it lands at the start of whatever
+line comes next -- the sentinel included. Matching the sentinel exactly hung every OneLake ATTACH
+(smoke 37425114956, ETL 37425193969; tmp run 37426460630 found it). So escape sequences and
+anything before a carriage return are stripped from every line, and a line that ENDS with the
+sentinel ends the statement.
+
 Values come back as strings (CSV). The callers that need a number say `int(...)`.
 """
 
@@ -26,6 +33,7 @@ import csv
 import functools
 import os
 import queue
+import re
 import shutil
 import subprocess
 import threading
@@ -84,9 +92,17 @@ class Result:
         return self._rows[0] if self._rows else None
 
 
+_ESCAPE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+
+
+def _clean(line: str) -> str:
+    """The line as text: no escape sequences, nothing a carriage return wrote over."""
+    return _ESCAPE.sub("", line.rstrip("\r\n")).rsplit("\r", 1)[-1]
+
+
 def _pump(stream, sink: queue.Queue) -> None:
     for line in iter(stream.readline, ""):
-        sink.put(line.rstrip("\r\n"))
+        sink.put(_clean(line))
     sink.put(None)  # EOF: the process is gone
 
 
@@ -122,7 +138,10 @@ class DuckDBCli:
                 raise RuntimeError(
                     f"duckdb CLI exited (code {self._proc.poll()}): " + "\n".join(lines)
                 )
-            if line == sentinel:
+            if line.endswith(sentinel):
+                before = line[: -len(sentinel)]
+                if before.strip():
+                    lines.append(before)
                 return lines
             lines.append(line)
 

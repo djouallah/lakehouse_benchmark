@@ -121,6 +121,8 @@ class _FakeCli:
     then the sentinel on each stream."""
 
     answers: dict[str, tuple[list[str], list[str]]] = {}
+    # What the shell writes, unterminated, ahead of the next line on (stdout, stderr).
+    noise = ("", "")
 
     def __init__(self, cmd, **kwargs):
         self.cmd, self.scripts = cmd, []
@@ -133,10 +135,13 @@ class _FakeCli:
         for key, (rows, errors) in self.answers.items():
             if key in script:
                 out, err = rows, errors
-        for line in out + [sentinel]:
-            self.stdout.lines.put(line + "\n")
-        for line in err + [sentinel]:
-            self.stderr.lines.put(line + "\n")
+        for stream, lines, noise in (
+            (self.stdout, out + [sentinel], self.noise[0]),
+            (self.stderr, err + [sentinel], self.noise[1]),
+        ):
+            lines[0] = noise + lines[0]
+            for line in lines:
+                stream.lines.put(line + "\n")
 
     def poll(self):
         return self.returncode
@@ -152,6 +157,7 @@ def cli(monkeypatch):
     monkeypatch.setattr(duckdb_cli.shutil, "which", lambda name: None)
     monkeypatch.setattr(duckdb_cli.subprocess, "Popen", _FakeCli)
     _FakeCli.answers = {}
+    _FakeCli.noise = ("", "")
     return _FakeCli
 
 
@@ -192,3 +198,22 @@ def test_the_statement_is_terminated_on_its_own_line():
 def test_extensions_lists_name_and_build(cli):
     cli.answers = {"duckdb_extensions()": (["azure,abc", "iceberg,def"], [])}
     assert duckdb_cli.DuckDBCli().extensions() == "azure=abc, iceberg=def"
+
+
+def test_terminal_noise_before_the_sentinel_does_not_hang(cli):
+    """A slow ATTACH makes the shell write `ESC[00m` with no newline, so it lands on the
+    sentinel's line. Exact matching hung every OneLake setup (tmp run 37426460630)."""
+    cli.noise = ("\x1b[00m", "\x1b[00m")
+    conn = duckdb_cli.DuckDBCli()
+    assert conn.sql("ATTACH 'w' AS onelake (TYPE ICEBERG)").fetchall() == []
+
+
+def test_terminal_noise_is_stripped_from_rows(cli):
+    cli.noise = ("\x1b[00m", "")
+    cli.answers = {"count(*)": (["2880404"], [])}
+    conn = duckdb_cli.DuckDBCli()
+    assert conn.sql("SELECT count(*) FROM store_sales").fetchone() == ("2880404",)
+
+
+def test_a_carriage_return_overwrites_what_came_before():
+    assert duckdb_cli._clean("spinner\r42\n") == "42"
