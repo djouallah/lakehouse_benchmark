@@ -107,9 +107,15 @@ def _has_artifact(run_id: int) -> bool:
 
 
 def _nightlies() -> list[dict]:
-    query = f"branch={BRANCH}&event=workflow_dispatch&per_page=100"
-    runs = _gh(f"repos/{REPO}/actions/runs?{query}")["workflow_runs"]
-    return sorted(runs, key=lambda r: r["created_at"], reverse=True)
+    """Two listings, merged: either can come back stale. ETL run 37427037888 got a repo-wide
+    listing whose newest nightly was 19 days old -- no newer run in it at all -- while the same
+    query a few minutes later had all of them, so it ran alpha42230 instead of alpha44357."""
+    listings = (
+        f"repos/{REPO}/actions/runs?branch={BRANCH}&event=workflow_dispatch&per_page=100",
+        f"repos/{REPO}/actions/workflows/Main.yml/runs?branch={BRANCH}&per_page=100",
+    )
+    runs = {run["id"]: run for path in listings for run in _gh(path)["workflow_runs"]}
+    return sorted(runs.values(), key=lambda r: r["created_at"], reverse=True)
 
 
 def _unpack(blob: bytes, dest: Path) -> Path:
@@ -143,7 +149,11 @@ def main() -> int:
         print(f"pinned run {pinned}: {version(number)}")
     else:
         print(f"newest {BRANCH} nightly with {', '.join(EXTENSIONS)} published:")
-        run, number = pick(_nightlies(), _missing_extensions, _has_artifact)
+        runs = _nightlies()
+        newest = next((r for r in runs if alpha(r.get("name", "")) is not None), None)
+        if newest is not None:
+            print(f"  newest listed: {newest['name']} ({newest['created_at']})")
+        run, number = pick(runs, _missing_extensions, _has_artifact)
 
     artifact = _artifact(run["id"])
     blob = subprocess.run(
