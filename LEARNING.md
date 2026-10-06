@@ -326,6 +326,12 @@ Largest scale each engine completes, cold, every statement answered:
   - [#29461](https://github.com/pola-rs/polars/issues/29461): a 2.0.0-rc.2 regression. TPC-DS
     q11 and q31 return one row fewer than rc.1, DuckDB, Spark and Sail, on plain parquet.
     Bisected in CI by pinning rc.1 for one run.
+- **2.0.0 (2026-10-06) fixes all three, and breaks TPC-H Q11 at every scale**
+  ([#29762](https://github.com/pola-rs/polars/issues/29762)). `SUM(decimal) * (0.0001 / SF)` is
+  now `Decimal(38, 12)` instead of `Float64`, and the CROSS JOIN filter against the
+  `Decimal(38, 2)` value becomes an inequality join whose `search_sorted` rejects decimals of
+  different scales. Bisected rc.2 vs 2.0.0 in a temporary CI job. TPC-DS SF=1 is 99/99 and
+  matches DuckDB.
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
   1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s).
 
