@@ -77,7 +77,7 @@ Largest scale each engine completes, cold, every statement answered:
 
 | Engine | TPC-H | TPC-DS | What breaks it next |
 |---|---|---|---|
-| Gluten/Velox | SF=100 (1,008 s) | **SF=100** (6,757 s) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
+| Gluten/Velox | SF=100 (1,008 s) | **SF=100** (4,768 s; 6,757 s on Iceberg 1.11) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
 | DuckDB | **SF=300** (3,227 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit |
 | StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases didn't parse (now backticked for it); Q71 passes on 0.7.2 |
