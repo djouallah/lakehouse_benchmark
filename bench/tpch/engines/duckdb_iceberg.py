@@ -73,7 +73,7 @@ class DuckDBIceberg:
         self._conn.sql(f"""
             ATTACH OR REPLACE '{self.cfg.warehouse}' AS onelake (
                 TYPE ICEBERG,
-                ENDPOINT '{ICEBERG_ENDPOINT}',
+                URI '{ICEBERG_ENDPOINT}',
                 TOKEN '{token}',
                 ACCESS_DELEGATION_MODE 'none',
                 MAX_TABLE_STALENESS '{CATALOG_CACHE_SECONDS // 60} minutes',

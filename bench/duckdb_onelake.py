@@ -42,7 +42,7 @@ def attach(conn, cfg: Config, token: str) -> None:
 
         ATTACH OR REPLACE '{cfg.warehouse}' AS {CATALOG} (
             TYPE ICEBERG,
-            ENDPOINT '{ICEBERG_ENDPOINT}',
+            URI '{ICEBERG_ENDPOINT}',
             TOKEN '{token}',
             ACCESS_DELEGATION_MODE 'none',
             STAGE_CREATE_TABLES false,
