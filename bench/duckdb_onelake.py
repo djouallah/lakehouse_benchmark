@@ -17,9 +17,10 @@ TWO ATTACH FLAGS the TPC-H read engine does not carry, both about writing:
   initialises the metadata in the create itself. Spark's create has no such follow-up, which is
   why the Spark engine did not need an equivalent.
 
-THE STORAGE PATH IS THE READ BENCHMARK'S: `CREATE SECRET ... access_token` plus
-`ACCESS_DELEGATION_MODE 'none'`. The parquet that CTAS writes goes out through the azure
-extension under that secret, the same way the TPC-H scans come in. Same curl transport too --
+STORAGE IS CREDENTIAL VENDING (2026-10-06, trying it): no azure secret and no
+`ACCESS_DELEGATION_MODE 'none'`, so the catalog hands DuckDB the storage credential for each
+table it loads, and the CTAS parquet goes out under that. The TPC-H read engine still uses its own
+secret with vending off (bench/tpch/engines/duckdb_iceberg.py). Same curl transport --
 see config.azure_transport for why that is not optional on Linux.
 """
 
@@ -32,19 +33,15 @@ CATALOG = "onelake"
 
 
 def attach(conn, cfg: Config, token: str) -> None:
-    """The write-capable ATTACH on one connection: transport, storage secret, the two flags."""
+    """The write-capable ATTACH on one connection: transport, the two flags, vended storage."""
     conn.sql(f"""
         SET GLOBAL azure_transport_option_type = '{azure_transport() or "default"}';
         SET preserve_insertion_order = false;
-
-        CREATE OR REPLACE SECRET onelake_storage (
-            TYPE azure, PROVIDER access_token, ACCESS_TOKEN '{token}');
 
         ATTACH OR REPLACE '{cfg.warehouse}' AS {CATALOG} (
             TYPE ICEBERG,
             URI '{ICEBERG_ENDPOINT}',
             TOKEN '{token}',
-            ACCESS_DELEGATION_MODE 'none',
             STAGE_CREATE_TABLES false,
             SKIP_CREATE_TABLE_METADATA_UPDATES true);
     """)
