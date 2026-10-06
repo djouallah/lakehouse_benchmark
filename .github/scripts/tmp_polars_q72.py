@@ -74,6 +74,7 @@ def iceberg(sf: int) -> None:
         tbl = catalog.create_table(identifier, schema=pq.read_schema(src))
         ids = {f.name: f.field_id for f in tbl.schema().fields}
         out = root / "data" / table
+        out.mkdir(parents=True, exist_ok=True)
         con.sql(
             f"COPY (SELECT * FROM read_parquet('{src}')) TO '{out.as_posix()}' "
             f"(FORMAT parquet, FILE_SIZE_BYTES '200MB', FIELD_IDS {field_ids_clause(ids)})"
