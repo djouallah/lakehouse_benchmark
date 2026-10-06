@@ -332,6 +332,11 @@ Largest scale each engine completes, cold, every statement answered:
   `Decimal(38, 2)` value becomes an inequality join whose `search_sorted` rejects decimals of
   different scales. Bisected rc.2 vs 2.0.0 in a temporary CI job. TPC-DS SF=1 is 99/99 and
   matches DuckDB.
+- **TPC-DS Q72 over `scan_iceberg` is the SF=10 killer** ([#29768](https://github.com/pola-rs/polars/issues/29768)).
+  Run 37469601767 answered Q1-Q71 in ~6 minutes, then Q72 ran 15 minutes until the runner killed
+  it (exit 143). On the same files Q72 is 2.1 s / 0.54 GiB with `scan_parquet` and killed at
+  13 GiB after 141 s with `scan_iceberg` (local SQLite catalog, so not OneLake); at SF=1, 0.2 s /
+  0.37 GiB against 15.2 s / 6.05 GiB. DuckDB: 0.4 s.
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
   1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s).
 
