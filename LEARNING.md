@@ -78,7 +78,7 @@ Largest scale each engine completes, cold, every statement answered:
 | Engine | TPC-H | TPC-DS | What breaks it next |
 |---|---|---|---|
 | Gluten/Velox | SF=100 (1,008 s) | **SF=100** (6,757 s) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
-| DuckDB | SF=200 (1,302 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit. TPC-H SF=300 Q18: the runner dies in its 450M-group aggregate |
+| DuckDB | **SF=300** (3,227 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit |
 | StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases didn't parse (now backticked for it); Q71 passes on 0.7.2 |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
@@ -186,7 +186,14 @@ Largest scale each engine completes, cold, every statement answered:
   105 GB of disk free. The same query takes 24.9 s at SF=60; the join order is what blows up
   (duckdb/duckdb#21896). The same run also lost Q88–Q99 to `Unauthorized` 65 minutes in, because
   the token baked into its `CREATE SECRET` had expired.
-- **TPC-H SF=300 Q18 takes the runner down** (run 36297418366). The job died 80 minutes in with
+- **TPC-H SF=300 now completes on the nightly CLI** (run 37429290996, 2026-10-06,
+  `v2.0.0-alpha44357`): 22/22 cold in 3,227 s, Q18 in 155 s, Q21 the slowest at 614 s.
+  duckdb/duckdb#22474 is still open, so what changed is somewhere else in the core between the
+  `2.0.0.dev2609250715` wheel and alpha44357. Row counts match StarRocks' SF=300 run except Q11
+  (280,546 vs 280,725): Q11 keeps groups above a fraction of the total, so groups at the threshold
+  flip with float summation order, and StarRocks was a few rows off at SF=30 and 60 too, where
+  DuckDB, chDB and Trino agreed. The history of the failure, before that:
+- **TPC-H SF=300 Q18 took the runner down** (run 36297418366). The job died 80 minutes in with
   "The hosted runner lost communication with the server": no job log, no result row. The timing
   puts it in Q18. At SF=200, Q1–Q17 take 889 s, and SF=300 ran 1.6× slower on Q1–Q8, so Q18
   started around minute 24 and ran ~55 minutes. At SF=200 it takes 60 s.
