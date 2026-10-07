@@ -25,8 +25,9 @@ THE SPILL PROBE. What stops DuckDB at big scales is the disk, not memory: TPC-DS
 at `90.6 GiB/90.6 GiB used`, and `max_temp_directory_size` defaults to 90% of the free disk under
 `temp_directory`. So setup logs both, and a daemon thread sums the blocks allocated under the temp
 directory once a second. It never touches the connection, only the filesystem. Each statement's
-peak is printed by the NEXT `refresh` (and the last by `close`), outside the timer -- `Q21 spill
-peak` in the log is the query just before it.
+peak is printed by the NEXT `refresh` (and the last by `close`), outside the timer -- a `spill
+peak` line in the log belongs to the query line just above it (TPC-DS runs its hard queries first,
+so a statement counter would not be the query number).
 """
 
 from __future__ import annotations
@@ -115,7 +116,7 @@ class DuckDBIceberg:
             return
         peak = self._spill.take_peak() / 2**30
         if self._statement:
-            scrub.safe_print(f"  Q{self._statement:<2} spill peak {peak:.2f} GiB")
+            scrub.safe_print(f"       spill peak {peak:.2f} GiB (query above)")
 
     def refresh(self) -> None:
         """Outside the timer: a new secret and attach once the token has under 15 minutes left."""

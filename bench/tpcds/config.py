@@ -116,6 +116,14 @@ class TpcdsConfig(Config):
     PASSES = ("cold",)
     # The totals chart shows every scale the suite has been run at, the per-query chart only SF=60.
     TOTALS_SFS = (10, 30, 60, 100)
+    # HARD QUERIES FIRST, so a run that is going to die on one dies in its first minutes, not two
+    # hours in after 98 easy ones. Q64 and Q72 lead because they are the ones that end runs
+    # (DuckDB SF=100 Q64 out of spill; LakeSail SF=60 Q72 out of spill; Spark-OSS 341 s on Q72 at
+    # SF=10). The rest is each query's mean share of an engine's total time across the latest
+    # SF=60/100 runs of every engine (2026-10-07): 23 4.4%, 4 4.1%, 14 3.7%, 19 3.6%, 67 3.3%,
+    # 9 3.2%, 95 2.9%, 78 2.7%, 5 2.3%, 11 1.9%, 75 1.9%, 80 1.8%, 28 1.6%. Same order for every
+    # engine, so the cache state each query meets is the same everywhere.
+    HARD_FIRST = (64, 72, 23, 4, 14, 19, 67, 9, 95, 78, 5, 11, 75, 80, 28)
     HEADLINE_SF = HEADLINE_SF
     ENGINES = ENGINES
     TABLES = TABLES

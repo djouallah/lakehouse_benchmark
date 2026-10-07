@@ -40,11 +40,20 @@ def _time(fn, *args) -> tuple[float, object, Exception | None]:
     return time.perf_counter() - start, value, None
 
 
-def run_pass(engine, statements: list[str], run_type: str) -> list[Row]:
-    """One full pass over the statements."""
+def order(n_statements: int, hard_first: tuple[int, ...] = ()) -> list[int]:
+    """Query numbers in run order: `hard_first` as given, then the rest ascending."""
+    first = [q for q in hard_first if 1 <= q <= n_statements]
+    return first + [q for q in range(1, n_statements + 1) if q not in first]
+
+
+def run_pass(
+    engine, statements: list[str], run_type: str, hard_first: tuple[int, ...] = ()
+) -> list[Row]:
+    """One full pass over the statements, hard ones first (config.HARD_FIRST)."""
     rows: list[Row] = []
     refresh = getattr(engine, "refresh", None)
-    for number, sql in enumerate(statements, start=1):
+    for number in order(len(statements), hard_first):
+        sql = statements[number - 1]
         if refresh is not None:
             # Untimed: re-minting a credential is not the query's work. A failure here is left
             # to surface as the statement's own error, with whatever credential is still in place.
@@ -96,7 +105,7 @@ def benchmark(engine, cfg) -> EngineResult:
         # chDB's filesystem cache, DuckDB's buffer pool, the OS page cache -- is what the warm
         # numbers measure. The suite's config says how many passes there are.
         for run_type in cfg.PASSES:
-            result.rows += run_pass(engine, statements, run_type)
+            result.rows += run_pass(engine, statements, run_type, cfg.HARD_FIRST)
     finally:
         engine.close()
 

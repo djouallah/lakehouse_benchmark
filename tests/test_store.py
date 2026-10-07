@@ -18,7 +18,7 @@ from bench.store import (
 )
 from bench.tpcds.config import TpcdsConfig
 from bench.tpch.config import ENGINES, TpchConfig
-from bench.tpch.runner import benchmark, totals
+from bench.tpch.runner import benchmark, order, run_pass, totals
 
 
 def _run(run_id="1", stamp="2026-09-20T03:17:44Z", sf=10):
@@ -140,6 +140,35 @@ def test_the_runner_takes_the_statement_count_from_the_suite():
     assert len(result.rows) == 1 + 99
     assert {r.query for r in result.rows if r.phase == "query"} == set(range(1, 100))
     assert {r.run_type for r in result.rows} == {"cold"}
+
+
+def test_tpcds_runs_its_hard_queries_first_and_every_query_once():
+    """A run that dies on Q64 should die in its first minutes, not after 98 easy queries."""
+    cfg = TpcdsConfig(workspace_id="w", lakehouse_id="l", sf=10)
+    ran = [r.query for r in benchmark(_Fake(), cfg).rows if r.phase == "query"]
+    assert ran[: len(cfg.HARD_FIRST)] == list(cfg.HARD_FIRST)
+    assert sorted(ran) == list(range(1, 100))
+    assert ran[len(cfg.HARD_FIRST) :] == sorted(ran[len(cfg.HARD_FIRST) :])
+
+
+def test_each_query_number_runs_its_own_statement():
+    """Reordering must not shift which SQL a query number gets."""
+    seen = []
+
+    class _Records(_Fake):
+        def execute(self, sql):
+            seen.append(sql)
+            return 1
+
+    statements = [f"SELECT {n}" for n in range(1, 6)]
+    rows = run_pass(_Records(), statements, "cold", hard_first=(4, 2))
+    assert [r.query for r in rows] == [4, 2, 1, 3, 5]
+    assert seen == ["SELECT 4", "SELECT 2", "SELECT 1", "SELECT 3", "SELECT 5"]
+
+
+def test_tpch_keeps_query_order():
+    assert TpchConfig.HARD_FIRST == ()
+    assert order(22) == list(range(1, 23))
 
 
 def test_a_failing_attach_is_recorded_not_raised():

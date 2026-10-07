@@ -120,6 +120,9 @@ class Config:
     PASSES = ("cold",)
     # Scales the totals chart compares side by side; empty draws it at the headline scale only.
     TOTALS_SFS = ()
+    # Statements run before the rest, in this order; the others follow in query order. Rows keep
+    # their query number either way, so this changes when a query runs, never what it is.
+    HARD_FIRST: tuple[int, ...] = ()
 
     workspace_id: str
     lakehouse_id: str
