@@ -122,7 +122,7 @@ class Config:
     TOTALS_SFS = ()
     # Statements run before the rest, in this order; the others follow in query order. Rows keep
     # their query number either way, so this changes when a query runs, never what it is.
-    HARD_FIRST: tuple[int, ...] = ()
+    HARD_FIRST = ()
 
     workspace_id: str
     lakehouse_id: str
