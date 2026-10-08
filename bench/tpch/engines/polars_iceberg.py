@@ -59,14 +59,18 @@ class PolarsIceberg:
         # resolves the manifest, then Polars opens the parquet itself and needs its own token.
         storage_options = {"bearer_token": token}
 
+        # BY NAME, THROUGH THE CATALOG: `scan_iceberg("ns.table", catalog=...)` resolves the table
+        # lazily at collect(), as DuckDB's ATTACH does, instead of a `catalog.load_table()` per
+        # table up front (pola-rs/polars#27776, where a maintainer pointed at it). Polars reuses
+        # the catalog it is given and caches REST scans and manifests (pola-rs/polars#29623,
+        # #29790). The loop stays: SQLContext needs a frame per name. There is no data-file disk
+        # cache to turn on -- Polars 2.0 removed it.
         self._ctx = pl.SQLContext()
         for table in self.cfg.TABLES:
+            name = f"{self.cfg.schema}.{table}"
             self._ctx.register(
-                f"{self.cfg.schema}.{table}",
-                pl.scan_iceberg(
-                    catalog.load_table(f"{self.cfg.schema}.{table}"),
-                    storage_options=storage_options,
-                ),
+                name,
+                pl.scan_iceberg(name, catalog=catalog, storage_options=storage_options),
             )
         scrub.safe_print(f"  polars {self.version} registered {len(self.cfg.TABLES)} tables")
 
