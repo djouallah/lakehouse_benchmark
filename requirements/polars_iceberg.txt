@@ -1,4 +1,7 @@
 azure-identity>=1.19
 psutil>=6
 pyiceberg[pyarrow,adlfs]>=0.12.0
-polars>=2.0.0rc2
+# TEMPORARY: Polars main (pola-rs/polars@c36581695d) with the Q11 (#29762) and Q72 (#29768)
+# fixes, built by tmp_polars_main.yml. Back to `polars>=2.0.0rc2` after the trial.
+polars @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c36581695d/polars-2.0.0-py3-none-any.whl
+polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c36581695d/polars_runtime_32-2.0.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
