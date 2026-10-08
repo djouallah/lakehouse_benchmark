@@ -1,0 +1,65 @@
+name: temporary polars main wheel
+
+# TEMPORARY. Polars publishes no nightly wheels; this builds main the way their release-python.yml
+# does (base package + polars-runtime-32, x86-64 non-compat CPU features) with the `release`
+# profile instead of `dist-release` (fat LTO), and attaches both wheels to a prerelease of this
+# repo so requirements/polars_iceberg.txt can point at them for a trial run. Deleted after.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: pola-rs/polars ref to build.
+        type: string
+        default: main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: -C target-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt,+cmpxchg16b,+avx,+avx2,+fma,+bmi1,+bmi2,+lzcnt,+pclmulqdq,+movbe
+      CFLAGS: -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mcx16 -mavx -mavx2 -mfma -mbmi -mbmi2 -mlzcnt -mpclmul -mmovbe
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: pola-rs/polars
+          ref: ${{ inputs.ref }}
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Base package
+        run: pip install uv && uv build py-polars --wheel --out-dir dist
+      - name: polars-runtime-32
+        uses: PyO3/maturin-action@v1
+        env:
+          POLARS_BUILD_COMMIT: ${{ steps.sha.outputs.sha }}
+        with:
+          command: build
+          target: x86_64-unknown-linux-gnu
+          docker-options: -e POLARS_BUILD_COMMIT
+          args: --profile release --manifest-path py-polars/runtime/polars-runtime-32/Cargo.toml --out dist
+          manylinux: auto
+          maturin-version: 1.15.0
+      - name: Import check
+        run: |
+          pip install dist/*.whl
+          python -c 'import polars; polars.show_versions()'
+          ls -la dist
+      - name: Attach to a prerelease of this repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          tag="polars-main-${SHA:0:10}"
+          gh release create "$tag" dist/*.whl --repo "${{ github.repository }}" --prerelease \
+            --title "$tag (temporary)" --notes "Polars main at pola-rs/polars@$SHA, built for a trial run."
