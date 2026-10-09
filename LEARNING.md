@@ -337,6 +337,17 @@ Largest scale each engine completes, cold, every statement answered:
   it (exit 143). On the same files Q72 is 2.1 s / 0.54 GiB with `scan_parquet` and killed at
   13 GiB after 141 s with `scan_iceberg` (local SQLite catalog, so not OneLake); at SF=1, 0.2 s /
   0.37 GiB against 15.2 s / 6.05 GiB. DuckDB: 0.4 s.
+- **Main after 2.0.0 fixes Q11 and Q72 and breaks TPC-DS Q4** ([#29822](https://github.com/pola-rs/polars/issues/29822)).
+  A wheel of pola-rs/polars@c36581695d (built in a temporary CI job) ran TPC-H SF=30 at 22/22,
+  142 s cold, against 21/22 and 192 s on 2.0.0 (run 37862297743). Over a local Iceberg catalog
+  at TPC-DS SF=10 it took Q72 from OOM to 2.6 s, but Q4 went from 34 s / 2.5 GiB to over 12 GiB
+  in 5 s, which is what stalled bench run 37859527146. The plan on main reorders Q4's six
+  `year_total` self-joins (`__POLARS_JOIN_ORDER_*`); 2.0.0 keeps the SQL order.
+  `use_metadata_statistics=False` does not help, and `scan_parquet` on the same files is fine.
+- **Tables are scanned by name through the catalog** (`scan_iceberg("ns.table", catalog=...)`),
+  as a maintainer suggested on [#27776](https://github.com/pola-rs/polars/issues/27776): lazy,
+  with the REST scan and manifest caches of #29790 / #29623. The registration loop stays, because
+  Polars SQL has no catalog. There is no data-file disk cache to turn on: Polars 2.0 removed it.
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
   1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s).
 
