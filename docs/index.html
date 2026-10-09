@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Small Data Benchmark</title>
+<meta name="description" content="Iceberg engines on small compute: light ETL, TPC-H and TPC-DS against OneLake, fastest first.">
+<style>
+/* Surfaces, ink and engine colours are bench/charts.py's THEMES / LIGHT / DARK, so an engine looks
+   the same here as in every PNG. */
+:root {
+  --surface: #fcfcfb; --raised: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8984;
+  --grid: #d8d7d2; --track: #f0efeb; --accent: #2a78d6;
+  --duckdb_iceberg: #2a78d6; --chdb_iceberg: #eb6834; --polars_iceberg: #1baf7a;
+  --lakesail_iceberg: #eda100; --daft_iceberg: #8a5cd1; --pyspark_iceberg: #d6468f;
+  --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1a1a19; --raised: #222221; --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8984;
+    --grid: #3a3a37; --track: #262624; --accent: #3987e5;
+    --duckdb_iceberg: #3987e5; --chdb_iceberg: #d95926; --polars_iceberg: #199e70;
+    --lakesail_iceberg: #c98500; --daft_iceberg: #9b6ee0; --pyspark_iceberg: #e05a9c;
+    --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface); color: var(--ink);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 880px; margin: 0 auto; padding: 48px 16px 64px; }
+h1 { font-size: clamp(28px, 6vw, 44px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 12px; }
+.lede { color: var(--ink-2); max-width: 62ch; margin: 0 0 32px; }
+.tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--track); flex-wrap: wrap; }
+.tabs button, .chips button {
+  font: inherit; border: 0; cursor: pointer; color: var(--ink-2); background: transparent;
+}
+.tabs button { padding: 8px 16px; border-radius: 9px; font-weight: 600; }
+.tabs button[aria-selected="true"] { background: var(--raised); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+.chips { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+.chips button { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--grid); font-size: 13px; font-variant-numeric: tabular-nums; }
+.chips button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
+.caption { color: var(--ink-2); font-size: 13px; margin: 0 0 20px; min-height: 1.5em; }
+.chart { display: grid; gap: 10px; }
+.row {
+  display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 12px;
+  opacity: 0; transform: translateY(6px); animation: in .45s ease forwards;
+}
+@keyframes in { to { opacity: 1; transform: none; } }
+.name { font-weight: 600; font-size: 14px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lane { position: relative; height: 34px; display: flex; align-items: center; gap: 10px; cursor: default; }
+.bar {
+  height: 100%; width: 0; border-radius: 0 4px 4px 0; background: var(--c);
+  transition: width .8s cubic-bezier(.2, .8, .2, 1), filter .15s;
+}
+.lane:hover .bar, .lane:focus .bar { filter: brightness(1.12); }
+.lane:focus { outline: none; }
+.lane:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.val { font-size: 13px; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.val .x { color: var(--ink-2); }
+.failed .bar {
+  width: 28px !important; background: repeating-linear-gradient(135deg, var(--grid) 0 4px, transparent 4px 8px);
+}
+.failed .val { color: var(--ink-3); font-style: italic; }
+.speedup {
+  margin-top: 24px; padding: 14px 16px; border-radius: 12px; background: var(--track);
+  font-size: 14px; color: var(--ink-2);
+}
+.speedup b { color: var(--ink); font-size: 18px; }
+.tip {
+  position: fixed; z-index: 10; pointer-events: none; opacity: 0; transition: opacity .12s;
+  background: var(--raised); color: var(--ink); border: 1px solid var(--grid); border-radius: 10px;
+  padding: 10px 12px; font-size: 13px; box-shadow: 0 6px 24px rgb(0 0 0 / .18); max-width: 260px;
+}
+.tip.on { opacity: 1; }
+.tip .t { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.tip .k { color: var(--ink-2); }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
+footer a, .lane a { color: var(--accent); }
+.empty { color: var(--ink-2); padding: 24px 0; }
+@media (max-width: 520px) {
+  main { padding-top: 32px; }
+  .row { grid-template-columns: 84px 1fr; gap: 8px; }
+  .name { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row { animation: none; opacity: 1; transform: none; }
+  .bar { transition: none; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Small Data Benchmark</h1>
+  <p class="lede">Most benchmarks are big data using big compute. Here we test small to medium data on
+    a 4-core, 16&nbsp;GB runner, reading and writing Iceberg on OneLake. The point is to stress spill
+    to disk and bad join orders; more compute just hides the issues.</p>
+
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="chips" id="chips"></div>
+  <p class="caption" id="caption"></p>
+  <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
+  <div id="speedup"></div>
+
+  <footer>
+    Mean of each engine's last 3 runs at that scale; the query suites count only runs that completed
+    every query, and <i>failed</i> means none did. Cold runs, seconds, lower is better.
+    Full tables: <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/docs/etl/RESULTS.md">ETL</a> ·
+    <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/docs/RESULTS.md">TPC-H</a> ·
+    <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/docs/tpcds/RESULTS.md">TPC-DS</a> ·
+    raw <a href="https://github.com/djouallah/lakehouse_benchmark/tree/main/docs/data">CSVs</a> ·
+    <a href="https://github.com/djouallah/lakehouse_benchmark">repo</a>
+  </footer>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+// Same aggregation as bench/speedup.py, bench/tpch/charts.py totals_by_sf and bench/etl/charts.py.
+const RECENT_RUNS = 3;  // bench/charts.py RECENT_RUNS
+const LABEL = {         // bench/charts.py LABEL
+  duckdb_iceberg: "DuckDB", chdb_iceberg: "chDB", polars_iceberg: "Polars",
+  lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",
+  pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
+};
+const SPARK = "pyspark_iceberg", GLUTEN = "pyspark_gluten_iceberg";
+// bench/speedup.py KNOWN_FAILED: a cancelled run publishes nothing, so the CSV cannot show it.
+const KNOWN_FAILED = [["tpcds", 100, SPARK]];
+const SUITES = [
+  { id: "etl", title: "Light ETL", csv: "data/etl_results.csv", headline: 1000,
+    scale: n => `${n.toLocaleString()} files`,
+    caption: n => `Read ${n.toLocaleString()} CSVs and write one Iceberg table.` },
+  { id: "tpch", title: "TPC-H", csv: "data/tpch_results.csv", headline: 10, queries: 22, sfs: [10, 30, 60, 100],
+    scale: n => `SF ${n}`, caption: n => `Total cold seconds for all 22 queries at scale factor ${n}.` },
+  { id: "tpcds", title: "TPC-DS", csv: "data/tpcds_results.csv", headline: 60, queries: 99, sfs: [10, 30, 60, 100],
+    scale: n => `SF ${n}`, caption: n => `Total cold seconds for all 99 queries at scale factor ${n}.` },
+];
+
+function parseCSV(text) {
+  const rows = []; let row = [], field = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); rows.push(row); row = []; field = "";
+    } else field += c;
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  const head = rows.shift();
+  return rows.filter(r => r.length === head.length).map(r => Object.fromEntries(head.map((h, i) => [h, r[i]])));
+}
+
+// One entry per (engine, scale, run): total, completeness, version, url.
+function groupRuns(rows, suite) {
+  const runs = new Map();
+  for (const r of rows) {
+    if (r.test !== suite.id) continue;
+    const sf = +r.sf;
+    if (suite.sfs && !suite.sfs.includes(sf)) continue;
+    const key = `${r.engine}|${sf}|${r.run_id}`;
+    let run = runs.get(key);
+    if (!run) runs.set(key, run = { engine: r.engine, sf, started: "", dur: 0, ok: 0, load: null, error: false });
+    if (r.run_started_at > run.started) { run.started = r.run_started_at; run.version = r.engine_version; run.url = r.run_url; }
+    if (suite.queries) {
+      if (r.run_type === "cold" && r.phase === "query") { run.dur += +r.dur || 0; run.ok += r.status === "ok"; }
+    } else if (r.phase === "load") {
+      if (r.status === "ok" && r.dur) run.load = +r.dur; else if (r.status === "error") run.error = true;
+    }
+  }
+  return [...runs.values()];
+}
+
+// {sf: [{engine, mean, n, version, url} | {engine, failed: true}]}
+function summarize(rows, suite) {
+  const by = {};
+  for (const run of groupRuns(rows, suite)) ((by[run.sf] ??= {})[run.engine] ??= []).push(run);
+  const out = {};
+  for (const [sf, engines] of Object.entries(by)) {
+    out[sf] = Object.entries(engines).map(([engine, runs]) => {
+      runs.sort((a, b) => b.started.localeCompare(a.started));
+      // Queries: last N COMPLETE runs. ETL: the engine's own last N runs, successful loads averaged.
+      const window = suite.queries
+        ? runs.filter(r => r.ok === suite.queries).slice(0, RECENT_RUNS)
+        : runs.slice(0, RECENT_RUNS);
+      const values = window.map(r => suite.queries ? r.dur : r.load).filter(v => v != null);
+      if (!values.length) {
+        const ran = suite.queries || window.some(r => r.error);
+        return ran ? { engine, failed: true, version: runs[0].version, url: runs[0].url } : null;
+      }
+      const latest = window.find(r => (suite.queries ? r.dur : r.load) != null);
+      return { engine, mean: values.reduce((a, b) => a + b, 0) / values.length, n: values.length,
+               version: latest.version, url: latest.url, started: latest.started };
+    }).filter(Boolean);
+  }
+  for (const [test, sf, engine] of KNOWN_FAILED) {
+    if (test === suite.id && out[sf] && !out[sf].some(i => i.engine === engine)) out[sf].push({ engine, failed: true });
+  }
+  for (const items of Object.values(out)) {
+    items.sort((a, b) => (a.mean ?? Infinity) - (b.mean ?? Infinity));
+  }
+  return out;
+}
+
+const $ = id => document.getElementById(id);
+const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
+const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
+const state = { suite: SUITES[0].id, sf: {} };
+const data = {};
+
+function renderTabs() {
+  $("tabs").innerHTML = "";
+  for (const s of SUITES) {
+    const b = document.createElement("button");
+    b.role = "tab"; b.textContent = s.title;
+    b.setAttribute("aria-selected", s.id === state.suite);
+    b.onclick = () => { state.suite = s.id; render(); };
+    $("tabs").append(b);
+  }
+}
+
+function render() {
+  renderTabs();
+  const suite = SUITES.find(s => s.id === state.suite);
+  const results = data[suite.id];
+  const scales = Object.keys(results || {}).map(Number).sort((a, b) => a - b);
+  let sf = state.sf[suite.id] ?? (scales.includes(suite.headline) ? suite.headline : scales.at(-1));
+  state.sf[suite.id] = sf;
+
+  $("chips").innerHTML = "";
+  for (const n of scales) {
+    const b = document.createElement("button");
+    b.textContent = suite.scale(n); b.setAttribute("aria-pressed", n === sf);
+    b.onclick = () => { state.sf[suite.id] = n; render(); };
+    $("chips").append(b);
+  }
+  $("caption").textContent = results ? suite.caption(sf) : "";
+
+  const chart = $("chart");
+  chart.innerHTML = "";
+  $("speedup").innerHTML = "";
+  if (!results) { chart.innerHTML = `<div class="empty">Could not load ${suite.csv}.</div>`; return; }
+  const items = results[sf] || [];
+  const ok = items.filter(i => !i.failed);
+  const top = Math.max(...ok.map(i => i.mean), 1), fastest = ok[0]?.mean;
+
+  items.forEach((item, idx) => {
+    const row = document.createElement("div");
+    row.className = "row" + (item.failed ? " failed" : "");
+    row.style.animationDelay = `${idx * 45}ms`;
+    row.style.setProperty("--c", `var(--${item.engine}, var(--ink-3))`);
+    const value = item.failed ? "failed"
+      : fmt(item.mean) + (idx ? ` <span class="x">· ${ratio(item.mean / fastest)}</span>` : "");
+    row.innerHTML = `<div class="name">${LABEL[item.engine] ?? item.engine}</div>
+      <div class="lane" tabindex="0"><div class="bar"></div><div class="val">${value}</div></div>`;
+    chart.append(row);
+    const lane = row.querySelector(".lane");
+    lane.onmouseenter = lane.onfocus = e => showTip(item, lane);
+    lane.onmousemove = e => moveTip(e.clientX, e.clientY);
+    lane.onmouseleave = lane.onblur = hideTip;
+    lane.onclick = () => item.url && window.open(item.url, "_blank", "noopener");
+    if (!item.failed) {
+      const bar = row.querySelector(".bar");
+      // Leave room for the value label at the end of the longest bar.
+      requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = `calc((100% - 120px) * ${item.mean / top})`; }));
+    }
+  });
+  if (!items.length) chart.innerHTML = `<div class="empty">No runs at this scale yet.</div>`;
+
+  const spark = items.find(i => i.engine === SPARK && !i.failed), gluten = items.find(i => i.engine === GLUTEN && !i.failed);
+  if (spark && gluten) {
+    $("speedup").innerHTML = `<div class="speedup"><b>${ratio(spark.mean / gluten.mean)}</b>&nbsp;
+      Gluten/Velox vs Spark-OSS on the same Spark plan (${fmt(gluten.mean)} vs ${fmt(spark.mean)}).</div>`;
+  }
+}
+
+const tip = $("tip");
+function showTip(item, lane) {
+  tip.style.setProperty("--c", `var(--${item.engine}, var(--ink-3))`);
+  const when = item.started ? new Date(item.started).toISOString().slice(0, 10) : "";
+  tip.innerHTML = `<div class="t"><span class="sw"></span>${LABEL[item.engine] ?? item.engine}</div>` +
+    (item.failed ? `<div>No complete run at this scale.</div>`
+      : `<div><b>${fmt(item.mean)}</b> <span class="k">mean of ${item.n} run${item.n > 1 ? "s" : ""}</span></div>
+         <div class="k">latest ${when}</div>`) +
+    `<div class="k">version ${item.version || "?"}</div><div class="k">click to open the run</div>`;
+  const r = lane.getBoundingClientRect();
+  moveTip(r.left + 140, r.top);
+  tip.classList.add("on");
+}
+function moveTip(x, y) {
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = `${Math.min(x + 14, innerWidth - w - 8)}px`;
+  tip.style.top = `${Math.max(8, y - h - 12)}px`;
+}
+function hideTip() { tip.classList.remove("on"); }
+
+renderTabs();
+Promise.all(SUITES.map(s => fetch(s.csv).then(r => r.ok ? r.text() : Promise.reject(r.status))
+  .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})))
+  .then(render);
+</script>
+</body>
+</html>
