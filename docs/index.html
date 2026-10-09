@@ -82,6 +82,13 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip .t { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .tip .k { color: var(--ink-2); }
+.tried { margin-top: 20px; font-size: 14px; color: var(--ink-2); }
+.tried h2 { font-size: 15px; color: var(--ink); margin: 0 0 6px; }
+.tried ul { margin: 0; padding-left: 18px; }
+.tried li { margin: 3px 0; }
+.tried b { color: var(--ink); }
+.tried a { color: var(--accent); }
+.tried code { font-size: 12px; }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
 footer a, .lane a { color: var(--accent); }
 .empty { color: var(--ink-2); padding: 24px 0; }
@@ -105,6 +112,20 @@ footer a, .lane a { color: var(--accent); }
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+
+  <section class="tried">
+    <h2>Tried, not added</h2>
+    <ul>
+      <li><b>Apache Doris</b>: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes.</li>
+      <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths.</li>
+      <li><b>Databend</b>: the release build has no Azure storage for Iceberg ("azdls not supported now"); a fix is being tested on a fork.</li>
+      <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM (<a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a>).</li>
+      <li><b>pg_lake</b> (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
+      <li><b>CedarDB</b>: no Iceberg support yet; it's on their roadmap.</li>
+      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>.</li>
+      <li><b>chDB</b>: not in TPC-DS; aborts on the first query (chDB 4.4.0).</li>
+    </ul>
+  </section>
 
   <footer>
     Mean of each engine's last 3 runs at that scale; the query suites count only runs that completed

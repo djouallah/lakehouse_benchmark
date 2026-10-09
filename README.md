@@ -22,6 +22,12 @@ Tried and not added:
 
 - **Apache Doris**: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes (condition 2).
 - **Firebolt Core**: attaches the catalog, but only reads data from `s3://`, `gs://` or `file://`. It rejects OneLake's `abfss://` paths, and its `azure://` location takes no Azure token (condition 2).
+- **Databend**: the release build has no Azure storage for Iceberg ("azdls not supported now"); a fix is being tested on a fork (condition 2).
+- **DataFusion Comet**: its native Iceberg scan has no `abfss://`, so OneLake scans fall back to the JVM ([apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058)) (condition 2).
+- **pg_lake** (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row `nation` takes 4-5s.
+- **CedarDB**: no Iceberg support yet; it's on their roadmap.
+- **Daft**: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and `SUBSTRING`.
+- **chDB**: not in TPC-DS; aborts on the first query (chDB 4.4.0).
 
 ## Gluten/Velox vs Spark-OSS
 
