@@ -2,7 +2,7 @@ name: tpcds bench
 
 # THE SECOND QUERY SUITE: the same job graph as bench.yml, on TPC-DS's 24 tables and 99
 # statements and the same shared scripts (BENCH_SUITE=tpcds picks the suite, bench/suite.py).
-# It runs FEWER ENGINES than bench.yml -- three of TPC-H's seven cannot answer TPC-DS at SF=10
+# It runs FEWER ENGINES than bench.yml -- two of TPC-H's engines cannot answer TPC-DS at SF=10
 # at all, and bench/tpcds/config.py's ENGINES says which and on what evidence.
 #
 #   prepare  ->  bench (matrix, one engine at a time)  ->  publish
@@ -28,7 +28,7 @@ on:
       engines:
         description: Comma-separated engines to run.
         type: string
-        default: duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,lakesail_iceberg
+        default: duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,lakesail_iceberg,polars_iceberg
       regenerate:
         description: Drop and rewrite the namespace even if it is marked complete.
         type: boolean
@@ -108,7 +108,7 @@ jobs:
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
         # once here so every artifact in the run shares one timestamp.
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,lakesail_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,lakesail_iceberg,polars_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"

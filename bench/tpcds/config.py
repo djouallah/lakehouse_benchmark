@@ -8,8 +8,8 @@
 * `from_env` reads TPCDS_SF, so tpcds.yml and bench.yml can be dispatched at different scales.
 
 The engine list is NOT TPC-H's. Identifiers and colours are shared with it -- an engine looks the
-same in every picture -- but `ENGINES` below is a subset, because three of TPC-H's seven cannot
-answer TPC-DS at the headline scale. Which three, and on what evidence, is written there.
+same in every picture -- but `ENGINES` below is a subset, because two of TPC-H's cannot
+answer TPC-DS at all. Which two, and on what evidence, is written there.
 """
 
 from __future__ import annotations
@@ -18,18 +18,14 @@ from dataclasses import dataclass
 
 from bench.config import SQL_DIR, Config
 
-# THE ENGINES THAT FINISH. TPC-H runs all seven; TPC-DS runs these three. Four of the rest were
-# dropped on measurement, not taste -- run 35732997698 (SF=10) and 35732283791 (SF=1) are the
+# THE ENGINES THAT FINISH. TPC-H runs them all; TPC-DS runs these. The rest were dropped on
+# measurement, not taste -- run 35732997698 (SF=10) and 35732283791 (SF=1) are the
 # evidence, and every number below is from the SF=10 run over identical OneLake tables.
 #
 #   chdb_iceberg      ABORTS IN GLIBC on its first query: `pthread_mutex_lock.c:94 assertion
 #                     failed: mutex->__data.__owner == 0`, exit 134, no result rows at all. Both
 #                     at SF=1 and SF=10, and against tables written by two different writers, so
 #                     it is chDB 4.4.0, not the data. TPC-H is unaffected -- chDB still runs there.
-#   polars_iceberg    KILLED THE RUNNER. 55 minutes in, the job died with "the hosted runner lost
-#                     communication with the server", which on a 15.6 GB box after an hour of
-#                     query memory is an OOM. (At SF=1 it finishes, 91/99, and loses q13/48/49/85
-#                     to pola-rs/polars#29449 -- negative decimal bounds decoded as unsigned.)
 #   lakesail_iceberg  38 MINUTES COLD for 90 of 99 statements, then 50 of 99 failed warm. Its
 #                     parser rejects the spec's double-quoted aliases (`AS "order count"`), which
 #                     is 8 statements at SF=1 already; the rest is scale. On 0.7.2 (run
@@ -59,6 +55,10 @@ ENGINES = (
     # LakeSail: back 2026-09-30. 0.7.2 answers 99/99 at SF=10 (run 36652684303) once its
     # double-quoted aliases are backticked (bench/tpch/queries.py BACKTICK_ALIASES).
     "lakesail_iceberg",
+    # Polars: back 2026-10-10. 2.0.0 OOM-killed the runner at SF=10 (Q72 over scan_iceberg,
+    # pola-rs/polars#29768; then Q4 on main, #29822). The main build pinned in
+    # requirements/polars_iceberg.txt answers 99/99 at SF=10 in 256 s cold (run 37943815509).
+    "polars_iceberg",
 )
 
 # The 24 tables of the spec (dsdgen also emits `dbgen_version`, which is not one), LARGEST FIRST
