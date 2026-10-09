@@ -1,4 +1,4 @@
-"""docs/index.html, the interactive results page: every engine the charts know has its colour and label there."""
+"""docs/index.html, the interactive results page: every engine has its chart colours and label."""
 
 from __future__ import annotations
 
