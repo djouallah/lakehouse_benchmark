@@ -1,4 +1,8 @@
 azure-identity>=1.19
 psutil>=6
 pyiceberg[pyarrow,adlfs]>=0.12.0
-polars>=2.0.0rc2
+# UNTIL THE NEXT POLARS RELEASE: Polars main (pola-rs/polars@c36581695d), built by
+# tmp_polars_main.yml, for the TPC-H Q11 fix (#29762) that 2.0.0 lacks. Back to the PyPI line
+# (`polars>=2.0.0rc2`) once a release has it. It also has the TPC-DS Q4 regression (#29822).
+polars @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c36581695d/polars-2.0.0-py3-none-any.whl
+polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c36581695d/polars_runtime_32-2.0.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
