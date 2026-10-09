@@ -87,6 +87,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tried ul { margin: 0; padding-left: 18px; }
 .tried li { margin: 6px 0; overflow-wrap: anywhere; }
 .tried b { color: var(--ink); }
+.tried .perm { color: var(--ink-3); text-decoration: none; margin-left: 4px; }
 .tried li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
 .tried a { color: var(--accent); }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
@@ -114,16 +115,16 @@ footer a, .lane a { color: var(--accent); }
   <div id="speedup"></div>
   <section class="tried" id="tried" hidden>
     <ul>
-      <li id="doris"><b>Apache Doris</b>: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes.</li>
-      <li id="firebolt"><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths (<a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a>).</li>
-      <li id="databend"><b>Databend</b>: the release build has no Azure storage for Iceberg ("azdls not supported now"); a fix is being tested on a fork (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>, decimal bug <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a>).</li>
-      <li id="datafusion-comet"><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM (<a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a>).</li>
-      <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream (<a href="https://github.com/apache/iceberg-rust/issues/3036">iceberg-rust#3036</a>).</li>
-      <li id="pg_lake"><b>pg_lake</b> (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
-      <li id="cedardb"><b>CedarDB</b>: no Iceberg support yet; it's on their roadmap.</li>
-      <li id="daft"><b>Daft</b>: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and <code>SUBSTRING</code> (<a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a>, OneLake paths <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a>).</li>
-      <li id="starrocks"><b>StarRocks</b>: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs (<a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a>, <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a>).</li>
-      <li id="chdb"><b>chDB</b>: not in TPC-DS; aborts on the first query (chDB 4.4.0).</li>
+      <li><b>Apache Doris</b>: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes.</li>
+      <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths (<a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a>).</li>
+      <li><b>Databend</b>: the release build has no Azure storage for Iceberg ("azdls not supported now"); a fix is being tested on a fork (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>, decimal bug <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a>).</li>
+      <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM (<a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>
+      <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream (<a href="https://github.com/apache/iceberg-rust/issues/3036">iceberg-rust#3036</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-no-iceberg-in-python">Details</a></li>
+      <li><b>pg_lake</b> (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
+      <li><b>CedarDB</b>: no Iceberg support yet; it's on their roadmap.</li>
+      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and <code>SUBSTRING</code> (<a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a>, OneLake paths <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
+      <li><b>StarRocks</b>: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs (<a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a>, <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks-a-candidate-that-qualifies">Details</a></li>
+      <li><b>chDB</b>: not in TPC-DS; aborts on the first query (chDB 4.4.0). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
     </ul>
   </section>
 
@@ -328,7 +329,12 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// Deep links: #tpch, #tpcds, #tried, or one engine on the tried tab (#datafusion-comet).
+// Every engine on the tried tab gets an id from its name and a # link to itself.
+for (const li of $("tried").querySelectorAll("li")) {
+  li.id = li.querySelector("b").textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  li.querySelector("b").insertAdjacentHTML("afterend", `<a class="perm" href="#${li.id}" aria-label="Link to ${li.id}">#</a>`);
+}
+// Deep links: #tpch, #tpcds, #tried, or one engine on the tried tab (#datafusion).
 function fromHash() {
   const h = decodeURIComponent(location.hash.slice(1));
   if ([...SUITES, TRIED].some(s => s.id === h)) state.suite = h;
