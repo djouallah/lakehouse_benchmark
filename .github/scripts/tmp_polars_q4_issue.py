@@ -149,8 +149,8 @@ def generate():
     catalog.create_namespace_if_not_exists("tpcds")
     for t in TABLES:
         con.sql(f"COPY {t} TO '{t}.parquet' (FORMAT parquet)")
-        tbl = catalog.create_table(f"tpcds.{t}", schema=pq.read_schema(f"{t}.parquet"))
-        tbl.add_files([f"file://{os.getcwd()}/{t}.parquet"])
+        data = pq.read_table(f"{t}.parquet")
+        catalog.create_table(f"tpcds.{t}", schema=data.schema).append(data)
 
 
 def child(case):
