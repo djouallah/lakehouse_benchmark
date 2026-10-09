@@ -83,7 +83,7 @@ Largest scale each engine completes, cold, every statement answered:
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases didn't parse (now backticked for it); Q71 passes on 0.7.2 |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
 | chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS aborts in glibc at any SF |
-| Polars | SF=60 (279 s, main build c36581695d) | — | TPC-H SF=100: untried; TPC-DS SF=10: Q4 OOMs on the main build (#29822), Q72 on 2.0.0 (#29768) |
+| Polars | SF=100 (591 s, main build c36581695d) | — | TPC-H SF=200: untried; TPC-DS SF=10: Q4 OOMs on the main build (#29822), Q72 on 2.0.0 (#29768) |
 
 - **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap, and it
   is the only engine that finished TPC-DS at SF=100. Not one of its failures at any scale came
@@ -344,6 +344,9 @@ Largest scale each engine completes, cold, every statement answered:
   in 5 s, which is what stalled bench run 37859527146. The plan on main reorders Q4's six
   `year_total` self-joins (`__POLARS_JOIN_ORDER_*`); 2.0.0 keeps the SQL order.
   `use_metadata_statistics=False` does not help, and `scan_parquet` on the same files is fine.
+  The same build completes TPC-H SF=60 (22/22, 279 s, run 37871297077) and SF=100 (22/22,
+  591 s, run 37872115807): second to DuckDB's 500 s at SF=100, ahead of StarRocks, Gluten and
+  Sail, with every row count matching theirs. Q21 (116 s) and Q18 (102 s) are its slowest.
 - **Tables are scanned by name through the catalog** (`scan_iceberg("ns.table", catalog=...)`),
   as a maintainer suggested on [#27776](https://github.com/pola-rs/polars/issues/27776): lazy,
   with the REST scan and manifest caches of #29790 / #29623. The registration loop stays, because
