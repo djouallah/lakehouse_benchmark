@@ -453,6 +453,26 @@ private val icebergReadableSchemes: Set[String] = Set("file", "s3", "s3a", "gs",
 - **Revisit when `abfss` appears in `icebergReadableSchemes`.** Filed as
   [apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058).
 
+## DataFusion: no Iceberg in Python
+
+Reviewed on paper (2026-10-10), no CI run. DataFusion fails on its Iceberg support, not on Azure.
+- **datafusion-python has no Iceberg.** There is no catalog, no scan and no write. Writes have been
+  an open request since 2025 ([apache/datafusion-python#1097](https://github.com/apache/datafusion-python/issues/1097)).
+- **The only pip route is gone.** pyiceberg-core's `IcebergDataFusionTable` loaded a table from its
+  metadata location into a read-only iceberg-rust `StaticTable`. Upstream removed it from main on
+  2026-09-03 ([apache/iceberg-rust#3036](https://github.com/apache/iceberg-rust/issues/3036),
+  PR #3143). The reason given: it ran a second Iceberg implementation behind a PyIceberg `Table`.
+  pyiceberg-core 0.10.1 is the last release that has it. It is built against DataFusion 53 and
+  needs the same major on the Python side (datafusion 54.1 is current).
+- **Writing would not be DataFusion.** The only option is pyiceberg appending DataFusion's Arrow
+  output, which tests pyiceberg's writer, not the engine's (condition 3).
+- **Azure would have worked.** pyiceberg-core 0.10.1 ships iceberg-rust's `opendal-azdls`, and
+  `adls.sas-token` is the path Databend's fork proved on OneLake. The Files section is reachable
+  through `object_store.MicrosoftAzure(bearer_token=..., use_fabric_endpoint=True)`.
+- **Already covered.** The DataFusion core is in the bench through LakeSail.
+- **Revisit when** datafusion-python ships an Iceberg catalog provider with writes. The Rust
+  `iceberg-datafusion` crate has both (REST catalog, `INSERT INTO`), but only for Rust callers.
+
 ## StarRocks: a candidate that qualifies
 
 Tried through the `candidate engine` workflow (`.github/scripts/candidate_engine.py`) on
