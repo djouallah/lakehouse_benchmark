@@ -119,13 +119,19 @@ class _Fake:
         self.closed = True
 
 
+class _Passes(_Fake):
+    def execute(self, sql):
+        return 7
+
+
 class _FailsToAttach(_Fake):
     def setup(self):
         raise RuntimeError("catalog refused the token")
 
 
-def test_a_failing_query_does_not_stop_the_run():
-    """Cell 15 had no try/except: one bad statement lost all 22 timings."""
+def test_a_failing_query_is_recorded_not_raised():
+    """Cell 15 had no try/except: one bad statement crashed the job. Q22 is the last statement,
+    so the run is complete up to it and the failure is a row."""
     result = benchmark(_Fake(), TpchConfig(workspace_id="w", lakehouse_id="l", sf=10))
     assert result.status == "ok"
     assert len(result.rows) == 23  # 1 setup + 22 cold
@@ -135,7 +141,7 @@ def test_a_failing_query_does_not_stop_the_run():
 
 def test_the_runner_takes_the_statement_count_from_the_suite():
     """Same runner, same fake engine, the TPC-DS config: 99 statements, one cold pass."""
-    result = benchmark(_Fake(), TpcdsConfig(workspace_id="w", lakehouse_id="l", sf=10))
+    result = benchmark(_Passes(), TpcdsConfig(workspace_id="w", lakehouse_id="l", sf=10))
     assert result.status == "ok"
     assert len(result.rows) == 1 + 99
     assert {r.query for r in result.rows if r.phase == "query"} == set(range(1, 100))
@@ -145,7 +151,7 @@ def test_the_runner_takes_the_statement_count_from_the_suite():
 def test_tpcds_runs_its_hard_queries_first_and_every_query_once():
     """A run that dies on Q64 should die in its first minutes, not after 98 easy queries."""
     cfg = TpcdsConfig(workspace_id="w", lakehouse_id="l", sf=10)
-    ran = [r.query for r in benchmark(_Fake(), cfg).rows if r.phase == "query"]
+    ran = [r.query for r in benchmark(_Passes(), cfg).rows if r.phase == "query"]
     assert ran[: len(cfg.HARD_FIRST)] == list(cfg.HARD_FIRST)
     assert sorted(ran) == list(range(1, 100))
     assert ran[len(cfg.HARD_FIRST) :] == sorted(ran[len(cfg.HARD_FIRST) :])
@@ -164,6 +170,20 @@ def test_each_query_number_runs_its_own_statement():
     rows = run_pass(_Records(), statements, "cold", hard_first=(4, 2))
     assert [r.query for r in rows] == [4, 2, 1, 3, 5]
     assert seen == ["SELECT 4", "SELECT 2", "SELECT 1", "SELECT 3", "SELECT 5"]
+
+
+def test_a_run_stops_at_the_first_failed_query():
+    """All or nothing: nothing after a failure runs."""
+
+    class _FailsOn2(_Fake):
+        def execute(self, sql):
+            if sql == "SELECT 2":
+                raise RuntimeError("out of spill")
+            return 1
+
+    statements = [f"SELECT {n}" for n in range(1, 6)]
+    rows = run_pass(_FailsOn2(), statements, "cold", hard_first=(4, 2))
+    assert [(r.query, r.status) for r in rows] == [(4, "ok"), (2, "error")]
 
 
 def test_tpch_keeps_query_order():

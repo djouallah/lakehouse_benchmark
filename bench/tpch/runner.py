@@ -4,12 +4,10 @@ REPLACES cells 15, 16 and 17.
 
 WHAT CHANGED BEYOND THE MEASUREMENT FIXES IN engines/base.py:
 
-* A FAILING QUERY NO LONGER KILLS THE RUN. Cell 15 had no try/except, so one engine raising on one
-  statement lost all 22 timings and both passes. Here a query failure becomes a row with
-  `status='error'` and a scrubbed message, and the remaining queries still run. That matters most
-  for exactly the engines most likely to fail -- Polars and LakeSail on Q9/Q18/Q21 at SF>=10 --
-  because "Sail completed 20 of 22, and here are the two it could not" is a result, while a dead
-  job is not.
+* A FAILING QUERY ENDS THE RUN, CLEANLY. A run is all of the suite or nothing (the owner's,
+  2026-10-09): the first failure becomes a row with `status='error'` and a scrubbed message, the
+  remaining statements are skipped, and run_engine.py publishes nothing for the engine. HARD_FIRST
+  puts the queries most likely to fail first, so a run that will not complete stops in minutes.
 * SETUP IS ITS OWN ROW rather than being added to query 1's duration. See store.Row.
 * `exclude_list=[]` (a mutable default argument, and a real bug waiting to happen) is gone; there
   was never a caller that passed it.
@@ -47,9 +45,13 @@ def order(n_statements: int, hard_first: tuple[int, ...] = ()) -> list[int]:
 
 
 def run_pass(
-    engine, statements: list[str], run_type: str, hard_first: tuple[int, ...] = ()
+    engine,
+    statements: list[str],
+    run_type: str,
+    hard_first: tuple[int, ...] = (),
 ) -> list[Row]:
-    """One full pass over the statements, hard ones first (config.HARD_FIRST)."""
+    """One pass over the statements, hard ones first (config.HARD_FIRST), ending at the first
+    statement that fails: a run is all of the suite or nothing (run_engine.py)."""
     rows: list[Row] = []
     refresh = getattr(engine, "refresh", None)
     for number in order(len(statements), hard_first):
@@ -69,6 +71,7 @@ def run_pass(
             )
             message = scrub.scrub_exc(exc, 160)
             scrub.safe_print(f"  Q{number:<2} {run_type:<4} {'ERROR':>8}  {message}")
+            break
     return rows
 
 
@@ -106,6 +109,8 @@ def benchmark(engine, cfg) -> EngineResult:
         # numbers measure. The suite's config says how many passes there are.
         for run_type in cfg.PASSES:
             result.rows += run_pass(engine, statements, run_type, cfg.HARD_FIRST)
+            if any(r.status == "error" for r in result.rows):
+                break
     finally:
         engine.close()
 

@@ -6,9 +6,9 @@ the namespace and the statement count.
 
 EXIT CODE, and the distinction matters more than it looks.
 
-A failing QUERY is DATA and exits 0 -- "LakeSail completed 20 of 22, and here is why the other
-two died" is a result worth publishing. A failing SETUP exits 1: an engine that could not attach
-has nothing to say.
+ALL OR NOTHING (the owner's, 2026-10-09). The runner stops at the first failed query; the engine
+then writes NO part -- publish has nothing of it to merge -- and exits 1, with the failing query
+in the log. A failing SETUP exits 1 too: an engine that could not attach has nothing to say.
 
 ZERO SUCCESSFUL QUERIES also exits 1, even though the attach worked, because that is never a
 result -- it is a broken configuration wearing a result's clothes. This guard exists because a
@@ -41,6 +41,12 @@ if __name__ == "__main__":
 
     scrub.safe_print(f"{cfg.engine} | {cfg.TITLE} SF={cfg.sf} | namespace {cfg.schema}")
     result = benchmark(get_engine(cfg.engine, cfg), cfg)
+    failed = [row.query for row in result.rows if row.phase == "query" and row.status == "error"]
+    if failed:
+        scrub.safe_print(
+            f"::error::{cfg.engine} failed Q{failed[0]}: the run stops there and publishes nothing"
+        )
+        sys.exit(1)
     # Captured HERE, on the runner that did the work -- not in publish, which is a different
     # machine and would stamp the results with its own hardware.
     result.host = host_facts()
