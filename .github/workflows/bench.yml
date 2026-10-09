@@ -22,7 +22,7 @@ on:
       sf:
         description: Scale factor. 1 is the smoke value; 10 is the default. 30 and up free the runner's hidden disk first.
         type: choice
-        options: ["1", "10", "30", "60", "100", "200", "300"]
+        options: ["1", "10", "30", "60", "100"]
         default: "10"
       engines:
         description: Comma-separated engines to run.
@@ -163,7 +163,7 @@ jobs:
       # workspace and the engines' local caches live under $RUNNER_TEMP, both on `/`; deleting the
       # preinstalled toolchains nobody here uses frees ~30 GB. SF=1/10 skip this.
       - name: Free runner disk (SF >= 30)
-        if: contains(fromJSON('["30","60","100","200","300"]'), inputs.sf || '10')
+        if: contains(fromJSON('["30","60","100"]'), inputs.sf || '10')
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
           df -h /

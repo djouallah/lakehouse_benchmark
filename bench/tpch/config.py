@@ -120,7 +120,7 @@ class TpchConfig(Config):
     # measures little but a second read of OneLake, while doubling a run that the one-hour token
     # already bounds. The totals chart compares every scale the suite runs at.
     PASSES = ("cold",)
-    TOTALS_SFS = (10, 30, 60, 100, 200, 300)
+    TOTALS_SFS = (10, 30, 60, 100)
     HEADLINE_SF = HEADLINE_SF
     ENGINES = ENGINES
     TABLES = TABLES
