@@ -139,7 +139,6 @@ LIMIT 100
 
 def generate():
     import duckdb
-    import pyarrow.parquet as pq
     from pyiceberg.catalog.sql import SqlCatalog
 
     con = duckdb.connect()
@@ -148,9 +147,12 @@ def generate():
     catalog = SqlCatalog("local", uri="sqlite:///catalog.db", warehouse="file://" + os.getcwd())
     catalog.create_namespace_if_not_exists("tpcds")
     for t in TABLES:
-        con.sql(f"COPY {t} TO '{t}.parquet' (FORMAT parquet)")
-        data = pq.read_table(f"{t}.parquet")
-        catalog.create_table(f"tpcds.{t}", schema=data.schema).append(data)
+        # DuckDB writes the files with the table's Iceberg field ids, then add_files registers them.
+        schema = con.sql(f"SELECT * FROM {t} LIMIT 0").to_arrow_table().schema
+        tbl = catalog.create_table(f"tpcds.{t}", schema=schema)
+        ids = ", ".join(f"{f.name}: {f.field_id}" for f in tbl.schema().fields)
+        con.sql(f"COPY {t} TO '{t}.parquet' (FORMAT parquet, FIELD_IDS {{{ids}}})")
+        tbl.add_files([f"file://{os.getcwd()}/{t}.parquet"])
 
 
 def child(case):
