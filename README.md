@@ -28,6 +28,7 @@ Tried and not added:
 <!-- speedup:start -->
 | Test | Scale | Spark-OSS | Gluten/Velox | Speedup |
 |---|---:|---:|---:|---:|
+| Light ETL | 10 files | 54.2s | 29.2s | 1.9x |
 | Light ETL | 100 files | 136.5s | 81.8s | 1.7x |
 | Light ETL | 1,000 files | 982.2s | 728.8s | 1.3x |
 | TPC-H | SF=10 | 513.8s | 139.7s | 3.7x |
