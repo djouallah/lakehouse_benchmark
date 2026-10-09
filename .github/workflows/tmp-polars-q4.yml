@@ -1,0 +1,33 @@
+name: tmp polars q4 issue
+
+# TEMPORARY: TPC-DS Q4 on Polars 2.0.0 vs main, scan_parquet / scan_iceberg / scan_iceberg
+# without metadata statistics, for the upstream issue. Delete with
+# .github/scripts/tmp_polars_q4_issue.py.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        polars: [release, main]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install duckdb "pyiceberg[sql-sqlite,pyarrow]" psutil
+      - if: matrix.polars == 'release'
+        run: pip install polars==2.0.0
+      # requirements/polars_iceberg.txt points at the main wheels (pola-rs/polars@c36581695d).
+      - if: matrix.polars == 'main'
+        run: pip install $(grep '^polars' requirements/polars_iceberg.txt | sed 's/ //g')
+      - working-directory: ${{ runner.temp }}
+        run: python "$GITHUB_WORKSPACE/.github/scripts/tmp_polars_q4_issue.py"
