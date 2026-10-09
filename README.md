@@ -22,7 +22,6 @@ Tried and not added:
 
 - **Apache Doris**: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes (condition 2).
 - **Firebolt Core**: attaches the catalog, but only reads data from `s3://`, `gs://` or `file://`. It rejects OneLake's `abfss://` paths, and its `azure://` location takes no Azure token (condition 2).
-- **pg_lake** (3.5.3): reads the catalog tables and runs TPC-H 22/22, but has no catalog cache for read-only tables. Every statement reloads each table's metadata from the catalog, so the 25-row `nation` takes 4-5s.
 
 ## Gluten/Velox vs Spark-OSS
 
