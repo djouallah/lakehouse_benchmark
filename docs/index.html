@@ -118,11 +118,11 @@ footer a, .lane a { color: var(--accent); }
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="details" id="about" hidden>
-    <p>This is not really a benchmark. I have no preference for any engine. I want every engine to work as
-      well as possible with an Iceberg REST catalog, and with OneLake in particular.</p>
-    <p>The only way to make progress is competition. Every engine runs the same tests on the same small
-      machine; when one fails, the bug goes upstream (see <a href="#details">Details</a>), and the fix shows up
-      in the next run.</p>
+    <p>This repo checks how well each engine works with an Iceberg REST catalog, mainly OneLake. No engine is
+      favoured; the timings are a side effect.</p>
+    <p>Every engine gets the same jobs on the same 16 GB GitHub runner: load CSVs into an Iceberg table, then
+      run TPC-H and TPC-DS against the catalog. When an engine fails, the bug is filed upstream
+      (see <a href="#details">Details</a>) and the engine is rerun once a fix ships.</p>
   </section>
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
