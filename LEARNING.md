@@ -1,7 +1,7 @@
 # Learnings
 
 What running small data on small compute taught us, on a 4 vCPU / 16 GB runner reading Iceberg on
-OneLake. Free disk is ~14 GB, or ~105 GB once `bench.yml` clears the toolchains for SF≥30. The
+OneLake. Free disk is ~87 GB, or ~105 GB once the workflows clear the toolchains for SF≥30. The
 numbers come from `docs/data/*.csv`, the job logs and the commits cited. The general lessons come
 first, then one section per engine.
 
@@ -44,7 +44,9 @@ On small data a query computes in under a second, so a fixed per-statement cost 
 
 - A data cache pays off **within a single cold pass**, because later queries re-read the same
   files. See the DuckDB table above. Gluten's Velox cache is off by default. Turning it on
-  (8 GB SSD + 1 GB memory) took TPC-H SF=10 cold from 249.6 s to 123–160 s (fd1d3ef).
+  (8 GB SSD + 1 GB memory) took TPC-H SF=10 cold from 249.6 s to 123–160 s (fd1d3ef). The SSD
+  tier is now half the free disk, at least 8 GiB (c565238), and Trino's file cache is sized the
+  same way.
 - It only helps while the working set fits. DuckDB, warm pass against cold:
 
   | | cold | warm | gain |
@@ -78,17 +80,18 @@ Largest scale each engine completes, cold, every statement answered:
 | Engine | TPC-H | TPC-DS | What breaks it next |
 |---|---|---|---|
 | Gluten/Velox | SF=100 (1,008 s) | **SF=100** (4,768 s; 6,757 s on Iceberg 1.11) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
-| DuckDB | **SF=300** (3,227 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan hits the 90.6 GiB spill limit |
-| StarRocks | SF=100 (688 s) | — | TPC-DS: Q49, Q70, Q86 are StarRocks SQL bugs (#79806, #79807) |
-| LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases didn't parse (now backticked for it); Q71 passes on 0.7.2 |
+| Trino | SF=60 (827 s) | **SF=100** (4,018 s) | TPC-H SF=100 Q18: `EXCEEDED_LOCAL_MEMORY_LIMIT`, the 9 GB per-query cap |
+| DuckDB | **SF=300** (3,227 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan; first out of spill (90.4 GiB), on the latest build out of memory (12.4 GiB) |
+| StarRocks | **SF=300** (3,943 s) | — | TPC-DS: Q49 is a StarRocks SQL bug (#79807) |
+| LakeSail | SF=100 (2,476 s) | SF=10 (1,632 s) | TPC-DS SF=60 Q72: spill passes Sail's 64 GB cap; SF=100 Q64: the 10 GiB pool runs out |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
 | chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS aborts in glibc at any SF |
-| Polars | SF=100 (591 s, main build c36581695d) | **SF=100** (1,167 s, main build e691ac01b8) | Untried: TPC-H SF=200 and TPC-DS SF=300. Joins and group-bys still have no spill |
+| Polars | SF=100 (589 s, main build c36581695d) | **SF=100** (1,167 s, main build e691ac01b8) | Nothing yet up to SF=100, the largest scale the workflows offer. Joins and group-bys still have no spill |
 
-- **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap. It and
-  Polars are the only engines that finished TPC-DS at SF=100. Not one of its failures at any scale came
-  from memory: up to SF=100 every one was an expired credential, and at TPC-H SF=300 it is the
-  disk (see Gluten/Velox below). Where both finish, DuckDB is faster: TPC-H SF=100 in 500 s
+- **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap. It,
+  Trino and Polars are the only engines that finished TPC-DS at SF=100. Not one of its failures
+  at any scale came from memory: up to SF=100 every one was an expired credential, and at TPC-H
+  SF=300 it is the disk (see Gluten/Velox below). Where both finish, DuckDB is faster: TPC-H SF=100 in 500 s
   against 1,008 s.
 - **An engine with no memory bound dies; it does not slow down.** Polars (streaming engine, no
   limit, no spill directory) and Sail (DataFusion's pool, unbounded by default) run normally and
@@ -105,11 +108,12 @@ Largest scale each engine completes, cold, every statement answered:
   - Giving Polars a budget (`POLARS_OOC_MEMORY_BUDGET_MB`, experimental) stopped the runner dying
     but did not finish: SF=30 stalled and was cancelled (run 36238938131).
 - **A hard limit fails the query, not the runner.** chDB's `max_memory_usage` (12 GB) raises
-  `MEMORY_LIMIT_EXCEEDED`, and the run carries on to the next statement.
+  `MEMORY_LIMIT_EXCEEDED`, and Trino's per-query cap `EXCEEDED_LOCAL_MEMORY_LIMIT`. The run then
+  stops there: since 2026-10-09 a run is all or nothing. It stops at the first failed query, or at
+  a query past 15 minutes, and publishes as a failure with no time.
 - **Spilling is only as good as the plan.** DuckDB's Q64 takes 24.9 s at SF=60. At SF=100 the
-  same bad join order spills until it hits 90.6 GiB.
-- **The ETL is not memory-bound.** DuckDB, Polars, chDB, Sail, Spark-OSS and Daft all finish
-  1000 files (52 GB of CSV) in every run. The engines stream the CSVs and never hold the dataset.
+  same bad join order spills until it hits 90.4 GiB.
+- **The ETL is not memory-bound.** Every engine finishes 1000 files (52 GB of CSV) in every run. The engines stream the CSVs and never hold the dataset.
 
 ## Gluten/Velox
 
@@ -137,7 +141,7 @@ Largest scale each engine completes, cold, every statement answered:
   statements once less than 15 minutes of SAS remain (d43a4e4). The next run finished 99/99
   with two restarts.
 - **Its cache is off by default.** Velox has a two-tier file cache, and turning it on (8 GB SSD +
-  1 GB memory) took TPC-H SF=10 cold from 249.6 s to 123–160 s (fd1d3ef). The load quantum must
+  1 GB memory; the SSD tier is now half the free disk) took TPC-H SF=10 cold from 249.6 s to 123–160 s (fd1d3ef). The load quantum must
   be 8 MB: Gluten's default of 256 MB refused to start ("only support up to 8MB load quantum
   size on SSD cache", 4ec3161).
 - **Q72 is a known Gluten problem** (apache/gluten#8417). Gluten forces shuffled hash joins, and
@@ -182,10 +186,11 @@ Largest scale each engine completes, cold, every statement answered:
   1.8–4× in a single cold pass (see the table at the top). The object, HTTP-metadata and
   parquet-metadata caches stay off.
 - **TPC-DS SF=100 Q64.** It ran ~257 s, then failed with `OutOfMemoryException: failed to offload
-  data block of size 256.0 KiB (90.6 GiB/90.6 GiB used)`. That is DuckDB's spill ceiling, hit with
-  105 GB of disk free. The same query takes 24.9 s at SF=60; the join order is what blows up
-  (duckdb/duckdb#21896). The same run also lost Q88–Q99 to `Unauthorized` 65 minutes in, because
-  the token baked into its `CREATE SECRET` had expired.
+  data block of size 256.0 KiB (90.4 GiB/90.4 GiB used)` (run 36246050559). That is DuckDB's spill
+  ceiling, hit with 105 GB of disk free. The same query takes 24.9 s at SF=60; the join order is
+  what blows up (duckdb/duckdb#21896). On the `2.0.0.dev2610011535` build it fails sooner, at the
+  memory limit: `could not allocate block of size 256.0 KiB (12.4 GiB/12.4 GiB used)` (run
+  37181326822).
 - **TPC-H SF=300 now completes on the nightly CLI** (run 37429290996, 2026-10-06,
   `v2.0.0-alpha44357`): 22/22 cold in 3,227 s, Q18 in 155 s, Q21 the slowest at 614 s.
   duckdb/duckdb#22474 is still open; the change is almost certainly duckdb/duckdb#26246 (merged
@@ -255,8 +260,9 @@ Largest scale each engine completes, cold, every statement answered:
   - Nothing in config holds it (temp-CI runs 36287446363, 36289407788): both broadcast thresholds
     at -1, `spark.memory.fraction` 0.8, a 13 GB heap, and both together all fail the same way at
     ~230 s. The build needs more than one JVM on a 16 GB box can have.
-  - The fix would be the query: `NOT EXISTS` is a plain anti join and sort-merges. The SQL stays as
-    written, so this stays a failure. Gluten passes it, building off-heap in Velox.
+  - The fix would be the query: `NOT EXISTS` is a plain anti join and sort-merges. The bench
+    rewrites SQL only to make it portable, never to make one engine faster, so this stays a
+    failure. Gluten passes it, building off-heap in Velox.
   - An engine gets a totals bar at a scale only when every statement completes, so Spark-OSS has
     no TPC-H SF=100 bar.
 - **Its catalog bearer cannot be refreshed.** Iceberg's `token` property sends a fixed header, and
@@ -278,7 +284,8 @@ Largest scale each engine completes, cold, every statement answered:
   Raised to 4 × 8 MB, which exactly fills the 16-buffer pool.
 - **TPC-DS SF=30 and SF=60 take the same time** (9,280 s against 9,303 s), so the time goes to
   per-query overhead and bad plans (Q9, Q72, Q23, Q28), not to data volume. At SF=100 it was
-  cancelled at Q28 after 2 h 54 min.
+  cancelled after 2 h 54 min with 27 queries done (run 36131888999). The 15-minute query limit
+  now ends such a run much sooner.
 - **It stays on Spark 4.1.3.** Spark 4.2 has no released Iceberg runtime: 1.11 stops at 4.1, and
   1.12 leaves 4.2 out. An Iceberg-main nightly ran the ETL but hung TPC-H Q21 at SF=1.
 
@@ -363,7 +370,7 @@ Largest scale each engine completes, cold, every statement answered:
   `year_total` self-joins (`__POLARS_JOIN_ORDER_*`); 2.0.0 keeps the SQL order.
   `use_metadata_statistics=False` does not help, and `scan_parquet` on the same files is fine.
   The same build completes TPC-H SF=60 (22/22, 279 s, run 37871297077) and SF=100 (22/22,
-  591 s, run 37872115807): second to DuckDB's 500 s at SF=100, ahead of StarRocks, Gluten and
+  589 s, run 37872115807): second to DuckDB's 500 s at SF=100, ahead of StarRocks, Gluten and
   Sail, with every row count matching theirs. Q21 (116 s) and Q18 (102 s) are its slowest.
   Q4 was fixed on main on 2026-10-09. The e691ac01b8 build runs Q4 in 5.2 s at SF=10 over OneLake.
 - **Tables are scanned by name through the catalog** (`scan_iceberg("ns.table", catalog=...)`),
@@ -371,7 +378,8 @@ Largest scale each engine completes, cold, every statement answered:
   with the REST scan and manifest caches of #29790 / #29623. The registration loop stays, because
   Polars SQL has no catalog. There is no data-file disk cache to turn on: Polars 2.0 removed it.
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
-  1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s).
+  1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s). That was
+  2.0.0-rc.2. The ETL runs the PyPI release, not the main build the query suites use.
 
 ## LakeSail
 
@@ -405,8 +413,8 @@ Largest scale each engine completes, cold, every statement answered:
   - The warm pass then lost 42 statements to `400 Bad Request` once the token baked into its
     environment expired.
   - It was dropped from TPC-DS and kept in TPC-H and the ETL.
-- **0.7.2 (DataFusion 55) made TPC-DS 37% faster.** SF=10 cold, run 36648458503: 91/99 in
-  1,458 s. On the 90 statements both versions answer, 2,289 s became 1,444 s. 74 of them got
+- **0.7.2 (DataFusion 55) made TPC-DS 37% faster.** SF=10 cold, run 36648458503 (not
+  published): 91/99 in 1,458 s. On the 90 statements both versions answer, 2,289 s became 1,444 s. 74 of them got
   more than 20% faster, and the scan-bound ones by 3–7× (Q39 65→9 s, Q21 66→9 s, Q37 68→10 s).
   4 got more than 20% slower (Q59 21→44 s, Q63 20→35 s, Q79 21→35 s, Q24 29→39 s).
   - Q71 passes (9,669 rows), so #2642 is fixed by the DataFusion upgrade.
@@ -417,6 +425,12 @@ Largest scale each engine completes, cold, every statement answered:
     column names.
   - TPC-H SF=10 did not move: 221 s, inside 0.7.1's 118–236 s spread. Every statement still
     reloads its tables (#2629), and Q22 absorbed a 23 s loadTable stall.
+- **Back in TPC-DS since 2026-09-30, with the aliases backticked.** SF=10 is 99/99 in 1,632 s (run
+  36652684303). It restarts on a fresh token when the old one runs low (523b429); before that,
+  SF=30 and SF=60 lost half their statements to `400` from the catalog. SF=60 then stops at Q72:
+  "The used disk space during the spilling process has exceeded the allowable limit" of 64 GB
+  (run 36860897295). SF=100 stops at its first query, Q64: "Resources exhausted", the 10 GiB
+  `fair` pool (run 38025112678).
 - **Its ETL table has no `filename` column.** The DataFrame transform it shares with Spark
   (`_spark_df.py`) leaves it out because Sail can't provide it.
 - **Late materialization made it slower.** `SAIL_PARQUET__PUSHDOWN_FILTERS` should help Q6, Q12
@@ -445,9 +459,10 @@ Largest scale each engine completes, cold, every statement answered:
 - **It can't address OneLake with `abfss://`.** `parse_azure_uri` only honours
   `container@host` when the host ends in `.dfs.core.windows.net`. On
   `onelake.dfs.fabric.microsoft.com` it takes the host as the container, and OneLake answers
-  `400 FriendlyNameSupportDisabled`. The fix is
-  [Eventual-Inc/Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533). Until it ships, the ETL
-  engine reads and writes `az://` paths.
+  `400 FriendlyNameSupportDisabled`. The fix,
+  [Eventual-Inc/Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533), is merged but not in
+  a release yet (0.7.26 does not have it). Until a release has it, the ETL engine reads and writes
+  `az://` paths.
 
 ## DataFusion Comet: rejected on `abfss://`
 
@@ -492,10 +507,11 @@ Reviewed on paper (2026-10-10), no CI run. DataFusion fails on its Iceberg suppo
 - **Revisit when** datafusion-python ships an Iceberg catalog provider with writes. The Rust
   `iceberg-datafusion` crate has both (REST catalog, `INSERT INTO`), but only for Rust callers.
 
-## StarRocks: a candidate that qualifies
+## StarRocks
 
-Tried through the `candidate engine` workflow (`.github/scripts/candidate_engine.py`) on
-`starrocks/allin1-ubuntu:4.1-latest` (4.1.4), Apache-2.0. It is a server, not a pip install: a
+In the bench since 2026-09-26, after passing the `candidate engine` workflow
+(`.github/scripts/candidate_engine.py`) on `starrocks/allin1-ubuntu:4.1-latest` (4.1.4 then, 4.1.6
+now), Apache-2.0. It completes TPC-H up to SF=300 (3,943 s, run 36322413606). It is a server, not a pip install: a
 Java front end and a C++ back end in one container, driven over the MySQL protocol. Run
 36222032188 passes all three requirements: 22/22 TPC-H at SF=10 (~75 s total in the probe, one
 run, not the bench harness), OneLake Iceberg and `Files/csv` reads, and a CTAS that pyiceberg reads
@@ -539,12 +555,49 @@ StarRocks limitation until the error was read closely.
   was killed (run 36231764513). The uncapped run before it took the whole runner down (exit 143,
   run 36230293425), which is why the container is now capped at 15 GB.
 - **TPC-DS SF=10: 94/99 at first** (run 36230441153). Q1 and Q5 hit the 3 s planning cap
-  (below, now lifted). The other three are StarRocks bugs, left as failures because the SQL
-  stays as written: `grouping()` in ORDER BY is rejected, which fails Q70 and Q86
-  ([StarRocks#79806](https://github.com/StarRocks/starrocks/issues/79806)), and a derived table
-  aliased `catalog` can't be referenced, which fails Q49
-  ([StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807)).
+  (below, now lifted). The other three are StarRocks bugs. `grouping()` in ORDER BY is rejected,
+  which failed Q70 and Q86
+  ([StarRocks#79806](https://github.com/StarRocks/starrocks/issues/79806)). Trino rejects it too,
+  so the bench now writes it the standard way, by the select list's name (`portable()` in
+  `bench/tpcds/rewrite.py`, e2e0dda), and both queries run. A derived table aliased `catalog`
+  can't be referenced, which fails Q49
+  ([StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807)). That one stays a
+  failure: SF=60 is 98/99 (run 37179596387), and SF=100 stops at Q49 (run 38025112678).
 - **Three defaults were costing it.** Spill is off (`enable_spill`), which lost TPC-H SF=100
   Q18/Q21. Parallelism is half the cores (`pipeline_dop` 0 means 2 on 4 vCPU; the Iceberg sink
   gets 1). Planning is capped at 3 s (`new_planner_optimize_timeout`), and the first query on a
   table loads its Iceberg metadata inside that window: TPC-DS lost Q1 and Q5.
+
+## Trino
+
+In the bench since 2026-09-28, on `trinodb/trino:483`. It is a server, like StarRocks: one JVM
+that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/trino.py`).
+
+- **Reading OneLake took three settings**, each found by a failed candidate run:
+  - The REST catalog takes the bearer as a fixed `oauth2.token`, which cannot be refreshed. The
+    bench re-creates the catalog on a fresh bearer when the old one runs low, as for StarRocks.
+  - Trino folds names to lower case, and OneLake's namespaces are `CH0010`.
+    `case-insensitive-name-matching` maps them back.
+  - `azure.endpoint=fabric.microsoft.com`. Without it no data file opens: "Location does not
+    match configured Azure endpoint" (run 36326766643). The catalog attaches and lists either way.
+- **Storage auth refreshes by itself.** The native Azure filesystem uses the Azure SDK's default
+  credential, which reads the GitHub OIDC assertion from a file the bench rewrites every 4
+  minutes.
+- **It finishes TPC-DS at every scale.** SF=10 in 632 s, SF=30 in 1,311 s, SF=60 in 2,471 s, and
+  SF=100 in 4,018 s (run 38016641812). At SF=100 that is ahead of Gluten (4,768 s); only Polars is
+  faster (1,167 s).
+- **TPC-H stops at SF=100 Q18** with `EXCEEDED_LOCAL_MEMORY_LIMIT` (run 36374585642). The join's
+  build side held 6.76 GB and asked for 3.4 GB more, past the 9 GB per-query cap. Two changes
+  were tried: spill from half the pool, then more heap headroom. SF=100 got slower (1,717 s
+  against 1,295 s), Q18 still failed, and one try took the JVM down with `OutOfMemoryError`. Both
+  were reverted (be73bef): no per-query tuning. It completes SF=60 in 827 s.
+- **Memory:** a 15 GB container, a 12 GB heap, 9 GB per query, 2 GB headroom, spill on (off by
+  default in Trino).
+- **Its file cache is off by default.** It is on here, sized like Velox's: half the free disk. The
+  first TPC-H SF=10 run went without it by mistake and was dropped (9b95326).
+- **TPC-DS needed standard SQL.** It ran 89/99 at SF=1 on its first smoke. The ten failures were
+  the query text, not Trino: bare date literals compared with dates, date + integer, and
+  `grouping()` in ORDER BY. `portable()` in `bench/tpcds/rewrite.py` writes them the standard way
+  for every engine (e2e0dda).
+- **ETL:** a Hive external table over `Files/csv`, then one `INSERT ... SELECT` into the Iceberg
+  table, one commit (c8bb84b). 1000 files in 892 s.

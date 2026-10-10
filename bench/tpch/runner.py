@@ -10,7 +10,8 @@ WHAT CHANGED BEYOND THE MEASUREMENT FIXES IN engines/base.py:
   puts the queries most likely to fail first, so a run that will not complete stops in minutes.
 * A QUERY THAT DOES NOT FINISH IS A FAILED QUERY. QUERY_TIMEOUT_S caps every statement, for every
   engine and both suites; past it the run stops exactly as on an error, instead of sitting on one
-  statement until the job's 355-minute cap (Spark-OSS at TPC-DS SF=100 spent 3 h to reach Q27).
+  statement until the job's 355-minute cap (Spark-OSS at TPC-DS SF=100 spent 3 h on its first 27
+  queries).
 * SETUP IS ITS OWN ROW rather than being added to query 1's duration. See store.Row.
 * `exclude_list=[]` (a mutable default argument, and a real bug waiting to happen) is gone; there
   was never a caller that passed it.
