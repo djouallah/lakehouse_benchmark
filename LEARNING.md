@@ -198,8 +198,7 @@ Largest scale each engine completes, cold, every statement answered:
   nested loop on `substring(ca_zip, 1, 5) != substring(s_zip, 1, 5)`, the only condition between
   them: 767M rows at SF=100 where it guessed 14.8M, 25 GiB spilled, ~200 s (plans run 38057700184).
   It does this before the month and the item filters have shrunk store_sales to 160K rows. Trino
-  joins those first, and none of its joins makes more than 205K rows. Both plans are on the page's
-  Bad joins tab.
+  joins those first, and none of its joins makes more than 205K rows.
 - **TPC-H SF=300 now completes on the nightly CLI** (run 37429290996, 2026-10-06,
   `v2.0.0-alpha44357`): 22/22 cold in 3,227 s, Q18 in 155 s, Q21 the slowest at 614 s.
   duckdb/duckdb#22474 is still open; the change is almost certainly duckdb/duckdb#26246 (merged

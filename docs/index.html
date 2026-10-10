@@ -774,8 +774,6 @@ function renderStorage() {
 // in the shape bench/plans.py documents. Every number on the tab is read from those files; the words around them
 // are the only thing written here. tests/test_plans.py checks every file a story names exists.
 const STORIES = [
-  { id: "q19", title: "Q19", good: "tpcds_q19_trino_iceberg_sf100", bad: "tpcds_q19_duckdb_iceberg_sf100",
-    lede: "Six tables. Two small filters: one month of dates, one item manager. A good plan applies them first." },
   { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
     lede: "Spark runs joins in the order the SQL lists them. Its cost-based optimizer is off by default, and Q72 lists inventory before the filters that make it small." },
 ];
@@ -820,7 +818,7 @@ async function renderPlans() {
   if (state.suite !== PLANS.id) return;
   stopRace();
   const name = p => LABEL[p.engine] ?? p.engine;
-  const chips = STORIES.map(x => `<button aria-pressed="${x.id === s.id}" data-story="${x.id}">${x.title}</button>`).join("");
+  const chips = STORIES.length < 2 ? "" : STORIES.map(x => `<button aria-pressed="${x.id === s.id}" data-story="${x.id}">${x.title}</button>`).join("");
   const intro = `<p class="intro">An engine does not run your SQL as written. Its <b>optimizer</b> picks the order of the joins,
     and it picks with <b>statistics</b>: how many rows each table has, how many distinct values, how much a filter keeps.
     A good order keeps every step small. A bad one builds a huge middle result, then spills to disk or runs out of memory.
@@ -1129,7 +1127,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #plans (#plans-q64 for one story), #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// Deep links: #performance, #plans (#plans-q72 for one story), #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
