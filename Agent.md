@@ -171,7 +171,7 @@ wire it in. Engine lists are cross-checked by `tests/test_config.py`, `tests/tes
 - `ADAPTERS` in `.github/scripts/smoke_sql.py`.
 - The engine lists and display names in the workflows.
 - In [`docs/index.html`](docs/index.html): the `--<engine>` colours (light and dark), `LABEL`, and
-  a row in `ENGINE_ROWS` (About › Engines) and `DBT_ROWS` (dbt support).
+  a row in `ENGINE_ROWS` (About › Engines), `DBT_ROWS` (dbt support) and `WORKLOAD_ROWS` (Real workload).
 - Its local file cache, enabled before the first published run.
 - For the Iceberg support grid: `.github/scripts/capability/catalog_capability_<client>.py`,
   `requirements/capability_<client>.txt`, the `clients` options in `capability.yml`, and `ENGINES`

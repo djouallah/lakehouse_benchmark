@@ -129,6 +129,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .skipped .m, .cap .broken .m { width: auto; height: auto; border-radius: 0; color: var(--ink-3); }
 .cap .skipped .m::before { content: "\2014"; }
 .cap .broken .m::before { content: "?"; }
+.cap ul.caption { padding-left: 20px; max-width: 75ch; }
 .cap .note { font-size: 13px; color: var(--ink-2); max-width: 75ch; margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
 /* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
@@ -177,6 +178,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <div id="speedup"></div>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
+  <section class="cap rows" id="workload" hidden></section>
   <section class="cap rows" id="storage" hidden></section>
   <section class="details" id="about" hidden>
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
@@ -310,14 +312,16 @@ const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const DBT = { id: "dbt", title: "dbt support" };
+const WORKLOAD = { id: "workload", title: "Real workload" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
 const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
-const PAGES = [CAPABILITY, DBT, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
+const PAGES = [CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "performance", title: "Performance", subs: SUITES },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
+  { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "issues", title: "Issues", subs: [DETAILS] },
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES, TRIED] },
@@ -357,6 +361,7 @@ function render() {
   for (const p of PAGES) $(p.id).hidden = p !== page;
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
+  if (page === WORKLOAD) { renderWorkload(); return; }
   if (page === STORAGE) { renderStorage(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
@@ -591,6 +596,71 @@ function renderDbt() {
       </tr>`).join("")}</tbody></table></div>`;
 }
 
+// THE REAL WORKLOAD TAB: can the engine replace DuckDB in one real dbt project, analytics-as-code?
+// Five requirements, all measured elsewhere on this page: raw CSV from OneLake Files and the Iceberg
+// write are the Light ETL (every engine in the bench passes both: README conditions 2 and 3); the dbt
+// column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt note
+// for the others (tests/test_results_page.py keeps the two in step); the file name column is what
+// each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
+const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
+const WORKLOAD_ROWS = [
+  { engine: "duckdb_iceberg", file: { ok: true, note: "<code>filename</code>" },
+    merge: { ok: true, note: "" }, verdict: "the engine it runs on" },
+  { engine: "pyspark_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
+    merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
+  { engine: "pyspark_gluten_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
+    merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
+  { engine: "trino_iceberg", file: { ok: true, note: "<code>\"$path\"</code>" },
+    merge: { ok: true, note: `<a href="#dbt">dbt-trino</a>` } },
+  { engine: "starrocks_iceberg", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },
+    merge: { ok: false, note: "dbt-starrocks has no merge" } },
+  { engine: "lakesail_iceberg", file: { ok: false, note: `<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>` },
+    merge: { ok: true, note: "" } },
+  { engine: "polars_iceberg", file: { ok: true, note: "<code>include_file_paths</code>" },
+    merge: { ok: false, note: "<code>write_iceberg</code> appends only" } },
+  { engine: "chdb_iceberg", file: { ok: true, note: "<code>_file</code>" },
+    merge: { ok: false, note: "" } },
+  { engine: "daft_iceberg", file: { ok: true, note: "<code>file_path_column</code>" },
+    merge: { ok: false, note: "<code>write_iceberg</code> appends or overwrites" } },
+];
+
+function renderWorkload() {
+  const sec = $(WORKLOAD.id);
+  const mark = (ok, text) => `<td class="lv ${ok === true ? "excellent" : ok === false ? "none" : "partial"}"><i class="m"></i>${text}</td>`;
+  const head = ["Engine", "Reads CSV from Files", "File name column", "dbt 1", "Writes Iceberg", "MERGE", "Replaces DuckDB here"];
+  sec.innerHTML = `
+    <p class="caption">Nobody changes an engine because it is 2× faster. The new engine must run the workload
+      you have today, and then be much better at something. What an engine supports comes before how fast it is.</p>
+    <p class="caption">One real project: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB read AEMO CSV files
+      from OneLake Files and load them into Iceberg tables through the OneLake catalog, every hour. To replace DuckDB
+      there, an engine needs all five:</p>
+    <ul class="caption">
+      <li>it reads raw CSV from OneLake Files;</li>
+      <li>it gives the source file name as a column: the project keys and dedupes on it;</li>
+      <li>it has a dbt 1 adapter that works on Iceberg tables;</li>
+      <li>it writes Iceberg through the REST catalog;</li>
+      <li>it has <code>MERGE</code>: the incremental models are insert-only merges.</li>
+    </ul>
+    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span></div>
+    <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${WORKLOAD_ROWS.map(r => {
+      const dbt = DBT_ROWS.find(d => d.engine === r.engine);
+      const dbtOk = ["excellent", "good"].includes(dbt.level) ? true : dbt.level === "partial" ? null : false;
+      const yes = r.file.ok && r.merge.ok && dbtOk === true;
+      return `
+      <tr style="--c: var(--${r.engine}, var(--ink-3))">
+        <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
+        ${mark(true, "Light ETL")}
+        ${mark(r.file.ok, r.file.note)}
+        ${mark(dbtOk, dbt.adapter ? `<a href="#dbt">${esc(dbt.adapter)}</a>` : `<a href="#dbt">no adapter</a>`)}
+        ${mark(true, "Light ETL")}
+        ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
+        ${mark(yes, r.verdict ?? (yes ? "Yes" : "No"))}
+      </tr>`; }).join("")}</tbody></table></div>
+    <p class="note">Reads CSV from Files and Writes Iceberg: every engine in the bench passes the <a href="#etl">Light ETL</a>.
+      File name column: what each engine's ETL reads. dbt 1: the <a href="#dbt">dbt support</a> tab.
+      MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
+}
+
 // THE CATALOGS TAB (storage token): the bench runs on OneLake, but the engines do not need it. With only the
 // catalog address and a token, DuckDB writes one row and reads it back. Most catalogs give the storage
 // token; the AWS ones give none, and DuckDB uses an AWS key there (`storage` in the data). The test and its secrets live in testing-iceberg-rest-catalog; .github/workflows/storage_token.yml
@@ -647,7 +717,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #features, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// Deep links: #performance, #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
