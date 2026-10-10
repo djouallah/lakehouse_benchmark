@@ -1,0 +1,435 @@
+{
+ "engine": "pyspark_iceberg",
+ "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
+ "suite": "tpcds",
+ "query": 72,
+ "sf": 10,
+ "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38056850495",
+ "warmup": false,
+ "seconds": 113.35,
+ "status": "ok",
+ "error": null,
+ "spill_bytes": null,
+ "peak_memory_bytes": 10737416704,
+ "root": {
+  "kind": "sort",
+  "op": "TakeOrderedAndProject",
+  "label": "Top N",
+  "detail": "",
+  "tables": [
+   "catalog_returns",
+   "catalog_sales",
+   "customer_demographics",
+   "date_dim",
+   "household_demographics",
+   "inventory",
+   "item",
+   "promotion",
+   "warehouse"
+  ],
+  "rows": null,
+  "est": null,
+  "read": null,
+  "seconds": null,
+  "cross": false,
+  "children": [
+   {
+    "kind": "agg",
+    "op": "HashAggregate",
+    "label": "Group by",
+    "detail": "",
+    "tables": [
+     "catalog_returns",
+     "catalog_sales",
+     "customer_demographics",
+     "date_dim",
+     "household_demographics",
+     "inventory",
+     "item",
+     "promotion",
+     "warehouse"
+    ],
+    "rows": 42226,
+    "est": null,
+    "read": null,
+    "seconds": null,
+    "cross": false,
+    "children": [
+     {
+      "kind": "join",
+      "op": "SortMergeJoin",
+      "label": "Sort-merge join",
+      "detail": "[cs_item_sk, cs_order_number], [cr_item_sk, cr_order_number], LeftOuter",
+      "tables": [
+       "catalog_returns",
+       "catalog_sales",
+       "customer_demographics",
+       "date_dim",
+       "household_demographics",
+       "inventory",
+       "item",
+       "promotion",
+       "warehouse"
+      ],
+      "rows": 42850,
+      "est": null,
+      "read": null,
+      "seconds": null,
+      "cross": false,
+      "children": [
+       {
+        "kind": "join",
+        "op": "BroadcastHashJoin",
+        "label": "Broadcast hash join",
+        "detail": "[cs_promo_sk], [p_promo_sk], LeftOuter, BuildRight, false",
+        "tables": [
+         "catalog_sales",
+         "customer_demographics",
+         "date_dim",
+         "household_demographics",
+         "inventory",
+         "item",
+         "promotion",
+         "warehouse"
+        ],
+        "rows": 42850,
+        "est": null,
+        "read": null,
+        "seconds": null,
+        "cross": false,
+        "children": [
+         {
+          "kind": "join",
+          "op": "BroadcastHashJoin",
+          "label": "Broadcast hash join",
+          "detail": "[cs_ship_date_sk], [d_date_sk], Inner, BuildRight, (d_date > date_add(d_date, 5)), false",
+          "tables": [
+           "catalog_sales",
+           "customer_demographics",
+           "date_dim",
+           "household_demographics",
+           "inventory",
+           "item",
+           "warehouse"
+          ],
+          "rows": 42850,
+          "est": null,
+          "read": null,
+          "seconds": null,
+          "cross": false,
+          "children": [
+           {
+            "kind": "join",
+            "op": "BroadcastHashJoin",
+            "label": "Broadcast hash join",
+            "detail": "[d_week_seq, inv_date_sk], [d_week_seq, d_date_sk], Inner, BuildRight, false",
+            "tables": [
+             "catalog_sales",
+             "customer_demographics",
+             "date_dim",
+             "household_demographics",
+             "inventory",
+             "item",
+             "warehouse"
+            ],
+            "rows": 44873,
+            "est": null,
+            "read": null,
+            "seconds": null,
+            "cross": false,
+            "children": [
+             {
+              "kind": "join",
+              "op": "BroadcastHashJoin",
+              "label": "Broadcast hash join",
+              "detail": "[cs_sold_date_sk], [d_date_sk], Inner, BuildRight, false",
+              "tables": [
+               "catalog_sales",
+               "customer_demographics",
+               "date_dim",
+               "household_demographics",
+               "inventory",
+               "item",
+               "warehouse"
+              ],
+              "rows": 7859450,
+              "est": null,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "join",
+                "op": "BroadcastHashJoin",
+                "label": "Broadcast hash join",
+                "detail": "[cs_bill_hdemo_sk], [hd_demo_sk], Inner, BuildRight, false",
+                "tables": [
+                 "catalog_sales",
+                 "customer_demographics",
+                 "household_demographics",
+                 "inventory",
+                 "item",
+                 "warehouse"
+                ],
+                "rows": 37008224,
+                "est": null,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": [
+                 {
+                  "kind": "join",
+                  "op": "BroadcastHashJoin",
+                  "label": "Broadcast hash join",
+                  "detail": "[cs_bill_cdemo_sk], [cd_demo_sk], Inner, BuildRight, false",
+                  "tables": [
+                   "catalog_sales",
+                   "customer_demographics",
+                   "inventory",
+                   "item",
+                   "warehouse"
+                  ],
+                  "rows": 223966163,
+                  "est": null,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": [
+                   {
+                    "kind": "join",
+                    "op": "BroadcastHashJoin",
+                    "label": "Broadcast hash join",
+                    "detail": "[cs_item_sk], [i_item_sk], Inner, BuildRight, false",
+                    "tables": [
+                     "catalog_sales",
+                     "inventory",
+                     "item",
+                     "warehouse"
+                    ],
+                    "rows": 1118217493,
+                    "est": null,
+                    "read": null,
+                    "seconds": null,
+                    "cross": false,
+                    "children": [
+                     {
+                      "kind": "join",
+                      "op": "BroadcastHashJoin",
+                      "label": "Broadcast hash join",
+                      "detail": "[inv_warehouse_sk], [w_warehouse_sk], Inner, BuildRight, false",
+                      "tables": [
+                       "catalog_sales",
+                       "inventory",
+                       "warehouse"
+                      ],
+                      "rows": 1118217493,
+                      "est": null,
+                      "read": null,
+                      "seconds": null,
+                      "cross": false,
+                      "children": [
+                       {
+                        "kind": "join",
+                        "op": "SortMergeJoin",
+                        "label": "Sort-merge join",
+                        "detail": "[cs_item_sk], [inv_item_sk], Inner, (cast(inv_quantity_on_hand as bigint) < cs_quantity)",
+                        "tables": [
+                         "catalog_sales",
+                         "inventory"
+                        ],
+                        "rows": 1118217493,
+                        "est": null,
+                        "read": null,
+                        "seconds": null,
+                        "cross": false,
+                        "children": [
+                         {
+                          "kind": "scan",
+                          "op": "BatchScan",
+                          "label": "catalog_sales",
+                          "detail": "(((((isnotnull(cs_quantity) AND isnotnull(cs_item_sk)) AND isnotnull(cs_bill_cdemo_sk)) AND isnotnull(cs_bill_hdemo_sk)) AND isnotnull(cs_sold_date_sk)) AND is\u2026",
+                          "tables": [
+                           "catalog_sales"
+                          ],
+                          "rows": 14262101,
+                          "est": null,
+                          "read": 14401261,
+                          "seconds": null,
+                          "cross": false,
+                          "children": []
+                         },
+                         {
+                          "kind": "scan",
+                          "op": "BatchScan",
+                          "label": "inventory",
+                          "detail": "(((isnotnull(inv_quantity_on_hand) AND isnotnull(inv_item_sk)) AND isnotnull(inv_warehouse_sk)) AND isnotnull(inv_date_sk))",
+                          "tables": [
+                           "inventory"
+                          ],
+                          "rows": 126456148,
+                          "est": null,
+                          "read": 133110000,
+                          "seconds": null,
+                          "cross": false,
+                          "children": []
+                         }
+                        ]
+                       },
+                       {
+                        "kind": "scan",
+                        "op": "BatchScan",
+                        "label": "warehouse",
+                        "detail": "isnotnull(w_warehouse_sk)",
+                        "tables": [
+                         "warehouse"
+                        ],
+                        "rows": 10,
+                        "est": null,
+                        "read": 10,
+                        "seconds": null,
+                        "cross": false,
+                        "children": []
+                       }
+                      ]
+                     },
+                     {
+                      "kind": "scan",
+                      "op": "BatchScan",
+                      "label": "item",
+                      "detail": "isnotnull(i_item_sk)",
+                      "tables": [
+                       "item"
+                      ],
+                      "rows": 102000,
+                      "est": null,
+                      "read": 102000,
+                      "seconds": null,
+                      "cross": false,
+                      "children": []
+                     }
+                    ]
+                   },
+                   {
+                    "kind": "scan",
+                    "op": "BatchScan",
+                    "label": "customer_demographics",
+                    "detail": "((isnotnull(cd_marital_status) AND (cd_marital_status = D)) AND isnotnull(cd_demo_sk))",
+                    "tables": [
+                     "customer_demographics"
+                    ],
+                    "rows": 384160,
+                    "est": null,
+                    "read": 1920800,
+                    "seconds": null,
+                    "cross": false,
+                    "children": []
+                   }
+                  ]
+                 },
+                 {
+                  "kind": "scan",
+                  "op": "BatchScan",
+                  "label": "household_demographics",
+                  "detail": "((isnotnull(hd_buy_potential) AND (hd_buy_potential = >10000)) AND isnotnull(hd_demo_sk))",
+                  "tables": [
+                   "household_demographics"
+                  ],
+                  "rows": 1200,
+                  "est": null,
+                  "read": 7200,
+                  "seconds": null,
+                  "cross": false,
+                  "children": []
+                 }
+                ]
+               },
+               {
+                "kind": "scan",
+                "op": "BatchScan",
+                "label": "date_dim",
+                "detail": "((((isnotnull(d_year) AND (d_year = 1999)) AND isnotnull(d_date_sk)) AND isnotnull(d_week_seq)) AND isnotnull(d_date))",
+                "tables": [
+                 "date_dim"
+                ],
+                "rows": 365,
+                "est": null,
+                "read": 73049,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               }
+              ]
+             },
+             {
+              "kind": "scan",
+              "op": "BatchScan",
+              "label": "date_dim",
+              "detail": "(isnotnull(d_week_seq) AND isnotnull(d_date_sk))",
+              "tables": [
+               "date_dim"
+              ],
+              "rows": 73049,
+              "est": null,
+              "read": 73049,
+              "seconds": null,
+              "cross": false,
+              "children": []
+             }
+            ]
+           },
+           {
+            "kind": "scan",
+            "op": "BatchScan",
+            "label": "date_dim",
+            "detail": "(isnotnull(d_date) AND isnotnull(d_date_sk))",
+            "tables": [
+             "date_dim"
+            ],
+            "rows": 73049,
+            "est": null,
+            "read": 73049,
+            "seconds": null,
+            "cross": false,
+            "children": []
+           }
+          ]
+         },
+         {
+          "kind": "scan",
+          "op": "BatchScan",
+          "label": "promotion",
+          "detail": "isnotnull(p_promo_sk)",
+          "tables": [
+           "promotion"
+          ],
+          "rows": 500,
+          "est": null,
+          "read": 500,
+          "seconds": null,
+          "cross": false,
+          "children": []
+         }
+        ]
+       },
+       {
+        "kind": "scan",
+        "op": "BatchScan",
+        "label": "catalog_returns",
+        "detail": "(isnotnull(cr_item_sk) AND isnotnull(cr_order_number))",
+        "tables": [
+         "catalog_returns"
+        ],
+        "rows": 1439749,
+        "est": null,
+        "read": 1439749,
+        "seconds": null,
+        "cross": false,
+        "children": []
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

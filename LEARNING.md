@@ -190,7 +190,16 @@ Largest scale each engine completes, cold, every statement answered:
   ceiling, hit with 105 GB of disk free. The same query takes 24.9 s at SF=60; the join order is
   what blows up (duckdb/duckdb#21896). On the `2.0.0.dev2610011535` build it fails sooner, at the
   memory limit: `could not allocate block of size 256.0 KiB (12.4 GiB/12.4 GiB used)` (run
-  37181326822).
+  37181326822). `v2.0.0-alpha46057` fails both ways: at the memory limit in the benchmark (run
+  38054455096), and at the spill ceiling, 90.8 GiB after 258 s, when Q64 is the only query (plans
+  run 38057700184). Its own estimate for the last join is 5.5 quadrillion rows. Trino answers it in
+  149 s, and no join in its plan makes more than ~300K rows.
+- **TPC-DS Q19 is a cross product.** DuckDB joins customer × customer_address × store with a
+  nested loop on `substring(ca_zip, 1, 5) != substring(s_zip, 1, 5)`, the only condition between
+  them: 767M rows at SF=100 where it guessed 14.8M, 25 GiB spilled, ~200 s (plans run 38057700184).
+  It does this before the month and the item filters have shrunk store_sales to 160K rows. Trino
+  joins those first, and none of its joins makes more than 205K rows. Both plans are on the page's
+  Bad joins tab.
 - **TPC-H SF=300 now completes on the nightly CLI** (run 37429290996, 2026-10-06,
   `v2.0.0-alpha44357`): 22/22 cold in 3,227 s, Q18 in 155 s, Q21 the slowest at 614 s.
   duckdb/duckdb#22474 is still open; the change is almost certainly duckdb/duckdb#26246 (merged

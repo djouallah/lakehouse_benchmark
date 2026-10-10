@@ -155,6 +155,80 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--ink); }
 .lane a { color: var(--accent); }
 .empty { color: var(--ink-2); padding: 24px 0; }
+/* Bad joins: the same query on two engines, each engine's executed plan side by side. */
+.pl .intro { color: var(--ink-2); max-width: 68ch; margin: 12px 0; }
+.pl .intro b { color: var(--ink); }
+.pl .hero { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; margin: 16px 0 4px; }
+.pl .hero .t { font-size: 13px; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
+.pl .hero .t i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.pl .hero .r { text-align: right; } .pl .hero .r .t { justify-content: flex-end; }
+.pl .big { font-size: clamp(30px, 7vw, 46px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.pl .big.fail { color: var(--no); }
+.pl .vs { color: var(--ink-3); font-weight: 700; padding-bottom: 8px; }
+.pl .verdict { font-size: 15px; margin: 4px 0 12px; }
+.pl .verdict b { color: var(--no); }
+.pl .ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.pl .play { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 20px; background: var(--ink); color: var(--surface); cursor: pointer; }
+.pl .play:focus-visible, .pl .ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pl .ghost { font: inherit; font-size: 13px; border: 1px solid var(--grid); background: transparent; color: var(--ink-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.pl .ghost[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
+.pl .hint { font-size: 12px; color: var(--ink-3); }
+.pl .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.pl .card { position: relative; background: var(--raised); border: 1px solid var(--grid); border-radius: 14px; padding: 12px; min-width: 0; transition: border-color .3s; }
+.pl .card.lost { border-color: var(--no); }
+.pl .card.won { border-color: var(--yes); }
+.pl .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pl .eng { font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.pl .eng i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.pl .clock { font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.pl .meta { font-size: 12px; color: var(--ink-3); overflow-wrap: anywhere; }
+.pl .badges { min-height: 24px; margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+.pl .badge { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
+.pl .badge.bad { background: color-mix(in srgb, var(--no) 16%, transparent); color: var(--no); }
+.pl .badge.ok { background: color-mix(in srgb, var(--yes) 16%, transparent); color: var(--yes); }
+.pl .tree { overflow-x: auto; margin-top: 4px; }
+.pl svg { display: block; margin: 0 auto; }
+.pl .edge { fill: none; stroke: var(--c); stroke-opacity: .3; stroke-linecap: round; transition: stroke-opacity .2s; }
+.pl .edge.guess { stroke-dasharray: 3 5; }
+.pl .edge.idle { stroke-opacity: .07; }
+.pl .edge.live { stroke-opacity: .95; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -10; } }
+.pl .nd { cursor: pointer; transition: opacity .25s; }
+.pl .nd circle { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; transition: stroke .2s, stroke-width .2s; }
+.pl .nd.cross circle { stroke: var(--no); stroke-dasharray: 4 3; stroke-width: 3; }
+.pl .nd.guess circle { stroke-dasharray: 2 3; }
+.pl .nd.wait { opacity: .3; }
+.pl .nd.run circle { animation: pulse .7s ease-in-out infinite; }
+@keyframes pulse { 50% { stroke-width: 6; } }
+.pl .nd text { font-size: 11px; fill: var(--ink-2); pointer-events: none; }
+.pl .nd .n { font-weight: 800; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl .nd .g { font-size: 12px; font-weight: 700; fill: var(--ink-2); text-anchor: middle; dominant-baseline: central; }
+.pl .nd.cross .g, .pl .nd.cross .n { fill: var(--no); }
+.pl .sel .nd:not(.hl) { opacity: .22; }
+.pl .sel .edge { stroke-opacity: .1; }
+.pl .nd.hl circle { stroke: var(--accent); stroke-width: 4; stroke-dasharray: none; }
+.pl .boom { position: absolute; left: 12px; right: 12px; top: 64px; text-align: center; font-weight: 800; font-size: 22px; color: var(--no); pointer-events: none; animation: in .3s ease forwards; opacity: 0; }
+.pl .card.shake { animation: shake .45s; }
+@keyframes shake { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+.pl .pick { margin: 12px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--track); font-size: 14px; color: var(--ink-2); min-height: 44px; }
+.pl .pick b { color: var(--ink); }
+.pl .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-2); margin: 12px 0 0; }
+.pl .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pl .legend svg { margin: 0; }
+.pl h3 { font-size: 15px; margin: 20px 0 6px; }
+.pl ol.steps { margin: 0; padding-left: 22px; max-width: 75ch; }
+.pl ol.steps li { margin: 4px 0; padding: 6px 10px; border-radius: 8px; cursor: pointer; color: var(--ink-2); }
+.pl ol.steps li:hover, .pl ol.steps li.on { background: var(--track); color: var(--ink); }
+.pl ol.steps li b { color: var(--ink); }
+.pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
+.pl .src a { color: var(--accent); }
+@media (max-width: 720px) {
+  .pl .duo { grid-template-columns: minmax(0, 1fr); }
+  .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl .edge.live, .pl .nd.run circle, .pl .card.shake { animation: none; }
+}
 @media (max-width: 520px) {
   main { padding-top: 16px; }
   .row { grid-template-columns: 84px 1fr; gap: 8px; }
@@ -181,6 +255,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
   <section class="cap rows" id="storage" hidden></section>
+  <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
     <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
@@ -316,11 +391,13 @@ const DBT = { id: "dbt", title: "dbt support" };
 const WORKLOAD = { id: "workload", title: "Real workload" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
 const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
-const PAGES = [CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
+const PLANS = { id: "plans", title: "Bad joins" };
+const PAGES = [PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "performance", title: "Performance", subs: SUITES },
+  { id: "badjoins", title: "Bad joins", subs: [PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
@@ -360,6 +437,8 @@ function render() {
   const page = PAGES.find(p => p.id === state.suite);
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
+  if (page !== PLANS) stopRace();
+  if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
   if (page === WORKLOAD) { renderWorkload(); return; }
@@ -691,6 +770,331 @@ function renderStorage() {
     <p class="note"><a href="${st.run}">Run</a> of ${esc(st.date)}.</p>`;
 }
 
+// THE BAD JOINS TAB: the same query on two engines, each engine's executed plan side by side, with the rows every
+// step made. data/plans/*.json come from .github/workflows/plans.yml through .github/scripts/plans_normalize.py,
+// in the shape bench/plans.py documents. Every number on the tab is read from those files; the words around them
+// are the only thing written here. tests/test_plans.py checks every file a story names exists.
+const STORIES = [
+  { id: "q19", title: "Q19", good: "tpcds_q19_trino_iceberg_sf100", bad: "tpcds_q19_duckdb_iceberg_sf100",
+    lede: "Six tables. Two small filters: one month of dates, one item manager. A good plan applies them first." },
+  { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
+    lede: "Spark runs joins in the order the SQL lists them. Its cost-based optimizer is off by default, and Q72 lists inventory before the filters that make it small." },
+];
+const plans = {};  // file -> plan, or null when it could not be read
+const pl = { story: STORIES[0].id };
+let race = null;
+
+const nfmt = x => x == null ? "?" : x < 1e3 ? `${Math.round(x)}` : x < 1e6 ? `${(x / 1e3).toFixed(x < 1e4 ? 1 : 0)}K`
+  : x < 1e9 ? `${(x / 1e6).toFixed(x < 1e7 ? 1 : 0)}M` : x < 1e12 ? `${(x / 1e9).toFixed(x < 1e10 ? 1 : 0)}B`
+  : x < 1e15 ? `${(x / 1e12).toFixed(x < 1e13 ? 1 : 0)} trillion` : `${(x / 1e15).toFixed(x < 1e16 ? 1 : 0)} quadrillion`;
+const gib = b => `${(b / 2 ** 30).toFixed(b < 10 * 2 ** 30 ? 1 : 0)} GiB`;
+const secs = s => s == null ? "?" : s >= 100 ? `${Math.round(s)} s` : `${s.toFixed(1)} s`;
+const walkPlan = (n, f) => { f(n); n.children.forEach(c => walkPlan(c, f)); };
+const allNodes = root => { const out = []; if (root) walkPlan(root, n => out.push(n)); return out; };
+const offBy = n => (n.rows == null || n.est == null) ? null : Math.max(n.rows, 1) / Math.max(n.est, 1);
+const sameSet = (a, b) => a.length === b.length && a.every((t, i) => t === b[i]);
+const tableList = ts => ts.length > 3 ? `${ts.slice(0, 3).join(", ")} and ${ts.length - 3} more` : ts.join(", ");
+const flow = n => n.rows ?? n.est ?? 0;  // what the line out of a node carries: real rows, or the guess when the query died
+
+// The node in `plan` that does the same work as `n`: the join over the same tables, else the smallest one over all of them.
+function twin(plan, n) {
+  const nodes = allNodes(plan?.root).filter(m => m.kind === n.kind || (n.kind !== "scan" && m.kind === "join"));
+  const exact = nodes.find(m => sameSet(m.tables, n.tables));
+  if (exact) return { node: exact, exact: true };
+  const cover = nodes.filter(m => n.tables.every(t => m.tables.includes(t))).sort((a, b) => a.tables.length - b.tables.length);
+  return cover.length ? { node: cover[0], exact: false } : null;
+}
+
+async function loadPlan(file) {
+  if (!(file in plans)) {
+    plans[file] = await fetch(`data/plans/${file}.json`).then(r => r.ok ? r.json() : null).catch(() => null);
+  }
+  return plans[file];
+}
+
+function storyFiles(s) { return { good: s.good, bad: s.bad }; }
+
+async function renderPlans() {
+  const sec = $(PLANS.id), s = STORIES.find(x => x.id === pl.story);
+  const files = storyFiles(s);
+  const [good, bad] = await Promise.all([loadPlan(files.good), loadPlan(files.bad)]);
+  if (state.suite !== PLANS.id) return;
+  stopRace();
+  const name = p => LABEL[p.engine] ?? p.engine;
+  const chips = STORIES.map(x => `<button aria-pressed="${x.id === s.id}" data-story="${x.id}">${x.title}</button>`).join("");
+  const intro = `<p class="intro">An engine does not run your SQL as written. Its <b>optimizer</b> picks the order of the joins,
+    and it picks with <b>statistics</b>: how many rows each table has, how many distinct values, how much a filter keeps.
+    A good order keeps every step small. A bad one builds a huge middle result, then spills to disk or runs out of memory.
+    Below: same query, same data, same 16 GB machine. Only the plan is different.</p>`;
+  if (!good || !bad || !good.root || !bad.root) {
+    sec.innerHTML = `<div class="chips">${chips}</div>${intro}<div class="empty">This story's plans are not captured yet.</div>`;
+    bindStoryChips(sec); return;
+  }
+  const bigBad = bad.status === "error" ? (/memory/i.test(bad.error || "") ? "out of memory" : "failed") : secs(bad.seconds);
+  const verdict = bad.status === "error"
+    ? `${name(bad)} <b>${bigBad}</b> after ${secs(bad.seconds)}${bad.spill_bytes ? `, with ${gib(bad.spill_bytes)} spilled to disk` : ""}. ${name(good)} answers in ${secs(good.seconds)}.`
+    : `${name(bad)} is <b>${ratio(bad.seconds / good.seconds)} slower</b> on this query${bad.spill_bytes ? `, and spills ${gib(bad.spill_bytes)} to disk` : ""}.`;
+  sec.innerHTML = `<div class="chips">${chips}</div>${intro}
+    <div class="hero">
+      <div style="--c: var(--${good.engine})"><div class="t"><i></i>${name(good)}</div><div class="big">${secs(good.seconds)}</div></div>
+      <div class="vs">vs</div>
+      <div class="r" style="--c: var(--${bad.engine})"><div class="t"><i></i>${name(bad)}</div><div class="big ${bad.status === "error" ? "fail" : ""}">${bigBad}</div></div>
+    </div>
+    <p class="verdict">${verdict} ${esc(s.lede)}</p>
+    <div class="ctl"><button class="play" id="pl-play">▶ Race</button>
+      <span class="hint">Hover a step for its numbers. Click one to find the same step in the other plan.</span></div>
+    <div class="duo">${card(good, "good")}${card(bad, "bad")}</div>
+    <div class="pick" id="pl-pick">The lines carry rows: the thicker, the more rows. Press Race to watch them flow.</div>
+    <div class="legend">
+      <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="var(--ink-3)" stroke-width="2"/></svg>few rows</span>
+      <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="var(--ink-3)" stroke-width="10"/></svg>many rows</span>
+      <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--no)" stroke-width="2.5" stroke-dasharray="3 2"/></svg>no join key: every row meets every row</span>
+    </div>
+    <h3>What went wrong</h3><ol class="steps" id="pl-steps"></ol>
+    <p class="src">${[good, bad].map(p => `${name(p)} ${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))}, TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}: <a href="${esc(p.run_url || "#")}">capture run</a>`).join(" · ")}.
+      Rows are what each step produced in that run; estimates are the engine's own, before it ran. Times are from these
+      runs, with each engine's plan instrumentation on; the benchmark's own times are on the Performance tab.</p>`;
+  bindStoryChips(sec);
+  $("pl-play").onclick = () => startRace(good, bad);
+  for (const [plan, side] of [[good, "good"], [bad, "bad"]]) drawTree(plan, side);
+  writeSteps(good, bad);
+  showAtEnd(good, bad);
+}
+
+function bindStoryChips(sec) {
+  for (const b of sec.querySelectorAll("[data-story]")) {
+    b.onclick = () => {
+      pl.story = b.dataset.story;
+      history.replaceState(null, "", `#plans-${pl.story}`); renderPlans();
+    };
+  }
+}
+
+function card(p, side) {
+  return `<div class="card" id="pl-${side}" style="--c: var(--${p.engine})">
+    <div class="head"><div class="eng"><i></i>${LABEL[p.engine] ?? p.engine}</div><div class="clock" id="pl-${side}-clock">${secs(p.seconds)}</div></div>
+    <div class="meta">${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))} · SF ${p.sf}${p.peak_memory_bytes ? ` · peak memory ${gib(p.peak_memory_bytes)}` : ""}</div>
+    <div class="badges" id="pl-${side}-badges"></div>
+    <div class="tree" id="pl-${side}-tree"></div></div>`;
+}
+
+// Spine layout, root on top, data flowing up: a node's biggest input sits straight under it and the others
+// branch off to the right. A left-deep chain of joins (Q72 on Spark) is a straight line, not a staircase.
+function drawTree(plan, side) {
+  const X = 78, Y = 54, PAD = 30;
+  const size = n => n._n ??= 1 + n.children.reduce((a, c) => a + size(c), 0);
+  const height = n => n._h ??= 1 + Math.max(0, ...n.children.map(height));
+  const right = [];  // per depth, the first free column
+  let depth = 0;
+  (function place(n, x, d) {
+    n._x = x; n._d = d; depth = Math.max(depth, d);
+    right[d] = Math.max(right[d] ?? 0, x + 1);
+    [...n.children].sort((a, b) => size(b) - size(a)).forEach((c, i) => {
+      let at = x;
+      if (i) { at = x + 1; for (let k = d + 1; k <= d + height(c); k++) at = Math.max(at, right[k] ?? 0); }
+      place(c, at, d + 1);
+    });
+  })(plan.root, 0, 0);
+  const leaf = Math.max(...right);
+  const W = Math.max(leaf, 2) * X + PAD + 40, H = (depth + 1) * Y + PAD + 10;
+  const px = n => PAD / 2 + n._x * X + X / 2, py = n => PAD + n._d * Y;
+  const radius = n => n.kind === "scan" ? 7 : Math.min(24, Math.max(8, 4 + 2.4 * Math.log10(flow(n) + 1)));
+  const width = n => Math.min(16, 1 + 1.5 * Math.log10(flow(n) + 1));
+  const glyph = { join: "⋈", agg: "Σ", sort: "↓", scan: "", other: "" };
+  let edges = "", nodes = "";
+  allNodes(plan.root).forEach((n, i) => {
+    n._id = `${side}-${i}`;
+    const x = px(n), y = py(n);
+    for (const c of n.children) {
+      const cx = px(c), cy = py(c), my = (cy + y) / 2;
+      edges += `<path class="edge${c.rows == null && c.est != null ? " guess" : ""}" data-from="${side}-${allNodes(plan.root).indexOf(c)}" d="M${cx},${cy} C${cx},${my} ${x},${my} ${x},${y}" stroke-width="${width(c).toFixed(1)}"/>`;
+    }
+    const r = radius(n), cls = ["nd", n.cross ? "cross" : "", n.rows == null && n.est != null ? "guess" : ""].join(" ");
+    const label = n.kind === "scan" ? `<text x="${x}" y="${y + r + 12}" text-anchor="middle">${esc(n.label.length > 13 ? n.label.slice(0, 12) + "…" : n.label)}</text>` : "";
+    nodes += `<g class="${cls}" data-id="${n._id}" tabindex="0"><circle cx="${x}" cy="${y}" r="${r}"/>
+      <text class="g" x="${x}" y="${y}">${n.cross ? "×" : r >= 11 ? glyph[n.kind] : ""}</text>
+      <text class="n" x="${x + r + 4}" y="${y - r + 2}">${n.rows == null ? (n.est != null ? `~${nfmt(n.est)}` : "") : nfmt(n.rows)}</text>${label}</g>`;
+  });
+  const box = $(`pl-${side}-tree`);
+  // Never larger than drawn; shrunk to fit the card, down to 60%, past which a wide tree (Q64) scrolls.
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;min-width:${Math.round(W * 0.6)}px">${edges}${nodes}</svg>`;
+  const svg = box.querySelector("svg");
+  const byId = Object.fromEntries(allNodes(plan.root).map(n => [n._id, n]));
+  for (const g of svg.querySelectorAll(".nd")) {
+    const n = byId[g.dataset.id];
+    g.onmouseenter = g.onfocus = e => planTip(plan, n, e);
+    g.onmousemove = e => moveTip(e.clientX, e.clientY);
+    g.onmouseleave = g.onblur = hideTip;
+    g.onclick = () => pick(plan, n);
+    g.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(plan, n); } };
+  }
+}
+
+function planTip(plan, n, e) {
+  const r = offBy(n);
+  const off = r == null ? "" : `<div class="k">guess off by <b>${r >= 1 ? ratio(r) : ratio(1 / r)}</b> (${r >= 1 ? "too low" : "too high"})</div>`;
+  tip.style.setProperty("--c", `var(--${plan.engine})`);
+  tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(n.label)}${n.cross ? " · no join key" : ""}</div>
+    ${n.rows != null ? `<div><b>${n.rows.toLocaleString()}</b> <span class="k">rows out</span></div>` : ""}
+    ${n.read != null && n.read !== n.rows ? `<div class="k">${n.read.toLocaleString()} rows read</div>` : ""}
+    ${n.est != null ? `<div class="k">optimizer's guess: ${Math.round(n.est).toLocaleString()}</div>` : `<div class="k">no estimate from this engine</div>`}
+    ${off}
+    ${n.kind !== "scan" ? `<div class="k">over ${esc(tableList(n.tables))}</div>` : ""}
+    ${n.detail ? `<div class="k"><code>${esc(n.detail)}</code></div>` : ""}`;
+  tip.classList.add("on");
+  if (e.clientX) moveTip(e.clientX, e.clientY);
+  else { const b = e.target.getBoundingClientRect(); moveTip(b.right, b.top); }
+}
+
+// Click a step: light it up here and its twin in the other plan, and say how the two compare.
+function pick(plan, n) {
+  const s = STORIES.find(x => x.id === pl.story), files = storyFiles(s);
+  const other = plan === plans[files.good] ? plans[files.bad] : plans[files.good];
+  const t = twin(other, n);
+  for (const svg of $(PLANS.id).querySelectorAll("svg")) {
+    svg.classList.add("sel");
+    for (const g of svg.querySelectorAll(".nd")) g.classList.toggle("hl", g.dataset.id === n._id || g.dataset.id === t?.node._id);
+  }
+  const me = LABEL[plan.engine], them = LABEL[other.engine];
+  const what = n.kind === "scan" ? `Reading <b>${esc(n.label)}</b>` : `The step over <b>${esc(tableList(n.tables))}</b>`;
+  const mine = `${me} makes <b>${n.rows != null ? nfmt(n.rows) : `~${nfmt(n.est)} (guess)`}</b> rows`;
+  const theirs = !t ? `${them} has no such step.`
+    : t.exact ? `${them} makes <b>${t.node.rows != null ? nfmt(t.node.rows) : `~${nfmt(t.node.est)}`}</b> for the same tables.`
+    : `${them} never joins these tables on their own; its first step that has all of them makes <b>${nfmt(flow(t.node))}</b>.`;
+  $("pl-pick").innerHTML = `${what}: ${mine}. ${theirs} <button class="ghost" id="pl-clear">clear</button>`;
+  $("pl-clear").onclick = clearPick;
+}
+
+function clearPick() {
+  for (const svg of $(PLANS.id).querySelectorAll("svg")) { svg.classList.remove("sel"); svg.querySelectorAll(".hl").forEach(g => g.classList.remove("hl")); }
+  for (const li of $(PLANS.id).querySelectorAll("#pl-steps li")) li.classList.remove("on");
+  $("pl-pick").innerHTML = "The lines carry rows: the thicker, the more rows. Press Race to watch them flow.";
+}
+
+// The steps write themselves from the two plans, so a new capture keeps them true.
+function writeSteps(good, bad) {
+  const g = LABEL[good.engine], b = LABEL[bad.engine], steps = [];
+  const joinsOf = p => allNodes(p.root).filter(n => n.kind === "join");
+  const biggest = p => joinsOf(p).sort((x, y) => flow(y) - flow(x))[0];
+  const bb = biggest(bad), gb = biggest(good);
+  const cross = joinsOf(bad).filter(n => n.cross).sort((x, y) => flow(y) - flow(x))[0];
+  if (cross) {
+    steps.push({ plan: bad, node: cross, html: `<b>No join key.</b> ${b} joins ${esc(tableList(cross.tables))} with only a
+      <code>${esc(cross.detail.replace(/^INNER\s*/, "").replace(/"(\w+)"\(/g, "$1(") || "condition")}</code> test, so every row on one side meets every row
+      on the other: <b>${nfmt(flow(cross))}</b> rows${cross.rows == null ? " expected" : ""}, to keep a few.` });
+  }
+  if (bb && bb !== cross) {
+    steps.push({ plan: bad, node: bb, html: `<b>The biggest middle result.</b> ${b}'s largest step makes <b>${nfmt(flow(bb))}</b>
+      rows${bb.rows == null ? " (its own guess; it died before it could count)" : ""}, over ${esc(tableList(bb.tables))}.
+      ${g}'s largest makes <b>${nfmt(flow(gb))}</b>.` });
+  }
+  const same = bb && twin(good, bb);
+  if (same) {
+    steps.push({ plan: good, node: same.node, html: same.exact
+      ? `<b>The same join, done right.</b> ${g} joins ${esc(tableList(bb.tables))} too, but after the filters have made
+        both sides small: <b>${nfmt(flow(same.node))}</b> rows instead of ${nfmt(flow(bb))}.`
+      : `<b>The good order.</b> ${g} never joins ${esc(tableList(bb.tables))} on their own. It brings the small, filtered
+        tables in first, so the step that finally has all of them makes <b>${nfmt(flow(same.node))}</b> rows instead of ${nfmt(flow(bb))}.` });
+  }
+  const end = bad.status === "error"
+    ? `<b>The end.</b> ${b}: <code>${esc((bad.error || "").slice(0, 140))}</code>`
+    : `<b>The end.</b> ${b} takes ${secs(bad.seconds)}${bad.spill_bytes ? ` and writes ${gib(bad.spill_bytes)} to disk` : ""}; ${g} takes ${secs(good.seconds)}.`;
+  steps.push({ html: end });
+  const ol = $("pl-steps");
+  ol.innerHTML = steps.map(s => `<li>${s.html}</li>`).join("");
+  [...ol.children].forEach((li, i) => {
+    const s = steps[i];
+    li.onclick = () => {
+      if (!s.node) return;
+      pick(s.plan, s.node);
+      [...ol.children].forEach(x => x.classList.toggle("on", x === li));
+      $(`pl-${s.plan === good ? "good" : "bad"}-tree`).scrollIntoView({ block: "nearest", behavior: "smooth" });
+    };
+  });
+}
+
+// THE RACE. Both plans on one clock, the slower one taking about 14 s of screen time. Each step starts when its
+// inputs are done and takes its share of the engine's real time (by its own timing where the engine gives one).
+function schedule(plan) {
+  const nodes = allNodes(plan.root), timed = nodes.some(n => (n.seconds ?? 0) > 0);
+  const weight = n => timed ? Math.max(n.seconds ?? 0, 0.001) : Math.log10(flow(n) + 10);
+  (function f(n) { n._s = Math.max(0, ...n.children.map(f)); n._e = n._s + weight(n); return n._e; })(plan.root);
+  const k = (plan.seconds || 1) / plan.root._e;
+  for (const n of nodes) { n._s *= k; n._e *= k; }
+}
+
+function frame(plan, side, t) {
+  const svg = $(`pl-${side}-tree`)?.querySelector("svg");
+  if (!svg) return;
+  const done = t >= plan.seconds, died = done && plan.status === "error";
+  for (const n of allNodes(plan.root)) {
+    const g = svg.querySelector(`[data-id="${n._id}"]`);
+    // A plan that died stops where it was: what had started stays lit, nothing pulses any more.
+    const state = t < n._s ? "wait" : died ? "dead" : t >= n._e ? "done" : "run";
+    g.classList.toggle("wait", state === "wait");
+    g.classList.toggle("run", state === "run");
+    const p = state === "done" ? 1 : state === "run" || state === "dead" ? Math.min(1, (t - n._s) / (n._e - n._s)) : 0;
+    const label = g.querySelector(".n");
+    if (n.rows != null) label.textContent = state === "wait" ? "" : nfmt(n.rows * (1 - Math.pow(1 - p, 2)));
+    for (const c of n.children) {
+      const e = svg.querySelector(`.edge[data-from="${c._id}"]`);
+      e?.classList.toggle("live", state === "run" && !died);
+      e?.classList.toggle("idle", t < c._s);
+    }
+  }
+  const clock = $(`pl-${side}-clock`), badges = $(`pl-${side}-badges`), cardEl = $(`pl-${side}`);
+  clock.textContent = done ? (died ? "✗ " : "✓ ") + secs(plan.seconds) : secs(t);
+  const spill = plan.spill_bytes && t > 0 ? `<span class="badge bad">spilled ${gib(plan.spill_bytes * Math.min(1, t / plan.seconds))}</span>` : "";
+  badges.innerHTML = spill + (done ? (died ? `<span class="badge bad">${/memory/i.test(plan.error || "") ? "out of memory" : "failed"}</span>` : `<span class="badge ok">done</span>`) : "");
+  if (done && !cardEl.dataset.ended) {
+    cardEl.dataset.ended = "1";
+    if (died) {
+      cardEl.classList.add("lost", "shake");
+      cardEl.insertAdjacentHTML("beforeend", `<div class="boom">${/memory/i.test(plan.error || "") ? "Out of memory" : "Query failed"}</div>`);
+    }
+  }
+}
+
+function startRace(good, bad) {
+  stopRace(); clearPick();
+  for (const side of ["good", "bad"]) { const c = $(`pl-${side}`); delete c.dataset.ended; c.classList.remove("lost", "won", "shake"); c.querySelector(".boom")?.remove(); }
+  schedule(good); schedule(bad);
+  const longest = Math.max(good.seconds, bad.seconds), screen = 14000, k = longest / screen;
+  let t0 = null;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("pl-play").textContent = "■ Stop";
+  $("pl-play").onclick = () => { stopRace(); showAtEnd(good, bad); };
+  const tick = now => {
+    t0 ??= now;  // the first frame's own clock: rAF's timestamp can be earlier than a performance.now() taken before it
+    const t = reduce ? longest : (now - t0) * k;
+    frame(good, "good", t); frame(bad, "bad", t);
+    const winner = good.seconds <= bad.seconds ? "good" : "bad";
+    if (t >= Math.min(good.seconds, bad.seconds)) $(`pl-${winner}`).classList.add("won");
+    if (t < longest) race = requestAnimationFrame(tick);
+    else { race = null; $("pl-play").textContent = "▶ Race again"; $("pl-play").onclick = () => startRace(good, bad); }
+  };
+  race = requestAnimationFrame(tick);
+}
+
+function stopRace() {
+  if (race) cancelAnimationFrame(race);
+  race = null;
+}
+
+// Before the race: the finished picture, so a reader who never presses Race still sees every number.
+function showAtEnd(good, bad) {
+  for (const [plan, side] of [[good, "good"], [bad, "bad"]]) {
+    schedule(plan);
+    const c = $(`pl-${side}`);
+    c.dataset.ended = "1";  // no shake or banner for the still picture
+    frame(plan, side, plan.seconds);
+    c.classList.toggle("lost", plan.status === "error");
+    for (const e of c.querySelectorAll(".edge")) e.classList.remove("live", "idle");
+  }
+  const play = $("pl-play");
+  if (play) { play.textContent = "▶ Race"; play.onclick = () => startRace(good, bad); }
+}
+
 const tip = $("tip");
 function showTip(item, lane) {
   tip.style.setProperty("--c", `var(--${item.engine}, var(--ink-3))`);
@@ -726,12 +1130,14 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// Deep links: #performance, #plans (#plans-q64 for one story), #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "details") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
+  const story = h.match(/^plans-(\w+)$/);  // one Bad joins story: #plans-q64
+  if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
   else if (GROUPS.some(g => g.id === h)) state.suite = GROUPS.find(g => g.id === h).subs[0].id;
   else if (h && document.getElementById(h)?.closest("#issues")) state.suite = DETAILS.id;
