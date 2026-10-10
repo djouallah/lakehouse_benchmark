@@ -188,11 +188,11 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <p>The best query is the one that does the least work. A good optimizer and good pruning beat brute force.</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>The object store integration matters as much as the engine itself.</p>
-    <p>When an engine fails, the bug is filed upstream (see <a href="#details">Details</a>).</p>
+    <p>When an engine fails, the bug is filed upstream (see <a href="#issues">Issues</a>).</p>
   </section>
   <section class="cap rows" id="engines" hidden></section>
   <section class="cap rows" id="tried" hidden></section>
-  <section class="details" id="details" hidden>
+  <section class="details" id="issues" hidden>
     <h3>In the bench</h3>
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes).</li>
@@ -307,7 +307,7 @@ function summarize(rows, suite) {
 const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
-const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
+const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const DBT = { id: "dbt", title: "dbt support" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
@@ -319,7 +319,7 @@ const GROUPS = [
   { id: "performance", title: "Performance", subs: SUITES },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
-  { id: "details", title: "Details", subs: [DETAILS] },
+  { id: "issues", title: "Issues", subs: [DETAILS] },
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES, TRIED] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
@@ -547,7 +547,7 @@ function renderEngines() {
     <p class="caption">The engines in the bench. From each project's own repo and site.</p>
     ${table(ENGINE_ROWS.filter(r => r.engine in LABEL))}`;
   $("tried").innerHTML = `
-    <p class="caption">Engines tried that did not work here; <a href="#details">Details</a> says why.</p>
+    <p class="caption">Engines tried that did not work here; <a href="#issues">Issues</a> says why.</p>
     ${table(ENGINE_ROWS.filter(r => !(r.engine in LABEL)))}`;
 }
 
@@ -632,8 +632,8 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// Every engine on the details tab gets an id from its name; clicking the name links to it and copies the URL.
-for (const li of $("details").querySelectorAll("li")) {
+// Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
+for (const li of $("issues").querySelectorAll("li")) {
   const b = li.querySelector("b");
   li.id = b.textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const a = document.createElement("a");
@@ -647,15 +647,15 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #features, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #details, #about, #engines,
-// or one engine on the details tab (#datafusion).
+// Deep links: #performance, #features, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
-  if (h === "tried") h = DETAILS.id;  // the tab's old name
+  if (h === "details") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
   else if (GROUPS.some(g => g.id === h)) state.suite = GROUPS.find(g => g.id === h).subs[0].id;
-  else if (h && document.getElementById(h)?.closest("#details")) state.suite = DETAILS.id;
+  else if (h && document.getElementById(h)?.closest("#issues")) state.suite = DETAILS.id;
 }
 addEventListener("hashchange", () => { fromHash(); render(); });
 renderEngines();
