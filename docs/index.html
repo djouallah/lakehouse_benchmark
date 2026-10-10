@@ -1017,7 +1017,9 @@ function schedule(plan) {
   const weight = n => timed ? Math.max(n.seconds ?? 0, 0.001) : Math.log10(flow(n) + 10);
   (function f(n) { n._s = Math.max(0, ...n.children.map(f)); n._e = n._s + weight(n); return n._e; })(plan.root);
   const k = (plan.seconds || 1) / plan.root._e;
-  for (const n of nodes) { n._s *= k; n._e *= k; }
+  for (const n of nodes) { n._s *= k; n._e *= k; n._show = n._s; }
+  // A table shows up only when the join that reads it starts: nothing is on screen at the start.
+  walkPlan(plan.root, n => n.children.forEach(c => { if (c.kind === "scan") c._show = n._s; }));
 }
 
 function frame(plan, side, t) {
@@ -1027,7 +1029,7 @@ function frame(plan, side, t) {
   for (const n of allNodes(plan.root)) {
     const g = svg.querySelector(`[data-id="${n._id}"]`);
     // A plan that died stops where it was: what had started stays lit, nothing pulses any more.
-    const state = t < n._s ? "wait" : died ? "dead" : t >= n._e ? "done" : "run";
+    const state = t < n._show ? "wait" : died ? "dead" : t >= n._e ? "done" : "run";
     g.classList.toggle("wait", state === "wait");
     g.classList.toggle("run", state === "run");
     const p = state === "done" ? 1 : state === "run" || state === "dead" ? Math.min(1, (t - n._s) / (n._e - n._s)) : 0;
@@ -1043,7 +1045,7 @@ function frame(plan, side, t) {
         e.style.strokeDasharray = `${len} ${len}`; e.style.strokeDashoffset = `${len * (1 - q)}`;
       } else { e.style.strokeDasharray = ""; e.style.strokeDashoffset = ""; }
       e.classList.toggle("live", !drawing && state === "run" && !died);
-      e.classList.toggle("idle", t < n._s);
+      e.classList.toggle("idle", t < n._s || t < c._show);
     }
   }
   const clock = $(`pl-${side}-clock`), badges = $(`pl-${side}-badges`), cardEl = $(`pl-${side}`);
