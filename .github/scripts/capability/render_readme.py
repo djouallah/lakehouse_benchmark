@@ -101,7 +101,11 @@ ROWS = [
         {"duckdb": ["create_schema", "drop_schema"], "sail": ["namespace"]},
     ),
     ("Credential vending", {"duckdb": ["credential_vending"]}),
-    ("A commit against a stale snapshot is refused", {"polars": ["stale_assertion"]}),
+    # DuckDB's cell is its isolation run's INSERT race on the `no retries` table.
+    (
+        "A commit against a stale snapshot is refused",
+        {"polars": ["stale_assertion"], "duckdb": ["stale_assertion"]},
+    ),
     # Writer B (pyiceberg) commits between the engine's read and its commit
     # (bench/capability/race.py).
     # DuckDB's cells are its isolation run's, at Iceberg's default level.

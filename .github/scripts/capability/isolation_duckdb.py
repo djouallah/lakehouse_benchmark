@@ -244,6 +244,25 @@ def matrix_rows(levels: dict, level: str = "serializable") -> list[dict]:
                     "detail": f"{outcome}: {detail}",
                 }
             )
+    # The stale-snapshot row: with retries off, DuckDB's INSERT is committed against the snapshot
+    # it read, which B has moved past. A refusal is the answer we want: the catalog enforces
+    # assert-ref-snapshot-id (catalog_capability_polars.py's stale_assertion asks the same).
+    if ("insert", "no retries") in levels:
+        outcome, detail = levels[("insert", "no retries")]
+        result = REFUSED
+        if outcome == "refused":
+            result = SUPPORTED
+        elif outcome in ("error", "broken"):
+            result = BROKEN
+        found.append(
+            {
+                "key": "stale_assertion",
+                "group": "commit",
+                "question": "INSERT with commit.retry.num-retries = 0; B appends in between",
+                "outcome": result,
+                "detail": f"{outcome}: {detail}",
+            }
+        )
     return found
 
 
