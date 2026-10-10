@@ -779,7 +779,7 @@ const STORIES = [
 ];
 const plans = {};  // file -> plan, or null when it could not be read
 const pl = { story: STORIES[0].id };
-let race = null, watcher = null;
+let race = null, watcher = null, pause = null;
 
 const nfmt = x => x == null ? "?" : x < 1e3 ? `${Math.round(x)}` : x < 1e6 ? `${(x / 1e3).toFixed(x < 1e4 ? 1 : 0)}K`
   : x < 1e9 ? `${(x / 1e6).toFixed(x < 1e7 ? 1 : 0)}M` : x < 1e12 ? `${(x / 1e9).toFixed(x < 1e10 ? 1 : 0)}B`
@@ -1061,30 +1061,42 @@ function frame(plan, side, t) {
   }
 }
 
+// One plan, then the other: the good one builds in 5 s of screen time, the bad one in 12 s. The clocks show
+// each engine's real seconds, so 13.9 s and 113 s still read as they are.
+const SCREEN = { good: 5000, bad: 12000 }, PAUSE = 800;
 function startRace(good, bad) {
   stopRace(); clearPick();
   for (const side of ["good", "bad"]) { const c = $(`pl-${side}`); delete c.dataset.ended; c.classList.remove("lost", "won", "shake"); c.querySelector(".boom")?.remove(); }
   schedule(good); schedule(bad);
-  const longest = Math.max(good.seconds, bad.seconds), screen = 14000, k = longest / screen;
-  let t0 = null;
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  frame(good, "good", 0); frame(bad, "bad", 0);
   $("pl-why").hidden = true;
   $("pl-play").textContent = "■ Skip to the end";
   $("pl-play").onclick = () => { stopRace(); showAtEnd(good, bad); };
+  const phases = [[good, "good"], [bad, "bad"]];
+  let i = 0, t0 = null;
   const tick = now => {
-    t0 ??= now;  // the first frame's own clock: rAF's timestamp can be earlier than a performance.now() taken before it
-    const t = reduce ? longest : (now - t0) * k;
-    frame(good, "good", t); frame(bad, "bad", t);
-    const winner = good.seconds <= bad.seconds ? "good" : "bad";
-    if (t >= Math.min(good.seconds, bad.seconds)) $(`pl-${winner}`).classList.add("won");
-    if (t < longest) race = requestAnimationFrame(tick);
-    else { race = null; showAtEnd(good, bad); }
+    const [plan, side] = phases[i];
+    t0 ??= now;  // each plan's own start: rAF's timestamp, not a performance.now() taken before it
+    const p = Math.max(0, now - t0) / SCREEN[side];
+    frame(plan, side, Math.min(1, p) * plan.seconds);
+    if (p < 1) { race = requestAnimationFrame(tick); return; }
+    if (side === "good") $(`pl-${side}`).classList.add("won");
+    if (++i < phases.length) {
+      t0 = null;
+      pause = setTimeout(() => {
+        $(`pl-${phases[i][1]}`).scrollIntoView({ block: "nearest", behavior: "smooth" });
+        race = requestAnimationFrame(tick);
+      }, PAUSE);
+      return;
+    }
+    race = null; showAtEnd(good, bad);
   };
   race = requestAnimationFrame(tick);
 }
 
 function stopRace() {
   watcher?.disconnect();
+  clearTimeout(pause);
   if (race) cancelAnimationFrame(race);
   race = null;
 }
