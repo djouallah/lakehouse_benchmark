@@ -16,20 +16,23 @@ A candidate engine must pass all three; the `candidate engine` workflow checks t
 Bonus:
 
 - It finishes TPC-DS.
-- More complex Iceberg DML (coming soon).
+- It supports more Iceberg operations (the Iceberg support tab on the results page).
+
+In the bench, with gaps:
+
+- **Daft**: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and `SUBSTRING` ([Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), OneLake paths [Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533)).
+- **StarRocks**: no complete TPC-DS run; Q49 fails on a SQL bug ([StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807)).
+- **chDB**: not in TPC-DS; aborts on the first query (chDB 4.4.0).
 
 Tried and not added:
 
 - **Apache Doris**: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes (condition 2).
 - **Firebolt Core**: attaches the catalog, but only reads data from `s3://`, `gs://` or `file://`. It rejects OneLake's `abfss://` paths, and its `azure://` location takes no Azure token (condition 2; [firebolt-core#90](https://github.com/firebolt-db/firebolt-core/issues/90)).
-- **Databend**: the release build has no Azure storage for Iceberg ("azdls not supported now"); a fix is being tested on a fork (condition 2; [databend#20590](https://github.com/databendlabs/databend/pull/20590), decimal bug [databend#20588](https://github.com/databendlabs/databend/issues/20588)).
+- **Databend**: the release build has no Azure storage for Iceberg ("azdls not supported now"); the fix is in the nightly builds, not yet in a stable release (condition 2; [databend#20590](https://github.com/databendlabs/databend/pull/20590), decimal bug [databend#20588](https://github.com/databendlabs/databend/issues/20588)).
 - **DataFusion Comet**: its native Iceberg scan has no `abfss://`, so OneLake scans fall back to the JVM ([apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058)) (condition 2).
 - **DataFusion**: its Python package has no Iceberg support: no catalog, no scan, no write ([apache/datafusion-python#1097](https://github.com/apache/datafusion-python/issues/1097)). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream ([apache/iceberg-rust#3036](https://github.com/apache/iceberg-rust/issues/3036)) (conditions 2 and 3).
 - **pg_lake** (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row `nation` takes 4-5s.
 - **CedarDB**: no Iceberg support yet; it's on their roadmap.
-- **Daft**: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and `SUBSTRING` ([Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), OneLake paths [Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533)).
-- **StarRocks**: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs ([StarRocks#79806](https://github.com/StarRocks/starrocks/issues/79806), [StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807)).
-- **chDB**: not in TPC-DS; aborts on the first query (chDB 4.4.0).
 
 ## Gluten/Velox vs Spark-OSS
 

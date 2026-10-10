@@ -195,21 +195,21 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <h3>In the bench</h3>
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes).</li>
-      <li><b>Polars</b>: TPC-DS runs on a main build until the fixes ship. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed), <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
+      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
       <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
-      <li><b>StarRocks</b>: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open), <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks-a-candidate-that-qualifies">Details</a></li>
+      <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
-      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
+      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries on 0.7.25, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged, not yet released). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
       <li><b>chDB</b>: not in TPC-DS; aborts on the first query (chDB 4.4.0). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
     </ul>
     <h3>Tried, not added</h3>
     <ul>
       <li><b>Apache Doris</b>: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes.</li>
       <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths. Filed: <a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a> (open).</li>
-      <li><b>Databend</b>: the release build can't read Iceberg on Azure; the fix is merged, not yet released (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>). Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (open) decimals fail, TPC-H 5/22.</li>
+      <li><b>Databend</b>: the release build can't read Iceberg on Azure; the fix (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) is in the nightly builds, not yet in a stable release. Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (open) decimals fail, TPC-H 5/22.</li>
       <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM. Filed: <a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>
       <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream (<a href="https://github.com/apache/iceberg-rust/issues/3036">#3036</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-no-iceberg-in-python">Details</a></li>
-      <li><b>pg_lake</b>: (3.5.3) runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
+      <li><b>pg_lake</b>: (tested on 3.5.3) runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
       <li><b>CedarDB</b>: no Iceberg support yet; it's on their roadmap.</li>
     </ul>
   </section>
@@ -545,9 +545,9 @@ const DBT_ROWS = [
   { engine: "starrocks_iceberg", level: "partial", adapter: "dbt-starrocks", url: "https://docs.starrocks.io/docs/integrations/dbt/",
     note: "No merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
   { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
-    note: `Failed when tried; not used. dbt-sail installs full PySpark with its jars, and it conflicts with <code>pyspark-client</code>: you ship Spark to avoid Spark. Sail also cannot name the source file (<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>). <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
-  { engine: "polars_iceberg", level: "none", adapter: "", url: "",
-    note: "No released adapter; dbt-polars is version 0.0.1." },
+    note: `An adapter exists, but it failed when tried, so it is not used. dbt-sail installs full PySpark with its jars, and it conflicts with <code>pyspark-client</code>: you ship Spark to avoid Spark. Sail also cannot name the source file (<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>). <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
+  { engine: "polars_iceberg", level: "partial", adapter: "dbt-polars", url: "https://github.com/datamindedbe/incubator-dbt-polars",
+    note: "An incubator project (0.3.1). Its docs mark Iceberg over a REST catalog as experimental. Not tried." },
   { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
     note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
   { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
@@ -568,8 +568,8 @@ function renderDbt() {
 }
 
 // THE CATALOGS TAB (storage token): the bench runs on OneLake, but the engines do not need it. With only the
-// catalog address and a token, DuckDB writes one row and reads it back; the catalog gives the storage
-// token. The test and its secrets live in testing-iceberg-rest-catalog; .github/workflows/storage_token.yml
+// catalog address and a token, DuckDB writes one row and reads it back. Most catalogs give the storage
+// token; the AWS ones give none, and DuckDB uses an AWS key there (`storage` in the data). The test and its secrets live in testing-iceberg-rest-catalog; .github/workflows/storage_token.yml
 // copies the catalogs that worked to data/storage_token.json.
 const STORAGE_REPO = "https://github.com/djouallah/testing-iceberg-rest-catalog";
 function renderStorage() {
@@ -577,8 +577,8 @@ function renderStorage() {
   if (!st) { sec.innerHTML = `<div class="empty">No results yet.</div>`; return; }
   sec.innerHTML = `
     <p class="caption">The bench runs on OneLake. The engines do not need OneLake: DuckDB needs only the
-      catalog address and a token, and the catalog gives the storage token for the data. The test writes
-      one row and reads it back (<a href="${STORAGE_REPO}/blob/main/storage_token.py">storage_token.py</a>).
+      catalog address and a token. Most catalogs also give the storage token for the data; the AWS
+      catalogs give none, so DuckDB uses an AWS key there. The test writes one row and reads it back (<a href="${STORAGE_REPO}/blob/main/storage_token.py">storage_token.py</a>).
       It works on these catalogs:</p>
     <div class="wrap"><table><tbody>${st.catalogs.map(c => `
       <tr>
