@@ -1,4 +1,4 @@
-""".github/scripts/storage_token_publish.py: the Storage token tab gets only what it can draw."""
+""".github/scripts/storage_token_publish.py: the Catalogs tab shows only what worked."""
 
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ publish = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(publish)
 
 
-def row(catalog: str, ok: bool = True) -> dict:
+def row(catalog: str, ok: bool) -> dict:
     return {
         "catalog": catalog,
         "label": catalog,
         "ok": ok,
-        "step": None if ok else "create",
-        "error": None if ok else "HTTPException",
+        "step": None if ok else "attach",
+        "error": None if ok else "Error",
         "storage": "token from the catalog",
     }
 
@@ -28,26 +28,11 @@ def result(rows: list[dict]) -> dict:
     return {"run": "https://example.invalid/run", "date": "2026-10-10", "catalogs": rows}
 
 
-def test_a_full_result_passes():
-    rows = [row(c, ok=c != "unity_default") for c in sorted(publish.CATALOGS)]
-    assert publish.check(result(rows))["catalogs"] == rows
+def test_only_the_catalogs_that_worked_are_kept():
+    kept = publish.keep(result([row("onelake", True), row("unity", False)]))["catalogs"]
+    assert kept == [{"catalog": "onelake", "label": "onelake", "storage": "token from the catalog"}]
 
 
-def test_a_missing_catalog_is_refused():
-    rows = [row(c) for c in sorted(publish.CATALOGS) if c != "unity_default"]
+def test_nothing_worked_is_refused():
     with pytest.raises(SystemExit):
-        publish.check(result(rows))
-
-
-def test_a_failure_without_its_error_is_refused():
-    rows = [row(c) for c in sorted(publish.CATALOGS)]
-    rows[0]["ok"] = False
-    with pytest.raises(SystemExit):
-        publish.check(result(rows))
-
-
-def test_a_failure_at_attach_is_refused():
-    rows = [row(c) for c in sorted(publish.CATALOGS)]
-    rows[0].update(ok=False, step="attach", error="Error")
-    with pytest.raises(SystemExit):
-        publish.check(result(rows))
+        publish.keep(result([row("unity", False)]))

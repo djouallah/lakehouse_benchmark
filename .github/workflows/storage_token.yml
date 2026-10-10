@@ -1,9 +1,10 @@
 name: storage token
 
-# THE SITE'S STORAGE TOKEN TAB. The test and its secrets live in testing-iceberg-rest-catalog
+# THE SITE'S CATALOGS TAB. The test and its secrets live in testing-iceberg-rest-catalog
 # (storage_token.py, its storage-token workflow): with only the catalog credentials, can DuckDB write
 # one row and read it back? This copies that repo's results/storage_token.json to
-# docs/data/storage_token.json, checks it, and commits it if it changed. No secrets here.
+# docs/data/storage_token.json, keeping only the catalogs that worked, and commits it if it
+# changed. No secrets here.
 
 on:
   workflow_dispatch:
@@ -34,8 +35,8 @@ jobs:
 
       - name: Copy and check
         run: |
-          curl -fsSL "$SOURCE" -o docs/data/storage_token.json
-          python .github/scripts/storage_token_publish.py
+          curl -fsSL "$SOURCE" -o "$RUNNER_TEMP/storage_token.json"
+          python .github/scripts/storage_token_publish.py "$RUNNER_TEMP/storage_token.json"
 
       - name: Commit
         run: |

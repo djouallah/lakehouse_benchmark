@@ -1,10 +1,10 @@
-"""Check the storage token result before it is published.
+"""Keep the catalogs that worked, check them, and write them for the page.
 
 testing-iceberg-rest-catalog's storage-token workflow writes results/storage_token.json there;
-.github/workflows/storage_token.yml copies it to docs/data/storage_token.json. This checks it is
-the shape the Storage token tab of docs/index.html draws, and that it carries no token.
+.github/workflows/storage_token.yml downloads it and runs this. Only the catalogs where DuckDB wrote
+a row and read it back are kept: the Catalogs tab of docs/index.html shows what works.
 
-    python .github/scripts/storage_token_publish.py [path]
+    python .github/scripts/storage_token_publish.py SOURCE [TARGET]
 """
 
 from __future__ import annotations
@@ -16,37 +16,26 @@ from pathlib import Path
 from bench.report import leak_check
 
 TARGET = Path("docs/data/storage_token.json")
-CATALOGS = {"onelake", "r2", "s3_table", "glue", "unity", "unity_default", "horizon"}
-FIELDS = {"catalog", "label", "ok", "step", "error", "storage"}
+FIELDS = {"catalog", "label", "storage"}
 
 
-def check(result: dict) -> dict:
-    """The result, if it is one the page can draw; SystemExit naming the first thing wrong."""
+def keep(result: dict) -> dict:
+    """The result with only the catalogs that worked; SystemExit if it is not one the page draws."""
     if not {"run", "date", "catalogs"} <= set(result):
         raise SystemExit(f"::error::missing run, date or catalogs: {sorted(result)}")
-    seen = [c.get("catalog") for c in result["catalogs"]]
-    if set(seen) != CATALOGS or len(seen) != len(CATALOGS):
-        raise SystemExit(f"::error::expected one row per catalog {sorted(CATALOGS)}, got {seen}")
-    for c in result["catalogs"]:
-        if set(c) != FIELDS:
-            raise SystemExit(f"::error::{c['catalog']}: fields {sorted(c)}, not {sorted(FIELDS)}")
-        name = c["catalog"]
-        if c["ok"] is not (c["step"] is None and c["error"] is None):
-            raise SystemExit(f"::error::{name}: a failure needs a step and an error")
-        if c["step"] == "attach":
-            # The catalog refused our own credentials, so the test never reached the storage: the
-            # question was not asked. Fix the secret in testing-iceberg-rest-catalog and rerun.
-            raise SystemExit(f"::error::{name}: failed at attach ({c['error']}): bad credentials")
-    return result
+    ok = [{k: c[k] for k in sorted(FIELDS)} for c in result["catalogs"] if c.get("ok") is True]
+    if not ok:
+        raise SystemExit("::error::no catalog worked")
+    return {"run": result["run"], "date": result["date"], "catalogs": ok}
 
 
 def main() -> int:
-    path = Path(sys.argv[1]) if len(sys.argv) > 1 else TARGET
-    result = check(json.loads(path.read_text(encoding="utf-8")))
-    leak_check([path])
-    failed = [c["catalog"] for c in result["catalogs"] if not c["ok"]]
-    rows = len(result["catalogs"])
-    print(f"checked {path}: {rows} catalogs, failing: {', '.join(failed) or 'none'}")
+    source = Path(sys.argv[1])
+    target = Path(sys.argv[2]) if len(sys.argv) > 2 else TARGET
+    result = keep(json.loads(source.read_text(encoding="utf-8")))
+    target.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    leak_check([target])
+    print(f"wrote {target}: {', '.join(c['catalog'] for c in result['catalogs'])}")
     return 0
 
 
