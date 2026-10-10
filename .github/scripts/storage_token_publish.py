@@ -32,7 +32,7 @@ def check(result: dict) -> dict:
             raise SystemExit(f"::error::{c['catalog']}: fields {sorted(c)}, not {sorted(FIELDS)}")
         name = c["catalog"]
         if c["ok"] is not (c["step"] is None and c["error"] is None):
-            raise SystemExit(f"::error::{name}: a failure needs a step and an error, a pass neither")
+            raise SystemExit(f"::error::{name}: a failure needs a step and an error")
         if c["step"] == "attach":
             # The catalog refused our own credentials, so the test never reached the storage: the
             # question was not asked. Fix the secret in testing-iceberg-rest-catalog and rerun.
