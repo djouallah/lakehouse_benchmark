@@ -144,7 +144,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Engines and dbt: plain tables, one row per engine. */
 .rows table { min-width: 0; }
 #engines table { min-width: 640px; }
-.rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
 .rows td.e .sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 6px; }
@@ -514,7 +514,7 @@ function renderEngines() {
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
-        <td class="n">${r.lang}</td><td class="n">${r.use}</td>
+        <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>
       </tr>`).join("")}</tbody></table></div>`;
 }
 
