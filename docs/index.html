@@ -376,9 +376,9 @@ function render() {
   }
 }
 
-// THE ICEBERG SUPPORT TAB: data/capability.json, published by .github/scripts/capability_publish.py from
-// djouallah/iceberg-probe-native. One cell per operation and engine; a row the catalog itself
-// blocks is not in the grid but listed under it.
+// THE ICEBERG SUPPORT TAB: data/capability.json, written by .github/scripts/capability/render_readme.py
+// from results/capability/ (capability.yml) and checked by .github/scripts/capability_publish.py.
+// One cell per operation and engine.
 const WORD = { supported: "yes", no: "no", "no-op": "accepted, not applied", na: "no such operation",
                skipped: "not probed", broken: "the probe could not ask" };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
