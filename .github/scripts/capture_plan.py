@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -35,6 +36,7 @@ from bench.tpch.engines import get_engine
 from bench.tpch.queries import load
 
 TMP = Path(os.environ.get("RUNNER_TEMP", "."))
+_ONELAKE_PATH = re.compile(r"abfss://[^/\"',\s]*/[^/\"',\s]*/Tables/")
 
 
 def _duckdb(engine, sql: str) -> dict:
@@ -151,8 +153,14 @@ CAPTURE = {
 
 
 def _clean(text: str) -> str:
-    """Registered secrets and anything token-shaped out: the file is a public artifact."""
+    """Registered secrets, the lakehouse's ids and anything token-shaped out: the file is a public
+    artifact, and DuckDB's scan info lists data files by their abfss path, ids included."""
     text = scrub.scrub(text)
+    for name in ("FABRIC_WORKSPACE_ID", "FABRIC_LAKEHOUSE_ID"):
+        if os.environ.get(name):
+            text = text.replace(os.environ[name], scrub.MASK)
+    # And any OneLake path whatever its ids, down to the table folder.
+    text = _ONELAKE_PATH.sub("abfss://***/Tables/", text)
     for token in scrub.find_token_shaped(text):
         text = text.replace(token, scrub.MASK)
     return text
