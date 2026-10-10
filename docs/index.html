@@ -87,7 +87,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tried ul { margin: 0; padding-left: 18px; }
 .tried li { margin: 6px 0; overflow-wrap: anywhere; }
 .tried b { color: var(--ink); }
-.tried .perm { color: var(--ink-3); text-decoration: none; margin-left: 4px; }
+.tried a.perm { color: var(--ink); text-decoration: none; }
+.tried a.perm:hover { text-decoration: underline; }
+.tried .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
 .tried li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
 .tried a { color: var(--accent); }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
@@ -329,10 +331,20 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// Every engine on the tried tab gets an id from its name and a # link to itself.
+// Every engine on the tried tab gets an id from its name; clicking the name links to it and copies the URL.
 for (const li of $("tried").querySelectorAll("li")) {
-  li.id = li.querySelector("b").textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  li.querySelector("b").insertAdjacentHTML("afterend", `<a class="perm" href="#${li.id}" aria-label="Link to ${li.id}">#</a>`);
+  const b = li.querySelector("b");
+  li.id = b.textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const a = document.createElement("a");
+  a.className = "perm"; a.href = `#${li.id}`; a.title = "Copy link";
+  b.replaceWith(a); a.append(b);
+  a.onclick = () => setTimeout(() => {
+    navigator.clipboard?.writeText(location.href).then(() => {
+      li.querySelector(".copied")?.remove();
+      a.insertAdjacentHTML("afterend", `<span class="copied">link copied</span>`);
+      setTimeout(() => li.querySelector(".copied")?.remove(), 1500);
+    }).catch(() => {});
+  });
 }
 // Deep links: #tpch, #tpcds, #tried, or one engine on the tried tab (#datafusion).
 function fromHash() {
