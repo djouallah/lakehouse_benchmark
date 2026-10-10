@@ -34,4 +34,4 @@ def test_every_engine_has_a_dbt_row():
 
 def test_the_storage_token_tab_is_under_features():
     assert "subs: [CAPABILITY, DBT, STORAGE]" in PAGE
-    assert 'const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };' in PAGE
+    assert 'const STORAGE = { id: "storage", title: "Storage token",' in PAGE

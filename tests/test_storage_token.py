@@ -1,4 +1,4 @@
-""".github/scripts/storage_token_publish.py: the Storage token tab only gets a result it can draw."""
+""".github/scripts/storage_token_publish.py: the Storage token tab gets only what it can draw."""
 
 from __future__ import annotations
 
@@ -7,9 +7,8 @@ from pathlib import Path
 
 import pytest
 
-SPEC = importlib.util.spec_from_file_location(
-    "storage_token_publish", Path(__file__).parent.parent / ".github" / "scripts" / "storage_token_publish.py"
-)
+SCRIPT = Path(__file__).parent.parent / ".github" / "scripts" / "storage_token_publish.py"
+SPEC = importlib.util.spec_from_file_location("storage_token_publish", SCRIPT)
 publish = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(publish)
 

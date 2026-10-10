@@ -29,13 +29,14 @@ def check(result: dict) -> dict:
         raise SystemExit(f"::error::expected one row per catalog {sorted(CATALOGS)}, got {seen}")
     for c in result["catalogs"]:
         if set(c) != FIELDS:
-            raise SystemExit(f"::error::{c['catalog']}: fields {sorted(c)}, expected {sorted(FIELDS)}")
+            raise SystemExit(f"::error::{c['catalog']}: fields {sorted(c)}, not {sorted(FIELDS)}")
+        name = c["catalog"]
         if c["ok"] is not (c["step"] is None and c["error"] is None):
-            raise SystemExit(f"::error::{c['catalog']}: a failure needs a step and an error, a pass neither")
+            raise SystemExit(f"::error::{name}: a failure needs a step and an error, a pass neither")
         if c["step"] == "attach":
             # The catalog refused our own credentials, so the test never reached the storage: the
             # question was not asked. Fix the secret in testing-iceberg-rest-catalog and rerun.
-            raise SystemExit(f"::error::{c['catalog']}: failed at attach ({c['error']}); the credentials are broken")
+            raise SystemExit(f"::error::{name}: failed at attach ({c['error']}): bad credentials")
     return result
 
 
@@ -44,7 +45,8 @@ def main() -> int:
     result = check(json.loads(path.read_text(encoding="utf-8")))
     leak_check([path])
     failed = [c["catalog"] for c in result["catalogs"] if not c["ok"]]
-    print(f"checked {path}: {len(result['catalogs'])} catalogs, failing: {', '.join(failed) or 'none'}")
+    rows = len(result["catalogs"])
+    print(f"checked {path}: {rows} catalogs, failing: {', '.join(failed) or 'none'}")
     return 0
 
 
