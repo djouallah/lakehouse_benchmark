@@ -736,6 +736,11 @@ class Doris(StarRocks):
                     mount,
                     "-e",
                     f"FE_SERVERS={self.FE_SERVERS}",
+                    # The images' JDK 17 dies reading the runner's cgroup v2 ("anyController is
+                    # null" in CgroupV2Subsystem, FE never up, run 38040345248). The BE embeds a
+                    # JVM too (hadoop-azure over JNI).
+                    "-e",
+                    "JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport",
                     *(a for e in env for a in ("-e", e)),
                     *(a for p in ports for a in ("-p", f"127.0.0.1:{p}")),
                     image,
