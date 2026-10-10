@@ -426,9 +426,13 @@ class ChdbCapability:
 
     def metadata_tables(self) -> str:
         table = self._fresh("inspect")
+        # chdb-core 26.9 loads every table in the catalog for this query, not only the one in the
+        # WHERE (pushdown is ClickHouse#113867, 26.10), and one unreadable table elsewhere in the
+        # lakehouse fails it. The setting skips those; the question is about this table.
         found = self.sql(
             f"SELECT count() FROM system.iceberg_history "
-            f"WHERE database = '{DB}' AND table = '{self.ns}.{table}'"
+            f"WHERE database = '{DB}' AND table = '{self.ns}.{table}' "
+            f"SETTINGS database_datalake_require_metadata_access = 0"
         )
         if found[0][0] == 0:
             raise NoOp("system.iceberg_history has no row for the table")
