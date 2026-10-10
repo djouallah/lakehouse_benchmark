@@ -13,6 +13,10 @@ on:
         description: chdb-io/chdb-core build_linux_x86_wheels.yml run on main that succeeded.
         type: string
         default: "36836729303"
+      version-base:
+        description: The release this main build leads to; the wheel becomes <this>.dev<run date>.
+        type: string
+        default: "26.9.2"
 
 permissions:
   contents: write
@@ -24,15 +28,17 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RUN_ID: ${{ inputs.run-id }}
+      VERSION_BASE: ${{ inputs.version-base }}
     steps:
       - id: run
         name: Check the run
         run: |
           gh api "repos/chdb-io/chdb-core/actions/runs/$RUN_ID" \
-            --jq '[.head_branch, .conclusion, .head_sha] | @tsv' | tee run.tsv
-          read -r branch conclusion sha < run.tsv
+            --jq '[.head_branch, .conclusion, .head_sha, .created_at] | @tsv' | tee run.tsv
+          read -r branch conclusion sha created < run.tsv
           [ "$branch" = main ] && [ "$conclusion" = success ] || { echo "not a successful main run"; exit 1; }
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION_BASE}.dev$(date -u -d "$created" +%Y%m%d)" >> "$GITHUB_OUTPUT"
       - name: Download the wheels
         run: |
           gh run download "$RUN_ID" -R chdb-io/chdb-core -n chdb-artifacts-linux-x86_64 -D artifact
@@ -43,10 +49,29 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Import check
+      # A main build calls itself 0.0.1b1 (only a tag build gets the real number), which the
+      # wrapper's `chdb-core>=26.7.0` refuses: pip then quietly takes PyPI instead. Renumber it
+      # as a dev build of the next release, dated by the run.
+      - name: Renumber the wheel
+        env:
+          VERSION: ${{ steps.run.outputs.version }}
         run: |
-          pip install --find-links dist chdb-core "chdb>=4.4.0"
+          pip install wheel
+          for whl in dist/*.whl; do python -m wheel unpack "$whl" -d unpacked && rm "$whl"; done
+          for dir in unpacked/*; do
+            info="$(ls -d "$dir"/chdb_core-*.dist-info)"
+            sed -i "s/^Version: .*/Version: $VERSION/" "$info/METADATA"
+            mv "$info" "$dir/chdb_core-$VERSION.dist-info"
+            python -m wheel pack "$dir" -d dist
+          done
+          ls -la dist
+      - name: Import check
+        env:
+          VERSION: ${{ steps.run.outputs.version }}
+        run: |
+          pip install dist/*.whl "chdb>=4.4.0"
           pip list --format=freeze | grep -Ei '^chdb'
+          [ "$(pip show chdb-core | sed -n 's/^Version: //p')" = "$VERSION" ]
           python -c "import chdb; print(chdb.query('SELECT version()', 'CSV'))"
       - name: Attach to a prerelease of this repo
         env:
@@ -55,4 +80,4 @@ jobs:
           tag="chdb-core-main-${SHA:0:10}"
           gh release create "$tag" dist/*.whl --repo "${{ github.repository }}" --prerelease \
             --title "$tag (temporary)" \
-            --notes "chdb-core main at chdb-io/chdb-core@$SHA, wheels from run $RUN_ID."
+            --notes "chdb-core main at chdb-io/chdb-core@$SHA, wheels from run $RUN_ID, renumbered from 0.0.1b1."
