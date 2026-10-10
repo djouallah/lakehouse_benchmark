@@ -63,7 +63,7 @@ def test_the_workload_merge_cells_match_the_iceberg_support_tab():
 def test_every_workload_row_is_in_one_of_the_three_tiers():
     import re
 
-    tiers = set(re.findall(r'\{ id: "(\w+)", title: "[^"]+", blurb:', rows("WORKLOAD_TIERS")))
+    tiers = set(re.findall(r'\{ id: "(\w+)", title: "[^"]+" \}', rows("WORKLOAD_TIERS")))
     assert tiers == {"veteran", "star", "niche"}
     assert set(re.findall(r'tier: "(\w+)"', rows("WORKLOAD_ROWS"))) <= tiers
     assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL)

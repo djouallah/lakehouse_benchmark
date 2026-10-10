@@ -131,7 +131,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .broken .m::before { content: "?"; }
 .cap ul.caption { padding-left: 20px; max-width: 75ch; }
 .rows tr.tier th { padding: 14px 0 6px; color: var(--ink); font-weight: 700; text-align: left; }
-.rows tr.tier th span { font-weight: 400; color: var(--ink-2); margin-left: 8px; }
 .cap .note { font-size: 13px; color: var(--ink-2); max-width: 75ch; margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
 /* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
@@ -605,12 +604,12 @@ function renderDbt() {
 // for the others (tests/test_results_page.py keeps the two in step); the file name column is what
 // each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
 const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
-// Three groups: a veteran has the features because the years and the users brought them; a new star is
-// young, still growing, and still filling the set; a niche engine is built for one job and is judged on that.
+// Three groups by age and purpose: veteran (Spark, Trino, and Gluten/Velox which runs Spark's plan), new star
+// (started 2019-2024, general purpose), niche (built for one job). Names only, no judgement in the header.
 const WORKLOAD_TIERS = [
-  { id: "veteran", title: "Veteran", blurb: "Years of users brought every feature. The question is only speed." },
-  { id: "star", title: "New star", blurb: "Young, still growing. The feature set is still filling in." },
-  { id: "niche", title: "Niche", blurb: "Built for one job. Not a general replacement, and not trying to be." },
+  { id: "veteran", title: "Veteran" },
+  { id: "star", title: "New star" },
+  { id: "niche", title: "Niche" },
 ];
 const WORKLOAD_ROWS = [
   { engine: "pyspark_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
@@ -657,7 +656,7 @@ function renderWorkload() {
     </ul>
     <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span></div>
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
-    <tbody><tr class="tier"><th colspan="${head.length}">${t.title}<span>${t.blurb}</span></th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => {
+    <tbody><tr class="tier"><th colspan="${head.length}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => {
       const dbt = DBT_ROWS.find(d => d.engine === r.engine);
       const dbtOk = ["excellent", "good"].includes(dbt.level) ? true : dbt.level === "partial" ? null : false;
       return `
