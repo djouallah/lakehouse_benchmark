@@ -2871,7 +2871,7 @@ FROM
            AND cs_sold_date_sk = d_date_sk
            AND d_year = 2001
            AND d_moy = 12
-         GROUP BY cs.cs_item_sk) in_cat) CATALOG
+         GROUP BY cs.cs_item_sk) in_cat) catalog
    WHERE (catalog.return_rank <= 10
           OR catalog.currency_rank <=10)
    UNION SELECT 'store' AS channel,
