@@ -180,7 +180,7 @@ def per_query(
 
 
 def totals(con, sf: int, out_dir: Path, subtitle: str, n_queries: int = 22) -> list[Path]:
-    """Horizontal bars: total seconds per engine, cold and warm, fastest first.
+    """Horizontal bars: total seconds per engine, cold (and warm, for old runs), fastest first.
 
     Replaces cell 23, which plotted warm totals against core count and then filtered to a single
     core count -- one bar per engine with an axis that carried no information. This is the chart
@@ -209,7 +209,7 @@ def totals(con, sf: int, out_dir: Path, subtitle: str, n_queries: int = 22) -> l
     for theme in THEMES.values():
         fig, ax = plt.subplots(figsize=(11, 1.1 * len(order) + 2.2))
         height = 0.36
-        # One bar per engine, centred, when there is no warm pass (TPC-DS runs cold only).
+        # One bar per engine, centred, when there is no warm pass (both suites run cold only now).
         slots = (
             ((height / 2, "cold", 1.0), (-height / 2, "warm", 0.55))
             if any("warm" in values for values in by_engine.values())

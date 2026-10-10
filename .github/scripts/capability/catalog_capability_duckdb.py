@@ -1,18 +1,18 @@
 """What the OneLake Iceberg REST catalog lets DuckDB do.
 
 WHAT DUCKDB CAN WRITE HERE, AND WHOSE LIMIT EACH `no` IS. DuckDB's iceberg extension attaches this
-endpoint as a REST catalog and plans, writes and commits Iceberg itself. It tracks the PRE-RELEASE
-line (requirements/duckdb_capability.txt pins `duckdb>=2.0.0.dev0`), because that is where the
-extension's Iceberg write support moves. This script sends it the Iceberg write and DDL vocabulary
-one statement at a time and checks what each statement DID.
+endpoint as a REST catalog and plans, writes and commits Iceberg itself. It tracks the NIGHTLY
+CLI (capability.yml installs it; requirements/capability_duckdb.txt has no duckdb), because that
+is where the extension's Iceberg write support moves. This script sends it the Iceberg write and
+DDL vocabulary one statement at a time and checks what each statement DID.
 
 A `no` carrying the catalog's REST error is the catalog's; any other `no` is DuckDB's. Where
 DuckDB has no statement for an operation at all, the probe asks what the parser says rather than
 skipping, so the `no` carries DuckDB's own words.
 
-THE ATTACH is bench/engines/duckdb_iceberg.attach: the curl transport, an access-token storage
-secret, ACCESS_DELEGATION_MODE 'none', and the two OneLake write flags. DuckDB has no per-table
-location on CREATE, so every table here takes the location the catalog assigns.
+THE ATTACH is bench/capability/engines/duckdb_iceberg.py: the curl transport, an access-token
+storage secret, ACCESS_DELEGATION_MODE 'none', and the two OneLake write flags. DuckDB has no
+per-table location on CREATE, so every table here takes the location the catalog assigns.
 
 EVERY PROBE CHECKS ITS EFFECT, twice where it is cheap: read back in DuckDB, and again through
 pyiceberg, which reads what the CATALOG now says rather than what DuckDB cached. Accepted with no

@@ -8,11 +8,12 @@ reproducible and checkable BY ANYONE. A results table in OneLake is private: a r
 Fabric account and a role assignment to see the data behind the charts, which defeats the
 exercise. Results in git are public, diffable, and survive the lakehouse being deleted.
 
-It also deletes an entire class of failure. Four matrix jobs appending to one Iceberg table race
+It also deletes an entire class of failure. Matrix jobs appending to one Iceberg table race
 on the commit; one file per run cannot. Nothing is ever appended to, rewritten or compacted, so
 there is no conflict to retry and no snapshot expiry to get wrong. `git log` is the audit trail.
 
-SIZE. 46 rows per engine-run (setup + 22 queries, cold and warm), four engines, a few KB per file.
+SIZE. 23 rows per engine-run for TPC-H (setup + 22 queries, one cold pass), 100 for TPC-DS, a
+few KB per engine in each file.
 Nightly is well under 2MB/year. No rotation, no retention policy. Revisit past ~1000 runs.
 """
 

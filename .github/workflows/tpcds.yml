@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       sf:
-        description: Scale factor. 1 is the smoke value; 60 is the default and the headline. 30, 60 and 100 free the runner's hidden disk first.
+        description: Scale factor. 1 is the smoke value; 60 is the default; the docs are built at 100. 30, 60 and 100 free the runner's hidden disk first.
         type: choice
         options: ["1", "10", "30", "60", "100"]
         default: "60"
@@ -139,11 +139,10 @@ jobs:
       || matrix.engine == 'trino_iceberg' && '🐰 Trino'
       || matrix.engine }}
     runs-on: ubuntu-latest
-    # LONGER THAN bench.yml's 50, and longer than the 85 that cost run 35732997698 its Spark
-    # numbers: 99 statements twice is four and a half times TPC-H's 44, and Spark at SF=10 spends
-    # 42 minutes on the cold pass alone. It was killed at Q97 of the warm pass -- 85 minutes in,
-    # with the whole run all but done and no part written, so the engine vanished from the
-    # results entirely. The job cap must sit clear of the slowest engine, not on top of it.
+    # The same 355 as bench.yml, far above the 85 that cost run 35732997698 its Spark numbers:
+    # it was killed at Q97 of the then warm pass, 85 minutes in, with no part written, so the
+    # engine vanished from the results. The job cap must sit clear of the slowest engine; the
+    # runner's 15-minute query limit (bench/tpch/runner.py) now ends a stuck run long before it.
     #
     # Token lifetime is a separate clock. TPC-DS first touches some tables late (ship_mode at Q62,
     # web_page at Q77), after the catalog bearer has expired, so the Spark engines restart their

@@ -45,8 +45,14 @@ jobs:
           git add docs/data/storage_token.json
           if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
           git commit -m "storage token: copy the latest result"
+          # ON A REJECTED PUSH, REGENERATE -- NEVER REBASE: the rule etl.yml's publish states.
           for attempt in 1 2 3; do
             git push && exit 0
-            git pull --rebase origin main
+            git fetch origin main
+            git reset --hard origin/main
+            python .github/scripts/storage_token_publish.py "$RUNNER_TEMP/storage_token.json"
+            git add docs/data/storage_token.json
+            if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+            git commit -m "storage token: copy the latest result"
           done
           exit 1

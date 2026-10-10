@@ -40,7 +40,7 @@ class Engine(Protocol):
     def version(self) -> str:
         """The resolved package version, recorded with every result.
 
-        Not cosmetic: duckdb tracks the nightly CLI and polars the pre-release line, so what
+        Not cosmetic: duckdb tracks the nightly CLI and polars a main-branch build, so what
         resolved differs run to run. A benchmark chart without the version that produced it is
         an assertion rather than a result.
         """

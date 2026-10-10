@@ -248,7 +248,7 @@ jobs:
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       # Local-mode Spark: the driver JVM IS the executor, and its heap is fixed before Python
       # starts it -- so .config("spark.driver.memory") is silently ignored and this must be an
-      # env var. 11g matches the ceiling chDB is given, leaving room for Python and page cache.
+      # env var. 11g leaves room for Python and page cache on a 16 GB runner.
       SPARK_DRIVER_MEMORY: 11g
     steps:
       - uses: actions/checkout@v5

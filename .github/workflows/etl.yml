@@ -7,12 +7,12 @@ name: light etl bench
 #
 # `land` is the SINGLE WRITER of Files/csv in the lakehouse. It downloads the daily zips and lands
 # the CSVs inside them uncompressed, once, idempotently: a lakehouse that already holds N files
-# costs one listing. Seven matrix jobs downloading the same files would be seven times the work
+# costs one listing. N matrix jobs downloading the same files would be N times the work
 # and a race on every upload.
 #
 # Every engine job reads Files/csv and writes ITS OWN table, T{n}.<engine>, so unlike the TPC-H
 # workflow there is no shared table to race on. max-parallel stays 1 anyway, for the reason
-# bench.yml gives: seven clients sharing one OneLake pipe measure the pipe, not the engines.
+# bench.yml gives: N clients sharing one OneLake pipe measure the pipe, not the engines.
 #
 # `publish` is the SINGLE WRITER of results, under results/etl/ and docs/etl/ -- separate from
 # the TPC-H trees so the two histories never mix. It needs no Azure credentials at all.
@@ -150,8 +150,8 @@ jobs:
 
       # requirements/etl_<engine>.txt is the engine's own file plus what the ETL adds (pyiceberg
       # for the engines that write through it, the ADLS client for the Files/csv listing), each
-      # self-contained like the rest of requirements/. Same engine specs as bench.yml, so both
-      # benchmarks measure one build of each engine.
+      # self-contained like the rest of requirements/. Same engine specs as bench.yml except Polars:
+      # TPC-H and TPC-DS run a main-branch build (requirements/polars_iceberg.txt), the ETL PyPI.
       - name: Install ${{ matrix.engine }}
         run: |
           pip install -r "requirements/etl_${BENCH_ENGINE}.txt"

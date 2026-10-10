@@ -102,7 +102,8 @@ ROWS = [
     ),
     ("Credential vending", {"duckdb": ["credential_vending"]}),
     ("A commit against a stale snapshot is refused", {"polars": ["stale_assertion"]}),
-    # Writer B (pyiceberg) commits between the engine's read and its commit (bench/race.py).
+    # Writer B (pyiceberg) commits between the engine's read and its commit
+    # (bench/capability/race.py).
     # DuckDB's cells are its isolation run's, at Iceberg's default level.
     ("Concurrent append: both kept", {e: ["race_append"] for e in ENGINES}),
     ("Concurrent writer: DELETE loses nothing", {e: ["race_delete"] for e in SQL}),
@@ -133,7 +134,7 @@ for _label, _sources in ROWS:
     if _label in CHDB:
         _sources["chdb"] = CHDB[_label]
 
-# THE SITE'S GRID (docs/data/capability.json, the Capability tab): every row of ROWS, grouped.
+# THE SITE'S GRID (docs/data/capability.json, the Iceberg support tab): every row of ROWS, grouped.
 GROUPS = {
     "Write": [
         "INSERT / append",

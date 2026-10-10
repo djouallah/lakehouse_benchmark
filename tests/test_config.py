@@ -120,7 +120,7 @@ def test_workflow_defaults_dispatch_only_engines_their_suite_lists():
     An engine the suite does not list writes a part file publish.py never reads, so the run
     spends a job on it and then drops it from the results. A workflow may list FEWER than the
     suite -- bench.yml leaves Daft out over Eventual-Inc/Daft#7532 while TPC-H's ENGINES keeps it
-    for the ETL charts -- and tpcds.yml lists its three exactly.
+    for the ETL charts -- and tpcds.yml lists its seven exactly.
     """
     root = Path(__file__).resolve().parent.parent
     for workflow, suite in (("tpcds.yml", TpcdsConfig), ("bench.yml", TpchConfig)):

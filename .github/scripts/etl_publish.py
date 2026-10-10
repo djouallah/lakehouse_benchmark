@@ -18,8 +18,8 @@ Two benchmarks, two histories, one file format.
 
 THE CHARTS AND RESULTS.md ARE THE HEADLINE_FILES VIEW. Every run is recorded -- the JSON, the
 CSV, the step summary -- but only a run at the headline file count rewrites docs/etl/charts and
-docs/etl/RESULTS.md, because README captions that chart as 1000 files at a path that never
-changes. bench/etl/config.py says what a FILES=100 run did to it before this guard existed.
+docs/etl/RESULTS.md, because that chart is the 1000-file one at a path that never changes.
+bench/etl/config.py says what a FILES=100 run did to it before this guard existed.
 """
 
 from __future__ import annotations

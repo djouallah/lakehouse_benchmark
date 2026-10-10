@@ -1,6 +1,7 @@
 # polars_iceberg.txt plus azure-storage-file-datalake (bench/etl/data.py lists Files/csv over
 # ADLS before the engine starts). `write_iceberg` is pyiceberg underneath, which the read
-# benchmark's file already carries. Same polars spec as there: >=2.0.0rc2 is the build measured.
+# benchmark's file already carries. NOT the same polars as there: TPC-H and TPC-DS run a main-branch
+# build for scan_iceberg fixes the ETL does not need; the ETL runs the PyPI release.
 azure-identity>=1.19
 azure-storage-file-datalake>=12.17
 psutil>=6

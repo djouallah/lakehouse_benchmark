@@ -36,8 +36,7 @@ on:
         description: A package spec (e.g. a wheel URL) installed over each engine's requirements, no deps. For testing an unreleased build; leave publish off.
         type: string
         default: ""
-  # Enable once a manual SF=10 run over all four engines has gone green and the leak check in
-  # publish.py has been confirmed clean. See Agent.md, section 4.
+  # Left off on purpose: runs are dispatched by hand, one scale at a time.
   # schedule:
   #   - cron: "17 3 * * *"
 
@@ -135,12 +134,12 @@ jobs:
     strategy:
       # MANDATORY. A LakeSail OOM must not delete DuckDB's results.
       fail-fast: false
-      # ONE ENGINE AT A TIME. The five engines read the same lakehouse, and run in parallel they
-      # are five clients contending for the same OneLake throughput -- which is what the numbers
+      # ONE ENGINE AT A TIME. The engines read the same lakehouse, and run in parallel they
+      # are N clients contending for the same OneLake throughput -- which is what the numbers
       # measured: on unchanged code, full-matrix runs swung 20-50% between runs for every engine
       # but DuckDB, while an engine run on its own came out a different number again. Serial jobs
-      # give each engine the lakehouse to itself, so a run is five measurements of one thing
-      # rather than one measurement of five things sharing a pipe. Costs wall clock, not money:
+      # give each engine the lakehouse to itself, so a run is N measurements of one thing
+      # rather than one measurement of N things sharing a pipe. Costs wall clock, not money:
       # the runner minutes are the same. Jobs start in the order the `engines` input lists them.
       max-parallel: 1
       matrix:
@@ -174,8 +173,8 @@ jobs:
           cache: pip
           cache-dependency-path: requirements/${{ matrix.engine }}.txt
 
-      # One self-contained file per engine. Which line it tracks -- pre-release for polars,
-      # stable for chdb and pysail -- is a property of that file, not a workflow input. DuckDB's
+      # One self-contained file per engine. Which line it tracks -- a main-branch build for
+      # polars, stable for the rest -- is a property of that file, not a workflow input. DuckDB's
       # file holds only its Python helpers; the engine is the nightly CLI, next step.
       - name: Install ${{ matrix.engine }}
         env:

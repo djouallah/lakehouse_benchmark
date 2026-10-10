@@ -1,4 +1,4 @@
-"""Run one engine's cold and warm passes and write its slice as an artifact.
+"""Run one engine's cold pass and write its slice as an artifact.
 
 READ-ONLY against OneLake. Writes exactly one local file, which `publish` merges. Serves both
 query suites: BENCH_SUITE picks the config (bench/suite.py), and the config carries the SQL file,

@@ -9,8 +9,8 @@ rank, so a run that omits an engine never repaints the survivors. Daft holds slo
 is not in bench.yml's engine list, which is the rule working as intended: adding it later must not
 recolour Spark.
 
-Slot 7, brown, is Gluten/Velox, last in ENGINES, validated in that last position in both modes --
-nothing passes the normal-vision floor between blue and orange.
+Slot 7, brown, is Gluten/Velox, validated in that position in both modes -- nothing passes the
+normal-vision floor between blue and orange.
 
 Slot 8, plum, is StarRocks. Bars sort fastest-first, so a new slot can land beside ANY other, and
 it was chosen to pass CVD and the normal-vision floor against every one of the seven, pairwise, in
@@ -31,8 +31,8 @@ rule -- hence value labels on the totals charts and the full tables in docs/. Da
 outright, though amber-green sits in the 6-8 CVD floor band, which the legend and the bar gaps
 satisfy as secondary encoding.
 
-Every chart is rendered TWICE, light and dark, so the README can serve the right one via
-`<picture>` + `prefers-color-scheme`. A single PNG on a dark GitHub theme is a white slab.
+Every chart is rendered TWICE, light and dark, so a page can serve the right one via
+`<picture>` + `prefers-color-scheme`. A single PNG on a dark theme is a white slab.
 """
 
 from __future__ import annotations

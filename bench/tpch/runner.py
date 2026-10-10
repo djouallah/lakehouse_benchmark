@@ -1,4 +1,4 @@
-"""Run the suite's statements cold (then warm, for TPC-H), timing each. Both suites come here.
+"""Run the suite's statements in one cold pass, timing each. Both suites come here.
 
 REPLACES cells 15, 16 and 17.
 
@@ -6,7 +6,7 @@ WHAT CHANGED BEYOND THE MEASUREMENT FIXES IN engines/base.py:
 
 * A FAILING QUERY ENDS THE RUN, CLEANLY. A run is all of the suite or nothing (the owner's,
   2026-10-09): the first failure becomes a row with `status='error'` and a scrubbed message, the
-  remaining statements are skipped, and run_engine.py publishes nothing for the engine. HARD_FIRST
+  remaining statements are skipped, and the run publishes as a failure, with no time. HARD_FIRST
   puts the queries most likely to fail first, so a run that will not complete stops in minutes.
 * A QUERY THAT DOES NOT FINISH IS A FAILED QUERY. QUERY_TIMEOUT_S caps every statement, for every
   engine and both suites; past it the run stops exactly as on an error, instead of sitting on one
