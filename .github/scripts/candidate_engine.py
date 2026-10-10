@@ -193,6 +193,30 @@ class StarRocks(Candidate):
 
     # BE log files inside the container, printed when the BE dies.
     be_logs: tuple[str, ...] = ()
+    be_log_lines = 60
+
+    def containers(self) -> tuple[str, ...]:
+        """Every container the engine runs in; the BE's is the last."""
+        return (CONTAINER,)
+
+    def be_crash_log(self) -> None:
+        for log in self.be_logs:
+            tail = subprocess.run(
+                [
+                    "docker",
+                    "exec",
+                    self.containers()[-1],
+                    "tail",
+                    "-n",
+                    str(self.be_log_lines),
+                    log,
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            _say(f"    --- {log}")
+            _say((tail.stdout + tail.stderr)[-20000:])
 
     def recover(self) -> None:
         try:
@@ -201,16 +225,8 @@ class StarRocks(Candidate):
         except Exception:  # noqa: BLE001 - FE down too: restart below
             pass
         _say("    BE not alive: its log, then a container restart")
-        for log in self.be_logs:
-            tail = subprocess.run(
-                ["docker", "exec", CONTAINER, "tail", "-n", "60", log],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            _say(f"    --- {log}")
-            _say((tail.stdout + tail.stderr)[-6000:])
-        subprocess.run(["docker", "restart", CONTAINER], check=False)
+        self.be_crash_log()
+        subprocess.run(["docker", "restart", *self.containers()], check=False)
         self._c = None
         self._wait_for_backend()
 
@@ -640,17 +656,120 @@ class Doris(StarRocks):
     client-secret keys Doris insists on for `azure.auth_type=OAuth2` are then scoped to a host
     nothing reads -- on the FE they are written AFTER the raw keys, so on OneLake's host they
     would win there.
+
+    NATIVE AZURE WILL NOT COVER ONELAKE. apache/doris#68103 (native Azure credentials, vended SAS)
+    keeps "genuine Fabric OneLake locations" on this Hadoop path, so the BE crash with workload
+    identity / SAS on that path is the blocker, not a missing feature.
+
+    4.1.4.x ships only FE and BE component images (no all-in-one), so the default runs two
+    containers on their own network. An `all-in-one-*` CANDIDATE_IMAGE runs the single container
+    StarRocks does.
     """
 
     name = "doris"
-    # 4.1.4 has component images but no all-in-one yet.
-    default_image = "apache/doris:all-in-one-4.1.3"
+    default_image = "apache/doris:fe-4.1.4.1"
     list_namespaces = "SHOW DATABASES FROM onelake"
-    # The image is tuned for CI fixtures (BE mem_limit 40%); the bench runner is 16 GB.
-    run_args = ("-e", "BE_CONFIG_EXTRA=mem_limit = 80%")
     be_logs = tuple(
         f"/opt/apache-doris/be/log/{name}" for name in ("be.out", "be.WARNING", "be.INFO")
     )
+    # be.out holds the crash header and stack; 60 lines cut the stack off (run 36401357218).
+    be_log_lines = 250
+    NETWORK = "doris"
+    SUBNET = "172.20.80"
+    FE_SERVERS = f"fe1:{SUBNET}.2:9010"
+    BE_CONTAINER = f"{CONTAINER}-be"
+
+    @property
+    def all_in_one(self) -> bool:
+        return ":all-in-one" in self.image
+
+    @property
+    def run_args(self) -> tuple[str, ...]:
+        # The all-in-one image is tuned for CI fixtures (BE mem_limit 40%); the runner is 16 GB.
+        return ("-e", "BE_CONFIG_EXTRA=mem_limit = 80%") if self.all_in_one else ()
+
+    def containers(self) -> tuple[str, ...]:
+        return (CONTAINER,) if self.all_in_one else (CONTAINER, self.BE_CONTAINER)
+
+    def start(self) -> None:
+        if self.all_in_one:
+            super().start()
+            return
+        _keep_assertion_fresh()
+        # The BE refuses to start with a small max_map_count or with swap on.
+        subprocess.run(["sudo", "sysctl", "-w", "vm.max_map_count=2000000"], check=True)
+        subprocess.run(["sudo", "swapoff", "-a"], check=True)
+        subprocess.run(
+            ["docker", "network", "create", "--subnet", f"{self.SUBNET}.0/24", self.NETWORK],
+            check=True,
+        )
+        mount = f"{ASSERTION_DIR}:{Path(ASSERTION_IN_CONTAINER).parent}:ro"
+        be_image = self.image.replace(":fe-", ":be-")
+        for name, ip, image, env, ports in (
+            (
+                CONTAINER,
+                f"{self.SUBNET}.2",
+                self.image,
+                ("FE_ID=1",),
+                ("9030:9030", "8030:8030"),
+            ),
+            (
+                self.BE_CONTAINER,
+                f"{self.SUBNET}.3",
+                be_image,
+                (f"BE_ADDR={self.SUBNET}.3:9050",),
+                ("8040:8040",),
+            ),
+        ):
+            subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "-d",
+                    "--name",
+                    name,
+                    "--network",
+                    self.NETWORK,
+                    "--ip",
+                    ip,
+                    "-v",
+                    mount,
+                    "-e",
+                    f"FE_SERVERS={self.FE_SERVERS}",
+                    *(a for e in env for a in ("-e", e)),
+                    *(a for p in ports for a in ("-p", f"127.0.0.1:{p}")),
+                    image,
+                ],
+                check=True,
+            )
+            digest = subprocess.run(
+                ["docker", "image", "inspect", "--format", "{{index .RepoDigests 0}}", image],
+                capture_output=True,
+                text=True,
+                check=False,
+            ).stdout.strip()
+            _say(f"image {image}  {digest}")
+        self._wait_for_backend()
+
+    def be_crash_log(self) -> None:
+        super().be_crash_log()
+        # A SIGSEGV inside the JNI hadoop-azure call may leave a JVM crash report instead.
+        report = subprocess.run(
+            [
+                "docker",
+                "exec",
+                self.containers()[-1],
+                "sh",
+                "-c",
+                "for f in $(find /opt/apache-doris -name 'hs_err_pid*.log' 2>/dev/null); "
+                'do echo "--- $f"; head -n 120 "$f"; done',
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if report.stdout.strip():
+            _say(report.stdout[-8000:])
 
     HOST = ONELAKE_DFS
     UNUSED_HOST = "unused.dfs.core.windows.net"
