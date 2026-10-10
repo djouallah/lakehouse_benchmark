@@ -159,15 +159,16 @@ footer a, .lane a { color: var(--accent); }
   <div id="speedup"></div>
   <section class="cap" id="iceberg" hidden></section>
   <section class="details" id="about" hidden>
-    <p>This repo checks how well each engine works with an Iceberg REST catalog, mainly OneLake. No engine is
-      favoured; the timings are a side effect.</p>
-    <p>This is how a storage person sees engines: they are all clients of the same tables. The bench tries to
-      be as neutral as humanly possible.</p>
-    <p>The workflow I'm after: attach the catalog, do the work in SQL, write the tables back. I have a
-      preference for SQL.</p>
-    <p>Every engine gets the same jobs on the same 16 GB GitHub runner: load CSVs into an Iceberg table, then
-      run TPC-H and TPC-DS against the catalog. When an engine fails, the bug is filed upstream
-      (see <a href="#details">Details</a>) and the engine is rerun once a fix ships.</p>
+    <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
+    <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
+    <p>The work is done in SQL. SQL is a shared language; a new syntax for every engine is not progress.</p>
+    <p>Iceberg, because an engine attached to a catalog becomes a real database: tables, transactions, many writers.</p>
+    <p>The state lives in the catalog, so the engine can be stateless: start, do the work, stop. With AI agents
+      starting engines on demand, that matters.</p>
+    <p>The best query is the one that does the least work. A good optimizer and good pruning beat brute force.</p>
+    <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
+    <p>The object store integration matters as much as the engine itself.</p>
+    <p>When an engine fails, the bug is filed upstream (see <a href="#details">Details</a>).</p>
   </section>
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
