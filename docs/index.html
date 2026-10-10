@@ -199,7 +199,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <h3>In the bench</h3>
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes).</li>
-      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
+      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; <a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">dbt-polars#29</a> a dbt source cannot name a <code>.CSV</code> file. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
       <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
       <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
@@ -557,8 +557,8 @@ function renderEngines() {
     ${table(ENGINE_ROWS.filter(r => !(r.engine in LABEL)))}`;
 }
 
-// THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB and
-// LakeSail were tried in fabric-medallion-dbt-community; the others come from their adapter docs.
+// THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB,
+// LakeSail and Polars were tried in fabric-medallion-dbt-community; the others come from their adapter docs.
 // Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in LABEL has a row
 // (tests/test_results_page.py).
 const DBT_LEVEL = { excellent: "Excellent", good: "Good", partial: "Partial", none: "None" };
@@ -577,7 +577,7 @@ const DBT_ROWS = [
   { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
     note: `An adapter exists, but it failed when tried, so it is not used. dbt-sail installs full PySpark with its jars, and it conflicts with <code>pyspark-client</code>: you ship Spark to avoid Spark. Sail also cannot name the source file (<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>). <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
   { engine: "polars_iceberg", level: "partial", adapter: "dbt-polars", url: "https://github.com/datamindedbe/incubator-dbt-polars",
-    note: "An incubator project (0.3.1). Its docs mark Iceberg over a REST catalog as experimental. Not tried." },
+    note: `Tried. SQL models run with Polars SQL; table, merge and append work on the Iceberg catalog. Merge is a delete then an append: two commits. No SQL hooks, <code>merge_clauses</code> is ignored, no <code>TIMESTAMPTZ</code>, <code>generate_series</code> or hash, and a source cannot name a <code>.CSV</code> file (<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">#29</a>). <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
   { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
     note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
   { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
@@ -586,7 +586,7 @@ const DBT_ROWS = [
 function renderDbt() {
   const sec = $(DBT.id);
   sec.innerHTML = `
-    <p class="caption">dbt 1 (dbt Core) with Iceberg tables. DuckDB and LakeSail were tried in
+    <p class="caption">dbt 1 (dbt Core) with Iceberg tables. DuckDB, LakeSail and Polars were tried in
       <a href="${DBT_MEDALLION}">fabric-medallion-dbt-community</a>; the others come from their adapter docs.</p>
     <div class="legend">${Object.entries(DBT_LEVEL).map(([k, w]) => `<span class="${k}"><i class="m"></i>${w}</span>`).join("")}</div>
     <div class="wrap"><table><tbody>${DBT_ROWS.map(r => `
