@@ -14,3 +14,8 @@ def test_every_engine_has_its_chart_colours_and_label():
         assert f"--{engine}: {LIGHT[engine]};" in PAGE, engine
         assert f"--{engine}: {DARK[engine]};" in PAGE, engine
         assert f'{engine}: "{label}"' in PAGE, engine
+
+
+def test_every_engine_has_a_dbt_row():
+    for engine in LABEL:
+        assert f'engine: "{engine}"' in PAGE, engine

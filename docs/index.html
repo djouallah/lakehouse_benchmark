@@ -133,6 +133,22 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .broken .m::before { content: "?"; }
 .cap .note { font-size: 13px; color: var(--ink-2); max-width: 75ch; margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
+/* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
+.cap .good .m { background: var(--yes); }
+.cap .partial .m { border: 2px solid var(--noop); background: linear-gradient(90deg, var(--noop) 50%, transparent 50%); }
+.cap .early .m { border: 2px solid var(--noop); }
+.cap .none .m { border: 2px solid var(--no); }
+.cap .none .m::before, .cap .none .m::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 2px; background: var(--no); border-radius: 1px; }
+.cap .none .m::before { transform: translate(-50%, -50%) rotate(45deg); }
+.cap .none .m::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.dbt table { min-width: 0; }
+.dbt td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
+.dbt td.e { font-weight: 700; white-space: nowrap; }
+.dbt td.e .sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 6px; }
+.dbt td.lv { white-space: nowrap; }
+.dbt td.lv .m { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.dbt td.n { color: var(--ink-2); }
+.dbt a { color: var(--accent); }
 .tip code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--ink); }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
 footer a, .lane a { color: var(--accent); }
@@ -158,6 +174,7 @@ footer a, .lane a { color: var(--accent); }
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="cap" id="iceberg" hidden></section>
+  <section class="cap dbt" id="dbt" hidden></section>
   <section class="details" id="about" hidden>
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
     <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
@@ -297,7 +314,8 @@ const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
-const PAGES = [CAPABILITY, DETAILS, ABOUT];  // sections of their own, no bar chart
+const DBT = { id: "dbt", title: "dbt" };
+const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT];  // sections of their own, no bar chart
 const state = { suite: SUITES[0].id, sf: {}, group: "All" };
 const data = {};
 
@@ -318,6 +336,7 @@ function render() {
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
   if (page === CAPABILITY) { renderCapability(); return; }
+  if (page === DBT) { renderDbt(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -448,6 +467,42 @@ function renderCapability() {
   }
 }
 
+// THE DBT TAB: how far each engine's dbt adapter goes with Iceberg tables. From each adapter's
+// docs and issues; the bench does not run dbt. Every engine in LABEL has a row (tests/test_results_page.py).
+const DBT_LEVEL = { good: "Good", partial: "Partial", early: "Early", none: "None" };
+const DBT_ROWS = [
+  { engine: "pyspark_iceberg", level: "good", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
+    note: "Made by dbt Labs. <code>file_format='iceberg'</code>; table and incremental models, with merge." },
+  { engine: "pyspark_gluten_iceberg", level: "good", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
+    note: "Same as Spark: Gluten is a plugin inside Spark, so dbt-spark runs it unchanged." },
+  { engine: "trino_iceberg", level: "good", adapter: "dbt-trino", url: "https://docs.getdbt.com/reference/resource-configs/trino-configs",
+    note: "Made by Starburst. The Iceberg connector supports table and incremental models: append, delete+insert and merge." },
+  { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
+    note: "Made by LakeSail: dbt-spark over Spark Connect. New, and not supported by dbt Labs." },
+  { engine: "duckdb_iceberg", level: "partial", adapter: "dbt-duckdb", url: "https://docs.getdbt.com/docs/build/iceberg/adapters/duckdb-iceberg-support",
+    note: "The adapter is mature, but Iceberg catalogs in <code>catalogs.yml</code> need dbt Fusion. On dbt Core you attach the catalog yourself, and the table model is reported to fail on REST catalogs." },
+  { engine: "starrocks_iceberg", level: "partial", adapter: "dbt-starrocks", url: "https://docs.starrocks.io/docs/integrations/dbt/",
+    note: "Writes table and incremental models to an Iceberg catalog; no merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
+  { engine: "polars_iceberg", level: "early", adapter: "dbt-polars", url: "https://pypi.org/project/dbt-polars/",
+    note: "Community adapter, version 0.0.1. Iceberg with a REST catalog is marked experimental." },
+  { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
+    note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
+  { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
+];
+
+function renderDbt() {
+  const sec = $(DBT.id);
+  sec.innerHTML = `
+    <p class="caption">How well dbt works with each engine on Iceberg tables. From each adapter's docs and issues; the bench does not run dbt.</p>
+    <div class="legend">${Object.entries(DBT_LEVEL).map(([k, w]) => `<span class="${k}"><i class="m"></i>${w}</span>`).join("")}</div>
+    <div class="wrap"><table><tbody>${DBT_ROWS.map(r => `
+      <tr style="--c: var(--${r.engine}, var(--ink-3))">
+        <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
+        <td class="lv ${r.level}"><i class="m"></i>${DBT_LEVEL[r.level]}</td>
+        <td class="n">${r.adapter ? `<a href="${r.url}">${r.adapter}</a>: ` : ""}${r.note}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+}
+
 const tip = $("tip");
 function showTip(item, lane) {
   tip.style.setProperty("--c", `var(--${item.engine}, var(--ink-3))`);
@@ -483,7 +538,7 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #iceberg, #details, #about, or one engine on the details tab (#datafusion).
+// Deep links: #tpch, #tpcds, #iceberg, #dbt, #details, #about, or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
