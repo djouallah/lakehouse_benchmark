@@ -84,7 +84,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .tip .k { color: var(--ink-2); }
 .details { color: var(--ink-2); margin-top: 16px; }
-.details h3 { font-size: 15px; color: var(--ink); margin: 16px 0 4px; }
+.details h3, #engines h3 { font-size: 15px; color: var(--ink); margin: 16px 0 4px; }
 .details p { margin: 0 0 12px; }
 .details ul { margin: 0; padding-left: 18px; }
 .details li { margin: 6px 0; overflow-wrap: anywhere; }
@@ -513,7 +513,7 @@ const ENGINE_ROWS = [
   { engine: "daft_iceberg", url: "https://github.com/Eventual-Inc/Daft", started: "Eventual, 2022",
     governed: "Eventual", licence: "Apache 2.0", lang: "Rust",
     use: "DataFrames for multimodal data, distributed" },
-  // Tried, not added: no chart colour, so the swatch is grey.
+  // Tried, did not work here: not in LABEL, so renderEngines puts them in the second table.
   { engine: "doris", label: "Apache Doris", url: "https://github.com/apache/doris", started: "Baidu as Palo, 2017",
     governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "C++, Java",
     use: "Distributed SQL, real-time analytics" },
@@ -539,14 +539,17 @@ const ENGINE_ROWS = [
 
 function renderEngines() {
   const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for"];
-  $("engines").innerHTML = `
-    <p class="caption">What each engine is. From each project's own repo and site. Grey: tried, not in the bench.</p>
-    <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${ENGINE_ROWS.map(r => `
+  const table = rows => `
+    <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i><a href="${r.url}">${esc(r.label ?? LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
         <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>
       </tr>`).join("")}</tbody></table></div>`;
+  $("engines").innerHTML = `
+    <p class="caption">What each engine is. From each project's own repo and site.</p>
+    <h3>In the bench</h3>${table(ENGINE_ROWS.filter(r => r.engine in LABEL))}
+    <h3>Tried, did not work here</h3>${table(ENGINE_ROWS.filter(r => !(r.engine in LABEL)))}`;
 }
 
 // THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB and
