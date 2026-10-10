@@ -305,7 +305,13 @@ def test_a_failed_run_is_published_and_an_attach_only_run_is_not():
     publish = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(publish)
 
-    failed = EngineResult("1", rows=[Row("cold", "setup", 0, 1.0), Row("cold", "query", 64, None, status="error")])
+    failed = EngineResult(
+        "1", rows=[Row("cold", "setup", 0, 1.0), Row("cold", "query", 64, None, status="error")]
+    )
     attach_only = EngineResult("1", rows=[Row("cold", "setup", 0, 1.0)])
-    assert publish.any_engine_produced_a_measurement(SimpleNamespace(engines={"trino_iceberg": failed}))
-    assert not publish.any_engine_produced_a_measurement(SimpleNamespace(engines={"trino_iceberg": attach_only}))
+    assert publish.any_engine_produced_a_measurement(
+        SimpleNamespace(engines={"trino_iceberg": failed})
+    )
+    assert not publish.any_engine_produced_a_measurement(
+        SimpleNamespace(engines={"trino_iceberg": attach_only})
+    )

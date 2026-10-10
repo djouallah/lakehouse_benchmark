@@ -312,9 +312,7 @@ def any_engine_produced_a_measurement(run: Run) -> bool:
     The artifacts and the step summary are still produced either way -- that is where you go to
     read the errors. Only the COMMIT is suppressed.
     """
-    return any(
-        row.phase == "query" for result in run.engines.values() for row in result.rows
-    )
+    return any(row.phase == "query" for result in run.engines.values() for row in result.rows)
 
 
 if __name__ == "__main__":

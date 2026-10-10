@@ -27,6 +27,7 @@ SPARK, GLUTEN = "pyspark_iceberg", "pyspark_gluten_iceberg"
 START, END = "<!-- speedup:start -->", "<!-- speedup:end -->"
 ETL_CSV = "docs/data/etl_results.csv"
 
+
 def _read(path: Path) -> list[dict]:
     if not path.exists():
         return []

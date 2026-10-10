@@ -55,7 +55,10 @@ def test_a_run_stopped_at_its_first_query_reads_failed():
     """All or nothing: the published failure is one error row, and that alone says `failed`."""
     from bench.speedup import SPARK, query_totals
 
-    rows = [dict(zip(COLUMNS, r)) for r in _query_run("a", "2026-01-01", 100, SPARK, [""], "tpcds", 1)]
+    rows = [
+        dict(zip(COLUMNS, r, strict=True))
+        for r in _query_run("a", "2026-01-01", 100, SPARK, [""], "tpcds", 1)
+    ]
     assert query_totals(rows, "tpcds", 99) == {(SPARK, 100): None}
     assert query_totals([], "tpcds", 99) == {}
 
