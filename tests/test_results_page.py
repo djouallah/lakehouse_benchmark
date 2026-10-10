@@ -51,7 +51,8 @@ def test_the_workload_merge_cells_match_the_iceberg_support_tab():
     import json
     import re
 
-    cap = json.loads((Path(__file__).parent.parent / "docs" / "data" / "capability.json").read_text(encoding="utf-8"))
+    cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
+    cap = json.loads(cap_path.read_text(encoding="utf-8"))
     merge = next(r for r in cap["rows"] if r["label"] == "MERGE with one action")
     table = rows("WORKLOAD_ROWS")
     for engine in cap["engines"]:
