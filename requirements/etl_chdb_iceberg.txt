@@ -8,3 +8,7 @@ azure-storage-file-datalake>=12.17
 psutil>=6
 chdb>=4.4.0
 pyiceberg[pyarrow,adlfs]>=0.12.0
+# chdb-core from a main build (chdb-io/chdb-core@6b4015b6b0, 2026-10-01), not PyPI: the chDB team
+# asked for the newest engine with the PyPI wrapper (issue #1). tmp_chdb_core_main.yml copies the
+# wheel here; it moves forward when a newer main build succeeds.
+chdb-core @ https://github.com/djouallah/lakehouse_benchmark/releases/download/chdb-core-main-6b4015b6b0/chdb_core-26.9.2.dev20261001-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
