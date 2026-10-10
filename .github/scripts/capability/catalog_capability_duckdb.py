@@ -33,9 +33,12 @@ from harness import (
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
+    MAX_EXPECTED,
     NAMESPACE,
     NESTED_TYPES,
     NOOP,
+    PRUNE_EXPECTED,
+    PRUNE_ID,
     REFUSED,
     SCALAR_TYPES,
     SKIPPED,
@@ -47,11 +50,15 @@ from harness import (
     Report,
     Skip,
     evolution_check,
+    iceberg_schema,
     partition_result,
     promotion_check,
+    read_without_files,
+    remove_data_files,
     transform_case,
     type_result,
     verdict,
+    write_stats_files,
 )
 
 from bench import auth, scrub
@@ -625,6 +632,36 @@ class DuckDBCapability:
         rows = self.sql(f"SELECT count(*) FROM iceberg_metadata({self.t(table)})")
         return f"iceberg_metadata() reads {rows[0][0]} manifest entr(ies)"
 
+    def _stats_table(self, what: str):
+        """harness.STATS_FILES, written by pyiceberg: four files with known min/max bounds."""
+        table = self.name(what)
+        self.pyiceberg().create_table((self.ns, table), iceberg_schema())
+        self.created.append((self.ns, table, "table"))
+        write_stats_files(self.iceberg(table))
+        return table
+
+    def file_pruning(self) -> str:
+        table = self._stats_table("prune")
+        gone = remove_data_files(self.iceberg(table), keep_id=PRUNE_ID)
+        return read_without_files(
+            f"SELECT v WHERE id = {PRUNE_ID}",
+            lambda: self.sql(f"SELECT v FROM {self.t(table)} WHERE id = {PRUNE_ID}"),
+            PRUNE_EXPECTED,
+            lambda: self.sql(f"SELECT sum(v) FROM {self.t(table)}"),
+            gone,
+        )
+
+    def max_from_metadata(self) -> str:
+        table = self._stats_table("max")
+        gone = remove_data_files(self.iceberg(table))
+        return read_without_files(
+            "SELECT max(id)",
+            lambda: self.sql(f"SELECT max(id) FROM {self.t(table)}"),
+            MAX_EXPECTED,
+            lambda: self.sql(f"SELECT sum(v) FROM {self.t(table)}"),
+            gone,
+        )
+
     # -- probes: refs and maintenance, where DuckDB has syntax at all ------------------------
 
     def create_branch(self) -> str:
@@ -781,6 +818,8 @@ PROBES = [
     ("read", "time travel, AT (VERSION => <snapshot>)", "time_travel"),
     ("read", "iceberg_snapshots()", "metadata_snapshots"),
     ("read", "iceberg_metadata()", "metadata_files"),
+    ("read", "WHERE id = 22 with the other data files deleted (file pruning)", "file_pruning"),
+    ("read", "max(id) with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("refs", "ALTER TABLE ... CREATE BRANCH", "create_branch"),
     ("maintenance", "iceberg_expire_snapshots", "expire_snapshots"),
     ("maintenance", "iceberg_rewrite_data_files (compaction)", "rewrite_data_files"),

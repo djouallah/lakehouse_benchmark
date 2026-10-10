@@ -30,9 +30,12 @@ from harness import (
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
+    MAX_EXPECTED,
     NAMESPACE,
     NESTED_TYPES,
     NOOP,
+    PRUNE_EXPECTED,
+    PRUNE_ID,
     REFUSED,
     SCALAR_TYPES,
     SKIPPED,
@@ -46,6 +49,8 @@ from harness import (
     iceberg_schema,
     partition_result,
     promotion_schema,
+    read_without_files,
+    remove_data_files,
     rows,
     transform_arrow,
     transform_case,
@@ -53,6 +58,7 @@ from harness import (
     type_result,
     type_schema,
     verdict,
+    write_stats_files,
 )
 from isolation_duckdb import race_probe
 
@@ -300,6 +306,43 @@ class PolarsCapability:
             raise NoOp(f"scan_iceberg(snapshot_id=<first>) reads {count} rows, the head {now}")
         return f"scan_iceberg(snapshot_id=<first snapshot>) reads {count} rows (the head {now})"
 
+    def _stats_table(self, what: str):
+        """harness.STATS_FILES, written by pyiceberg: four files with known min/max bounds."""
+        table = self.create(what)
+        write_stats_files(table)
+        return self.load(table)
+
+    def _sum(self, table):
+        import polars as pl
+
+        return self.scan(table).select(pl.col("v").sum()).collect().rows()
+
+    def file_pruning(self) -> str:
+        import polars as pl
+
+        table = self._stats_table("prune")
+        gone = remove_data_files(table, keep_id=PRUNE_ID)
+        return read_without_files(
+            f"filter(id == {PRUNE_ID}).select(v)",
+            lambda: self.scan(table).filter(pl.col("id") == PRUNE_ID).select("v").collect().rows(),
+            PRUNE_EXPECTED,
+            lambda: self._sum(table),
+            gone,
+        )
+
+    def max_from_metadata(self) -> str:
+        import polars as pl
+
+        table = self._stats_table("max")
+        gone = remove_data_files(table)
+        return read_without_files(
+            "select(id.max())",
+            lambda: self.scan(table).select(pl.col("id").max()).collect().rows(),
+            MAX_EXPECTED,
+            lambda: self._sum(table),
+            gone,
+        )
+
     # -- commit ------------------------------------------------------------------------------
 
     def stale_assertion(self) -> str:
@@ -364,6 +407,8 @@ PROBES = [
     ("schema", "schema_mode='merge' promotes int -> long", "type_promotion"),
     ("schema", "write before and after partition evolution", "write_after_evolution"),
     ("read", "time travel, scan_iceberg(snapshot_id=)", "time_travel"),
+    ("read", "filter(id == 22) with the other data files deleted (file pruning)", "file_pruning"),
+    ("read", "id.max() with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("commit", "is assert-ref-snapshot-id enforced on a Polars commit", "stale_assertion"),
     ("concurrency", "sink append; B appends between Polars' read and commit", "race_append"),
 ]

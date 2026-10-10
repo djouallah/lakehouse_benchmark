@@ -106,3 +106,20 @@ def test_nothing_the_catalog_decides_is_probed_or_shown():
         text = script.read_text(encoding="utf-8")
         for word in ("blocked", "BLOCKED", "def format_v3", "def insert_overwrite"):
             assert word not in text, f"{script.name}: {word}"
+
+
+def test_every_engine_asks_the_metadata_read_probes():
+    """File pruning and MAX from the metadata are asked of every engine, the same way."""
+    sources = dict(render_readme.ROWS)
+    for label, key in (
+        ("File pruning from min/max in the metadata", "file_pruning"),
+        ("MAX from the metadata, no data file read", "max_from_metadata"),
+    ):
+        assert sources[label] == {e: [key] for e in render_readme.ENGINES}
+        for engine in render_readme.ENGINES:
+            script = (
+                _ROOT / ".github" / "scripts" / "capability" / f"catalog_capability_{engine}.py"
+            )
+            text = script.read_text(encoding="utf-8")
+            assert f"def {key}(self)" in text, f"{script.name}: {key}"
+            assert f'"{key}"),' in text, f"{script.name}: {key} is not in PROBES"

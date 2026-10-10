@@ -87,6 +87,10 @@ ROWS = [
         "Metadata tables",
         {"duckdb": ["metadata_snapshots", "metadata_files"], "sail": ["metadata_tables"]},
     ),
+    # pyiceberg writes four data files with known min/max bounds, then deletes some of them from
+    # storage and keeps the metadata. A right answer means the engine never opened them.
+    ("File pruning from min/max in the metadata", {e: ["file_pruning"] for e in ENGINES}),
+    ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
     ("Compaction", {"duckdb": ["rewrite_data_files"], "sail": ["rewrite_data_files"]}),
     ("Expire snapshots", {e: ["expire_snapshots"] for e in SQL}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
@@ -167,6 +171,10 @@ GROUPS = {
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
+    ],
+    "Reading from metadata": [
+        "File pruning from min/max in the metadata",
+        "MAX from the metadata, no data file read",
     ],
     "Read & maintenance": [
         "Time travel",

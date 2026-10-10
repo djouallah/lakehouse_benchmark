@@ -22,9 +22,12 @@ import sys
 
 from harness import (
     BROKEN,
+    MAX_EXPECTED,
     NAMESPACE,
     NESTED_TYPES,
     NOOP,
+    PRUNE_EXPECTED,
+    PRUNE_ID,
     REFUSED,
     SCALAR_TYPES,
     SKIPPED,
@@ -38,10 +41,13 @@ from harness import (
     iceberg_schema,
     partition_result,
     promotion_check,
+    read_without_files,
+    remove_data_files,
     rows,
     transform_case,
     type_result,
     verdict,
+    write_stats_files,
 )
 from isolation_duckdb import race_probe
 
@@ -478,6 +484,36 @@ class SailCapability:
         rows = self.sql(f"SELECT count(*) FROM {self.t(table)}.snapshots")
         return f"t.snapshots reads {rows[0][0]} snapshot(s)"
 
+    def _stats_table(self, what: str) -> str:
+        """harness.STATS_FILES, written by pyiceberg: four files with known min/max bounds."""
+        table = self.name(what)
+        self.pyiceberg().create_table((self.ns, table), iceberg_schema())
+        self.created.append(table)
+        write_stats_files(self.iceberg(table))
+        return table
+
+    def file_pruning(self) -> str:
+        table = self._stats_table("prune")
+        gone = remove_data_files(self.iceberg(table), keep_id=PRUNE_ID)
+        return read_without_files(
+            f"SELECT v WHERE id = {PRUNE_ID}",
+            lambda: self.sql(f"SELECT v FROM {self.t(table)} WHERE id = {PRUNE_ID}"),
+            PRUNE_EXPECTED,
+            lambda: self.sql(f"SELECT sum(v) FROM {self.t(table)}"),
+            gone,
+        )
+
+    def max_from_metadata(self) -> str:
+        table = self._stats_table("max")
+        gone = remove_data_files(self.iceberg(table))
+        return read_without_files(
+            "SELECT max(id)",
+            lambda: self.sql(f"SELECT max(id) FROM {self.t(table)}"),
+            MAX_EXPECTED,
+            lambda: self.sql(f"SELECT sum(v) FROM {self.t(table)}"),
+            gone,
+        )
+
     # -- refs --------------------------------------------------------------------------------
 
     def create_branch(self) -> str:
@@ -649,6 +685,8 @@ PROBES = [
     ("schema", "ALTER TABLE SET TBLPROPERTIES", "set_property"),
     ("read", "time travel, VERSION AS OF", "time_travel"),
     ("read", "metadata tables (t.snapshots)", "metadata_tables"),
+    ("read", "WHERE id = 22 with the other data files deleted (file pruning)", "file_pruning"),
+    ("read", "max(id) with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("refs", "ALTER TABLE ... CREATE BRANCH", "create_branch"),
     ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "CALL system.expire_snapshots", "expire_snapshots"),

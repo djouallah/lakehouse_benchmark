@@ -482,3 +482,68 @@ def promotion_check(tbl) -> str:
     if [r["c"] for r in found] != [7]:
         raise NoOp(f"c is long, and the old row reads {found}")
     return "c is long, and the row written as int reads 7"
+
+
+# --------------------------------------------------------------------------------------------
+# reading from the metadata: file pruning, and MAX without the data files
+# --------------------------------------------------------------------------------------------
+
+# Four appends by pyiceberg: four data files with ids 1-3, 11-13, 21-23 and 31-33 (v = id * 10).
+# Their min/max bounds in the manifests do not overlap. pyiceberg writes the files for every
+# engine, so every engine reads the same bounds and only its reader is asked.
+STATS_FILES = [[(i, i * 10) for i in range(base + 1, base + 4)] for base in (0, 10, 20, 30)]
+PRUNE_ID = 22
+PRUNE_EXPECTED = [(220,)]
+MAX_EXPECTED = [(33,)]
+
+
+def write_stats_files(tbl) -> None:
+    """STATS_FILES into an empty (id, v) table, one append and one data file each."""
+    for pairs in STATS_FILES:
+        tbl.append(rows(pairs))
+
+
+def remove_data_files(tbl, keep_id: int | None = None) -> str:
+    """Delete the data files from storage and leave the metadata as it is. With keep_id, the one
+    file whose bounds hold that id stays. An engine that answers after this never opened them."""
+    from pyiceberg.expressions import EqualTo
+
+    files = [task.file.file_path for task in tbl.scan().plan_files()]
+    keep = set()
+    if keep_id is not None:
+        keep = {
+            task.file.file_path for task in tbl.scan(row_filter=EqualTo("id", keep_id)).plan_files()
+        }
+    if len(files) != len(STATS_FILES) or (keep_id is not None and len(keep) != 1):
+        raise Broken(
+            f"expected {len(STATS_FILES)} data files, one of them holding id {keep_id}; "
+            f"found {len(files)} and {len(keep)}"
+        )
+    gone = [path for path in files if path not in keep]
+    for path in gone:
+        tbl.io.delete(path)
+    left = [path for path in gone if tbl.io.new_input(path).exists()]
+    if left:
+        raise Broken(f"{len(left)} data file(s) still in storage after the delete")
+    return f"{len(gone)} of {len(files)} data files deleted"
+
+
+def read_without_files(label: str, query, expected: list[tuple], control, gone: str) -> str:
+    """The engine's read (`query`), after remove_data_files. The right answer means the engine
+    never opened the deleted files. `control` reads every row, so it must fail. If it works, the
+    engine skips missing files, and the right answer proves nothing."""
+    try:
+        got = query()
+    except Exception as exc:  # noqa: BLE001 - the engine's error is the answer
+        message = str(exc) if isinstance(exc, Refused) else scrub.scrub_exc(exc, 400)
+        raise Refused(f"{label} fails with {gone}, so it opens them: {message}") from None
+    if got != expected:
+        raise Refused(f"{label} with {gone} returns {got}, expected {expected}")
+    try:
+        found = control()
+    except Exception:  # noqa: BLE001 - failing is what the control is for
+        return f"{label} returns {got} with {gone}; a full scan fails, as it should"
+    raise Broken(
+        f"{label} returns {got}, and a full scan also works with {gone} ({found}): "
+        "the engine skips missing files, so this proves nothing"
+    )

@@ -26,9 +26,12 @@ from datetime import UTC, datetime
 
 from harness import (
     BROKEN,
+    MAX_EXPECTED,
     NAMESPACE,
     NESTED_TYPES,
     NOOP,
+    PRUNE_EXPECTED,
+    PRUNE_ID,
     REFUSED,
     SCALAR_TYPES,
     SKIPPED,
@@ -44,11 +47,14 @@ from harness import (
     partition_result,
     promotion_check,
     promotion_schema,
+    read_without_files,
+    remove_data_files,
     rows,
     transform_case,
     type_result,
     type_schema,
     verdict,
+    write_stats_files,
 )
 from isolation_duckdb import race_probe
 
@@ -438,6 +444,34 @@ class ChdbCapability:
             raise NoOp("system.iceberg_history has no row for the table")
         return f"system.iceberg_history reads {found[0][0]} snapshot(s)"
 
+    def _stats_table(self, what: str) -> str:
+        """harness.STATS_FILES, written by pyiceberg: four files with known min/max bounds."""
+        table = self._py_create(what)
+        write_stats_files(self.iceberg(table))
+        return table
+
+    def file_pruning(self) -> str:
+        table = self._stats_table("prune")
+        gone = remove_data_files(self.iceberg(table), keep_id=PRUNE_ID)
+        return read_without_files(
+            f"SELECT v WHERE id = {PRUNE_ID}",
+            lambda: self.sql(f"SELECT v FROM {self.t(table)} WHERE id = {PRUNE_ID}"),
+            PRUNE_EXPECTED,
+            lambda: self.sql(f"SELECT sum(v) FROM {self.t(table)}"),
+            gone,
+        )
+
+    def max_from_metadata(self) -> str:
+        table = self._stats_table("max")
+        gone = remove_data_files(self.iceberg(table))
+        return read_without_files(
+            "SELECT max(id)",
+            lambda: self.sql(f"SELECT max(id) FROM {self.t(table)}"),
+            MAX_EXPECTED,
+            lambda: self.sql(f"SELECT sum(v) FROM {self.t(table)}"),
+            gone,
+        )
+
     # -- refs --------------------------------------------------------------------------------
 
     def create_branch(self) -> str:
@@ -571,6 +605,8 @@ PROBES = [
     ("schema", "ALTER TABLE MODIFY ORDER BY (sort order evolution)", "sort_order_evolution"),
     ("read", "time travel, SETTINGS iceberg_snapshot_id", "time_travel"),
     ("read", "metadata (system.iceberg_history)", "metadata_tables"),
+    ("read", "WHERE id = 22 with the other data files deleted (file pruning)", "file_pruning"),
+    ("read", "max(id) with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("refs", "ALTER TABLE ... CREATE BRANCH", "create_branch"),
     ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "ALTER TABLE ... EXECUTE expire_snapshots", "expire_snapshots"),
