@@ -87,6 +87,7 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 | `storage_token.yml` | none; daily at 03:17 UTC. Copies `storage_token.json` from testing-iceberg-rest-catalog to `docs/data/` for the Catalogs tab |
 | `auth_smoke.yml` | none |
 | `tmp_polars_main.yml` | `ref` (main). Temporary: builds the Polars main wheel `requirements/polars_iceberg.txt` pins, until a release has the fixes |
+| `tmp_chdb_core_main.yml` | `run-id` (a successful chdb-core main build). Copies its wheels to the prerelease the chDB requirements pin |
 
 `prepare` generates a namespace once and later runs reuse it. `ci.yml` (ruff check, ruff format
 and pytest) runs on every push; the smoke test's `sql` phase runs on a push that touches `bench/`,

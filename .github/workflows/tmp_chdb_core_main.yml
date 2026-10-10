@@ -1,0 +1,58 @@
+name: temporary chdb-core main wheel
+
+# chdb-core publishes no nightly wheels: a push to main builds them into a CI artifact
+# (chdb-artifacts-linux-x86_64), which pip cannot install by URL. This copies the Linux x86_64
+# wheels of one successful main run to a prerelease of this repo, so requirements/*chdb*.txt run
+# the newest engine with the PyPI chdb wrapper (asked in issue #1). Moved forward when a newer
+# main build succeeds.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run-id:
+        description: chdb-io/chdb-core build_linux_x86_wheels.yml run on main that succeeded.
+        type: string
+        default: "36836729303"
+
+permissions:
+  contents: write
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ inputs.run-id }}
+    steps:
+      - id: run
+        name: Check the run
+        run: |
+          gh api "repos/chdb-io/chdb-core/actions/runs/$RUN_ID" \
+            --jq '[.head_branch, .conclusion, .head_sha] | @tsv' | tee run.tsv
+          read -r branch conclusion sha < run.tsv
+          [ "$branch" = main ] && [ "$conclusion" = success ] || { echo "not a successful main run"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Download the wheels
+        run: |
+          gh run download "$RUN_ID" -R chdb-io/chdb-core -n chdb-artifacts-linux-x86_64 -D artifact
+          mkdir dist
+          find artifact -name 'chdb_core-*manylinux*x86_64.whl' ! -name '*cp314t*' -exec cp {} dist/ \;
+          ls -la dist
+          [ -n "$(ls dist)" ]
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Import check
+        run: |
+          pip install --find-links dist chdb-core "chdb>=4.4.0"
+          pip list --format=freeze | grep -Ei '^chdb'
+          python -c "import chdb; print(chdb.query('SELECT version()', 'CSV'))"
+      - name: Attach to a prerelease of this repo
+        env:
+          SHA: ${{ steps.run.outputs.sha }}
+        run: |
+          tag="chdb-core-main-${SHA:0:10}"
+          gh release create "$tag" dist/*.whl --repo "${{ github.repository }}" --prerelease \
+            --title "$tag (temporary)" \
+            --notes "chdb-core main at chdb-io/chdb-core@$SHA, wheels from run $RUN_ID."
