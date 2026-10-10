@@ -83,17 +83,17 @@ Largest scale each engine completes, cold, every statement answered:
 | LakeSail | SF=100 (2,476 s) | — | TPC-DS: 8 double-quoted aliases didn't parse (now backticked for it); Q71 passes on 0.7.2 |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
 | chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS aborts in glibc at any SF |
-| Polars | SF=100 (591 s, main build c36581695d) | — | TPC-H SF=200: untried; TPC-DS SF=10: Q4 OOMs on the main build (#29822), Q72 on 2.0.0 (#29768) |
+| Polars | SF=100 (591 s, main build c36581695d) | **SF=100** (1,167 s, main build e691ac01b8) | Untried: TPC-H SF=200 and TPC-DS SF=300. Joins and group-bys still have no spill |
 
-- **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap, and it
-  is the only engine that finished TPC-DS at SF=100. Not one of its failures at any scale came
+- **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap. It and
+  Polars are the only engines that finished TPC-DS at SF=100. Not one of its failures at any scale came
   from memory: up to SF=100 every one was an expired credential, and at TPC-H SF=300 it is the
   disk (see Gluten/Velox below). Where both finish, DuckDB is faster: TPC-H SF=100 in 500 s
   against 1,008 s.
 - **An engine with no memory bound dies; it does not slow down.** Polars (streaming engine, no
   limit, no spill directory) and Sail (DataFusion's pool, unbounded by default) run normally and
   then take the whole runner with them.
-  - Polars at TPC-H SF=30 answered Q1–Q6 in ordinary times (27.5 / 9.2 / 8.6 / 5.5 / 13.0 /
+  - Polars 2.0.0-rc.2 at TPC-H SF=30 answered Q1–Q6 in ordinary times (27.5 / 9.2 / 8.6 / 5.5 / 13.0 /
     6.8 s), then the runner was killed 75 s into Q7 (run 36001440696).
   - Exit 143, no traceback, and no row in the results. Only the job log shows it happened.
   - It is a cliff, not a slow spill.
@@ -312,10 +312,28 @@ Largest scale each engine completes, cold, every statement answered:
 
 ## Polars
 
-- **Fine at TPC-H SF=10 (82–106 s), gone at SF=30.** It uses the streaming engine with 4 threads
-  and no memory limit. At SF=30 the runner was OOM-killed 75 s into Q7, and at TPC-DS SF=10 the
-  runner "lost communication with the server" 55 minutes in. See "Past memory" above. It is not
-  run at larger scales.
+- **The main build finishes both suites at SF=100.** pola-rs/polars@e691ac01b8, the build pinned
+  in `requirements/polars_iceberg.txt`, answers TPC-DS 99/99 at every scale:
+  - SF=10: 256 s (run 37943815509)
+  - SF=30: 271 s (run 37945726671)
+  - SF=60: 764 s (run 37948405184). This is the fastest result at SF=60. StarRocks takes 902 s and
+    fails Q49, and DuckDB takes 1,367 s.
+  - SF=100: 1,167 s (run 37951147158). Only Gluten also finishes, in 4,768 s. DuckDB fails Q64.
+  - Its slowest queries at SF=100 are Q67 (65 s), Q64 (63 s) and Q72 (61 s).
+  - On TPC-H SF=10 it takes 57.9 s (run 37947617200). DuckDB is faster at 44.3 s.
+- **Why main is fast now.** The optimizer work that went into 2.0 and main between August and
+  October 2026:
+  - Join reordering: [#28985](https://github.com/pola-rs/polars/pull/28985), and
+    [#29038](https://github.com/pola-rs/polars/pull/29038), which makes it use scan statistics.
+  - Dynamic predicates for hash joins: [#29312](https://github.com/pola-rs/polars/pull/29312).
+  - Bloom filters pushed into the probe side: [#29423](https://github.com/pola-rs/polars/pull/29423).
+  - Better costing for reused subplans: [#29250](https://github.com/pola-rs/polars/pull/29250).
+
+  Before this, joins ran in the order the SQL wrote them. TPC-DS star joins suffered most.
+- **2.0.0-rc.2 was fine at TPC-H SF=10 (82–106 s) and gone at SF=30.** It used the streaming
+  engine with 4 threads and no memory limit. At SF=30 the runner was OOM-killed 75 s into Q7. At
+  TPC-DS SF=10 the runner "lost communication with the server" 55 minutes in. See "Past memory"
+  above.
 - **Three correctness bugs, all found by comparing row counts across engines on identical data:**
   - [pola-rs/polars#29449](https://github.com/pola-rs/polars/issues/29449): `scan_iceberg`
     decodes negative decimal bounds as unsigned, so TPC-DS q13/48/49/85 fail with "decoded value
@@ -347,6 +365,7 @@ Largest scale each engine completes, cold, every statement answered:
   The same build completes TPC-H SF=60 (22/22, 279 s, run 37871297077) and SF=100 (22/22,
   591 s, run 37872115807): second to DuckDB's 500 s at SF=100, ahead of StarRocks, Gluten and
   Sail, with every row count matching theirs. Q21 (116 s) and Q18 (102 s) are its slowest.
+  Q4 was fixed on main on 2026-10-09. The e691ac01b8 build runs Q4 in 5.2 s at SF=10 over OneLake.
 - **Tables are scanned by name through the catalog** (`scan_iceberg("ns.table", catalog=...)`),
   as a maintainer suggested on [#27776](https://github.com/pola-rs/polars/issues/27776): lazy,
   with the REST scan and manifest caches of #29790 / #29623. The registration loop stays, because
