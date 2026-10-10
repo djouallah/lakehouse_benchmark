@@ -175,7 +175,7 @@
    "group": "schema",
    "question": "ALTER COLUMN c TYPE BIGINT (int -> long)",
    "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38014406401_1_promote"
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38022167812_1_promote"
   },
   {
    "key": "partition_evolution",
@@ -189,7 +189,7 @@
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
    "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38014406401_1_props"
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38022167812_1_props"
   },
   {
    "key": "time_travel",
@@ -203,7 +203,21 @@
    "group": "read",
    "question": "metadata tables (t.snapshots)",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38014406401_1_inspect\"), Identifier(\"snapshots\")]"
+   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38022167812_1_inspect\"), Identifier(\"snapshots\")]"
+  },
+  {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "SELECT v WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "max_from_metadata",
+   "group": "read",
+   "question": "max(id) with every data file deleted (min/max from metadata)",
+   "outcome": "supported",
+   "detail": "SELECT max(id) returns [(33,)] with 4 of 4 data files deleted; a full scan fails, as it should"
   },
   {
    "key": "create_branch",
@@ -245,7 +259,7 @@
    "group": "catalog",
    "question": "CREATE DATABASE, then DROP DATABASE",
    "outcome": "supported",
-   "detail": "`sl_38014406401_1_ns` created, listed, dropped"
+   "detail": "`sl_38022167812_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -273,17 +287,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6227621753962692761) but found Some(7854925601043114190)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(983907278193906374) but found Some(3416877485051537164)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6131099080922696820) but found Some(1664116713234794519)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(2491847467689763520) but found Some(9060942395765580840)"
   }
  ],
- "run": "38014406401",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401",
+ "run": "38022167812",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
  "date": "2026-10-10"
 }

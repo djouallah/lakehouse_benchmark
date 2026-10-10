@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38014406401_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38022167812_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -248,11 +248,25 @@
    "detail": "iceberg_metadata() reads WARNING: manifest entr(ies)"
   },
   {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "SELECT v WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "max_from_metadata",
+   "group": "read",
+   "question": "max(id) with every data file deleted (min/max from metadata)",
+   "outcome": "no",
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38022167812_1_max/data/00000-0-2e122c73-d8dd-450a-9a7c-af0955950950.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
+  },
+  {
    "key": "create_branch",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE BRANCH",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38014406401_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38022167812_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
   },
   {
    "key": "expire_snapshots",
@@ -287,7 +301,7 @@
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`dk_38014406401_1_ns` created; pyiceberg lists it"
+   "detail": "`dk_38022167812_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "drop_schema",
@@ -297,7 +311,7 @@
    "detail": "the empty namespace is gone"
   }
  ],
- "run": "38014406401",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401",
+ "run": "38022167812",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
  "date": "2026-10-10"
 }

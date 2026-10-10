@@ -119,7 +119,7 @@
    "group": "write",
    "question": "MERGE INTO",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38016056611_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38022167812_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
   },
   {
    "key": "truncate",
@@ -168,7 +168,7 @@
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38016056611_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET\u2026"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38022167812_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET\u2026"
   },
   {
    "key": "sort_order_evolution",
@@ -190,6 +190,20 @@
    "question": "metadata (system.iceberg_history)",
    "outcome": "supported",
    "detail": "system.iceberg_history reads 1 snapshot(s)"
+  },
+  {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "SELECT v WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "max_from_metadata",
+   "group": "read",
+   "question": "max(id) with every data file deleted (min/max from metadata)",
+   "outcome": "no",
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 9ea857cb-f01e-0074-1372-58309b000000. (STD_EXCEPTION)"
   },
   {
    "key": "create_branch",
@@ -248,7 +262,7 @@
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "38016056611",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38016056611",
+ "run": "38022167812",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
  "date": "2026-10-10"
 }

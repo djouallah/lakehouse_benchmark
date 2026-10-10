@@ -2,26 +2,26 @@
  "engines": {
   "polars_iceberg": {
    "version": "2.0.0",
-   "run": "38014406401",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401",
+   "run": "38022167812",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
    "date": "2026-10-10"
   },
   "duckdb_iceberg": {
    "version": "v2.0.0-alpha46057",
-   "run": "38014406401",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401",
+   "run": "38022167812",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
    "date": "2026-10-10"
   },
   "lakesail_iceberg": {
    "version": "0.7.2",
-   "run": "38014406401",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401",
+   "run": "38022167812",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
    "date": "2026-10-10"
   },
   "chdb_iceberg": {
    "version": "4.4.0",
-   "run": "38016056611",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38016056611",
+   "run": "38022167812",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
    "date": "2026-10-10"
   }
  },
@@ -30,6 +30,7 @@
   "Tables & types",
   "Schema",
   "Concurrency",
+  "Reading from metadata",
   "Read & maintenance"
  ],
  "rows": [
@@ -120,7 +121,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38016056611_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38022167812_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     }
    }
   },
@@ -397,7 +398,7 @@
     },
     "lakesail_iceberg": {
      "o": "no",
-     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38014406401_1_promote"
+     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38022167812_1_promote"
     },
     "chdb_iceberg": {
      "o": "supported"
@@ -454,11 +455,11 @@
     },
     "lakesail_iceberg": {
      "o": "no",
-     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38014406401_1_props"
+     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38022167812_1_props"
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38016056611_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38022167812_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     }
    }
   },
@@ -574,6 +575,45 @@
    }
   },
   {
+   "group": "Reading from metadata",
+   "label": "File pruning from min/max in the metadata",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Reading from metadata",
+   "label": "MAX from the metadata, no data file read",
+   "cells": {
+    "polars_iceberg": {
+     "o": "no",
+     "n": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/…"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-…"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 9ea857cb-f01e-0074-1372-5…"
+    }
+   }
+  },
+  {
    "group": "Read & maintenance",
    "label": "Time travel",
    "cells": {
@@ -603,7 +643,7 @@
     },
     "lakesail_iceberg": {
      "o": "no",
-     "n": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38014406401_1_inspect\"), Identifier(\"snapshots\")]"
+     "n": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38022167812_1_inspect\"), Identifier(\"snapshots\")]"
     },
     "chdb_iceberg": {
      "o": "supported"
@@ -660,7 +700,7 @@
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38014406401_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38022167812_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
     },
     "lakesail_iceberg": {
      "o": "no",

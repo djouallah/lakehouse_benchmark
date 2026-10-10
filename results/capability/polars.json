@@ -87,6 +87,20 @@
    "detail": "scan_iceberg(snapshot_id=<first snapshot>) reads 3 rows (the head 4)"
   },
   {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "filter(id == 22) with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "filter(id == 22).select(v) returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "max_from_metadata",
+   "group": "read",
+   "question": "id.max() with every data file deleted (min/max from metadata)",
+   "outcome": "no",
+   "detail": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/0\u2026"
+  },
+  {
    "key": "stale_assertion",
    "group": "commit",
    "question": "is assert-ref-snapshot-id enforced on a Polars commit",
@@ -101,7 +115,7 @@
    "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
   }
  ],
- "run": "38014406401",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401",
+ "run": "38022167812",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
  "date": "2026-10-10"
 }
