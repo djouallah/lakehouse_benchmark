@@ -34,26 +34,17 @@ def query(n: int) -> str:
 q47 = query(47)
 CASES = {
     "version": "SELECT version()",
-    "q47_full": q47,
-    "q47_select_list": q47.replace("SELECT *\nFROM v2", "SELECT d_year, sum_sales\nFROM v2"),
-    "q47_no_outer_filter": q47.replace("WHERE d_year = 1999\n  AND", "WHERE"),
-    "q57_full": query(57),
-    # The minimal shape: a CTE that projects a window over an aggregate, read by a second CTE
-    # through a self-join, then filtered by the bare name.
-    "min_window_selfjoin": "WITH v1 AS (SELECT d_year, sum(d_moy) AS s, "
-    "rank() OVER (ORDER BY d_year) AS rn FROM date_dim GROUP BY d_year), "
-    "v2 AS (SELECT v1.d_year, v1_lag.s AS psum FROM v1, v1 AS v1_lag WHERE v1.rn = v1_lag.rn + 1) "
-    "SELECT * FROM v2 WHERE d_year = 1999",
-    "min_window_nojoin": "WITH v1 AS (SELECT d_year, sum(d_moy) AS s, "
-    "rank() OVER (ORDER BY d_year) AS rn FROM date_dim GROUP BY d_year), "
-    "v2 AS (SELECT v1.d_year FROM v1) SELECT * FROM v2 WHERE d_year = 1999",
-    "min_selfjoin_nowindow": "WITH v1 AS (SELECT d_year, d_moy AS rn FROM date_dim), "
-    "v2 AS (SELECT v1.d_year, v1_lag.rn AS r FROM v1, v1 AS v1_lag WHERE v1.rn = v1_lag.rn + 1) "
-    "SELECT * FROM v2 WHERE d_year = 1999",
-    "min_selfjoin_threeway": "WITH v1 AS (SELECT d_year, d_moy AS rn FROM date_dim), "
-    "v2 AS (SELECT v1.d_year, v1_lag.rn AS r, v1_lead.rn AS l FROM v1, v1 AS v1_lag, v1 AS v1_lead "
-    "WHERE v1.rn = v1_lag.rn + 1 AND v1.rn = v1_lead.rn - 1) "
-    "SELECT * FROM v2 WHERE d_year = 1999",
+    "const_two_way": "WITH v1 AS (SELECT 1 AS a), v2 AS (SELECT v1.a FROM v1, v1 AS x) SELECT * FROM v2 WHERE a = 1",
+    "const_three_way": "WITH v1 AS (SELECT 1 AS a), v2 AS (SELECT v1.a FROM v1, v1 AS x, v1 AS y) SELECT * FROM v2 WHERE a = 1",
+    "const_three_way_select": "WITH v1 AS (SELECT 1 AS a), v2 AS (SELECT v1.a FROM v1, v1 AS x, v1 AS y) SELECT a FROM v2",
+    "const_three_way_alias": "WITH v1 AS (SELECT 1 AS a), v2 AS (SELECT v1.a AS a FROM v1, v1 AS x, v1 AS y) SELECT * FROM v2 WHERE a = 1",
+    "const_three_way_join_on": "WITH v1 AS (SELECT 1 AS a), v2 AS (SELECT v1.a FROM v1 CROSS JOIN v1 AS x CROSS JOIN v1 AS y) SELECT * FROM v2 WHERE a = 1",
+    "subquery_three_way": "SELECT * FROM (SELECT v1.a FROM (SELECT 1 AS a) AS v1, (SELECT 1 AS a) AS x, (SELECT 1 AS a) AS y) WHERE a = 1",
+    "tables_three_way": "SELECT * FROM (SELECT t1.d_year FROM date_dim AS t1, date_dim AS t2, date_dim AS t3) WHERE d_year = 1",
+    "old_analyzer": "WITH v1 AS (SELECT 1 AS a), v2 AS (SELECT v1.a FROM v1, v1 AS x, v1 AS y) SELECT * FROM v2 WHERE a = 1 SETTINGS allow_experimental_analyzer = 0",
+    "q47_alias_fix": q47.replace("v1.d_year,", "v1.d_year AS d_year,"),
+    "q18_cast_keep_nullable": "SELECT avg(CAST(x AS decimal(12, 2))) FROM (SELECT CAST(NULL, 'Nullable(Float64)') AS x UNION ALL SELECT 1.5) SETTINGS cast_keep_nullable = 1",
+    "q18_cast_null_literal": "SELECT CAST(NULL AS decimal(12, 2))",
 }
 
 for name, sql in CASES.items():
