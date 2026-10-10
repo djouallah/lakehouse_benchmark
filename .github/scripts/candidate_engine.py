@@ -852,39 +852,41 @@ class Doris(StarRocks):
         return ["SWITCH onelake", "SET query_timeout = 3600"]
 
     def _csv_sources(self, path: str, sas: str) -> dict[str, tuple[str, dict[str, str]]]:
-        """Each read as (hdfs() TVF source, ETL column name -> expression in that source).
+        """Each read as (http() TVF source, ETL column name -> expression in that source).
 
-        OneLake paths go through hadoop-azure, so the TVF is `hdfs()`, not `s3()`/Azure Blob.
+        NO abfss:// FILE READ in 4.1.4.1: `hdfs()` takes only hdfs/viewfs/jfs ("Unsupported
+        schema: abfss", run 38040822572), and `s3()`/`file()` on Azure take an account key, or
+        OAuth2 only inside an Iceberg REST catalog (AzureProperties). So the CSV is read over
+        OneLake's https endpoint with `http()`: the SAS in the URL, or the bearer as a header.
         Doris names TVF CSV columns c1..cN unless `csv_schema` declares them.
         """
-        # Not the OAuth2 set: hdfs() refuses it ("OAuth2 auth type is only supported for iceberg
-        # rest catalog", run 36400638699).
-        storage = self.storage(sas)["workload identity (raw fs.azure keys) alone"]
-        fs = path.split("/", 3)
-        common = {
-            "uri": path,
-            "fs.defaultFS": f"{fs[0]}//{fs[2]}",
-            "format": "csv",
-            "skip_lines": "1",
-        } | storage
+        relative = path.split("/", 3)[3]
+        url = f"https://{ONELAKE_DFS}/{self.cfg.workspace_id}/{relative}"
+        bearer = {
+            "http.header.Authorization": f"Bearer {auth.onelake_token()}",
+            "http.header.x-ms-version": "2023-11-03",
+        }
+        common = {"format": "csv", "skip_lines": "1"}
 
-        def tvf(props: dict[str, str]) -> str:
-            return f"hdfs({self._props(common | props)})"
+        def tvf(uri: str, props: dict[str, str]) -> str:
+            return f"http({self._props({'uri': uri} | common | props)})"
 
         named = {c: c.lower() for c in COLUMNS}
 
-        def declared(width: int) -> tuple[str, dict[str, str]]:
+        def declared(uri: str, width: int, extra: dict[str, str]) -> tuple[str, dict[str, str]]:
             names = [c.lower() for c in COLUMNS] + [f"c{i}" for i in range(len(COLUMNS), width)]
             schema = ";".join(f"{n}:string" for n in names)
             props = {"column_separator": ",", "enclose": '"', "csv_schema": schema}
-            return tvf(props), named
+            return tvf(uri, props | extra), named
 
-        lines = tvf({"column_separator": "|~|", "csv_schema": "line:string"})
+        signed = f"{url}?{sas}"
+        lines = tvf(signed, {"column_separator": "|~|", "csv_schema": "line:string"})
         split = {c: f"split_part(line, ',', {i + 1})" for i, c in enumerate(COLUMNS)}
         return {
-            "53 string columns (csv_schema)": declared(len(COLUMNS)),
-            "120 string columns (csv_schema)": declared(CSV_MAX_WIDTH),
-            "one string per line, split_part": (lines, split),
+            "http(), SAS, 53 string columns": declared(signed, len(COLUMNS), {}),
+            "http(), SAS, 120 string columns": declared(signed, CSV_MAX_WIDTH, {}),
+            "http(), SAS, one string per line, split_part": (lines, split),
+            "http(), bearer header, 120 string columns": declared(url, CSV_MAX_WIDTH, bearer),
         }
 
     def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
