@@ -605,7 +605,7 @@ function renderDbt() {
 const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
 const WORKLOAD_ROWS = [
   { engine: "duckdb_iceberg", file: { ok: true, note: "<code>filename</code>" },
-    merge: { ok: true, note: "" }, verdict: "the engine it runs on" },
+    merge: { ok: true, note: "" } },
   { engine: "pyspark_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
     merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
   { engine: "pyspark_gluten_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
@@ -627,13 +627,13 @@ const WORKLOAD_ROWS = [
 function renderWorkload() {
   const sec = $(WORKLOAD.id);
   const mark = (ok, text) => `<td class="lv ${ok === true ? "excellent" : ok === false ? "none" : "partial"}"><i class="m"></i>${text}</td>`;
-  const head = ["Engine", "File name column", "dbt 1", "MERGE", "Replaces DuckDB here"];
+  const head = ["Engine", "File name column", "dbt 1", "MERGE"];
   sec.innerHTML = `
     <p class="caption">Nobody changes an engine because it is 2× faster. The new engine must run the workload
       you have today, and then be much better at something. What an engine supports comes before how fast it is.</p>
     <p class="caption">One real project: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB read AEMO CSV files
       from OneLake Files and load them into Iceberg tables through the OneLake catalog, every hour. To replace DuckDB
-      there, an engine needs all three:</p>
+      there, an engine needs all three. One red cell and it is not an option:</p>
     <ul class="caption">
       <li>it gives the source file name as a column: the project keys and dedupes on it;</li>
       <li>it has a dbt 1 adapter that works on Iceberg tables;</li>
@@ -643,14 +643,12 @@ function renderWorkload() {
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${WORKLOAD_ROWS.map(r => {
       const dbt = DBT_ROWS.find(d => d.engine === r.engine);
       const dbtOk = ["excellent", "good"].includes(dbt.level) ? true : dbt.level === "partial" ? null : false;
-      const yes = r.file.ok && r.merge.ok && dbtOk === true;
       return `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
         ${mark(r.file.ok, r.file.note)}
         ${mark(dbtOk, dbt.adapter ? `<a href="#dbt">${esc(dbt.adapter)}</a>` : `<a href="#dbt">no adapter</a>`)}
         ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
-        ${mark(yes, r.verdict ?? (yes ? "Yes" : "No"))}
       </tr>`; }).join("")}</tbody></table></div>
     <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: the <a href="#dbt">dbt support</a> tab.
       MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
