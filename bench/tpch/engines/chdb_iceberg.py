@@ -24,6 +24,7 @@ import os
 import pathlib
 
 from bench import auth, scrub
+from bench.chdb_version import chdb_version
 from bench.config import CATALOG_CACHE_SECONDS, ICEBERG_ENDPOINT, Config
 from bench.tpch.config import chdb_cache_gib
 from bench.tpch.engines.base import restart_on_fresh_token
@@ -88,9 +89,7 @@ class ChdbIceberg:
 
     @property
     def version(self) -> str:
-        import chdb
-
-        return chdb.__version__
+        return chdb_version()
 
     def _write_config(self, scratch: pathlib.Path) -> pathlib.Path:
         """The ClickHouse server config: cache location and size, spill path, memory ceiling.

@@ -67,6 +67,7 @@ jobs:
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
       started: ${{ steps.plan.outputs.started }}
+      chdb_core_source: ${{ steps.chdb_core.outputs.source }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -85,6 +86,13 @@ jobs:
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
           echo "engines: $ENGINES"
+
+      - id: chdb_core
+        name: Resolve chdb-core
+        if: contains(fromJSON(steps.plan.outputs.engines), 'chdb_iceberg')
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          resolve-only: "true"
 
       # OIDC only. No client secret exists on this app registration.
       - uses: azure/login@v3
@@ -156,6 +164,12 @@ jobs:
         run: |
           pip install -r "requirements/etl_${BENCH_ENGINE}.txt"
           pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|daft|pysail|pyspark|pyiceberg|pyarrow)=' || true
+
+      - name: Install latest usable chdb-core
+        if: matrix.engine == 'chdb_iceberg'
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          source: ${{ needs.land.outputs.chdb_core_source }}
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
       # .github/scripts/duckdb_nightly.py which nightly.

@@ -76,6 +76,7 @@ jobs:
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
       started: ${{ steps.plan.outputs.started }}
+      chdb_core_source: ${{ steps.chdb_core.outputs.source }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -94,6 +95,13 @@ jobs:
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
           echo "engines: $ENGINES"
+
+      - id: chdb_core
+        name: Resolve chdb-core
+        if: contains(fromJSON(steps.plan.outputs.engines), 'chdb_iceberg') && inputs.override == ''
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          resolve-only: "true"
 
       # OIDC only. No client secret exists on this app registration.
       - uses: azure/login@v3
@@ -184,6 +192,13 @@ jobs:
           pip install -r "requirements/${BENCH_ENGINE}.txt"
           if [ -n "$OVERRIDE" ]; then pip install --force-reinstall --no-deps "$OVERRIDE"; fi
           pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pysail|pyiceberg|pyarrow)=' || true
+
+      # Keep the PyPI chdb wrapper and update only chdb-core; an explicit override still wins.
+      - name: Install latest usable chdb-core
+        if: matrix.engine == 'chdb_iceberg' && inputs.override == ''
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          source: ${{ needs.prepare.outputs.chdb_core_source }}
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
       # .github/scripts/duckdb_nightly.py which nightly.

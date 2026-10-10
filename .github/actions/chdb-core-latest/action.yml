@@ -1,0 +1,36 @@
+name: Latest usable chdb-core
+description: Install the newest usable Linux x86_64 chdb-core wheel.
+
+inputs:
+  channel:
+    description: Select auto, release, or nightly builds.
+    required: false
+    default: auto
+  source:
+    description: Install a source returned by an earlier resolve step.
+    required: false
+    default: ""
+  resolve-only:
+    description: Resolve and output a source without installing it.
+    required: false
+    default: "false"
+
+outputs:
+  source:
+    description: Selected release or nightly build.
+    value: ${{ steps.install.outputs.source }}
+  version:
+    description: Installed chdb-core version.
+    value: ${{ steps.install.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CHDB_CORE_CHANNEL: ${{ inputs.channel }}
+        CHDB_CORE_SOURCE_INPUT: ${{ inputs.source }}
+        CHDB_CORE_RESOLVE_ONLY: ${{ inputs.resolve-only }}
+      run: python3 "$GITHUB_WORKSPACE/.github/scripts/chdb_core_latest.py"

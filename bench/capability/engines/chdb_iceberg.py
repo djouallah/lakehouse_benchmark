@@ -20,6 +20,7 @@ import json
 import tempfile
 
 from bench import auth, scrub
+from bench.chdb_version import chdb_version
 from bench.config import ICEBERG_ENDPOINT, Config
 
 # The attached catalog's name inside chDB.
@@ -58,9 +59,7 @@ class ChdbIceberg:
 
     @property
     def version(self) -> str:
-        import chdb
-
-        return chdb.__version__
+        return chdb_version()
 
     def setup(self) -> None:
         from chdb import session

@@ -52,7 +52,9 @@ on:
       - "requirements/**"
       - ".github/scripts/smoke_*.py"
       - ".github/scripts/duckdb_nightly.py"
+      - ".github/scripts/chdb_core_latest.py"
       - ".github/actions/duckdb-nightly/**"
+      - ".github/actions/chdb-core-latest/**"
       - ".github/workflows/smoke.yml"
 
 concurrency:
@@ -77,6 +79,7 @@ jobs:
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
       duckdb-run-id: ${{ steps.duckdb.outputs.run-id }}
+      chdb_core_source: ${{ steps.chdb_core.outputs.source }}
     steps:
       - id: plan
         run: |
@@ -97,6 +100,12 @@ jobs:
       # sql and catalog jobs to this same build.
       - id: duckdb
         uses: ./.github/actions/duckdb-nightly
+      - id: chdb_core
+        name: Resolve chdb-core
+        if: contains(fromJSON(steps.plan.outputs.engines), 'chdb_iceberg')
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          resolve-only: "true"
       - if: (inputs.suite || 'tpch') == 'tpcds'
         run: pip install -r requirements/duckdb_iceberg.txt
       - if: (inputs.suite || 'tpch') != 'tpcds'
@@ -149,6 +158,12 @@ jobs:
 
       # The ENGINE's file only. No generator here: the data comes from the cache `plan` filled.
       - run: pip install -r "requirements/${{ matrix.engine }}.txt"
+
+      - name: Install latest usable chdb-core
+        if: matrix.engine == 'chdb_iceberg'
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          source: ${{ needs.plan.outputs.chdb_core_source }}
 
       # The nightly CLI `plan` generated with, so the DuckDB jobs read with the generator's build.
       - name: Install the DuckDB nightly CLI
@@ -279,6 +294,12 @@ jobs:
           key: ivy-spark41-iceberg111-v1
 
       - run: pip install -r "requirements/${{ matrix.engine }}.txt"
+
+      - name: Install latest usable chdb-core
+        if: matrix.engine == 'chdb_iceberg'
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          source: ${{ needs.plan.outputs.chdb_core_source }}
 
       # The nightly CLI `plan` generated with, so the DuckDB jobs read with the generator's build.
       - name: Install the DuckDB nightly CLI

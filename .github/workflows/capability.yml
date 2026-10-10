@@ -42,6 +42,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       clients: ${{ steps.plan.outputs.clients }}
+      chdb_core_source: ${{ steps.chdb_core.outputs.source }}
     steps:
       - id: plan
         run: |
@@ -49,6 +50,14 @@ jobs:
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
+
+      - uses: actions/checkout@v5
+      - id: chdb_core
+        name: Resolve chdb-core
+        if: contains(fromJSON(steps.plan.outputs.clients), 'chdb')
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          resolve-only: "true"
 
   ask:
     needs: plan
@@ -96,6 +105,12 @@ jobs:
         run: |
           pip install -r "$REQS"
           pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|chdb|polars)=' || true
+
+      - name: Install latest usable chdb-core
+        if: matrix.client == 'chdb'
+        uses: ./.github/actions/chdb-core-latest
+        with:
+          source: ${{ needs.plan.outputs.chdb_core_source }}
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why.
       - name: DuckDB nightly CLI
