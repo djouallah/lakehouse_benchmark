@@ -29,6 +29,10 @@ on:
         description: Comma-separated query numbers, run in this order.
         type: string
         default: "19"
+      warmup:
+        description: Run each query once, untimed, before the captured run, so its files are cached.
+        type: boolean
+        default: false
       duckdb-run-id:
         description: A duckdb/duckdb nightly run to pin. Empty picks the newest usable one.
         type: string
@@ -46,6 +50,7 @@ env:
   TPCH_SF: ${{ inputs.sf }}
   TPCDS_SF: ${{ inputs.sf }}
   PLAN_QUERIES: ${{ inputs.queries }}
+  PLAN_WARMUP: ${{ inputs.warmup }}
   BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
   FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
   FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}

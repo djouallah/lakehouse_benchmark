@@ -16,6 +16,8 @@ query runs once, cold, with the engine's own plan instrumentation on:
 * Spark: the executed physical plan after `collect()` -- the final plan when AQE re-planned --
   with each node's SQL metrics (`numOutputRows`, spill).
 
+PLAN_WARMUP=true runs each query once, untimed, before the captured run (see main).
+
 A query that fails is still written: the error, the estimates when the engine gave them, and the
 time it ran before failing. Bad joins are about exactly those.
 """
@@ -36,6 +38,7 @@ from bench.tpch.engines import get_engine
 from bench.tpch.queries import load
 
 TMP = Path(os.environ.get("RUNNER_TEMP", "."))
+WARMUP = os.environ.get("PLAN_WARMUP", "false") == "true"
 _ONELAKE_PATH = re.compile(r"abfss://[^/\"',\s]*/[^/\"',\s]*/Tables/")
 
 
@@ -188,7 +191,17 @@ def main() -> int:
                 "query": number,
                 "sf": cfg.sf,
                 "run_url": os.environ.get("BENCH_RUN_URL", ""),
+                "warmup": WARMUP,
             }
+            if WARMUP:
+                # Once untimed first, the same for every engine: the files are then in the engine's
+                # cache, as they are in the benchmark, where earlier queries read them. The plan
+                # is the subject here, not a cold read from OneLake.
+                try:
+                    engine.execute(statements[number - 1])
+                except Exception as exc:  # noqa: BLE001 - the captured run reports it
+                    scrub.safe_print(f"  Q{number} warm-up failed: {scrub.scrub_exc(exc, 160)}")
+                engine.refresh()
             try:
                 record.update(CAPTURE[cfg.engine](engine, statements[number - 1]))
             except Exception as exc:  # noqa: BLE001 - the capture itself broke: say so, go on
