@@ -21,10 +21,10 @@ from bench.config import SQL_DIR, Config
 # THE ENGINES THAT FINISH. Two of TPC-H's are left out, on measurement, not taste -- run
 # 35732997698 (SF=10) and 35732283791 (SF=1) are the evidence:
 #
-#   chdb_iceberg      ABORTS IN GLIBC on its first query: `pthread_mutex_lock.c:94 assertion
-#                     failed: mutex->__data.__owner == 0`, exit 134, no result rows at all. Both
-#                     at SF=1 and SF=10, and against tables written by two different writers, so
-#                     it is chDB 4.4.0, not the data. TPC-H is unaffected -- chDB still runs there.
+#   chdb_iceberg      chdb-core 26.9.0 ABORTED IN GLIBC on its first query (`pthread_mutex_lock.c:94
+#                     assertion failed`, exit 134). The chdb-core main build no longer crashes but
+#                     fails 6 of 99 on known ClickHouse issues (LEARNING.md#chdb), and a run is
+#                     all or nothing. TPC-H is unaffected -- chDB still runs there.
 #   daft_iceberg      never ran here: TPC-H already excludes it from the query benchmark
 #                     (Eventual-Inc/Daft#7532).
 #

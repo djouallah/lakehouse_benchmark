@@ -85,7 +85,7 @@ Largest scale each engine completes, cold, every statement answered:
 | StarRocks | **SF=300** (3,943 s) | — | TPC-DS: Q49 is a StarRocks SQL bug (#79807) |
 | LakeSail | SF=100 (2,476 s) | SF=10 (1,632 s) | TPC-DS SF=60 Q72: spill passes Sail's 64 GB cap; SF=100 Q64: the 10 GiB pool runs out |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
-| chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS aborts in glibc at any SF |
+| chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS: 93/99 at SF=1 on the chdb-core main build; the other 6 are known ClickHouse issues |
 | Polars | SF=100 (589 s, main build c36581695d) | **SF=100** (1,167 s, main build e691ac01b8) | Nothing yet up to SF=100, the largest scale the workflows offer. Joins and group-bys still have no spill |
 
 - **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap. It,
@@ -310,9 +310,20 @@ Largest scale each engine completes, cold, every statement answered:
   - Q21 needed 10.41 GiB against a 9.31 GiB cap: its `IN`/`NOT IN` subqueries are hash sets of
     ~100M keys, which don't spill. The cap is now 12 GB a query and 13 GB the process, DuckDB's
     default share of this runner.
-- **TPC-DS aborts in glibc on its first query:** `pthread_mutex_lock.c:94 assertion failed`,
-  exit 134, no rows. It happened at SF=1 and SF=10, against tables from two different writers,
-  so it is chDB 4.4.0, not the data. TPC-H is unaffected.
+- **TPC-DS no longer crashes, but 6 of 99 queries fail.** With chdb-core 26.9.0, chDB aborted in
+  glibc on its first TPC-DS query (`pthread_mutex_lock.c:94 assertion failed`, exit 134). The
+  chdb-core main build (chdb-io/chdb-core@6b4015b6b0, engine 26.9.2.1) runs 93/99 at SF=1, 92 of
+  them checked over OneLake too, with the same row counts as DuckDB (runs 38040069896,
+  38040272246, 38041411988). The 6 failures are known ClickHouse behaviour:
+  - Q36, Q66: an aggregate with its column's name as alias (`sum(x) AS x`), ClickHouse#9715.
+  - Q47, Q57: with three or more tables in FROM, `v1.a` keeps the name `v1.a`, so the outer query
+    can't find `a`. Two tables work. ClickHouse#34697.
+  - Q75: `SUM` over a `CASE` mixing Decimal and Float64, ClickHouse#106707
+    (`allow_lossy_numeric_supertype` avoids it).
+  - Q18: `CAST(NULL AS decimal(12, 2))` is an error, not NULL (`cast_keep_nullable = 1` avoids it).
+  - Q49 failed too, on the bench's SQL: it named a subquery `CATALOG` and then used
+    `catalog.item`. ClickHouse names are case-sensitive. sql/tpcds.sql now writes `catalog`, as the
+    spec does.
 - **Its filesystem cache doesn't check free space.** A `max_size` bigger than the disk is an
   ENOSPC mid-query, not an eviction. The Fabric notebook this came from asked for 150 GiB, 10×
   the runner's disk. The cache is now 1.5× the dataset, clamped to 2–8 GiB (`chdb_cache_gib`).
