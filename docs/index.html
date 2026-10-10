@@ -10,7 +10,7 @@
    the same here as in every PNG. */
 :root {
   --surface: #fcfcfb; --raised: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8984;
-  --grid: #d8d7d2; --track: #f0efeb; --accent: #2a78d6;
+  --grid: #d8d7d2; --track: #f0efeb; --accent: #2a78d6; --no: #c2412d; --noop: #b07d00;
   --duckdb_iceberg: #2a78d6; --chdb_iceberg: #eb6834; --polars_iceberg: #1baf7a;
   --lakesail_iceberg: #eda100; --daft_iceberg: #8a5cd1; --pyspark_iceberg: #d6468f;
   --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
@@ -18,7 +18,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --surface: #1a1a19; --raised: #222221; --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8984;
-    --grid: #3a3a37; --track: #262624; --accent: #3987e5;
+    --grid: #3a3a37; --track: #262624; --accent: #3987e5; --no: #ef6a54; --noop: #d9a520;
     --duckdb_iceberg: #3987e5; --chdb_iceberg: #d95926; --polars_iceberg: #199e70;
     --lakesail_iceberg: #c98500; --daft_iceberg: #9b6ee0; --pyspark_iceberg: #e05a9c;
     --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
@@ -94,6 +94,48 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
 .details a { color: var(--accent); }
+/* Capability: operations down, engines across, one mark per cell. */
+.cap .chips { margin-top: 12px; }
+.cap .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink-2); margin: 0 0 12px; }
+.cap .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cap .wrap { overflow-x: auto; }
+.cap table { border-collapse: collapse; width: 100%; min-width: 440px; font-variant-numeric: tabular-nums; }
+.cap th, .cap td { padding: 0; }
+.cap thead th { vertical-align: bottom; padding-bottom: 8px; }
+.cap thead th.op { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.cap .eng { display: grid; justify-items: center; gap: 3px; min-width: 64px; }
+.cap .eng .nm { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cap .eng .sw { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+.cap .eng .ver { font-size: 11px; color: var(--ink-3); max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap .score { width: 52px; height: 4px; border-radius: 2px; background: var(--track); overflow: hidden; }
+.cap .score i { display: block; height: 100%; background: var(--c); }
+.cap .eng .ct { font-size: 11px; color: var(--ink-2); }
+.cap td.label { position: sticky; left: 0; background: var(--surface); z-index: 1; font-size: 14px; padding: 7px 12px 7px 0; min-width: 170px; }
+.cap tr.r td { border-top: 1px solid var(--track); }
+.cap tr.r:hover td { background: var(--track); }
+.cap tr.grp td { padding: 16px 0 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+.cap tr.grp td span { position: sticky; left: 0; }
+.cap td.cell { text-align: center; }
+.cap .c { width: 34px; height: 30px; border: 0; background: transparent; cursor: pointer; display: inline-grid; place-items: center; border-radius: 6px; font: inherit; }
+.cap .c:hover { background: var(--raised); }
+.cap .c:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cap .c.na { cursor: default; }
+.cap .m { width: 14px; height: 14px; border-radius: 50%; display: block; position: relative; }
+.cap .supported .m { background: var(--c); }
+.cap .no .m { border: 2px solid var(--no); }
+.cap .no .m::before, .cap .no .m::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 2px; background: var(--no); border-radius: 1px; }
+.cap .no .m::before { transform: translate(-50%, -50%) rotate(45deg); }
+.cap .no .m::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.cap .no-op .m { border: 2px solid var(--noop); background: linear-gradient(90deg, var(--noop) 50%, transparent 50%); }
+.cap .na .m { width: 10px; height: 2px; border-radius: 1px; background: var(--grid); }
+.cap .skipped .m, .cap .broken .m { width: auto; height: auto; border-radius: 0; color: var(--ink-3); }
+.cap .skipped .m::before { content: "\2014"; }
+.cap .broken .m::before { content: "?"; }
+.cap .blocked { margin-top: 12px; font-size: 13px; color: var(--ink-2); max-width: 75ch; }
+.cap .blocked b { color: var(--ink); font-weight: 600; }
+.cap .note { font-size: 13px; color: var(--ink-2); max-width: 75ch; margin: 8px 0 0; }
+.cap .note a { color: var(--accent); }
+.tip code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--ink); }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
 footer a, .lane a { color: var(--accent); }
 .empty { color: var(--ink-2); padding: 24px 0; }
@@ -117,6 +159,7 @@ footer a, .lane a { color: var(--accent); }
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+  <section class="cap" id="capability" hidden></section>
   <section class="details" id="about" hidden>
     <p>This repo checks how well each engine works with an Iceberg REST catalog, mainly OneLake. No engine is
       favoured; the timings are a side effect.</p>
@@ -258,8 +301,9 @@ const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
-const PAGES = [DETAILS, ABOUT];  // static sections, no chart
-const state = { suite: SUITES[0].id, sf: {} };
+const CAPABILITY = { id: "capability", title: "Capability", json: "data/capability.json" };
+const PAGES = [CAPABILITY, DETAILS, ABOUT];  // sections of their own, no bar chart
+const state = { suite: SUITES[0].id, sf: {}, group: "All" };
 const data = {};
 
 function renderTabs() {
@@ -278,6 +322,7 @@ function render() {
   const page = PAGES.find(p => p.id === state.suite);
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
+  if (page === CAPABILITY) { renderCapability(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -332,6 +377,82 @@ function render() {
   }
 }
 
+// THE CAPABILITY TAB: data/capability.json, published by .github/scripts/capability_publish.py from
+// djouallah/iceberg-probe-native. One cell per operation and engine; a row the catalog itself
+// blocks is not in the grid but listed under it.
+const WORD = { supported: "yes", no: "no", "no-op": "accepted, not applied", na: "no such operation",
+               skipped: "not probed", broken: "the probe could not ask" };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderCapability() {
+  const cap = data.capability, sec = $("capability");
+  if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${CAPABILITY.json}.</div>`; return; }
+  const engines = Object.keys(cap.engines), groups = ["All", ...cap.groups];
+  if (!groups.includes(state.group)) state.group = "All";
+  const score = e => {
+    const asked = cap.rows.map(r => r.cells[e].o).filter(o => o !== "na" && o !== "skipped");
+    return [asked.filter(o => o === "supported").length, asked.length];
+  };
+  sec.innerHTML = `
+    <div class="chips">${groups.map(g => `<button aria-pressed="${g === state.group}">${esc(g)}</button>`).join("")}</div>
+    <p class="caption">What each engine can do against the OneLake Iceberg REST catalog, checked by reading the result back through the catalog.</p>
+    <div class="legend">
+      <span class="supported" style="--c: var(--ink-2)"><i class="m"></i>yes</span>
+      <span class="no"><i class="m"></i>no</span>
+      <span class="no-op"><i class="m"></i>accepted, not applied</span>
+      <span class="na"><i class="m"></i>no such operation</span>
+    </div>
+    <div class="wrap"><table>
+      <thead><tr><th class="op" scope="col">Operation</th>${engines.map(e => {
+        const [yes, of] = score(e), v = cap.engines[e].version;
+        return `<th scope="col" style="--c: var(--${e}, var(--ink-3))"><div class="eng">
+          <span class="nm"><i class="sw"></i>${esc(LABEL[e] ?? e)}</span>
+          <span class="ver" title="${esc(v)}">${esc(v)}</span>
+          <span class="score" aria-hidden="true"><i style="width:${(100 * yes / Math.max(of, 1)).toFixed(0)}%"></i></span>
+          <span class="ct">${yes} of ${of}</span></div></th>`;
+      }).join("")}</tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="blocked"><b>Waiting on the OneLake catalog, so not scored:</b> ${cap.blocked.map(esc).join(" · ")}.</p>
+    <p class="note">In the concurrency rows a second writer commits between the engine's read and its commit.
+      Every reading, with what came back: <a href="https://github.com/djouallah/iceberg-probe-native#readme">iceberg-probe-native</a>.</p>`;
+  [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group = groups[i]; render(); });
+
+  const body = sec.querySelector("tbody");
+  let last = null;
+  for (const row of cap.rows) {
+    if (state.group !== "All" && row.group !== state.group) continue;
+    if (state.group === "All" && row.group !== last) {
+      body.insertAdjacentHTML("beforeend", `<tr class="grp"><td colspan="${engines.length + 1}"><span>${esc(row.group)}</span></td></tr>`);
+      last = row.group;
+    }
+    const tr = document.createElement("tr");
+    tr.className = "r";
+    tr.innerHTML = `<td class="label">${esc(row.label)}</td>` + engines.map(e => {
+      const o = row.cells[e].o;
+      return `<td class="cell"><button class="c ${o}" style="--c: var(--${e}, var(--ink-3))" data-e="${e}"
+        aria-label="${esc(LABEL[e] ?? e)}, ${esc(row.label)}: ${WORD[o]}"${o === "na" ? ' tabindex="-1"' : ""}><i class="m"></i></button></td>`;
+    }).join("");
+    for (const btn of tr.querySelectorAll(".c")) {
+      const e = btn.dataset.e, c = row.cells[e], run = cap.engines[e];
+      btn.onmouseenter = btn.onfocus = () => {
+        tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
+        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>
+          <div class="k">${esc(row.label)}</div><div><b>${WORD[c.o]}</b></div>` +
+          (c.n ? `<div><code>${esc(c.n)}</code></div>` : "") +
+          (c.o === "na" ? "" : `<div class="k">version ${esc(run.version)} · ${esc(run.date)} · click to open the run</div>`);
+        const r = btn.getBoundingClientRect();
+        moveTip(r.left + r.width / 2, r.top);
+        tip.classList.add("on");
+      };
+      btn.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+      btn.onmouseleave = btn.onblur = hideTip;
+      if (c.o !== "na") btn.onclick = () => window.open(run.url, "_blank", "noopener");
+    }
+    body.append(tr);
+  }
+}
+
 const tip = $("tip");
 function showTip(item, lane) {
   tip.style.setProperty("--c", `var(--${item.engine}, var(--ink-3))`);
@@ -367,7 +488,7 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #details, #about, or one engine on the details tab (#datafusion).
+// Deep links: #tpch, #tpcds, #capability, #details, #about, or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
@@ -377,9 +498,12 @@ function fromHash() {
 addEventListener("hashchange", () => { fromHash(); render(); });
 fromHash();
 if (PAGES.some(p => p.id === state.suite)) render(); else renderTabs();
-Promise.all(SUITES.map(s => fetch(s.csv).then(r => r.ok ? r.text() : Promise.reject(r.status))
-  .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})))
-  .then(render);
+Promise.all([
+  ...SUITES.map(s => fetch(s.csv).then(r => r.ok ? r.text() : Promise.reject(r.status))
+    .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})),
+  fetch(CAPABILITY.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { data.capability = j; }).catch(() => {}),
+]).then(render);
 </script>
 </body>
 </html>
