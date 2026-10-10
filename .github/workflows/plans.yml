@@ -1,0 +1,121 @@
+name: plans
+
+# The plans behind the results page's "Bad joins" tab (docs/index.html #plans): one engine, a few
+# queries, each run once with the engine's plan instrumentation on. .github/scripts/capture_plan.py
+# says what each engine reports. The raw plans come back as an artifact; plans_normalize.py turns
+# them into docs/data/plans/*.json, which is committed by hand -- this workflow writes nothing.
+#
+# Same setup as the bench job in bench.yml / tpcds.yml for the same engine, and the same OneLake
+# queue: a capture is a query against the lakehouse like any other.
+
+on:
+  workflow_dispatch:
+    inputs:
+      engine:
+        description: The engine whose plans to capture.
+        type: choice
+        options: [duckdb_iceberg, trino_iceberg, pyspark_iceberg, pyspark_gluten_iceberg]
+        default: duckdb_iceberg
+      suite:
+        type: choice
+        options: [tpcds, tpch]
+        default: tpcds
+      sf:
+        description: Scale factor; the suite's tables must already be in OneLake.
+        type: choice
+        options: ["1", "10", "30", "60", "100"]
+        default: "100"
+      queries:
+        description: Comma-separated query numbers, run in this order.
+        type: string
+        default: "19"
+      duckdb-run-id:
+        description: A duckdb/duckdb nightly run to pin. Empty picks the newest usable one.
+        type: string
+        default: ""
+
+concurrency:
+  group: onelake
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  PYTHONUNBUFFERED: "1"
+  BENCH_SUITE: ${{ inputs.suite }}
+  BENCH_ENGINE: ${{ inputs.engine }}
+  TPCH_SF: ${{ inputs.sf }}
+  TPCDS_SF: ${{ inputs.sf }}
+  PLAN_QUERIES: ${{ inputs.queries }}
+  BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+  FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  # bench.yml says why, for each.
+  AZURE_TRANSPORT_OPTION_TYPE: curl
+  CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
+  SPARK_DRIVER_MEMORY: 11g
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Free runner disk (SF >= 30)
+        if: contains(fromJSON('["30","60","100"]'), inputs.sf)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/${{ inputs.engine }}.txt
+      - run: pip install -r "requirements/${BENCH_ENGINE}.txt"
+
+      - name: Install the DuckDB nightly CLI
+        if: inputs.engine == 'duckdb_iceberg'
+        uses: ./.github/actions/duckdb-nightly
+        with:
+          run-id: ${{ inputs.duckdb-run-id }}
+
+      - uses: actions/setup-java@v5
+        if: startsWith(inputs.engine, 'pyspark')
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/cache@v4
+        if: startsWith(inputs.engine, 'pyspark')
+        with:
+          path: |
+            ~/.ivy2
+            ~/.ivy2.5.2
+            ~/.m2/repository
+          key: ivy-spark41-iceberg111-v1
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Pull the Trino image
+        if: inputs.engine == 'trino_iceberg'
+        run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
+
+      - name: Capture plans
+        shell: bash
+        run: python .github/scripts/capture_plan.py plans_raw 2>&1 | tee capture.log
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: plans-${{ inputs.engine }}-sf${{ inputs.sf }}
+          path: |
+            plans_raw/*.json
+            capture.log
+          if-no-files-found: warn
