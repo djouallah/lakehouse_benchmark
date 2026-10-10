@@ -177,7 +177,6 @@ footer a, .lane a { color: var(--accent); }
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="cap" id="iceberg" hidden></section>
-  <section class="cap rows" id="engines" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="details" id="about" hidden>
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
@@ -190,6 +189,9 @@ footer a, .lane a { color: var(--accent); }
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>The object store integration matters as much as the engine itself.</p>
     <p>When an engine fails, the bug is filed upstream (see <a href="#details">Details</a>).</p>
+    <h3>Engines</h3>
+    <p>What each engine is. From each project's own repo and site.</p>
+    <div class="cap rows" id="engines"></div>
   </section>
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
@@ -318,9 +320,8 @@ const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
-const ENGINES = { id: "engines", title: "Engines" };
 const DBT = { id: "dbt", title: "dbt" };
-const PAGES = [ENGINES, CAPABILITY, DBT, DETAILS, ABOUT];  // sections of their own, no bar chart
+const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT];  // sections of their own, no bar chart
 const state = { suite: SUITES[0].id, sf: {}, group: "All" };
 const data = {};
 
@@ -340,10 +341,9 @@ function render() {
   const page = PAGES.find(p => p.id === state.suite);
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
-  if (page === ENGINES) { renderEngines(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
-  if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
+  if (page) { $(page.id).querySelector(":target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
   const scales = Object.keys(results || {}).map(Number).sort((a, b) => a - b);
@@ -473,7 +473,7 @@ function renderCapability() {
   }
 }
 
-// THE ENGINES TAB: what each engine is. Facts from each project's own repo and site, no ratings.
+// THE ENGINES TABLE, on the About tab: what each engine is. Facts from each project's own repo and site, no ratings.
 // Every engine in LABEL has a row (tests/test_results_page.py).
 const ENGINE_ROWS = [
   { engine: "pyspark_iceberg", url: "https://github.com/apache/spark", started: "UC Berkeley AMPLab, 2009",
@@ -506,10 +506,8 @@ const ENGINE_ROWS = [
 ];
 
 function renderEngines() {
-  const sec = $(ENGINES.id);
   const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for"];
-  sec.innerHTML = `
-    <p class="caption">What each engine is. From each project's own repo and site.</p>
+  $("engines").innerHTML = `
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${ENGINE_ROWS.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
@@ -593,15 +591,16 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #engines, #iceberg, #dbt, #details, #about, or one engine on the details tab (#datafusion).
+// Deep links: #tpch, #tpcds, #iceberg, #dbt, #details, #about, #engines (on About), or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
-  else if (h && document.getElementById(h)?.closest("#details")) state.suite = DETAILS.id;
+  else if (h) state.suite = document.getElementById(h)?.closest("#details, #about")?.id ?? state.suite;
 }
 addEventListener("hashchange", () => { fromHash(); render(); });
+renderEngines();
 fromHash();
 if (PAGES.some(p => p.id === state.suite)) render(); else renderTabs();
 Promise.all([
