@@ -141,14 +141,17 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .none .m::before, .cap .none .m::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 2px; background: var(--no); border-radius: 1px; }
 .cap .none .m::before { transform: translate(-50%, -50%) rotate(45deg); }
 .cap .none .m::after { transform: translate(-50%, -50%) rotate(-45deg); }
-.dbt table { min-width: 0; }
-.dbt td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
-.dbt td.e { font-weight: 700; white-space: nowrap; }
-.dbt td.e .sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 6px; }
-.dbt td.lv { white-space: nowrap; }
-.dbt td.lv .m { display: inline-block; vertical-align: -2px; margin-right: 6px; }
-.dbt td.n { color: var(--ink-2); }
-.dbt a { color: var(--accent); }
+/* Engines and dbt: plain tables, one row per engine. */
+.rows table { min-width: 0; }
+#engines table { min-width: 760px; }
+.rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
+.rows td.e { font-weight: 700; white-space: nowrap; }
+.rows td.e .sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 6px; }
+.rows td.lv { white-space: nowrap; }
+.rows td.lv .m { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.rows td.n { color: var(--ink-2); }
+.rows a { color: var(--accent); }
 .tip code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--ink); }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
 footer a, .lane a { color: var(--accent); }
@@ -174,7 +177,8 @@ footer a, .lane a { color: var(--accent); }
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="cap" id="iceberg" hidden></section>
-  <section class="cap dbt" id="dbt" hidden></section>
+  <section class="cap rows" id="engines" hidden></section>
+  <section class="cap rows" id="dbt" hidden></section>
   <section class="details" id="about" hidden>
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
     <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
@@ -314,8 +318,9 @@ const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
+const ENGINES = { id: "engines", title: "Engines" };
 const DBT = { id: "dbt", title: "dbt" };
-const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT];  // sections of their own, no bar chart
+const PAGES = [ENGINES, CAPABILITY, DBT, DETAILS, ABOUT];  // sections of their own, no bar chart
 const state = { suite: SUITES[0].id, sf: {}, group: "All" };
 const data = {};
 
@@ -335,6 +340,7 @@ function render() {
   const page = PAGES.find(p => p.id === state.suite);
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
+  if (page === ENGINES) { renderEngines(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
@@ -467,6 +473,52 @@ function renderCapability() {
   }
 }
 
+// THE ENGINES TAB: what each engine is. Facts from each project's own repo and site, no ratings.
+// "Used in" lists only services whose vendor docs say they ship the engine; vendor forks stay out.
+// Every engine in LABEL has a row (tests/test_results_page.py).
+const ENGINE_ROWS = [
+  { engine: "pyspark_iceberg", url: "https://github.com/apache/spark", started: "UC Berkeley AMPLab, 2009",
+    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "Scala",
+    use: "Distributed batch and streaming", usedIn: "Databricks, Microsoft Fabric, Azure Synapse, Google Dataproc, Amazon EMR and Glue" },
+  { engine: "pyspark_gluten_iceberg", url: "https://github.com/apache/gluten", started: "Intel and Kyligence, 2022; Velox by Meta",
+    governed: "Apache Software Foundation (Velox: Meta)", licence: "Apache 2.0", lang: "C++, Scala",
+    use: "Native execution inside Spark", usedIn: "Velox: Meta's Presto, IBM watsonx.data" },
+  { engine: "trino_iceberg", url: "https://github.com/trinodb/trino", started: "Facebook as Presto, 2012; Trino since 2020",
+    governed: "Trino Software Foundation", licence: "Apache 2.0", lang: "Java",
+    use: "Distributed SQL over many sources", usedIn: "Starburst, Amazon Athena, Amazon EMR, Google Dataproc" },
+  { engine: "starrocks_iceberg", url: "https://github.com/StarRocks/starrocks", started: "Fork of Apache Doris, 2020",
+    governed: "Linux Foundation", licence: "Apache 2.0", lang: "C++, Java",
+    use: "Distributed SQL, real-time and lakehouse", usedIn: "CelerData, Alibaba Cloud EMR" },
+  { engine: "duckdb_iceberg", url: "https://github.com/duckdb/duckdb", started: "CWI Amsterdam, 2019",
+    governed: "DuckDB Foundation; built by DuckDB Labs", licence: "MIT", lang: "C++",
+    use: "In-process SQL, one machine", usedIn: "MotherDuck; preinstalled in Microsoft Fabric Python notebooks" },
+  { engine: "chdb_iceberg", url: "https://github.com/chdb-io/chdb", started: "Auxten Wang, 2023",
+    governed: "Company: ClickHouse Inc. since 2024", licence: "Apache 2.0", lang: "C++",
+    use: "ClickHouse inside Python", usedIn: "—" },
+  { engine: "polars_iceberg", url: "https://github.com/pola-rs/polars", started: "Ritchie Vink, 2020",
+    governed: "Company: Polars", licence: "MIT", lang: "Rust",
+    use: "DataFrames, one machine", usedIn: "Polars Cloud; preinstalled in Microsoft Fabric Python notebooks" },
+  { engine: "lakesail_iceberg", url: "https://github.com/lakehq/sail", started: "LakeSail, 2024",
+    governed: "Company: LakeSail", licence: "Apache 2.0", lang: "Rust",
+    use: "Spark API on DataFusion", usedIn: "LakeSail platform" },
+  { engine: "daft_iceberg", url: "https://github.com/Eventual-Inc/Daft", started: "Eventual, 2022",
+    governed: "Company: Eventual", licence: "Apache 2.0", lang: "Rust",
+    use: "DataFrames for multimodal data, distributed", usedIn: "Daft Cloud" },
+];
+
+function renderEngines() {
+  const sec = $(ENGINES.id);
+  const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", "Used in"];
+  sec.innerHTML = `
+    <p class="caption">What each engine is. From each project's own repo and site.</p>
+    <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${ENGINE_ROWS.map(r => `
+      <tr style="--c: var(--${r.engine}, var(--ink-3))">
+        <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
+        <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
+        <td class="n">${r.lang}</td><td class="n">${r.use}</td><td class="n">${r.usedIn}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+}
+
 // THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB and
 // LakeSail were tried in fabric-medallion-dbt-community; the others come from their adapter docs.
 // Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in LABEL has a row
@@ -542,7 +594,7 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #iceberg, #dbt, #details, #about, or one engine on the details tab (#datafusion).
+// Deep links: #tpch, #tpcds, #engines, #iceberg, #dbt, #details, #about, or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
