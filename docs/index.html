@@ -143,7 +143,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .none .m::after { transform: translate(-50%, -50%) rotate(-45deg); }
 /* Engines and dbt: plain tables, one row per engine. */
 .rows table { min-width: 0; }
-#engines table { min-width: 760px; }
+#engines table { min-width: 640px; }
 .rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
@@ -474,48 +474,47 @@ function renderCapability() {
 }
 
 // THE ENGINES TAB: what each engine is. Facts from each project's own repo and site, no ratings.
-// "Used in" lists only services whose vendor docs say they ship the engine; vendor forks stay out.
 // Every engine in LABEL has a row (tests/test_results_page.py).
 const ENGINE_ROWS = [
   { engine: "pyspark_iceberg", url: "https://github.com/apache/spark", started: "UC Berkeley AMPLab, 2009",
     governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "Scala",
-    use: "Distributed batch and streaming", usedIn: "Databricks, Microsoft Fabric, Azure Synapse, Google Dataproc, Amazon EMR and Glue" },
+    use: "Distributed batch and streaming" },
   { engine: "pyspark_gluten_iceberg", url: "https://github.com/apache/gluten", started: "Intel and Kyligence, 2022; Velox by Meta",
     governed: "Apache Software Foundation (Velox: Meta)", licence: "Apache 2.0", lang: "C++, Scala",
-    use: "Native execution inside Spark", usedIn: "Velox: Meta's Presto, IBM watsonx.data" },
+    use: "Native execution inside Spark" },
   { engine: "trino_iceberg", url: "https://github.com/trinodb/trino", started: "Facebook as Presto, 2012; Trino since 2020",
     governed: "Trino Software Foundation", licence: "Apache 2.0", lang: "Java",
-    use: "Distributed SQL over many sources", usedIn: "Starburst, Amazon Athena, Amazon EMR, Google Dataproc" },
+    use: "Distributed SQL over many sources" },
   { engine: "starrocks_iceberg", url: "https://github.com/StarRocks/starrocks", started: "Fork of Apache Doris, 2020",
     governed: "Linux Foundation", licence: "Apache 2.0", lang: "C++, Java",
-    use: "Distributed SQL, real-time and lakehouse", usedIn: "CelerData, Alibaba Cloud EMR" },
+    use: "Distributed SQL, real-time and lakehouse" },
   { engine: "duckdb_iceberg", url: "https://github.com/duckdb/duckdb", started: "CWI Amsterdam, 2019",
     governed: "DuckDB Foundation; built by DuckDB Labs", licence: "MIT", lang: "C++",
-    use: "In-process SQL, one machine", usedIn: "MotherDuck; preinstalled in Microsoft Fabric Python notebooks" },
+    use: "In-process SQL, one machine" },
   { engine: "chdb_iceberg", url: "https://github.com/chdb-io/chdb", started: "Auxten Wang, 2023",
     governed: "Company: ClickHouse Inc. since 2024", licence: "Apache 2.0", lang: "C++",
-    use: "ClickHouse inside Python", usedIn: "—" },
+    use: "ClickHouse inside Python" },
   { engine: "polars_iceberg", url: "https://github.com/pola-rs/polars", started: "Ritchie Vink, 2020",
     governed: "Company: Polars", licence: "MIT", lang: "Rust",
-    use: "DataFrames, one machine", usedIn: "Polars Cloud; preinstalled in Microsoft Fabric Python notebooks" },
+    use: "DataFrames, one machine" },
   { engine: "lakesail_iceberg", url: "https://github.com/lakehq/sail", started: "LakeSail, 2024",
     governed: "Company: LakeSail", licence: "Apache 2.0", lang: "Rust",
-    use: "Spark API on DataFusion", usedIn: "LakeSail platform" },
+    use: "Spark API on DataFusion" },
   { engine: "daft_iceberg", url: "https://github.com/Eventual-Inc/Daft", started: "Eventual, 2022",
     governed: "Company: Eventual", licence: "Apache 2.0", lang: "Rust",
-    use: "DataFrames for multimodal data, distributed", usedIn: "Daft Cloud" },
+    use: "DataFrames for multimodal data, distributed" },
 ];
 
 function renderEngines() {
   const sec = $(ENGINES.id);
-  const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", "Used in"];
+  const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for"];
   sec.innerHTML = `
     <p class="caption">What each engine is. From each project's own repo and site.</p>
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${ENGINE_ROWS.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
-        <td class="n">${r.lang}</td><td class="n">${r.use}</td><td class="n">${r.usedIn}</td>
+        <td class="n">${r.lang}</td><td class="n">${r.use}</td>
       </tr>`).join("")}</tbody></table></div>`;
 }
 
