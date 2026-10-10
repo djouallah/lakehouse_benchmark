@@ -332,7 +332,7 @@ def provenance(data: dict) -> list[str]:
     lines = [
         "## Where these readings come from",
         "",
-        "The OneLake Iceberg REST catalog in production, read by CI "
+        "The OneLake Iceberg REST catalog, read by CI "
         "(`.github/workflows/capability.yml`), which writes this file. Every cell is a reading "
         "taken by sending the request, not a property of the product: re-run rather than trust it.",
         "",
@@ -345,12 +345,19 @@ def provenance(data: dict) -> list[str]:
     return lines + [""]
 
 
+PREVIEW = (
+    "The OneLake Iceberg API is still in private preview. Some issues are already fixed upstream."
+)
+
+
 def render(data: dict) -> str:
     table, notes = capability(data)
     out = [
         "# Iceberg support: what each engine can do against the OneLake Iceberg REST catalog",
         "",
         "Polars, DuckDB, Sail and chDB: engines with their own Iceberg implementation, no JVM.",
+        "",
+        PREVIEW,
         "",
         "`yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no "
         "such operation · `—` not probed · `?` the probe could not ask",

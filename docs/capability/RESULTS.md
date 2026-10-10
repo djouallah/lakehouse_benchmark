@@ -2,6 +2,8 @@
 
 Polars, DuckDB, Sail and chDB: engines with their own Iceberg implementation, no JVM.
 
+The OneLake Iceberg API is still in private preview. Some issues are already fixed upstream.
+
 `yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no such operation · `—` not probed · `?` the probe could not ask
 
 | Operation | Polars | DuckDB | Sail | chDB |
@@ -124,7 +126,7 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 
 ## Where these readings come from
 
-The OneLake Iceberg REST catalog in production, read by CI (`.github/workflows/capability.yml`), which writes this file. Every cell is a reading taken by sending the request, not a property of the product: re-run rather than trust it.
+The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`), which writes this file. Every cell is a reading taken by sending the request, not a property of the product: re-run rather than trust it.
 
 - polars: 2.0.0, [run 38014406401](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401), 2026-10-10
 - duckdb: v2.0.0-alpha46057, [run 38014406401](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38014406401), 2026-10-10
