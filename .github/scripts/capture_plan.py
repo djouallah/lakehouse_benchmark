@@ -53,8 +53,9 @@ def _duckdb(engine, sql: str) -> dict:
     profile = TMP / "duckdb_profile.json"
     profile.unlink(missing_ok=True)
     conn.sql(
-        f"SET profiling_output = '{profile.as_posix()}'; "
-        "SET profiling_mode = 'detailed'; SET enable_profiling = 'json';"
+        # This order: the output file's extension is checked against the profiling type.
+        f"SET enable_profiling = 'json'; SET profiling_output = '{profile.as_posix()}'; "
+        "SET profiling_mode = 'detailed';"
     )
     if engine._spill is not None:
         engine._spill.take_peak()
