@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 import pytest
 
@@ -184,6 +185,41 @@ def test_a_run_stops_at_the_first_failed_query():
     statements = [f"SELECT {n}" for n in range(1, 6)]
     rows = run_pass(_FailsOn2(), statements, "cold", hard_first=(4, 2))
     assert [(r.query, r.status) for r in rows] == [(4, "ok"), (2, "error")]
+
+
+def test_a_query_past_the_timeout_ends_the_run():
+    """A statement that does not finish is a failed one: the run stops there, it does not wait."""
+
+    class _HangsOn2(_Fake):
+        def execute(self, sql):
+            if sql == "SELECT 2":
+                time.sleep(5)
+            return 1
+
+    statements = [f"SELECT {n}" for n in range(1, 6)]
+    start = time.perf_counter()
+    rows = run_pass(_HangsOn2(), statements, "cold", hard_first=(4, 2), timeout=0.2)
+    assert time.perf_counter() - start < 2
+    assert [(r.query, r.status) for r in rows] == [(4, "ok"), (2, "error")]
+    assert rows[-1].error.startswith("QueryTimeout")
+
+
+def test_a_timed_out_run_leaves_the_busy_engine_alone(monkeypatch):
+    """close() would queue behind the abandoned statement; run_engine.py ends the process."""
+    import bench.tpch.runner as runner
+
+    monkeypatch.setattr(runner, "QUERY_TIMEOUT_S", 0.2)
+
+    class _Hangs(_Fake):
+        closed = False
+
+        def execute(self, sql):
+            time.sleep(5)
+
+    engine = _Hangs()
+    result = benchmark(engine, TpcdsConfig(workspace_id="w", lakehouse_id="l", sf=10))
+    assert result.status == "timed_out"
+    assert not engine.closed
 
 
 def test_tpch_keeps_query_order():

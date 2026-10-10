@@ -22,6 +22,7 @@ read one byte of them. A green check mark on that is worse than a red one.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -46,6 +47,11 @@ if __name__ == "__main__":
         scrub.safe_print(
             f"::error::{cfg.engine} failed Q{failed[0]}: the run stops there and publishes nothing"
         )
+        if result.status == "timed_out":
+            # The timed-out statement is still running on a thread nothing can stop, and
+            # interpreter shutdown would tear the engine down under it. _exit just ends.
+            sys.stdout.flush()
+            os._exit(1)
         sys.exit(1)
     # Captured HERE, on the runner that did the work -- not in publish, which is a different
     # machine and would stamp the results with its own hardware.

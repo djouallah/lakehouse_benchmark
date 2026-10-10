@@ -79,7 +79,7 @@ class Row:
 @dataclass
 class EngineResult:
     version: str
-    status: str = "ok"  # ok | setup_failed
+    status: str = "ok"  # ok | setup_failed | timed_out
     rows: list[Row] = field(default_factory=list)
     # The machine THIS engine ran on, captured in the bench job.
     #

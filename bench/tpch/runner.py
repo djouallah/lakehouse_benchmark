@@ -8,6 +8,9 @@ WHAT CHANGED BEYOND THE MEASUREMENT FIXES IN engines/base.py:
   2026-10-09): the first failure becomes a row with `status='error'` and a scrubbed message, the
   remaining statements are skipped, and run_engine.py publishes nothing for the engine. HARD_FIRST
   puts the queries most likely to fail first, so a run that will not complete stops in minutes.
+* A QUERY THAT DOES NOT FINISH IS A FAILED QUERY. QUERY_TIMEOUT_S caps every statement, for every
+  engine and both suites; past it the run stops exactly as on an error, instead of sitting on one
+  statement until the job's 355-minute cap (Spark-OSS at TPC-DS SF=100 spent 3 h to reach Q27).
 * SETUP IS ITS OWN ROW rather than being added to query 1's duration. See store.Row.
 * `exclude_list=[]` (a mutable default argument, and a real bug waiting to happen) is gone; there
   was never a caller that passed it.
@@ -16,11 +19,21 @@ WHAT CHANGED BEYOND THE MEASUREMENT FIXES IN engines/base.py:
 from __future__ import annotations
 
 import contextlib
+import threading
 import time
 
 from bench import scrub
 from bench.store import EngineResult, Row
 from bench.tpch.queries import load
+
+# 15 minutes. Above every statement that has ever completed in the bench (the slowest, 780 s, is
+# Sail's at TPC-H SF=100, as of 2026-10-10), so no published number would have changed under it;
+# far below the job cap, so a run that is going nowhere says so in minutes, not hours.
+QUERY_TIMEOUT_S = 900
+
+
+class QueryTimeout(Exception):
+    """A statement still running at QUERY_TIMEOUT_S. Recorded like any other failed query."""
 
 
 def _time(fn, *args) -> tuple[float, object, Exception | None]:
@@ -38,6 +51,24 @@ def _time(fn, *args) -> tuple[float, object, Exception | None]:
     return time.perf_counter() - start, value, None
 
 
+def _time_capped(fn, *args, timeout: float) -> tuple[float, object, Exception | None]:
+    """`_time`, but a call still running after `timeout` seconds returns QueryTimeout.
+
+    The call runs on a daemon thread because there is no portable way to interrupt one: DuckDB,
+    Polars and the JVM sit in native code where no Python signal reaches them. The thread is
+    abandoned, not stopped -- the engine stays busy, so benchmark() skips close() and
+    run_engine.py ends the process.
+    """
+    out: list = []
+    worker = threading.Thread(target=lambda: out.append(_time(fn, *args)), daemon=True)
+    start = time.perf_counter()
+    worker.start()
+    worker.join(timeout)
+    if out:
+        return out[0]
+    return time.perf_counter() - start, None, QueryTimeout(f"did not finish in {timeout:.0f} s")
+
+
 def order(n_statements: int, hard_first: tuple[int, ...] = ()) -> list[int]:
     """Query numbers in run order: `hard_first` as given, then the rest ascending."""
     first = [q for q in hard_first if 1 <= q <= n_statements]
@@ -49,9 +80,12 @@ def run_pass(
     statements: list[str],
     run_type: str,
     hard_first: tuple[int, ...] = (),
+    timeout: float | None = None,
 ) -> list[Row]:
     """One pass over the statements, hard ones first (config.HARD_FIRST), ending at the first
-    statement that fails: a run is all of the suite or nothing (run_engine.py)."""
+    statement that fails or runs past `timeout` (default QUERY_TIMEOUT_S): a run is all of the
+    suite or nothing (run_engine.py)."""
+    timeout = QUERY_TIMEOUT_S if timeout is None else timeout
     rows: list[Row] = []
     refresh = getattr(engine, "refresh", None)
     for number in order(len(statements), hard_first):
@@ -61,7 +95,7 @@ def run_pass(
             # to surface as the statement's own error, with whatever credential is still in place.
             with contextlib.suppress(Exception):
                 refresh()
-        duration, count, exc = _time(engine.execute, sql)
+        duration, count, exc = _time_capped(engine.execute, sql, timeout=timeout)
         if exc is None:
             rows.append(Row(run_type, "query", number, round(duration, 4), rows=count))
             scrub.safe_print(f"  Q{number:<2} {run_type:<4} {duration:8.3f}s  {count} rows")
@@ -103,6 +137,7 @@ def benchmark(engine, cfg) -> EngineResult:
     result.rows.append(Row("cold", "setup", 0, round(setup_duration, 4)))
     scrub.safe_print(f"  setup {setup_duration:.3f}s")
 
+    timed_out = False
     try:
         # A second pass runs the SAME statements again, immediately. Whatever the engine cached --
         # chDB's filesystem cache, DuckDB's buffer pool, the OS page cache -- is what the warm
@@ -110,9 +145,17 @@ def benchmark(engine, cfg) -> EngineResult:
         for run_type in cfg.PASSES:
             result.rows += run_pass(engine, statements, run_type, cfg.HARD_FIRST)
             if any(r.status == "error" for r in result.rows):
+                timed_out = any(
+                    (r.error or "").startswith(QueryTimeout.__name__) for r in result.rows
+                )
                 break
     finally:
-        engine.close()
+        # Not after a timeout: the abandoned statement still holds the engine, and close() would
+        # wait on it for as long as the timeout was there to save.
+        if timed_out:
+            result.status = "timed_out"
+        else:
+            engine.close()
 
     return result
 
