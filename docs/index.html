@@ -85,6 +85,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip .k { color: var(--ink-2); }
 .details { color: var(--ink-2); margin-top: 16px; }
 .details h3 { font-size: 15px; color: var(--ink); margin: 16px 0 4px; }
+.details p { max-width: 68ch; margin: 0 0 12px; }
 .details ul { margin: 0; padding-left: 18px; }
 .details li { margin: 6px 0; overflow-wrap: anywhere; }
 .details b { color: var(--ink); }
@@ -116,6 +117,13 @@ footer a, .lane a { color: var(--accent); }
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+  <section class="details" id="about" hidden>
+    <p>This is not really a benchmark. I have no preference for any engine. I want every engine to work as
+      well as possible with an Iceberg REST catalog, and with OneLake in particular.</p>
+    <p>The only way to make progress is competition. Every engine runs the same tests on the same small
+      machine; when one fails, the bug goes upstream (see <a href="#details">Details</a>), and the fix shows up
+      in the next run.</p>
+  </section>
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
     <ul>
@@ -244,13 +252,14 @@ function summarize(rows, suite) {
 const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
-const DETAILS = { id: "details", title: "Details" };
+const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
+const PAGES = [DETAILS, ABOUT];  // static sections, no chart
 const state = { suite: SUITES[0].id, sf: {} };
 const data = {};
 
 function renderTabs() {
   $("tabs").innerHTML = "";
-  for (const s of [...SUITES, DETAILS]) {
+  for (const s of [...SUITES, ...PAGES]) {
     const b = document.createElement("button");
     b.role = "tab"; b.textContent = s.title;
     b.setAttribute("aria-selected", s.id === state.suite);
@@ -261,10 +270,10 @@ function renderTabs() {
 
 function render() {
   renderTabs();
-  const details = state.suite === DETAILS.id;
-  for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = details;
-  $("details").hidden = !details;
-  if (details) { $("details").querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
+  const page = PAGES.find(p => p.id === state.suite);
+  for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
+  for (const p of PAGES) $(p.id).hidden = p !== page;
+  if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
   const scales = Object.keys(results || {}).map(Number).sort((a, b) => a - b);
@@ -353,16 +362,16 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #details, or one engine on the details tab (#datafusion).
+// Deep links: #tpch, #tpcds, #details, #about, or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
-  if ([...SUITES, DETAILS].some(s => s.id === h)) state.suite = h;
+  if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
   else if (h && document.getElementById(h)?.closest("#details")) state.suite = DETAILS.id;
 }
 addEventListener("hashchange", () => { fromHash(); render(); });
 fromHash();
-if (state.suite === DETAILS.id) render(); else renderTabs();
+if (PAGES.some(p => p.id === state.suite)) render(); else renderTabs();
 Promise.all(SUITES.map(s => fetch(s.csv).then(r => r.ok ? r.text() : Promise.reject(r.status))
   .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})))
   .then(render);
