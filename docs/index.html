@@ -205,7 +205,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     </ul>
     <h3>Tried, not added</h3>
     <ul>
-      <li><b>Apache Doris</b>: reads and writes OneLake Iceberg on 4.1.4.1 (TPC-H 22/22), but can't read the raw CSV files in the lakehouse: its file functions take no <code>abfss://</code> path.</li>
+      <li><b>Apache Doris</b>: reads and writes OneLake Iceberg on 4.1.4.1 (TPC-H 22/22), but can't read the raw CSV files in the lakehouse: its file functions take no <code>abfss://</code> path. Filed: <a href="https://github.com/apache/doris/issues/68877">#68877</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#apache-doris-iceberg-yes-raw-abfss-files-no">Details</a></li>
       <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths. Filed: <a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a> (open).</li>
       <li><b>Databend</b>: the release build can't read Iceberg on Azure; the fix (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) is in the nightly builds, not yet in a stable release. Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (open) decimals fail, TPC-H 5/22.</li>
       <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM. Filed: <a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>

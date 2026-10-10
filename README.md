@@ -26,7 +26,7 @@ In the bench, with gaps:
 
 Tried and not added:
 
-- **Apache Doris**: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes (condition 2).
+- **Apache Doris**: reads and writes OneLake Iceberg, but can't read raw files in the lakehouse; its file functions take no `abfss://` path (condition 2, [#68877](https://github.com/apache/doris/issues/68877)).
 - **Firebolt Core**: attaches the catalog, but only reads data from `s3://`, `gs://` or `file://`. It rejects OneLake's `abfss://` paths, and its `azure://` location takes no Azure token (condition 2; [firebolt-core#90](https://github.com/firebolt-db/firebolt-core/issues/90)).
 - **Databend**: the release build has no Azure storage for Iceberg ("azdls not supported now"); the fix is in the nightly builds, not yet in a stable release (condition 2; [databend#20590](https://github.com/databendlabs/databend/pull/20590), decimal bug [databend#20588](https://github.com/databendlabs/databend/issues/20588)).
 - **DataFusion Comet**: its native Iceberg scan has no `abfss://`, so OneLake scans fall back to the JVM ([apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058)) (condition 2).

@@ -643,12 +643,16 @@ class Trino(Candidate):
 
 
 class Doris(StarRocks):
-    """Apache Doris all-in-one: one FE (Java: planner, catalog) and one BE (C++) in one container.
+    """Apache Doris: one FE (Java: planner, catalog) and one BE (C++).
 
     Same shape and protocol as StarRocks (MySQL on 9030, user root), which forked from it in 2020.
 
-    ONELAKE IS A DOCUMENTED PATH (docs: lakehouse/best-practices/doris-onelake, 3.1.4+), but only
-    with a client secret, and this app registration has none. Doris routes
+    4.1.4.1 (run 38040822572): attach, Iceberg read, TPC-H 22/22 and Iceberg write pass with
+    workload identity. Only the Files CSV read fails: the file table functions take no OneLake
+    abfss:// path (filed apache/doris#68877, see LEARNING.md).
+
+    The documented OneLake setup (docs: lakehouse/best-practices/doris-onelake) uses a client
+    secret, and this app registration has none. Doris routes
     `abfss://...dfs.fabric.microsoft.com` to hadoop-azure over JNI and hands it the catalog's raw
     `fs.*` properties, the user's last so they win (AzureFileSystemProperties
     .oauth2BackendProperties). So the storage credential is hadoop-azure's workload identity, the
@@ -658,8 +662,8 @@ class Doris(StarRocks):
     would win there.
 
     NATIVE AZURE WILL NOT COVER ONELAKE. apache/doris#68103 (native Azure credentials, vended SAS)
-    keeps "genuine Fabric OneLake locations" on this Hadoop path, so the BE crash with workload
-    identity / SAS on that path is the blocker, not a missing feature.
+    keeps "genuine Fabric OneLake locations" on this Hadoop path. On 4.1.3 the BE crashed on that
+    path with workload identity / SAS; on 4.1.4.1, with JVM container support off, it does not.
 
     4.1.4.x ships only FE and BE component images (no all-in-one), so the default runs two
     containers on their own network. An `all-in-one-*` CANDIDATE_IMAGE runs the single container

@@ -518,6 +518,31 @@ Reviewed on paper (2026-10-10), no CI run. DataFusion fails on its Iceberg suppo
 - **Revisit when** datafusion-python ships an Iceberg catalog provider with writes. The Rust
   `iceberg-datafusion` crate has both (REST catalog, `INSERT INTO`), but only for Rust callers.
 
+## Apache Doris: Iceberg yes, raw `abfss://` files no
+
+Tried on 4.1.4.1 (2026-10-10, run 38040822572), not added.
+
+- **Iceberg on OneLake works.** Attach, read, TPC-H SF=10 22/22, and an Iceberg write that
+  pyiceberg reads back. The storage credential is workload identity, set as raw
+  `fs.azure.account.*` keys on the catalog (`WorkloadIdentityTokenProvider`), with no client
+  secret.
+- **It needed one JVM setting.** The FE and BE images run JDK 17, which crashed on the runner's
+  cgroup v2 ("anyController is null", run 38040345248). `JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport`
+  fixed it. On 4.1.3 the BE crashed (SIGSEGV) on the first data read; on 4.1.4.1 it did not.
+- **Raw files in `Files/` cannot be read.** The Iceberg path has OneLake code: `LocationPath`
+  sends OneLake `abfss://` paths to the BE's hadoop-azure reader. The file table functions do
+  not:
+  - `hdfs()` uses that same reader, but accepts only `hdfs`, `viewfs` and `jfs` paths:
+    "Unsupported schema: abfss". On master the list is `hdfs`, `viewfs`.
+  - `s3()` / `file()` on Azure take only an account key, which OneLake does not have. OAuth2 is
+    refused: "only supported for iceberg rest catalog".
+- **No workaround.** Reading each file over https with `http()` was tried and dropped: it is not
+  `abfss` support.
+- **apache/doris#68103 will not fix it.** It moves Azure to native credentials but keeps OneLake
+  on the Hadoop path.
+- **Revisit when** a file table function reads OneLake `abfss://`. Filed as
+  [apache/doris#68877](https://github.com/apache/doris/issues/68877).
+
 ## StarRocks
 
 In the bench since 2026-09-26, after passing the `candidate engine` workflow
