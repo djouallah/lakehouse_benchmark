@@ -58,3 +58,12 @@ def test_the_workload_merge_cells_match_the_iceberg_support_tab():
         start = table.index(f'engine: "{engine}"')
         cell = re.search(r"merge: \{ ok: (true|false)", table[start:]).group(1)
         assert (cell == "true") == (merge["cells"][engine]["o"] == "supported"), engine
+
+
+def test_every_workload_row_is_in_one_of_the_three_tiers():
+    import re
+
+    tiers = set(re.findall(r'\{ id: "(\w+)", title: "[^"]+", blurb:', rows("WORKLOAD_TIERS")))
+    assert tiers == {"veteran", "star", "niche"}
+    assert set(re.findall(r'tier: "(\w+)"', rows("WORKLOAD_ROWS"))) <= tiers
+    assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL)
