@@ -1,0 +1,302 @@
+{
+ "engine": "duckdb",
+ "version": "v2.0.0-alpha46057",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "DuckDB attaches the REST catalog",
+   "outcome": "supported",
+   "detail": "DuckDB v2.0.0-alpha46057 (azure 35c55cf13f, httpfs 4efb6297a8, iceberg 5b9ff899a1); 20 namespace(s), _bench_capability listed"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS on the existing `_bench_capability`",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE (the catalog assigns the location)",
+   "outcome": "supported",
+   "detail": "created at the catalog's location `…/Tables/_bench_capability/dk_38011645322_1_base`; field ids [1, 2], format-version 2"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "supported",
+   "detail": "CTAS: DuckDB reads [(1, 10), (2, 20), (3, 30)]; pyiceberg agrees"
+  },
+  {
+   "key": "create_partitioned",
+   "group": "create",
+   "question": "PARTITIONED BY (identity), then write",
+   "outcome": "supported",
+   "detail": "spec ['identity']; 3 rows over 2 partitions wrote 2 data file(s)"
+  },
+  {
+   "key": "create_sorted_at_create",
+   "group": "create",
+   "question": "CREATE TABLE ... SORTED BY (sort order at create)",
+   "outcome": "supported",
+   "detail": "sort order ['1 ASC NULLS LAST']"
+  },
+  {
+   "key": "create_sorted",
+   "group": "create",
+   "question": "ALTER TABLE ... SET SORTED BY (sort order)",
+   "outcome": "supported",
+   "detail": "sort order ['1 ASC NULLS LAST']"
+  },
+  {
+   "key": "partition_bucket",
+   "group": "create",
+   "question": "PARTITIONED BY (bucket(4, id)), then write",
+   "outcome": "supported",
+   "detail": "all of bucket"
+  },
+  {
+   "key": "partition_truncate",
+   "group": "create",
+   "question": "PARTITIONED BY (truncate(2, x)), then write",
+   "outcome": "supported",
+   "detail": "all of truncate"
+  },
+  {
+   "key": "partition_temporal",
+   "group": "create",
+   "question": "PARTITIONED BY year / month / day / hour, then write",
+   "outcome": "supported",
+   "detail": "all of year, month, day, hour"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "insert_values",
+   "group": "write",
+   "question": "INSERT INTO ... VALUES",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... VALUES: DuckDB reads [(1, 10), (2, 20), (3, 30)]; pyiceberg agrees; 1 commit(s)"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: DuckDB reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; pyiceberg agrees"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE FROM ... WHERE",
+   "outcome": "supported",
+   "detail": "DELETE: DuckDB reads [(2, 20), (3, 30)]; pyiceberg agrees; 1 delete file(s) in the scan (merge-on-read)"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "supported",
+   "detail": "UPDATE: DuckDB reads [(1, 999), (2, 20), (3, 30)]; pyiceberg agrees"
+  },
+  {
+   "key": "merge_update_only",
+   "group": "write",
+   "question": "MERGE, one action: WHEN MATCHED UPDATE",
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE only: DuckDB reads [(1, 777), (2, 20), (3, 30)]; pyiceberg agrees; 1 snapshot(s) in the commit"
+  },
+  {
+   "key": "merge_delete_only",
+   "group": "write",
+   "question": "MERGE, one action: WHEN MATCHED DELETE",
+   "outcome": "supported",
+   "detail": "MERGE, DELETE only: DuckDB reads [(2, 20), (3, 30)]; pyiceberg agrees; 1 snapshot(s) in the commit"
+  },
+  {
+   "key": "merge_insert_only",
+   "group": "write",
+   "question": "MERGE, one action: WHEN NOT MATCHED INSERT",
+   "outcome": "supported",
+   "detail": "MERGE, INSERT only: DuckDB reads [(1, 10), (2, 20), (3, 30), (9, 90)]; pyiceberg agrees; 1 snapshot(s) in the commit"
+  },
+  {
+   "key": "merge_by_source_only",
+   "group": "write",
+   "question": "MERGE, one action: WHEN NOT MATCHED BY SOURCE DELETE",
+   "outcome": "supported",
+   "detail": "MERGE, NOT MATCHED BY SOURCE DELETE only: DuckDB reads [(1, 10)]; pyiceberg agrees; 1 snapshot(s) in the commit"
+  },
+  {
+   "key": "merge_update_by_source",
+   "group": "write",
+   "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED BY SOURCE DELETE",
+   "outcome": "no",
+   "detail": "Not implemented Error: MERGE INTO with Iceberg only supports a single UPDATE/DELETE action currently"
+  },
+  {
+   "key": "merge_three",
+   "group": "write",
+   "question": "MERGE, three actions: UPDATE + INSERT + BY SOURCE DELETE",
+   "outcome": "no",
+   "detail": "Not implemented Error: MERGE INTO with Iceberg only supports a single UPDATE/DELETE action currently"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE",
+   "outcome": "supported",
+   "detail": "TRUNCATE: DuckDB reads []; pyiceberg agrees; NOT metadata-only: delete snapshot, deleted-data-files None, added-data-files None, added-delete-files 1"
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ALTER TABLE ADD COLUMN",
+   "outcome": "supported",
+   "detail": "schema ['id', 'v', 'w']; new column written: DuckDB reads [(1, 'NULL'), (2, 'NULL'), (3, 'NULL'), (4, 400)]; pyiceberg reads [(1, None), (2, None), (3, None), (4, 400)]"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "ALTER TABLE DROP COLUMN",
+   "outcome": "supported",
+   "detail": "schema now ['id']"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "ALTER TABLE RENAME COLUMN",
+   "outcome": "supported",
+   "detail": "schema now ['id', 'v2']; data kept: DuckDB reads [(1, 10), (2, 20), (3, 30)]; pyiceberg agrees"
+  },
+  {
+   "key": "type_promotion",
+   "group": "schema",
+   "question": "ALTER COLUMN c TYPE BIGINT (int -> long)",
+   "outcome": "supported",
+   "detail": "c is long, and the row written as int reads 7"
+  },
+  {
+   "key": "rename_table",
+   "group": "schema",
+   "question": "ALTER TABLE ... RENAME TO (table)",
+   "outcome": "no",
+   "detail": "TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/tables/rename' returned a non-200 status code (NotImplemented_501), with reason: Not Implemented, body: {\"error\":{\"code\":\"NotImplemented\",\"message\":\"The Iceberg rename table operation is not supported.\",\"target\":null,\"details\":null}}"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "set_iceberg_table_properties",
+   "outcome": "supported",
+   "detail": "the property is on the table"
+  },
+  {
+   "key": "partition_evolution",
+   "group": "schema",
+   "question": "ALTER TABLE ... SET PARTITIONED BY (partition evolution)",
+   "outcome": "supported",
+   "detail": "spec now ['bucket[4]']"
+  },
+  {
+   "key": "write_after_evolution",
+   "group": "schema",
+   "question": "INSERT after SET PARTITIONED BY, read across both specs",
+   "outcome": "supported",
+   "detail": "data files on specs [0, 1]; all 8 rows read, by pyiceberg and the engine"
+  },
+  {
+   "key": "time_travel",
+   "group": "read",
+   "question": "time travel, AT (VERSION => <snapshot>)",
+   "outcome": "supported",
+   "detail": "AT (VERSION => <first snapshot>) reads 3 rows (the table has 4)"
+  },
+  {
+   "key": "metadata_snapshots",
+   "group": "read",
+   "question": "iceberg_snapshots()",
+   "outcome": "supported",
+   "detail": "iceberg_snapshots() reads WARNING: snapshot(s); pyiceberg sees 1"
+  },
+  {
+   "key": "metadata_files",
+   "group": "read",
+   "question": "iceberg_metadata()",
+   "outcome": "supported",
+   "detail": "iceberg_metadata() reads WARNING: manifest entr(ies)"
+  },
+  {
+   "key": "create_branch",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE BRANCH",
+   "outcome": "no",
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38011645322_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "iceberg_expire_snapshots",
+   "outcome": "no",
+   "detail": "Catalog Error: Table Function with name iceberg_expire_snapshots does not exist! Did you mean \"iceberg_snapshots\"?"
+  },
+  {
+   "key": "rewrite_data_files",
+   "group": "maintenance",
+   "question": "iceberg_rewrite_data_files (compaction)",
+   "outcome": "supported",
+   "detail": "3 -> 1 data file(s), commit `replace`; data kept: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; pyiceberg agrees"
+  },
+  {
+   "key": "drop_table",
+   "group": "catalog",
+   "question": "DROP TABLE",
+   "outcome": "supported",
+   "detail": "gone from the catalog; 0 of 1 data file(s) still in storage"
+  },
+  {
+   "key": "credential_vending",
+   "group": "catalog",
+   "question": "ACCESS_DELEGATION_MODE 'vended_credentials', no storage secret",
+   "outcome": "supported",
+   "detail": "no storage secret, read 3 rows then INSERT: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; pyiceberg agrees"
+  },
+  {
+   "key": "create_schema",
+   "group": "catalog",
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "`dk_38011645322_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "drop_schema",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
+  }
+ ],
+ "run": "38011645322",
+ "date": "2026-10-10"
+}

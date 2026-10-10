@@ -119,7 +119,7 @@ def token_expires_on() -> float:
     return _cached[1] if _cached is not None else float("inf")
 
 
-def catalog(cfg: Config):
+def catalog(cfg: Config, uri: str = ICEBERG_ENDPOINT):
     """A pyiceberg RestCatalog on the Fabric OneLake Iceberg endpoint.
 
     Used by `prepare` (table creation and add_files) and by the Polars engine. The other three
@@ -135,7 +135,7 @@ def catalog(cfg: Config):
     return load_catalog(
         "onelake",
         **{
-            "uri": ICEBERG_ENDPOINT,
+            "uri": uri,
             "token": token,
             "warehouse": cfg.warehouse,
             "adls.account-name": "onelake",

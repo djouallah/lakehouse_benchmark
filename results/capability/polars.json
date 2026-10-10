@@ -1,0 +1,106 @@
+{
+ "engine": "polars",
+ "version": "2.0.0",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "Polars imports and the pyiceberg catalog attaches",
+   "outcome": "supported",
+   "detail": "polars 2.0.0; pyiceberg catalog attached, _bench_capability exists"
+  },
+  {
+   "key": "sink_append",
+   "group": "write",
+   "question": "sink_iceberg(mode='append')",
+   "outcome": "supported",
+   "detail": "sink_iceberg(mode='append'), a append snapshot: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "write an identity-partitioned table",
+   "outcome": "supported",
+   "detail": "identity(id), 2 partitions: pyiceberg reads [(1, 10), (2, 20)]; Polars agrees"
+  },
+  {
+   "key": "partition_bucket",
+   "group": "create",
+   "question": "write a table partitioned by bucket(4, id)",
+   "outcome": "no",
+   "detail": "works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform"
+  },
+  {
+   "key": "partition_truncate",
+   "group": "create",
+   "question": "write a table partitioned by truncate(2, x)",
+   "outcome": "supported",
+   "detail": "all of truncate"
+  },
+  {
+   "key": "partition_temporal",
+   "group": "create",
+   "question": "write tables partitioned by year / month / day / hour",
+   "outcome": "supported",
+   "detail": "all of year, month, day, hour"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "schema_merge_add_column",
+   "group": "schema",
+   "question": "schema_mode='merge' adds a column",
+   "outcome": "supported",
+   "detail": "column `note` added: pyiceberg reads [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 'x')]; Polars agrees"
+  },
+  {
+   "key": "type_promotion",
+   "group": "schema",
+   "question": "schema_mode='merge' promotes int -> long",
+   "outcome": "supported",
+   "detail": "c promoted to long: pyiceberg reads [(1, 7), (2, 8)]; Polars agrees"
+  },
+  {
+   "key": "write_after_evolution",
+   "group": "schema",
+   "question": "write before and after partition evolution",
+   "outcome": "supported",
+   "detail": "data files on specs [0, 1]; all 8 rows read, by pyiceberg and the engine"
+  },
+  {
+   "key": "time_travel",
+   "group": "read",
+   "question": "time travel, scan_iceberg(snapshot_id=)",
+   "outcome": "supported",
+   "detail": "scan_iceberg(snapshot_id=<first snapshot>) reads 3 rows (the head 4)"
+  },
+  {
+   "key": "stale_assertion",
+   "group": "commit",
+   "question": "is assert-ref-snapshot-id enforced on a Polars commit",
+   "outcome": "supported",
+   "detail": "enforced, declined with: CommitFailedException: CommitFailedException: CommitFailedException: One or more requirements failed. The client may retry."
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "sink append; B appends between Polars' read and commit",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  }
+ ],
+ "run": "37949375865",
+ "date": "2026-10-09"
+}

@@ -1,0 +1,214 @@
+{
+ "engine": "duckdb_isolation",
+ "version": "v2.0.0-alpha46057",
+ "configs": {
+  "serializable": {},
+  "snapshot": {
+   "write.delete.isolation-level": "snapshot",
+   "write.update.isolation-level": "snapshot",
+   "write.merge.isolation-level": "snapshot"
+  },
+  "no retries": {
+   "commit.retry.num-retries": "0"
+  }
+ },
+ "levels": {
+  "insert/serializable": {
+   "outcome": "retried",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  "insert/snapshot": {
+   "outcome": "retried",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  "insert/no retries": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "delete/serializable": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: DELETE on \"iso_dk_37953552712_1_delete_serializable\" conflicts with a concurrent commit (scanned snapshot 4827137949152194732, now at 4570672190258767448); re-run the DELETE. Set 'write.del…"
+  },
+  "delete/snapshot": {
+   "outcome": "retried",
+   "detail": "final [(2, 20), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  "delete/no retries": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "update_other/serializable": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "update_other/snapshot": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "update_other/no retries": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "merge_other/serializable": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "merge_other/snapshot": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "merge_other/no retries": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  },
+  "delete_vs_delete/serializable": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: DELETE on \"iso_dk_37953552712_1_delete_vs_delete_serializable\" conflicts with a concurrent commit (scanned snapshot 2897262353985008965, now at 613119421973456005); re-run the DELETE. Set '…"
+  },
+  "delete_vs_delete/snapshot": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: DELETE on \"iso_dk_37953552712_1_delete_vs_delete_snapshot\" conflicts with a concurrent commit (scanned snapshot 6754144345905428446, now at 7193394157235928244); re-run the DELETE. Set 'wri…"
+  },
+  "delete_vs_delete/no retries": {
+   "outcome": "refused",
+   "detail": "final [(1, 10), (2, 20)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  }
+ },
+ "rows": [
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERT a row; B appends a row",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETE id 1; B appends a row",
+   "outcome": "supported",
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: DELETE on \"iso_dk_37953552712_1_delete_serializable\" conflicts with a concurrent commit (scanned snapshot 4827137949152194732, now at 4570672190258767448); re-run the DELETE. Set 'write.del…"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATE v = v + 1 on id 2; B appends a row",
+   "outcome": "supported",
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client may retry. type: CommitFailedException rea…"
+  }
+ ],
+ "transactions": [
+  {
+   "key": "repeatable_read",
+   "title": "BEGIN; read; B appends; read again",
+   "outcome": "repeatable",
+   "detail": "reads 3, B appends, reads 3; COMMIT ok"
+  },
+  {
+   "key": "snapshot_point",
+   "title": "B commits after BEGIN, before the first read",
+   "outcome": "at first read",
+   "detail": "BEGIN, B appends, the first read sees 4 rows; B appends again, the next read sees 4"
+  },
+  {
+   "key": "rollback",
+   "title": "INSERT + DELETE, then ROLLBACK",
+   "outcome": "nothing sent",
+   "detail": "INSERT + DELETE, ROLLBACK; commits [none]; [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "failing_statement",
+   "title": "a failing statement inside the transaction",
+   "outcome": "all rolled back",
+   "detail": "INSERT ok, then INSERT failed (RuntimeError: RuntimeError: Conversion Error: Could not convert string 'not a number' to …); COMMIT ok; [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "visibility",
+   "title": "own uncommitted rows, inside and from another connection",
+   "outcome": "yes",
+   "detail": "uncommitted INSERT: this transaction reads 4, another connection 3; COMMIT ok; catalog 4 rows"
+  },
+  {
+   "key": "two_connections",
+   "title": "two DuckDB transactions update the same row",
+   "outcome": "second refused",
+   "detail": "both read v = 10, +1 and +100; first COMMIT ok; second COMMIT RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'http://127.0.0.1:44139/iceberg/v1' returned a non-200 status code (Conflict_409). message: One or more requirements failed. The client ma…; [(1, 11), (2, 20), (3, 30)]"
+  }
+ ],
+ "combos": [
+  {
+   "key": "drop_create",
+   "title": "DROP TABLE, CREATE TABLE the same name with a new column, INSERT",
+   "outcome": "refused",
+   "detail": "CREATE refused: RuntimeError: RuntimeError: Not implemented Error: Cannot create table deleted within a transaction: onelake._bench_capability.iso_dk_37953552712_1_cb_drop_create; t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []"
+  },
+  {
+   "key": "create_or_replace_self",
+   "title": "CREATE OR REPLACE TABLE t AS SELECT ... FROM t",
+   "outcome": "refused",
+   "detail": "CREATE refused: RuntimeError: RuntimeError: Not implemented Error: CREATE OR REPLACE not supported in DuckDB-Iceberg. Please use separate Drop and Create Statements; t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []"
+  },
+  {
+   "key": "create_insert",
+   "title": "CREATE TABLE, INSERT",
+   "outcome": "works",
+   "detail": "t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n (('id', 'v'), [(1, 1)]); sent ['POST tables 200', 'POST n 200']"
+  },
+  {
+   "key": "ctas",
+   "title": "CREATE TABLE AS SELECT from the seeded table",
+   "outcome": "works",
+   "detail": "t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n (('id', 'v'), [(1, 20), (2, 40), (3, 60)]); sent ['POST tables 200', 'POST n 200']"
+  },
+  {
+   "key": "add_column_insert",
+   "title": "ADD COLUMN, INSERT a row that fills it",
+   "outcome": "works",
+   "detail": "t (('id', 'v', 'w'), [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 400)]); n None; sent ['POST t 200']"
+  },
+  {
+   "key": "add_column_update",
+   "title": "ADD COLUMN, UPDATE it",
+   "outcome": "works",
+   "detail": "t (('id', 'v', 'w'), [(1, 10, 100), (2, 20, 200), (3, 30, 300)]); n None; sent ['POST t 200']"
+  },
+  {
+   "key": "rename_column_insert",
+   "title": "RENAME COLUMN, INSERT",
+   "outcome": "works",
+   "detail": "t (('id', 'v2'), [(1, 10), (2, 20), (3, 30), (4, 40)]); n None; sent ['POST t 200']"
+  },
+  {
+   "key": "drop_column_insert",
+   "title": "DROP COLUMN, INSERT",
+   "outcome": "works",
+   "detail": "t (('id',), [(1,), (2,), (3,), (4,)]); n None; sent ['POST t 200']"
+  },
+  {
+   "key": "partition_insert",
+   "title": "SET PARTITIONED BY (bucket(4, id)), INSERT",
+   "outcome": "works",
+   "detail": "t (('id', 'v'), [(1, 10), (2, 20), (3, 30), (4, 40)]); n None; sent ['POST t 200']; spec ['bucket[4]']"
+  },
+  {
+   "key": "truncate_insert_rollback",
+   "title": "TRUNCATE, INSERT, ROLLBACK",
+   "outcome": "works",
+   "detail": "t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []"
+  },
+  {
+   "key": "drop_rollback",
+   "title": "DROP TABLE, ROLLBACK",
+   "outcome": "works",
+   "detail": "t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []"
+  },
+  {
+   "key": "drop_create_rollback",
+   "title": "DROP TABLE, CREATE TABLE the same name, ROLLBACK",
+   "outcome": "refused",
+   "detail": "CREATE refused: RuntimeError: RuntimeError: Not implemented Error: Cannot create table deleted within a transaction: onelake._bench_capability.iso_dk_37953552712_1_cb_drop_create_rollback; t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []"
+  }
+ ],
+ "run": "37953552712",
+ "date": "2026-10-09"
+}

@@ -80,6 +80,7 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 | `etl.yml` | `files` 10/100/1000 (100), `engines` (7, includes daft), `publish` |
 | `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
+| `capability.yml` (iceberg support) | `clients` polars/duckdb/sail/chdb/duckdb_isolation (all), `keep` (false) |
 
 `prepare` generates a namespace once and later runs reuse it. `ci.yml` (ruff + pytest) and the
 smoke test's `sql` phase run on every push. A `schedule:` block is left commented out at the top

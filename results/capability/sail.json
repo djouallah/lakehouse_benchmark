@@ -1,0 +1,288 @@
+{
+ "engine": "sail",
+ "version": "0.7.2",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "Sail starts and attaches the REST catalog",
+   "outcome": "supported",
+   "detail": "pysail 0.7.2; _bench_capability listed"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE ... USING iceberg",
+   "outcome": "supported",
+   "detail": "field ids [1, 2], format-version 2"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "supported",
+   "detail": "CTAS: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Sail agrees"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "PARTITIONED BY (p), then INSERT",
+   "outcome": "supported",
+   "detail": "spec ['identity']; 3 rows over 2 partitions wrote 2 data file(s)"
+  },
+  {
+   "key": "sort_order",
+   "group": "create",
+   "question": "ALTER TABLE ... WRITE ORDERED BY (sort order)",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+  },
+  {
+   "key": "partition_bucket",
+   "group": "create",
+   "question": "PARTITIONED BY (bucket(4, id)), then INSERT",
+   "outcome": "supported",
+   "detail": "all of bucket"
+  },
+  {
+   "key": "partition_truncate",
+   "group": "create",
+   "question": "PARTITIONED BY (truncate(2, x)), then INSERT",
+   "outcome": "supported",
+   "detail": "all of truncate"
+  },
+  {
+   "key": "partition_temporal",
+   "group": "create",
+   "question": "PARTITIONED BY years / months / days / hours, then INSERT",
+   "outcome": "supported",
+   "detail": "all of year, month, day, hour"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "outcome": "no",
+   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO",
+   "outcome": "supported",
+   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Sail agrees; 1 commit(s)"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE FROM",
+   "outcome": "supported",
+   "detail": "DELETE: pyiceberg reads [(2, 20), (3, 30)]; Sail agrees"
+  },
+  {
+   "key": "delete_mor",
+   "group": "write",
+   "question": "DELETE FROM, merge-on-read table",
+   "outcome": "no-op",
+   "detail": "merge-on-read DELETE returned success; expected [(2, 20), (3, 30)], pyiceberg reads pyiceberg could not read it: ValueError: PyIceberg does not yet support equality deletes: https://github.com/apache/iceberg/issues/6568, Sail reads [(2, 20), (3, 30)]"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "supported",
+   "detail": "UPDATE: pyiceberg reads [(1, 999), (2, 20), (3, 30)]; Sail agrees"
+  },
+  {
+   "key": "merge_update_only",
+   "group": "write",
+   "question": "MERGE, UPDATE only",
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE only: pyiceberg reads [(1, 777), (2, 20), (3, 30)]; Sail agrees"
+  },
+  {
+   "key": "merge_delete_only",
+   "group": "write",
+   "question": "MERGE, DELETE only",
+   "outcome": "supported",
+   "detail": "MERGE, DELETE only: pyiceberg reads [(2, 20), (3, 30)]; Sail agrees"
+  },
+  {
+   "key": "merge_insert_only",
+   "group": "write",
+   "question": "MERGE, INSERT only",
+   "outcome": "supported",
+   "detail": "MERGE, INSERT only: pyiceberg reads [(1, 10), (2, 20), (3, 30), (9, 90)]; Sail agrees"
+  },
+  {
+   "key": "merge_by_source_only",
+   "group": "write",
+   "question": "MERGE, NOT MATCHED BY SOURCE DELETE only",
+   "outcome": "supported",
+   "detail": "MERGE, NOT MATCHED BY SOURCE DELETE only: pyiceberg reads [(1, 10)]; Sail agrees"
+  },
+  {
+   "key": "merge_mor",
+   "group": "write",
+   "question": "MERGE INTO, merge-on-read table",
+   "outcome": "supported",
+   "detail": "merge-on-read MERGE INTO: pyiceberg reads [(1, 777), (2, 20), (3, 30), (9, 90)]; Sail agrees; 1 position_deletes"
+  },
+  {
+   "key": "merge_delete_mor",
+   "group": "write",
+   "question": "MERGE ... WHEN MATCHED THEN DELETE, merge-on-read table",
+   "outcome": "supported",
+   "detail": "merge-on-read MERGE ... WHEN MATCHED THEN DELETE: pyiceberg reads [(2, 20), (3, 30)]; Sail agrees; 1 position_deletes"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE TABLE",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ALTER TABLE ADD COLUMN",
+   "outcome": "no",
+   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "ALTER TABLE DROP COLUMN",
+   "outcome": "no",
+   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "ALTER TABLE RENAME COLUMN",
+   "outcome": "no",
+   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+  },
+  {
+   "key": "type_promotion",
+   "group": "schema",
+   "question": "ALTER COLUMN c TYPE BIGINT (int -> long)",
+   "outcome": "no",
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38012150653_1_promote"
+  },
+  {
+   "key": "partition_evolution",
+   "group": "schema",
+   "question": "ALTER TABLE ADD PARTITION FIELD (partition evolution)",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "ALTER TABLE SET TBLPROPERTIES",
+   "outcome": "no",
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38012150653_1_props"
+  },
+  {
+   "key": "time_travel",
+   "group": "read",
+   "question": "time travel, VERSION AS OF",
+   "outcome": "supported",
+   "detail": "VERSION AS OF the first snapshot reads 3 rows (the table has 4)"
+  },
+  {
+   "key": "metadata_tables",
+   "group": "read",
+   "question": "metadata tables (t.snapshots)",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38012150653_1_inspect\"), Identifier(\"snapshots\")]"
+  },
+  {
+   "key": "create_branch",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE BRANCH",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+  },
+  {
+   "key": "create_tag",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE TAG",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "CALL system.expire_snapshots",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+  },
+  {
+   "key": "rewrite_data_files",
+   "group": "maintenance",
+   "question": "CALL system.rewrite_data_files (compaction)",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "CALL system.rewrite_manifests",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+  },
+  {
+   "key": "namespace",
+   "group": "catalog",
+   "question": "CREATE DATABASE, then DROP DATABASE",
+   "outcome": "supported",
+   "detail": "`sl_38012150653_1_ns` created, listed, dropped"
+  },
+  {
+   "key": "rename_table",
+   "group": "catalog",
+   "question": "ALTER TABLE ... RENAME TO, then read",
+   "outcome": "no",
+   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+  },
+  {
+   "key": "drop_purge",
+   "group": "catalog",
+   "question": "DROP TABLE ... PURGE",
+   "outcome": "supported",
+   "detail": "gone from the catalog"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERT INTO; B appends between Sail's read and commit",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETE id 1; B appends",
+   "outcome": "supported",
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1335633744497614839) but found Some(7983725396265119715)"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATE v = v + 1 on id 2; B appends",
+   "outcome": "supported",
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(2558930533836869161) but found Some(3155249651422313036)"
+  }
+ ],
+ "run": "38012150653",
+ "date": "2026-10-10"
+}

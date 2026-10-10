@@ -1,0 +1,253 @@
+{
+ "engine": "chdb",
+ "version": "4.4.0",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
+   "outcome": "supported",
+   "detail": "chdb 4.4.0; 358 catalog table(s) listed"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "PARTITION BY p, then INSERT",
+   "outcome": "supported",
+   "detail": "spec ['identity']; 3 rows over 2 partition(s), 2 file(s); table made by pyiceberg"
+  },
+  {
+   "key": "sorted_at_create",
+   "group": "create",
+   "question": "ORDER BY at create (sort order)",
+   "outcome": "skipped",
+   "detail": "no table could be created"
+  },
+  {
+   "key": "partition_bucket",
+   "group": "create",
+   "question": "INSERT into bucket(4, id) partitions",
+   "outcome": "supported",
+   "detail": "all of bucket"
+  },
+  {
+   "key": "partition_truncate",
+   "group": "create",
+   "question": "INSERT into truncate(2, x) partitions",
+   "outcome": "supported",
+   "detail": "all of truncate"
+  },
+  {
+   "key": "partition_temporal",
+   "group": "create",
+   "question": "INSERT into year / month / day / hour partitions",
+   "outcome": "supported",
+   "detail": "all of year, month, day, hour"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO ... VALUES",
+   "outcome": "supported",
+   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees; table made by pyiceberg; 1 commit(s)"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (4, 40)]; chDB agrees; table made by pyiceberg"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE FROM",
+   "outcome": "supported",
+   "detail": "DELETE FROM: pyiceberg reads [(2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+  },
+  {
+   "key": "alter_delete",
+   "group": "write",
+   "question": "ALTER TABLE ... DELETE WHERE",
+   "outcome": "supported",
+   "detail": "ALTER TABLE ... DELETE: pyiceberg reads [(2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE ... SET",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 48. DB::Exception: Lightweight updates are not supported. Table with engine IcebergAzure doesn't support lightweight updates. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "alter_update",
+   "group": "write",
+   "question": "ALTER TABLE ... UPDATE",
+   "outcome": "supported",
+   "detail": "ALTER TABLE ... UPDATE: pyiceberg reads [(1, 999), (2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+  },
+  {
+   "key": "merge_into",
+   "group": "write",
+   "question": "MERGE INTO",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_37949375865_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE TABLE",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ALTER TABLE ADD COLUMN",
+   "outcome": "supported",
+   "detail": "schema ['id', 'v', 'w']"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "ALTER TABLE DROP COLUMN",
+   "outcome": "supported",
+   "detail": "schema now ['id']"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "ALTER TABLE RENAME COLUMN",
+   "outcome": "supported",
+   "detail": "renamed, data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+  },
+  {
+   "key": "type_promotion",
+   "group": "schema",
+   "question": "MODIFY COLUMN c Int64 (int -> long)",
+   "outcome": "supported",
+   "detail": "c is long, and the row written as int reads 7; table made by pyiceberg"
+  },
+  {
+   "key": "partition_evolution",
+   "group": "schema",
+   "question": "ALTER TABLE ADD PARTITION FIELD (partition evolution)",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "ALTER TABLE SET TBLPROPERTIES",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '37949375865_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET…"
+  },
+  {
+   "key": "sort_order_evolution",
+   "group": "schema",
+   "question": "ALTER TABLE MODIFY ORDER BY (sort order evolution)",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "time_travel",
+   "group": "read",
+   "question": "time travel, SETTINGS iceberg_snapshot_id",
+   "outcome": "supported",
+   "detail": "SETTINGS iceberg_snapshot_id of the first snapshot reads 3 rows (the table has 4)"
+  },
+  {
+   "key": "metadata_tables",
+   "group": "read",
+   "question": "metadata (system.iceberg_history)",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 86. DB::Exception: Received error 86 while fetching table metadata for existing table '_bench_capability.cap_36224373505_1_id0'. If you want this error to be ignored, use database_datalake_require_metadata_access=0. Error: Code: 86. DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/namespaces/_bench_capability/tables/cap_36224373505_1_id0. HTTP status code: 400 'Bad Request', body length: 81 bytes, body: '{\"error\":{\"message\":\"Malformed request\",\"type\":\"BadRequestException\",\"code\":400}}'. (RECEIVED_ERROR_FROM_REMOTE_IO_SERVER), Stack trace (when …"
+  },
+  {
+   "key": "create_branch",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE BRANCH",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DETACH PART, ATTACH PAR…"
+  },
+  {
+   "key": "create_tag",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE TAG",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DETACH PART, ATTACH PARTITION…"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "ALTER TABLE ... EXECUTE expire_snapshots",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 48. DB::Exception: expire_snapshots is not supported for Iceberg tables backed by a transactional catalog. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "compaction",
+   "group": "maintenance",
+   "question": "OPTIMIZE TABLE (compaction)",
+   "outcome": "no-op",
+   "detail": "returned success and data files went 2 -> 2"
+  },
+  {
+   "key": "rename_table",
+   "group": "catalog",
+   "question": "RENAME TABLE, then read",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 48. DB::Exception: DataLakeCatalog: renameTable() is not supported. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERT INTO; B appends between chDB's read and commit",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETE id 1; B appends",
+   "outcome": "supported",
+   "detail": "retried: final [(2, 20), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  }
+ ],
+ "run": "37949375865",
+ "date": "2026-10-09"
+}

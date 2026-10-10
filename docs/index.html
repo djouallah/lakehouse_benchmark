@@ -157,7 +157,7 @@ footer a, .lane a { color: var(--accent); }
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
-  <section class="cap" id="capability" hidden></section>
+  <section class="cap" id="iceberg" hidden></section>
   <section class="details" id="about" hidden>
     <p>This repo checks how well each engine works with an Iceberg REST catalog, mainly OneLake. No engine is
       favoured; the timings are a side effect.</p>
@@ -172,6 +172,7 @@ footer a, .lane a { color: var(--accent); }
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
     <ul>
+      <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it.</li>
       <li><b>Polars</b>: TPC-DS runs on a main build until the fixes ship. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed), <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
       <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
       <li><b>StarRocks</b>: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open), <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks-a-candidate-that-qualifies">Details</a></li>
@@ -299,7 +300,7 @@ const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
-const CAPABILITY = { id: "capability", title: "Capability", json: "data/capability.json" };
+const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const PAGES = [CAPABILITY, DETAILS, ABOUT];  // sections of their own, no bar chart
 const state = { suite: SUITES[0].id, sf: {}, group: "All" };
 const data = {};
@@ -375,7 +376,7 @@ function render() {
   }
 }
 
-// THE CAPABILITY TAB: data/capability.json, published by .github/scripts/capability_publish.py from
+// THE ICEBERG SUPPORT TAB: data/capability.json, published by .github/scripts/capability_publish.py from
 // djouallah/iceberg-probe-native. One cell per operation and engine; a row the catalog itself
 // blocks is not in the grid but listed under it.
 const WORD = { supported: "yes", no: "no", "no-op": "accepted, not applied", na: "no such operation",
@@ -383,7 +384,7 @@ const WORD = { supported: "yes", no: "no", "no-op": "accepted, not applied", na:
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function renderCapability() {
-  const cap = data.capability, sec = $("capability");
+  const cap = data.capability, sec = $(CAPABILITY.id);
   if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${CAPABILITY.json}.</div>`; return; }
   const engines = Object.keys(cap.engines), groups = ["All", ...cap.groups];
   if (!groups.includes(state.group)) state.group = "All";
@@ -412,7 +413,7 @@ function renderCapability() {
       <tbody></tbody>
     </table></div>
     <p class="note">In the concurrency rows a second writer commits between the engine's read and its commit.
-      Every reading, with what came back: <a href="https://github.com/djouallah/iceberg-probe-native#readme">iceberg-probe-native</a>.</p>`;
+      Every reading, with what came back: <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/docs/capability/RESULTS.md">RESULTS.md</a>.</p>`;
   [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group = groups[i]; render(); });
 
   const body = sec.querySelector("tbody");
@@ -485,10 +486,11 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #capability, #details, #about, or one engine on the details tab (#datafusion).
+// Deep links: #tpch, #tpcds, #iceberg, #details, #about, or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
+  if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
   else if (h && document.getElementById(h)?.closest("#details")) state.suite = DETAILS.id;
 }
