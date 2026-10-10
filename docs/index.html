@@ -134,9 +134,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .note { font-size: 13px; color: var(--ink-2); max-width: 75ch; margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
 /* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
-.cap .good .m { background: var(--yes); }
-.cap .partial .m { border: 2px solid var(--noop); background: linear-gradient(90deg, var(--noop) 50%, transparent 50%); }
-.cap .early .m { border: 2px solid var(--noop); }
+.cap .excellent .m { background: var(--yes); }
+.cap .good .m { border: 2px solid var(--yes); background: linear-gradient(90deg, var(--yes) 50%, transparent 50%); }
+.cap .partial .m { border: 2px solid var(--noop); }
 .cap .none .m { border: 2px solid var(--no); }
 .cap .none .m::before, .cap .none .m::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 2px; background: var(--no); border-radius: 1px; }
 .cap .none .m::before { transform: translate(-50%, -50%) rotate(45deg); }
@@ -467,24 +467,27 @@ function renderCapability() {
   }
 }
 
-// THE DBT TAB: how far each engine's dbt adapter goes with Iceberg tables. From each adapter's
-// docs and issues; the bench does not run dbt. Every engine in LABEL has a row (tests/test_results_page.py).
-const DBT_LEVEL = { good: "Good", partial: "Partial", early: "Early", none: "None" };
+// THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB and
+// LakeSail were tried in fabric-medallion-dbt-community; the others come from their adapter docs.
+// Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in LABEL has a row
+// (tests/test_results_page.py).
+const DBT_LEVEL = { excellent: "Excellent", good: "Good", partial: "Partial", none: "None" };
+const DBT_MEDALLION = "https://github.com/djouallah/fabric-medallion-dbt-community";
 const DBT_ROWS = [
-  { engine: "pyspark_iceberg", level: "good", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
-    note: "Made by dbt Labs. <code>file_format='iceberg'</code>; table and incremental models, with merge." },
-  { engine: "pyspark_gluten_iceberg", level: "good", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
-    note: "Same as Spark: Gluten is a plugin inside Spark, so dbt-spark runs it unchanged." },
-  { engine: "trino_iceberg", level: "good", adapter: "dbt-trino", url: "https://docs.getdbt.com/reference/resource-configs/trino-configs",
-    note: "Made by Starburst. The Iceberg connector supports table and incremental models: append, delete+insert and merge." },
-  { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
-    note: "Made by LakeSail: dbt-spark over Spark Connect. New, and not supported by dbt Labs." },
-  { engine: "duckdb_iceberg", level: "partial", adapter: "dbt-duckdb", url: "https://docs.getdbt.com/docs/build/iceberg/adapters/duckdb-iceberg-support",
-    note: "The adapter is mature, but Iceberg catalogs in <code>catalogs.yml</code> need dbt Fusion. On dbt Core you attach the catalog yourself, and the table model is reported to fail on REST catalogs." },
+  { engine: "pyspark_iceberg", level: "excellent", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
+    note: "<code>file_format='iceberg'</code>; table and incremental models, with merge." },
+  { engine: "pyspark_gluten_iceberg", level: "excellent", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
+    note: "Same as Spark: Gluten is a plugin inside Spark." },
+  { engine: "trino_iceberg", level: "excellent", adapter: "dbt-trino", url: "https://docs.getdbt.com/reference/resource-configs/trino-configs",
+    note: "Table and incremental models, with merge." },
+  { engine: "duckdb_iceberg", level: "good", adapter: "dbt-duckdb", url: "https://github.com/duckdb/dbt-duckdb",
+    note: `Works with the Iceberg catalog through <code>attach</code>. It needs two small macro overrides: <code>DESCRIBE</code> must hide Iceberg's <code>__</code> column, and <code>DROP</code> must not use <code>CASCADE</code>. <a href="${DBT_MEDALLION}/blob/main/docs/engine-nuances.md">Details</a>` },
   { engine: "starrocks_iceberg", level: "partial", adapter: "dbt-starrocks", url: "https://docs.starrocks.io/docs/integrations/dbt/",
-    note: "Writes table and incremental models to an Iceberg catalog; no merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
-  { engine: "polars_iceberg", level: "early", adapter: "dbt-polars", url: "https://pypi.org/project/dbt-polars/",
-    note: "Community adapter, version 0.0.1. Iceberg with a REST catalog is marked experimental." },
+    note: "No merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
+  { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
+    note: `Failed when tried; not used. dbt-sail installs full PySpark with its jars, and it conflicts with <code>pyspark-client</code>: you ship Spark to avoid Spark. Sail also cannot name the source file (<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>). <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
+  { engine: "polars_iceberg", level: "none", adapter: "", url: "",
+    note: "No released adapter; dbt-polars is version 0.0.1." },
   { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
     note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
   { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
@@ -493,7 +496,8 @@ const DBT_ROWS = [
 function renderDbt() {
   const sec = $(DBT.id);
   sec.innerHTML = `
-    <p class="caption">How well dbt works with each engine on Iceberg tables. From each adapter's docs and issues; the bench does not run dbt.</p>
+    <p class="caption">dbt 1 (dbt Core) with Iceberg tables. DuckDB and LakeSail were tried in
+      <a href="${DBT_MEDALLION}">fabric-medallion-dbt-community</a>; the others come from their adapter docs.</p>
     <div class="legend">${Object.entries(DBT_LEVEL).map(([k, w]) => `<span class="${k}"><i class="m"></i>${w}</span>`).join("")}</div>
     <div class="wrap"><table><tbody>${DBT_ROWS.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
