@@ -83,15 +83,16 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip .t { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .tip .k { color: var(--ink-2); }
-.tried { color: var(--ink-2); margin-top: 16px; }
-.tried ul { margin: 0; padding-left: 18px; }
-.tried li { margin: 6px 0; overflow-wrap: anywhere; }
-.tried b { color: var(--ink); }
-.tried a.perm { color: var(--ink); text-decoration: none; }
-.tried a.perm:hover { text-decoration: underline; }
-.tried .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
-.tried li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
-.tried a { color: var(--accent); }
+.details { color: var(--ink-2); margin-top: 16px; }
+.details h3 { font-size: 15px; color: var(--ink); margin: 16px 0 4px; }
+.details ul { margin: 0; padding-left: 18px; }
+.details li { margin: 6px 0; overflow-wrap: anywhere; }
+.details b { color: var(--ink); }
+.details a.perm { color: var(--ink); text-decoration: none; }
+.details a.perm:hover { text-decoration: underline; }
+.details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
+.details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
+.details a { color: var(--accent); }
 footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
 footer a, .lane a { color: var(--accent); }
 .empty { color: var(--ink-2); padding: 24px 0; }
@@ -115,18 +116,24 @@ footer a, .lane a { color: var(--accent); }
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
-  <section class="tried" id="tried" hidden>
+  <section class="details" id="details" hidden>
+    <h3>In the bench</h3>
+    <ul>
+      <li><b>Polars</b>: TPC-DS runs on a main build until the fixes ship. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed), <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
+      <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
+      <li><b>StarRocks</b>: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open), <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks-a-candidate-that-qualifies">Details</a></li>
+      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
+      <li><b>chDB</b>: not in TPC-DS; aborts on the first query (chDB 4.4.0). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
+    </ul>
+    <h3>Tried, not added</h3>
     <ul>
       <li><b>Apache Doris</b>: reads OneLake only with a client secret; with a workload-identity or SAS token the backend crashes.</li>
-      <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths (<a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a>).</li>
-      <li><b>Databend</b>: the release build has no Azure storage for Iceberg ("azdls not supported now"); a fix is being tested on a fork (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>, decimal bug <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a>).</li>
-      <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM (<a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>
-      <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream (<a href="https://github.com/apache/iceberg-rust/issues/3036">iceberg-rust#3036</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-no-iceberg-in-python">Details</a></li>
-      <li><b>pg_lake</b> (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
+      <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths. Filed: <a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a> (open).</li>
+      <li><b>Databend</b>: the release build can't read Iceberg on Azure; the fix is merged, not yet released (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>). Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (open) decimals fail, TPC-H 5/22.</li>
+      <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM. Filed: <a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>
+      <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream (<a href="https://github.com/apache/iceberg-rust/issues/3036">#3036</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-no-iceberg-in-python">Details</a></li>
+      <li><b>pg_lake</b>: (3.5.3) runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
       <li><b>CedarDB</b>: no Iceberg support yet; it's on their roadmap.</li>
-      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and <code>SUBSTRING</code> (<a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a>, OneLake paths <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
-      <li><b>StarRocks</b>: no TPC-DS result; Q49, Q70 and Q86 fail on SQL bugs (<a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a>, <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks-a-candidate-that-qualifies">Details</a></li>
-      <li><b>chDB</b>: not in TPC-DS; aborts on the first query (chDB 4.4.0). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
     </ul>
   </section>
 
@@ -237,13 +244,13 @@ function summarize(rows, suite) {
 const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
-const TRIED = { id: "tried", title: "Tried, not added" };
+const DETAILS = { id: "details", title: "Details" };
 const state = { suite: SUITES[0].id, sf: {} };
 const data = {};
 
 function renderTabs() {
   $("tabs").innerHTML = "";
-  for (const s of [...SUITES, TRIED]) {
+  for (const s of [...SUITES, DETAILS]) {
     const b = document.createElement("button");
     b.role = "tab"; b.textContent = s.title;
     b.setAttribute("aria-selected", s.id === state.suite);
@@ -254,10 +261,10 @@ function renderTabs() {
 
 function render() {
   renderTabs();
-  const tried = state.suite === TRIED.id;
-  for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = tried;
-  $("tried").hidden = !tried;
-  if (tried) { $("tried").querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
+  const details = state.suite === DETAILS.id;
+  for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = details;
+  $("details").hidden = !details;
+  if (details) { $("details").querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
   const scales = Object.keys(results || {}).map(Number).sort((a, b) => a - b);
@@ -331,8 +338,8 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// Every engine on the tried tab gets an id from its name; clicking the name links to it and copies the URL.
-for (const li of $("tried").querySelectorAll("li")) {
+// Every engine on the details tab gets an id from its name; clicking the name links to it and copies the URL.
+for (const li of $("details").querySelectorAll("li")) {
   const b = li.querySelector("b");
   li.id = b.textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const a = document.createElement("a");
@@ -346,15 +353,16 @@ for (const li of $("tried").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #tried, or one engine on the tried tab (#datafusion).
+// Deep links: #tpch, #tpcds, #details, or one engine on the details tab (#datafusion).
 function fromHash() {
-  const h = decodeURIComponent(location.hash.slice(1));
-  if ([...SUITES, TRIED].some(s => s.id === h)) state.suite = h;
-  else if (h && document.getElementById(h)?.closest("#tried")) state.suite = TRIED.id;
+  let h = decodeURIComponent(location.hash.slice(1));
+  if (h === "tried") h = DETAILS.id;  // the tab's old name
+  if ([...SUITES, DETAILS].some(s => s.id === h)) state.suite = h;
+  else if (h && document.getElementById(h)?.closest("#details")) state.suite = DETAILS.id;
 }
 addEventListener("hashchange", () => { fromHash(); render(); });
 fromHash();
-if (state.suite === TRIED.id) render(); else renderTabs();
+if (state.suite === DETAILS.id) render(); else renderTabs();
 Promise.all(SUITES.map(s => fetch(s.csv).then(r => r.ok ? r.text() : Promise.reject(r.status))
   .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})))
   .then(render);
