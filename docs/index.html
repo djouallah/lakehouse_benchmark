@@ -170,8 +170,10 @@ footer a, .lane a { color: var(--accent); }
 <body>
 <main>
   <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></header>
+  <p class="lede">An engine is two things: how fast it runs, and what it supports.</p>
 
   <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="chips" id="subtabs"></div>
   <div class="chips" id="chips"></div>
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
@@ -179,8 +181,6 @@ footer a, .lane a { color: var(--accent); }
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="details" id="about" hidden>
-    <div class="chips" id="about-chips"></div>
-    <div id="approach">
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
     <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
     <p>The work is done in SQL. SQL is a shared language; a new syntax for every engine is not progress.</p>
@@ -191,9 +191,8 @@ footer a, .lane a { color: var(--accent); }
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>The object store integration matters as much as the engine itself.</p>
     <p>When an engine fails, the bug is filed upstream (see <a href="#details">Details</a>).</p>
-    </div>
-    <div class="cap rows" id="engines" hidden></div>
   </section>
+  <section class="cap rows" id="engines" hidden></section>
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
     <ul>
@@ -322,32 +321,42 @@ const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const DBT = { id: "dbt", title: "dbt" };
-const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT];  // sections of their own, no bar chart
-const ABOUT_SUBS = [{ id: "approach", title: "Approach" }, { id: "engines", title: "Engines" }];  // sub-tabs of About
-const state = { suite: SUITES[0].id, sf: {}, group: "All", about: ABOUT_SUBS[0].id };
+const ENGINES = { id: "engines", title: "Engines" };
+const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+// The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
+// state.suite is always a sub (a suite or a page); a group with one sub has no pills.
+const GROUPS = [
+  { id: "performance", title: "Performance", subs: SUITES },
+  { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
+  { id: "details", title: "Details", subs: [DETAILS] },
+  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES] },
+];
+const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
+const state = { suite: SUITES[0].id, sf: {}, group: "All", last: {} };
 const data = {};
 
+function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
+
 function renderTabs() {
-  $("tabs").innerHTML = "";
-  for (const s of [...SUITES, ...PAGES]) {
+  const current = groupOf(state.suite);
+  state.last[current.id] = state.suite;  // a top tab reopens the sub last used in it
+  $("tabs").innerHTML = ""; $("subtabs").innerHTML = "";
+  for (const g of GROUPS) {
     const b = document.createElement("button");
-    b.role = "tab"; b.textContent = s.title;
-    b.setAttribute("aria-selected", s.id === state.suite);
-    b.onclick = () => { state.suite = s.id; history.replaceState(null, "", `#${s.id}`); render(); };
+    b.role = "tab"; b.textContent = g.title;
+    b.setAttribute("aria-selected", g === current);
+    b.onclick = () => go(state.last[g.id] ?? g.subs[0].id);
     $("tabs").append(b);
   }
-}
-
-function renderAbout() {
-  $("about-chips").innerHTML = "";
-  for (const s of ABOUT_SUBS) {
+  $("subtabs").hidden = current.subs.length < 2;
+  if (current.subs.length < 2) return;
+  for (const s of current.subs) {
     const b = document.createElement("button");
     b.textContent = s.title;
-    b.setAttribute("aria-pressed", s.id === state.about);
-    b.onclick = () => { state.about = s.id; history.replaceState(null, "", `#${s.id === "engines" ? s.id : ABOUT.id}`); renderAbout(); };
-    $("about-chips").append(b);
+    b.setAttribute("aria-pressed", s.id === state.suite);
+    b.onclick = () => go(s.id);
+    $("subtabs").append(b);
   }
-  for (const s of ABOUT_SUBS) $(s.id).hidden = s.id !== state.about;
 }
 
 function render() {
@@ -357,7 +366,6 @@ function render() {
   for (const p of PAGES) $(p.id).hidden = p !== page;
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
-  if (page === ABOUT) { renderAbout(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -488,7 +496,7 @@ function renderCapability() {
   }
 }
 
-// THE ENGINES SUB-TAB of About: what each engine is. Facts from each project's own repo and site, no ratings.
+// THE ENGINES PAGE, a sub-tab of About: what each engine is. Facts from each project's own repo and site, no ratings.
 // Every engine in LABEL has a row (tests/test_results_page.py).
 const ENGINE_ROWS = [
   { engine: "pyspark_iceberg", url: "https://github.com/apache/spark", started: "UC Berkeley AMPLab, 2009",
@@ -607,13 +615,14 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #tpch, #tpcds, #iceberg, #dbt, #details, #about, #engines (About's sub-tab), or one engine on the details tab (#datafusion).
+// Deep links: #performance, #features, #etl, #tpch, #tpcds, #iceberg, #dbt, #details, #about, #engines,
+// or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "tried") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
-  if (h === ABOUT.id || ABOUT_SUBS.some(s => s.id === h)) { state.suite = ABOUT.id; state.about = h === ABOUT.id ? ABOUT_SUBS[0].id : h; }
-  else if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
+  if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
+  else if (GROUPS.some(g => g.id === h)) state.suite = GROUPS.find(g => g.id === h).subs[0].id;
   else if (h && document.getElementById(h)?.closest("#details")) state.suite = DETAILS.id;
 }
 addEventListener("hashchange", () => { fromHash(); render(); });
