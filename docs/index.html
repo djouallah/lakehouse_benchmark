@@ -120,8 +120,8 @@ footer a, .lane a { color: var(--accent); }
   <section class="details" id="about" hidden>
     <p>This repo checks how well each engine works with an Iceberg REST catalog, mainly OneLake. No engine is
       favoured; the timings are a side effect.</p>
-    <p>It's how storage sees engines: the tables stay put, and every engine is just another client reading and
-      writing them. The bench aims to be as neutral as humanly possible.</p>
+    <p>This is how a storage person sees engines: they are all clients of the same tables. The bench tries to
+      be as neutral as humanly possible.</p>
     <p>The workflow I'm after: attach the catalog, do the work in SQL, write the tables back. I have a
       preference for SQL.</p>
     <p>Every engine gets the same jobs on the same 16 GB GitHub runner: load CSVs into an Iceberg table, then
