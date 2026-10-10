@@ -1,0 +1,724 @@
+{
+ "engines": {
+  "polars_iceberg": {
+   "version": "2.0.0",
+   "run": "37949375865",
+   "url": "https://github.com/djouallah/iceberg-probe-native/actions/runs/37949375865",
+   "date": "2026-10-09"
+  },
+  "duckdb_iceberg": {
+   "version": "v2.0.0-alpha46057",
+   "run": "37949375865",
+   "url": "https://github.com/djouallah/iceberg-probe-native/actions/runs/37949375865",
+   "date": "2026-10-09"
+  },
+  "lakesail_iceberg": {
+   "version": "0.7.2",
+   "run": "37952652391",
+   "url": "https://github.com/djouallah/iceberg-probe-native/actions/runs/37952652391",
+   "date": "2026-10-09"
+  },
+  "chdb_iceberg": {
+   "version": "4.4.0",
+   "run": "37949375865",
+   "url": "https://github.com/djouallah/iceberg-probe-native/actions/runs/37949375865",
+   "date": "2026-10-09"
+  }
+ },
+ "groups": [
+  "Write",
+  "Tables & types",
+  "Schema",
+  "Concurrency",
+  "Read & maintenance"
+ ],
+ "rows": [
+  {
+   "group": "Write",
+   "label": "INSERT / append",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Write",
+   "label": "INSERT ... SELECT",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "na"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Write",
+   "label": "DELETE",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Write",
+   "label": "UPDATE",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Write",
+   "label": "MERGE with one action",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "na"
+    },
+    "chdb_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Write",
+   "label": "TRUNCATE",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "CREATE TABLE",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "CREATE TABLE AS SELECT",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Partitioned table",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Partition transform: bucket",
+   "cells": {
+    "polars_iceberg": {
+     "o": "no",
+     "n": "works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Partition transform: truncate",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Partition transforms: year / month / day / hour",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Nested types: struct, list, map",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Drop table with purge",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_37949375865_1_d…"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "Create / drop namespace",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Add column",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Drop column",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Rename column",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Type promotion (int → long)",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_37952652391_1_promote"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Partition evolution",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Write after partition evolution",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "na"
+    },
+    "chdb_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Set table property",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_37952652391_1_props"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '37949375865_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Sort order at create",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "na"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Sort order evolution",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
+    }
+   }
+  },
+  {
+   "group": "Concurrency",
+   "label": "A commit against a stale snapshot is refused",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "na"
+    },
+    "lakesail_iceberg": {
+     "o": "na"
+    },
+    "chdb_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Concurrency",
+   "label": "Concurrent append: both kept",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Concurrency",
+   "label": "Concurrent writer: DELETE loses nothing",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Concurrency",
+   "label": "Concurrent writer: UPDATE loses nothing",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Time travel",
+   "cells": {
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Metadata tables",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_37952652391_1_inspect\"), Identifier(\"snapshots\")]"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "400 Malformed request"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Compaction",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+    },
+    "chdb_iceberg": {
+     "o": "no-op",
+     "n": "returned success and data files went 2 -> 2"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Expire snapshots",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Catalog Error: Table Function with name iceberg_expire_snapshots does not exist! Did you mean \"iceberg_snapshots\"?"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 48. DB::Exception: expire_snapshots is not supported for Iceberg tables backed by a transactional catalog. (NOT_IMPLEMENTED)"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Create branch",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_37949375865_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, …"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Create tag",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "na"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
+    }
+   }
+  },
+  {
+   "group": "Read & maintenance",
+   "label": "Credential vending",
+   "cells": {
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "na"
+    },
+    "chdb_iceberg": {
+     "o": "na"
+    }
+   }
+  }
+ ],
+ "blocked": [
+  "MERGE INTO / upsert",
+  "MERGE ... WHEN NOT MATCHED BY SOURCE",
+  "INSERT OVERWRITE, whole table",
+  "INSERT OVERWRITE, one partition / by filter",
+  "Several writes in one transaction",
+  "CREATE OR REPLACE TABLE",
+  "format-version 3"
+ ]
+}
