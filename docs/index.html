@@ -597,8 +597,8 @@ function renderDbt() {
 }
 
 // THE REAL WORKLOAD TAB: can the engine replace DuckDB in one real dbt project, analytics-as-code?
-// Five requirements, all measured elsewhere on this page: raw CSV from OneLake Files and the Iceberg
-// write are the Light ETL (every engine in the bench passes both: README conditions 2 and 3); the dbt
+// Four requirements, all measured elsewhere on this page: raw CSV from OneLake Files is the Light ETL
+// (every engine in the bench passes it, and writes Iceberg: README conditions 2 and 3); the dbt
 // column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt note
 // for the others (tests/test_results_page.py keeps the two in step); the file name column is what
 // each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
@@ -627,18 +627,17 @@ const WORKLOAD_ROWS = [
 function renderWorkload() {
   const sec = $(WORKLOAD.id);
   const mark = (ok, text) => `<td class="lv ${ok === true ? "excellent" : ok === false ? "none" : "partial"}"><i class="m"></i>${text}</td>`;
-  const head = ["Engine", "Reads CSV from Files", "File name column", "dbt 1", "Writes Iceberg", "MERGE", "Replaces DuckDB here"];
+  const head = ["Engine", "Reads CSV from Files", "File name column", "dbt 1", "MERGE", "Replaces DuckDB here"];
   sec.innerHTML = `
     <p class="caption">Nobody changes an engine because it is 2× faster. The new engine must run the workload
       you have today, and then be much better at something. What an engine supports comes before how fast it is.</p>
     <p class="caption">One real project: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB read AEMO CSV files
       from OneLake Files and load them into Iceberg tables through the OneLake catalog, every hour. To replace DuckDB
-      there, an engine needs all five:</p>
+      there, an engine needs all four:</p>
     <ul class="caption">
       <li>it reads raw CSV from OneLake Files;</li>
       <li>it gives the source file name as a column: the project keys and dedupes on it;</li>
       <li>it has a dbt 1 adapter that works on Iceberg tables;</li>
-      <li>it writes Iceberg through the REST catalog;</li>
       <li>it has <code>MERGE</code>: the incremental models are insert-only merges.</li>
     </ul>
     <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span></div>
@@ -652,11 +651,10 @@ function renderWorkload() {
         ${mark(true, "Light ETL")}
         ${mark(r.file.ok, r.file.note)}
         ${mark(dbtOk, dbt.adapter ? `<a href="#dbt">${esc(dbt.adapter)}</a>` : `<a href="#dbt">no adapter</a>`)}
-        ${mark(true, "Light ETL")}
         ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
         ${mark(yes, r.verdict ?? (yes ? "Yes" : "No"))}
       </tr>`; }).join("")}</tbody></table></div>
-    <p class="note">Reads CSV from Files and Writes Iceberg: every engine in the bench passes the <a href="#etl">Light ETL</a>.
+    <p class="note">Reads CSV from Files: every engine in the bench passes the <a href="#etl">Light ETL</a>.
       File name column: what each engine's ETL reads. dbt 1: the <a href="#dbt">dbt support</a> tab.
       MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
 }
