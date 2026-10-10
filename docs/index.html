@@ -388,8 +388,8 @@ function renderCapability() {
   const engines = Object.keys(cap.engines), groups = ["All", ...cap.groups];
   if (!groups.includes(state.group)) state.group = "All";
   const score = e => {
-    const asked = cap.rows.map(r => r.cells[e].o).filter(o => o !== "na" && o !== "skipped");
-    return [asked.filter(o => o === "supported").length, asked.length];
+    const all = cap.rows.map(r => r.cells[e].o);  // every engine out of the same total
+    return [all.filter(o => o === "supported").length, all.length];
   };
   sec.innerHTML = `
     <div class="chips">${groups.map(g => `<button aria-pressed="${g === state.group}">${esc(g)}</button>`).join("")}</div>
