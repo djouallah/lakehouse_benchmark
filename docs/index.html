@@ -177,6 +177,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <div id="speedup"></div>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
+  <section class="cap rows" id="storage" hidden></section>
   <section class="details" id="about" hidden>
     <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
     <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
@@ -309,13 +310,14 @@ const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const DBT = { id: "dbt", title: "dbt support" };
+const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
 const ENGINES = { id: "engines", title: "Engines" };
-const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [CAPABILITY, DBT, STORAGE, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "performance", title: "Performance", subs: SUITES },
-  { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
+  { id: "features", title: "Features", subs: [CAPABILITY, DBT, STORAGE] },
   { id: "details", title: "Details", subs: [DETAILS] },
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES] },
 ];
@@ -354,6 +356,7 @@ function render() {
   for (const p of PAGES) $(p.id).hidden = p !== page;
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
+  if (page === STORAGE) { renderStorage(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -563,6 +566,30 @@ function renderDbt() {
       </tr>`).join("")}</tbody></table></div>`;
 }
 
+// THE STORAGE TOKEN TAB: the bench runs on OneLake, but the engines do not need it. With only the
+// catalog address and a token, DuckDB writes one row and reads it back; the catalog gives the storage
+// token. The test and its secrets live in testing-iceberg-rest-catalog; .github/workflows/storage_token.yml
+// copies its result to data/storage_token.json.
+const STORAGE_REPO = "https://github.com/djouallah/testing-iceberg-rest-catalog";
+function renderStorage() {
+  const sec = $(STORAGE.id), st = data.storage;
+  if (!st) { sec.innerHTML = `<div class="empty">No results yet.</div>`; return; }
+  const failed = st.catalogs.filter(c => !c.ok).map(c => esc(c.label));
+  sec.innerHTML = `
+    <p class="caption">The bench runs on OneLake. The engines do not need OneLake: DuckDB needs only the
+      catalog address and a token, and the catalog gives the storage token for the data. The test writes
+      one row and reads it back (<a href="${STORAGE_REPO}/blob/main/storage_token.py">storage_token.py</a>).
+      ${failed.length ? `It fails on: ${failed.join(", ")}.` : "It works on every catalog."}</p>
+    <div class="legend"><span class="excellent"><i class="m"></i>Works</span><span class="none"><i class="m"></i>Fails</span></div>
+    <div class="wrap"><table><tbody>${st.catalogs.map(c => `
+      <tr>
+        <td class="e">${esc(c.label)}</td>
+        <td class="lv ${c.ok ? "excellent" : "none"}"><i class="m"></i>${c.ok ? "Works" : "Fails"}</td>
+        <td class="n">${esc(c.storage)}${c.ok ? "" : `; fails at ${esc(c.step)}: <code>${esc(c.error)}</code>`}</td>
+      </tr>`).join("")}</tbody></table></div>
+    <p class="note"><a href="${st.run}">Run</a> of ${esc(st.date)}.</p>`;
+}
+
 const tip = $("tip");
 function showTip(item, lane) {
   tip.style.setProperty("--c", `var(--${item.engine}, var(--ink-3))`);
@@ -598,7 +625,7 @@ for (const li of $("details").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #features, #etl, #tpch, #tpcds, #iceberg, #dbt, #details, #about, #engines,
+// Deep links: #performance, #features, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #details, #about, #engines,
 // or one engine on the details tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -617,6 +644,8 @@ Promise.all([
     .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})),
   fetch(CAPABILITY.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.capability = j; }).catch(() => {}),
+  fetch(STORAGE.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { data.storage = j; }).catch(() => {}),
 ]).then(render);
 </script>
 </body>
