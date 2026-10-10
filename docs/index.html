@@ -131,8 +131,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .skipped .m, .cap .broken .m { width: auto; height: auto; border-radius: 0; color: var(--ink-3); }
 .cap .skipped .m::before { content: "\2014"; }
 .cap .broken .m::before { content: "?"; }
-.cap .blocked { margin-top: 12px; font-size: 13px; color: var(--ink-2); max-width: 75ch; }
-.cap .blocked b { color: var(--ink); font-weight: 600; }
 .cap .note { font-size: 13px; color: var(--ink-2); max-width: 75ch; margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
 .tip code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--ink); }
@@ -413,7 +411,6 @@ function renderCapability() {
       }).join("")}</tr></thead>
       <tbody></tbody>
     </table></div>
-    <p class="blocked"><b>Waiting on the OneLake catalog, so not scored:</b> ${cap.blocked.map(esc).join(" · ")}.</p>
     <p class="note">In the concurrency rows a second writer commits between the engine's read and its commit.
       Every reading, with what came back: <a href="https://github.com/djouallah/iceberg-probe-native#readme">iceberg-probe-native</a>.</p>`;
   [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group = groups[i]; render(); });

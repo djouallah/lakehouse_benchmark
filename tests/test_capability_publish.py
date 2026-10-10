@@ -22,7 +22,6 @@ def _grid(**overrides):
         "rows": [
             {"group": "Write", "label": "DELETE", "cells": {"duckdb_iceberg": {"o": "supported"}}}
         ],
-        "blocked": ["format-version 3"],
     }
     grid.update(overrides)
     return grid
@@ -47,3 +46,8 @@ def test_an_unknown_outcome_is_refused():
 def test_the_page_draws_every_outcome_the_publisher_accepts():
     for outcome in capability_publish.OUTCOMES:
         assert f'"{outcome}"' in PAGE or f"{outcome}:" in PAGE, outcome
+
+
+def test_a_grid_that_lists_blocked_rows_is_refused():
+    with pytest.raises(SystemExit, match="blocks"):
+        capability_publish.check(_grid(blocked=["format-version 3"]))

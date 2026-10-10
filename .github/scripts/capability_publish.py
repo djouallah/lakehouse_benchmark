@@ -4,7 +4,7 @@ The probes run in djouallah/iceberg-probe-native, which writes the grid as docs/
 (its render_readme.py, from its results/). This copies that file to docs/data/capability.json,
 where the Capability tab of docs/index.html reads it, after checking that it is the shape the
 page expects and that every engine in it is one this site knows. Rows the catalog itself blocks
-arrive already set apart under `blocked`.
+never reach this repo: the grid holds only what the catalog lets an engine do.
 
     python .github/scripts/capability_publish.py [url-or-path]
 """
@@ -35,6 +35,8 @@ def fetch(source: str) -> dict:
 
 def check(grid: dict) -> dict:
     """The grid, if it is one the page can draw; SystemExit naming the first thing wrong."""
+    if "blocked" in grid:
+        raise SystemExit("::error::the grid lists rows the catalog blocks; the site shows none")
     unknown = set(grid["engines"]) - set(LABEL)
     if unknown:
         raise SystemExit(f"::error::engines with no label or colour here: {sorted(unknown)}")
