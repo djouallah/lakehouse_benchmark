@@ -111,7 +111,7 @@ def run_pass(
 
 
 def benchmark(engine, cfg) -> EngineResult:
-    """Attach, run each of the suite's passes (cold, then warm for TPC-H). Always closes the engine.
+    """Attach, run each of the suite's passes (one cold pass for both). Always closes the engine.
 
     A setup failure returns `status='setup_failed'` with the one setup row rather than raising:
     the caller writes the artifact either way, so a failed engine still appears in the results

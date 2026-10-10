@@ -8,7 +8,7 @@ notebook's one Delta append:
   same for every engine, and the same as store.Row documents for TPC-H.
 * `phase='load'`, `query=1` -- everything the notebook's `<engine>_clean_csv` did: drop and
   create the table, read the CSVs from OneLake, transform, write, commit. `rows` is the row count
-  read back from the table afterwards, untimed: seven engines applying one filter to one set of
+  read back from the table afterwards, untimed: every engine applying one filter to one set of
   files should land one number, and a chart cannot show which of them did not.
 
 One pass, `run_type='cold'`: the notebook ran once, and a second write of the same input would
