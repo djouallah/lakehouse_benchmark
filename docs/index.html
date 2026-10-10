@@ -513,15 +513,37 @@ const ENGINE_ROWS = [
   { engine: "daft_iceberg", url: "https://github.com/Eventual-Inc/Daft", started: "Eventual, 2022",
     governed: "Eventual", licence: "Apache 2.0", lang: "Rust",
     use: "DataFrames for multimodal data, distributed" },
+  // Tried, not added: no chart colour, so the swatch is grey.
+  { engine: "doris", label: "Apache Doris", url: "https://github.com/apache/doris", started: "Baidu as Palo, 2017",
+    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "C++, Java",
+    use: "Distributed SQL, real-time analytics" },
+  { engine: "firebolt", label: "Firebolt Core", url: "https://github.com/firebolt-db/firebolt-core", started: "Firebolt, 2025",
+    governed: "Firebolt", licence: "Elastic 2.0", lang: "C++",
+    use: "Distributed SQL, self-hosted" },
+  { engine: "databend", label: "Databend", url: "https://github.com/databendlabs/databend", started: "Datafuse Labs, 2020",
+    governed: "Databend Labs", licence: "Apache 2.0", lang: "Rust",
+    use: "Data warehouse on object storage" },
+  { engine: "comet", label: "DataFusion Comet", url: "https://github.com/apache/datafusion-comet", started: "Apple, 2024",
+    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "Rust, Scala",
+    use: "Native execution inside Spark" },
+  { engine: "datafusion", label: "DataFusion", url: "https://github.com/apache/datafusion", started: "Andy Grove, 2017",
+    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "Rust",
+    use: "Query engine library for other engines" },
+  { engine: "pg_lake", label: "pg_lake", url: "https://github.com/Snowflake-Labs/pg_lake", started: "Snowflake, 2025",
+    governed: "Snowflake", licence: "Apache 2.0", lang: "C",
+    use: "Iceberg inside Postgres" },
+  { engine: "cedardb", label: "CedarDB", url: "https://cedardb.com", started: "TUM, 2024",
+    governed: "CedarDB", licence: "Proprietary", lang: "C++",
+    use: "Postgres-compatible analytics and transactions" },
 ];
 
 function renderEngines() {
   const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for"];
   $("engines").innerHTML = `
-    <p class="caption">What each engine is. From each project's own repo and site.</p>
+    <p class="caption">What each engine is. From each project's own repo and site. Grey: tried, not in the bench.</p>
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${ENGINE_ROWS.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
-        <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
+        <td class="e"><i class="sw"></i><a href="${r.url}">${esc(r.label ?? LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
         <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>
       </tr>`).join("")}</tbody></table></div>`;
