@@ -606,10 +606,10 @@ function renderDbt() {
 // each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
 const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
 // Three groups: a veteran has the features because the years and the users brought them; a new star is
-// young, widely used, and still filling the set; a niche engine is built for one job and is judged on that.
+// young, still growing, and still filling the set; a niche engine is built for one job and is judged on that.
 const WORKLOAD_TIERS = [
   { id: "veteran", title: "Veteran", blurb: "Years of users brought every feature. The question is only speed." },
-  { id: "star", title: "New star", blurb: "Young and widely used. The feature set is still filling in." },
+  { id: "star", title: "New star", blurb: "Young, still growing. The feature set is still filling in." },
   { id: "niche", title: "Niche", blurb: "Built for one job. Not a general replacement, and not trying to be." },
 ];
 const WORKLOAD_ROWS = [
@@ -625,7 +625,7 @@ const WORKLOAD_ROWS = [
     merge: { ok: false, note: "dbt-starrocks has no merge" } },
   { engine: "polars_iceberg", tier: "star", file: { ok: true, note: "<code>include_file_paths</code>" },
     merge: { ok: false, note: "<code>write_iceberg</code> appends only" } },
-  { engine: "lakesail_iceberg", tier: "niche", file: { ok: false, note: `<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>` },
+  { engine: "lakesail_iceberg", tier: "star", file: { ok: false, note: `<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>` },
     merge: { ok: true, note: "" } },
   { engine: "chdb_iceberg", tier: "niche", file: { ok: true, note: "<code>_file</code>" },
     merge: { ok: false, note: "" } },
