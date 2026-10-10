@@ -634,6 +634,10 @@ function renderWorkload() {
     <p class="caption">A minimum set of features makes an engine an option at all. That set takes time: users bring
       the workloads, the workloads show the gaps, the gaps get fixed, and more users come. A fast engine without the
       set is not in that circle yet.</p>
+    <p class="caption">Spark-OSS is the baseline. It is the most mature engine here: every feature on this page, every
+      adapter, every file format. Its weak point is the executor: row by row on the JVM, so it is the slowest engine
+      on the <a href="#performance">Performance</a> tab. A native engine under the same Spark plan fixes that without
+      giving up the features; Gluten/Velox is that engine in the bench.</p>
     <p class="caption">One real project: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB read AEMO CSV files
       from OneLake Files and load them into Iceberg tables through the OneLake catalog, every hour. To replace DuckDB
       there, an engine needs all three. One red cell and it is not an option:</p>
