@@ -84,7 +84,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .tip .k { color: var(--ink-2); }
 .details { color: var(--ink-2); margin-top: 16px; }
-.details h3, #engines h3 { font-size: 15px; color: var(--ink); margin: 16px 0 4px; }
+.details h3 { font-size: 15px; color: var(--ink); margin: 16px 0 4px; }
 .details p { margin: 0 0 12px; }
 .details ul { margin: 0; padding-left: 18px; }
 .details li { margin: 6px 0; overflow-wrap: anywhere; }
@@ -191,6 +191,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <p>When an engine fails, the bug is filed upstream (see <a href="#details">Details</a>).</p>
   </section>
   <section class="cap rows" id="engines" hidden></section>
+  <section class="cap rows" id="tried" hidden></section>
   <section class="details" id="details" hidden>
     <h3>In the bench</h3>
     <ul>
@@ -311,8 +312,8 @@ const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", titl
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const DBT = { id: "dbt", title: "dbt support" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
-const ENGINES = { id: "engines", title: "Engines" };
-const PAGES = [CAPABILITY, DBT, STORAGE, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
+const PAGES = [CAPABILITY, DBT, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
@@ -320,7 +321,7 @@ const GROUPS = [
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "details", title: "Details", subs: [DETAILS] },
-  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES] },
+  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES, TRIED] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
 const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
@@ -513,7 +514,7 @@ const ENGINE_ROWS = [
   { engine: "daft_iceberg", url: "https://github.com/Eventual-Inc/Daft", started: "Eventual, 2022",
     governed: "Eventual", licence: "Apache 2.0", lang: "Rust",
     use: "DataFrames for multimodal data, distributed" },
-  // Tried, did not work here: not in LABEL, so renderEngines puts them in the second table.
+  // Tried, no success: not in LABEL, so renderEngines puts them on the Tried tab.
   { engine: "doris", label: "Apache Doris", url: "https://github.com/apache/doris", started: "Baidu as Palo, 2017",
     governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "C++, Java",
     use: "Distributed SQL, real-time analytics" },
@@ -547,9 +548,11 @@ function renderEngines() {
         <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>
       </tr>`).join("")}</tbody></table></div>`;
   $("engines").innerHTML = `
-    <p class="caption">What each engine is. From each project's own repo and site.</p>
-    <h3>In the bench</h3>${table(ENGINE_ROWS.filter(r => r.engine in LABEL))}
-    <h3>Tried, did not work here</h3>${table(ENGINE_ROWS.filter(r => !(r.engine in LABEL)))}`;
+    <p class="caption">The engines in the bench. From each project's own repo and site.</p>
+    ${table(ENGINE_ROWS.filter(r => r.engine in LABEL))}`;
+  $("tried").innerHTML = `
+    <p class="caption">Engines tried that did not work here; <a href="#details">Details</a> says why.</p>
+    ${table(ENGINE_ROWS.filter(r => !(r.engine in LABEL)))}`;
 }
 
 // THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB and
