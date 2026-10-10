@@ -229,9 +229,9 @@ const SUITES = [
   { id: "etl", title: "Light ETL", csv: "data/etl_results.csv", headline: 1000,
     scale: n => `${n.toLocaleString()} files`,
     caption: n => `Read ${n.toLocaleString()} CSVs and write one Iceberg table.` },
-  { id: "tpch", title: "TPC-H", csv: "data/tpch_results.csv", headline: 10, queries: 22, sfs: [10, 30, 60, 100],
+  { id: "tpch", title: "TPC-H", csv: "data/tpch_results.csv", headline: 100, queries: 22, sfs: [10, 30, 60, 100],
     scale: n => `SF ${n}`, caption: n => `Total cold seconds for all 22 queries at scale factor ${n}.` },
-  { id: "tpcds", title: "TPC-DS", csv: "data/tpcds_results.csv", headline: 60, queries: 99, sfs: [10, 30, 60, 100],
+  { id: "tpcds", title: "TPC-DS", csv: "data/tpcds_results.csv", headline: 100, queries: 99, sfs: [10, 30, 60, 100],
     scale: n => `SF ${n}`, caption: n => `Total cold seconds for all 99 queries at scale factor ${n}.` },
 ];
 
