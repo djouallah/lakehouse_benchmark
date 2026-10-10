@@ -18,26 +18,18 @@ from dataclasses import dataclass
 
 from bench.config import SQL_DIR, Config
 
-# THE ENGINES THAT FINISH. TPC-H runs them all; TPC-DS runs these. The rest were dropped on
-# measurement, not taste -- run 35732997698 (SF=10) and 35732283791 (SF=1) are the
-# evidence, and every number below is from the SF=10 run over identical OneLake tables.
+# THE ENGINES THAT FINISH. Two of TPC-H's are left out, on measurement, not taste -- run
+# 35732997698 (SF=10) and 35732283791 (SF=1) are the evidence:
 #
 #   chdb_iceberg      ABORTS IN GLIBC on its first query: `pthread_mutex_lock.c:94 assertion
 #                     failed: mutex->__data.__owner == 0`, exit 134, no result rows at all. Both
 #                     at SF=1 and SF=10, and against tables written by two different writers, so
 #                     it is chDB 4.4.0, not the data. TPC-H is unaffected -- chDB still runs there.
-#   lakesail_iceberg  38 MINUTES COLD for 90 of 99 statements, then 50 of 99 failed warm. Its
-#                     parser rejects the spec's double-quoted aliases (`AS "order count"`), which
-#                     is 8 statements at SF=1 already; the rest is scale. On 0.7.2 (run
-#                     36648458503) cold is 24 minutes and Q71 passes (lakehq/sail#2642), and
-#                     bench/tpch/queries.py now backticks those aliases for it (BACKTICK_ALIASES).
 #   daft_iceberg      never ran here: TPC-H already excludes it from the query benchmark
 #                     (Eventual-Inc/Daft#7532).
 #
-# What is left is DuckDB and Spark. Spark is slow --
-# ~42 min cold, and bench/tpch/engines/pyspark_iceberg.py's `refresh` exists because of it -- but
-# it is the only non-DuckDB engine that answers all 99, so dropping it would leave one engine
-# measured against itself.
+# Spark-OSS is slow -- bench/tpch/engines/pyspark_iceberg.py's `refresh` exists because of it --
+# but it answers all 99, so it stays.
 ENGINES = (
     "duckdb_iceberg",
     "pyspark_iceberg",
@@ -46,7 +38,7 @@ ENGINES = (
     # TpcdsConfig runs one pass.
     "pyspark_gluten_iceberg",
     # StarRocks: added 2026-09-26 after passing candidate_engine.yml (22/22 TPC-H, OneLake reads
-    # and writes). Its TPC-DS coverage is whatever its first runs show.
+    # and writes). Q49 fails on a StarRocks bug (StarRocks#79807); everything else runs.
     "starrocks_iceberg",
     # Trino: added 2026-09-28. 89/99 at SF=1 on its first smoke; the ten were query text, not
     # Trino, and read the same on every engine once written as standard SQL (bench/tpcds/
@@ -97,10 +89,10 @@ TABLES = (
 # makes a 30% error here change nothing.
 PARQUET_MB_PER_SF = 300
 
-# The scale the headline docs are built at, and tpcds.yml's default. SF=60, the largest a 16 GB
-# runner gets through: 20 GiB of parquet that does not fit in memory, so the engines are measured
-# reading OneLake, not their caches. SF=10, 30 and 100 are charted too, in the totals chart only.
-HEADLINE_SF = 60
+# The scale docs/tpcds/RESULTS.md and the per-query chart are built at: SF=100, the scale the
+# results page opens at. ~30 GB of parquet does not fit a 16 GB runner, so the engines are
+# measured reading OneLake, not their caches. tpcds.yml still defaults to SF=60.
+HEADLINE_SF = 100
 
 
 @dataclass(frozen=True)
@@ -114,7 +106,7 @@ class TpcdsConfig(Config):
     # does not fit a 16 GB runner, so DuckDB's warm was only 8% under its cold (1,046s -> 962s).
     # One pass also halves a run that was already the longest in the repo.
     PASSES = ("cold",)
-    # The totals chart shows every scale the suite has been run at, the per-query chart only SF=60.
+    # The totals chart shows every scale the suite has been run at, the per-query chart only SF=100.
     TOTALS_SFS = (10, 30, 60, 100)
     # HARD QUERIES FIRST, so a run that is going to die on one dies in its first minutes, not two
     # hours in after 98 easy ones. Q64 and Q72 lead because they are the ones that end runs

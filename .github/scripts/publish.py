@@ -21,8 +21,7 @@ It touches nothing in Azure: no pyiceberg, no credentials, no network. That is w
 requirements/report.txt has no azure-identity in it and the job needs no `id-token` permission.
 
 THE LEAK CHECK IS NOT OPTIONAL, and it lives in bench/report.py with `merge` and `write_csv` --
-the three pieces every publish script shares, including the concurrency benchmark's, which is a
-package module and cannot sibling-import this script.
+the three pieces every publish script shares (this one and etl_publish.py).
 """
 
 from __future__ import annotations
@@ -46,7 +45,11 @@ PER_ROW_MAX = 33
 
 
 def summarize(run: Run, engines: tuple[str, ...]) -> list[dict]:
-    """Per-engine totals for the markdown tables."""
+    """Per-engine totals for the markdown tables.
+
+    A run that failed a query has NO total, the way the page shows it: the sum of the queries
+    before the failure is not a time for the suite. Its row still lists what failed.
+    """
     out = []
     for engine in engines:
         result = run.engines.get(engine)
@@ -62,6 +65,7 @@ def summarize(run: Run, engines: tuple[str, ...]) -> list[dict]:
             elif row.status == "error" and row.run_type == "cold":
                 failed.append(row.query)
         setup = next((r.dur for r in result.rows if r.phase == "setup"), None)
+        complete = not failed and result.status == "ok"
         out.append(
             {
                 "engine": engine,
@@ -69,8 +73,8 @@ def summarize(run: Run, engines: tuple[str, ...]) -> list[dict]:
                 "version": result.version,
                 "status": result.status,
                 "setup": setup,
-                "cold": totals["cold"],
-                "warm": totals["warm"],
+                "cold": totals["cold"] if complete else None,
+                "warm": totals["warm"] if complete else None,
                 "failed": failed,
             }
         )
@@ -163,7 +167,8 @@ def write_results_md(run: Run, rows: list[dict], table, path: Path, suite) -> No
     lines += [
         "## Per query, latest run",
         "",
-        "Seconds, cold pass. `—` means the query failed; see Failures above.",
+        "Seconds, cold pass. `—` means the query failed or did not run"
+        + ("; see Failures above." if failures else "."),
         "",
     ]
     engines = [r["engine"] for r in rows]
@@ -298,7 +303,8 @@ def main() -> int:
     write_step_summary(run, rows, suite)
 
     best = rows[0]
-    print(f"::notice::fastest cold: {best['label']} at {best['cold']:,.1f}s")
+    if best["cold"]:
+        print(f"::notice::fastest cold: {best['label']} at {best['cold']:,.1f}s")
     return 0
 
 

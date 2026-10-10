@@ -315,3 +315,23 @@ def test_a_failed_run_is_published_and_an_attach_only_run_is_not():
     assert not publish.any_engine_produced_a_measurement(
         SimpleNamespace(engines={"trino_iceberg": attach_only})
     )
+
+
+def test_a_failed_run_has_no_total_in_results_md():
+    """The sum of the queries before a failure is not a suite time; the page shows none either."""
+    import importlib.util
+    from pathlib import Path
+
+    script = Path(__file__).parent.parent / ".github" / "scripts" / "publish.py"
+    spec = importlib.util.spec_from_file_location("publish", script)
+    publish = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(publish)
+
+    run = _run()
+    run.engines["trino_iceberg"] = EngineResult(
+        "1", rows=[Row("cold", "query", 1, 3.0), Row("cold", "query", 2, 4.0)]
+    )
+    rows = publish.summarize(run, ("duckdb_iceberg", "trino_iceberg"))
+    assert [r["engine"] for r in rows] == ["trino_iceberg", "duckdb_iceberg"]
+    assert rows[0]["cold"] == 7.0
+    assert rows[1]["cold"] is None and rows[1]["failed"] == [2]

@@ -202,8 +202,8 @@ def attach(conn, cfg: Config, token: str) -> None:
 def datacache_metrics(conn) -> str:
     """The back end's DataCacheMetrics column from SHOW BACKENDS: what the data cache holds.
 
-    Read at close as proof the cache engaged, as pyspark_alluxio_iceberg does for Alluxio. The
-    allin1 start-up log prints the same column, but at start-up, when it is always 0 B.
+    Read at close as proof the cache engaged. The allin1 start-up log prints the same column, but
+    at start-up, when it is always 0 B.
     """
     with conn.cursor() as cur:
         cur.execute("SHOW BACKENDS")

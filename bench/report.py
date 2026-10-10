@@ -1,11 +1,8 @@
 """What every publish script shares: merge the matrix artifacts, flatten to CSV, refuse to leak.
 
-Lifted out of .github/scripts/publish.py when the third benchmark arrived. Its publisher lives
-inside bench/concurrency, so that the three benchmarks sit side by side as packages, and a module
-under bench/ cannot sibling-import a script in .github/scripts (that trick relies on
-`python .github/scripts/x.py` putting the scripts directory at sys.path[0]). Moving the three
-functions was the alternative to copying the leak check, which is the one piece of this repo that
-must exist exactly once.
+Lifted out of .github/scripts/publish.py so that publish.py and etl_publish.py share one copy.
+Moving the three functions was the alternative to copying the leak check, which is the one piece
+of this repo that must exist exactly once.
 
 THE LEAK CHECK IS NOT OPTIONAL. Everything a publish script writes is about to be committed to a
 public repo, and git history is forever. `find_token_shaped` scans for JWT-shaped strings that

@@ -9,7 +9,7 @@ which tables, which SQL file, how many statements, which table carries the gener
 where results and docs go. The runner, the engines, the charts and the CI scripts read those off
 the config they are handed and never import a TPC-H constant directly -- which is what lets
 bench/tpcds/config.py describe the second query suite and run it through the same runner, the
-same seven engines and the same charts.
+same engines and the same charts.
 """
 
 from __future__ import annotations
@@ -36,10 +36,11 @@ ENGINES = (
 
 TABLES = ("lineitem", "orders", "partsupp", "part", "customer", "nation", "region", "supplier")
 
-# The scale the headline docs are built at: bench.yml's default, and what README's charts show.
-# A publish at SF=1 or SF=30 records its run and leaves docs/charts and docs/RESULTS.md alone, for
-# the reason bench/etl/config.py gives at HEADLINE_FILES.
-HEADLINE_SF = 10
+# The scale docs/RESULTS.md and the per-query chart are built at: SF=100, the scale the results
+# page opens at. A publish at another scale in TOTALS_SFS redraws them from the latest stored
+# SF=100 runs; a publish at SF=1 records its run and leaves docs/charts and docs/RESULTS.md alone,
+# for the reason bench/etl/config.py gives at HEADLINE_FILES.
+HEADLINE_SF = 100
 
 # Approximate parquet MiB per scale factor unit, measured from a real tpchgen-cli run. Used only
 # to choose a part count; being off by 30% moves a file from 200MB to 260MB and changes nothing.
@@ -97,9 +98,9 @@ def chdb_cache_gib(dataset_gib: float) -> int:
     The notebook asked for 150Gi, which was fine on a Fabric node and is 10x the runner's entire
     disk. ClickHouse does NOT check free space before filling this cache, so a max_size larger
     than the disk is an ENOSPC in the middle of a query rather than an eviction. 1.5x the dataset
-    gives the warm run somewhere to hit; the clamp keeps it inside a 14GB disk with room for
-    spills and the OS. Takes the estimate rather than a scale factor because a TPC-DS SF is not a
-    TPC-H SF: each suite's config knows its own bytes-per-SF (`Config.estimated_gib`).
+    lets a query re-read what an earlier one fetched; the clamp keeps it small enough to leave room
+    for spills and the OS. Takes the estimate rather than a scale factor because a TPC-DS SF is
+    not a TPC-H SF: each suite's config knows its own bytes-per-SF (`Config.estimated_gib`).
     """
     return max(2, min(math.ceil(dataset_gib * 1.5), 8))
 
