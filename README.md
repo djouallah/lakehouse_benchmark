@@ -32,7 +32,6 @@ Tried and not added:
 - **DataFusion Comet**: its native Iceberg scan has no `abfss://`, so OneLake scans fall back to the JVM ([apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058)) (condition 2).
 - **DataFusion**: its Python package has no Iceberg support: no catalog, no scan, no write ([apache/datafusion-python#1097](https://github.com/apache/datafusion-python/issues/1097)). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream ([apache/iceberg-rust#3036](https://github.com/apache/iceberg-rust/issues/3036)) (conditions 2 and 3).
 - **pg_lake** (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row `nation` takes 4-5s.
-- **CedarDB**: no Iceberg support yet; it's on their roadmap.
 
 ## Gluten/Velox vs Spark-OSS
 

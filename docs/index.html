@@ -211,7 +211,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
       <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM. Filed: <a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>
       <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The only route, pyiceberg-core's DataFusion table, was read-only and has been removed upstream (<a href="https://github.com/apache/iceberg-rust/issues/3036">#3036</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-no-iceberg-in-python">Details</a></li>
       <li><b>pg_lake</b>: (tested on 3.5.3) runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
-      <li><b>CedarDB</b>: no Iceberg support yet; it's on their roadmap.</li>
     </ul>
   </section>
 
@@ -533,9 +532,6 @@ const ENGINE_ROWS = [
   { engine: "pg_lake", label: "pg_lake", url: "https://github.com/Snowflake-Labs/pg_lake", started: "Snowflake, 2025",
     governed: "Snowflake", licence: "Apache 2.0", lang: "C",
     use: "Iceberg inside Postgres" },
-  { engine: "cedardb", label: "CedarDB", url: "https://cedardb.com", started: "TUM, 2024",
-    governed: "CedarDB", licence: "Proprietary", lang: "C++",
-    use: "Postgres-compatible analytics and transactions" },
 ];
 
 function renderEngines() {
