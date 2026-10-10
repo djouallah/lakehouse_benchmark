@@ -45,7 +45,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | Drop table with purge | na | yes | yes | — |
 | Create / drop namespace | na | yes | yes | na |
 | Credential vending | na | yes | na | na |
-| A commit against a stale snapshot is refused | yes | na | na | na |
+| A commit against a stale snapshot is refused | yes | yes | na | na |
 | Concurrent append: both kept | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | na | yes | yes | yes |
 | Concurrent writer: UPDATE loses nothing | na | yes | yes | yes |
@@ -116,7 +116,7 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 
 | Statements in one `BEGIN ... COMMIT`, no concurrent writer | Outcome | What came back |
 |---|---|---|
-| DROP TABLE, CREATE TABLE the same name with a new column, INSERT | refused | `CREATE refused: RuntimeError: RuntimeError: Not implemented Error: Cannot create table deleted within a transaction: onelake._bench_capability.iso_dk_38022167812_1_cb_drop_create; t (('id', 'v'), [(1…` |
+| DROP TABLE, CREATE TABLE the same name with a new column, INSERT | refused | `CREATE refused: RuntimeError: RuntimeError: Not implemented Error: Cannot create table deleted within a transaction: onelake._bench_capability.iso_dk_38042313677_1_cb_drop_create; t (('id', 'v'), [(1…` |
 | CREATE OR REPLACE TABLE t AS SELECT ... FROM t | refused | `CREATE refused: RuntimeError: RuntimeError: Not implemented Error: CREATE OR REPLACE not supported in DuckDB-Iceberg. Please use separate Drop and Create Statements; t (('id', 'v'), [(1, 10), (2, 20)…` |
 | CREATE TABLE, INSERT | works | `t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n (('id', 'v'), [(1, 1)]); sent ['POST tables 200', 'POST n 200']` |
 | CREATE TABLE AS SELECT from the seeded table | works | `t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n (('id', 'v'), [(1, 20), (2, 40), (3, 60)]); sent ['POST tables 200', 'POST n 200']` |
@@ -127,7 +127,7 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 | SET PARTITIONED BY (bucket(4, id)), INSERT | works | `t (('id', 'v'), [(1, 10), (2, 20), (3, 30), (4, 40)]); n None; sent ['POST t 200']; spec ['bucket[4]']` |
 | TRUNCATE, INSERT, ROLLBACK | works | `t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []` |
 | DROP TABLE, ROLLBACK | works | `t (('id', 'v'), [(1, 10), (2, 20), (3, 30)]); n None; sent []` |
-| DROP TABLE, CREATE TABLE the same name, ROLLBACK | refused | `CREATE refused: RuntimeError: RuntimeError: Not implemented Error: Cannot create table deleted within a transaction: onelake._bench_capability.iso_dk_38022167812_1_cb_drop_create_rollback; t (('id', …` |
+| DROP TABLE, CREATE TABLE the same name, ROLLBACK | refused | `CREATE refused: RuntimeError: RuntimeError: Not implemented Error: Cannot create table deleted within a transaction: onelake._bench_capability.iso_dk_38042313677_1_cb_drop_create_rollback; t (('id', …` |
 
 ## Where these readings come from
 
@@ -137,4 +137,4 @@ The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`
 - duckdb: v2.0.0-alpha46057, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - sail: 0.7.2, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - chdb: 4.4.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
-- duckdb_isolation: v2.0.0-alpha46057, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
+- duckdb_isolation: v2.0.0-alpha46057, [run 38042313677](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38042313677), 2026-10-10
