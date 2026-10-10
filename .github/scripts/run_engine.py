@@ -6,9 +6,12 @@ the namespace and the statement count.
 
 EXIT CODE, and the distinction matters more than it looks.
 
-ALL OR NOTHING (the owner's, 2026-10-09). The runner stops at the first failed query; the engine
-then writes NO part -- publish has nothing of it to merge -- and exits 1, with the failing query
-in the log. A failing SETUP exits 1 too: an engine that could not attach has nothing to say.
+ALL OR NOTHING (the owner's, 2026-10-09). The runner stops at the first failed query, or the first
+one past runner.QUERY_TIMEOUT_S, and exits 1 with the failing query in the log. It still WRITES its
+part (2026-10-10): the rows up to the failure, the failure itself as an error row. An incomplete run
+never counts toward a time -- the charts and the page average complete runs only -- but it is how
+the page knows the engine ran at that scale and reads `failed`, with no hand-kept list. A failing
+SETUP exits 1 too: an engine that could not attach has nothing to say.
 
 ZERO SUCCESSFUL QUERIES also exits 1, even though the attach worked, because that is never a
 result -- it is a broken configuration wearing a result's clothes. This guard exists because a
@@ -43,9 +46,14 @@ if __name__ == "__main__":
     scrub.safe_print(f"{cfg.engine} | {cfg.TITLE} SF={cfg.sf} | namespace {cfg.schema}")
     result = benchmark(get_engine(cfg.engine, cfg), cfg)
     failed = [row.query for row in result.rows if row.phase == "query" and row.status == "error"]
+    # Captured HERE, on the runner that did the work -- not in publish, which is a different
+    # machine and would stamp the results with its own hardware.
+    result.host = host_facts()
+    path = write_engine_part(out_dir, cfg.engine, result)
     if failed:
         scrub.safe_print(
-            f"::error::{cfg.engine} failed Q{failed[0]}: the run stops there and publishes nothing"
+            f"::error::{cfg.engine} failed Q{failed[0]}: the run stops there and publishes the "
+            f"failure, not a time -> {path}"
         )
         if result.status == "timed_out":
             # The timed-out statement is still running on a thread nothing can stop, and
@@ -53,10 +61,6 @@ if __name__ == "__main__":
             sys.stdout.flush()
             os._exit(1)
         sys.exit(1)
-    # Captured HERE, on the runner that did the work -- not in publish, which is a different
-    # machine and would stamp the results with its own hardware.
-    result.host = host_facts()
-    path = write_engine_part(out_dir, cfg.engine, result)
 
     summary = " ".join(f"{k}={v:,.1f}s" for k, v in sorted(totals(result).items()))
     errors = sum(1 for row in result.rows if row.status == "error")

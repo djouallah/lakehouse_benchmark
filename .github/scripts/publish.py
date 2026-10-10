@@ -262,7 +262,7 @@ def main() -> int:
     if not any_engine_produced_a_measurement(run):
         write_step_summary(run, rows, suite)
         print(
-            "::error::every statement failed on every engine -- nothing was measured, so no "
+            "::error::no engine got past its attach -- nothing was measured, so no "
             "results file is being committed. Read the per-engine logs in the artifacts."
         )
         return 1
@@ -303,20 +303,17 @@ def main() -> int:
 
 
 def any_engine_produced_a_measurement(run: Run) -> bool:
-    """True if at least one engine completed at least one query.
+    """True if at least one engine attached and ran a query, whether it finished or failed.
 
-    A run where EVERY statement failed is not a result, and committing one to a public repo
-    records a broken configuration as a data point. It happened: run 35486545501 landed a file
-    whose only non-error row was the setup timing, because `publish` has `if: always()` so that a
-    single dead engine cannot suppress the other three.
+    A failed query IS a result since 2026-10-10: the run stops at it (run_engine.py) and the page
+    reads `failed` from it. What is still not a result is a run where nothing got past the
+    attach -- run 35486545501 landed a file whose only row was a setup timing.
 
     The artifacts and the step summary are still produced either way -- that is where you go to
     read the errors. Only the COMMIT is suppressed.
     """
     return any(
-        row.phase == "query" and row.status == "ok"
-        for result in run.engines.values()
-        for row in result.rows
+        row.phase == "query" for result in run.engines.values() for row in result.rows
     )
 
 

@@ -214,8 +214,6 @@ const LABEL = {         // bench/charts.py LABEL
   pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
 };
 const SPARK = "pyspark_iceberg", GLUTEN = "pyspark_gluten_iceberg";
-// bench/speedup.py KNOWN_FAILED: a cancelled run publishes nothing, so the CSV cannot show it.
-const KNOWN_FAILED = [["tpcds", 100, SPARK]];
 const SUITES = [
   { id: "etl", title: "Light ETL", csv: "data/etl_results.csv", headline: 1000,
     scale: n => `${n.toLocaleString()} files`,
@@ -287,9 +285,6 @@ function summarize(rows, suite) {
       return { engine, mean: values.reduce((a, b) => a + b, 0) / values.length, n: values.length,
                version: latest.version, url: latest.url, started: latest.started };
     }).filter(Boolean);
-  }
-  for (const [test, sf, engine] of KNOWN_FAILED) {
-    if (test === suite.id && out[sf] && !out[sf].some(i => i.engine === engine)) out[sf].push({ engine, failed: true });
   }
   for (const items of Object.values(out)) {
     items.sort((a, b) => (a.mean ?? Infinity) - (b.mean ?? Infinity));

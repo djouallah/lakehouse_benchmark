@@ -292,3 +292,20 @@ def test_refresh_runs_before_every_statement_and_never_fails_one():
     result = benchmark(engine, TpcdsConfig(workspace_id="w", lakehouse_id="l", sf=10))
     assert engine.calls == ["refresh", "execute"] * 99
     assert all(r.status == "ok" for r in result.rows)
+
+
+def test_a_failed_run_is_published_and_an_attach_only_run_is_not():
+    """The page reads `failed` from the failed run's rows; setup alone is not a result."""
+    import importlib.util
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    script = Path(__file__).parent.parent / ".github" / "scripts" / "publish.py"
+    spec = importlib.util.spec_from_file_location("publish", script)
+    publish = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(publish)
+
+    failed = EngineResult("1", rows=[Row("cold", "setup", 0, 1.0), Row("cold", "query", 64, None, status="error")])
+    attach_only = EngineResult("1", rows=[Row("cold", "setup", 0, 1.0)])
+    assert publish.any_engine_produced_a_measurement(SimpleNamespace(engines={"trino_iceberg": failed}))
+    assert not publish.any_engine_produced_a_measurement(SimpleNamespace(engines={"trino_iceberg": attach_only}))

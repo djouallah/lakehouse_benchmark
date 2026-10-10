@@ -51,11 +51,13 @@ def test_block_is_rewritten_with_means_failed_and_not_run(tmp_path, monkeypatch)
     assert "| Light ETL | 1,000 files | 30.0s | — | — |" in text
 
 
-def test_a_known_failure_without_a_stored_run_reads_failed():
+def test_a_run_stopped_at_its_first_query_reads_failed():
+    """All or nothing: the published failure is one error row, and that alone says `failed`."""
     from bench.speedup import SPARK, query_totals
 
-    assert query_totals([], "tpcds", 99) == {(SPARK, 100): None}
-    assert query_totals([], "tpch", 22) == {}
+    rows = [dict(zip(COLUMNS, r)) for r in _query_run("a", "2026-01-01", 100, SPARK, [""], "tpcds", 1)]
+    assert query_totals(rows, "tpcds", 99) == {(SPARK, 100): None}
+    assert query_totals([], "tpcds", 99) == {}
 
 
 def test_readme_without_markers_is_left_alone(tmp_path):
