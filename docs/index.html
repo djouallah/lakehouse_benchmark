@@ -190,14 +190,14 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl svg { display: block; margin: 0 auto; }
 .pl .edge { fill: none; stroke: var(--c); stroke-opacity: .3; stroke-linecap: round; transition: stroke-opacity .2s; }
 .pl .edge.guess { stroke-dasharray: 3 5; }
-.pl .edge.idle { stroke-opacity: .07; }
+.pl .edge.idle { stroke-opacity: 0; }
 .pl .edge.live { stroke-opacity: .95; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
 @keyframes flow { to { stroke-dashoffset: -10; } }
 .pl .nd { cursor: pointer; transition: opacity .25s; }
 .pl .nd circle { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; transition: stroke .2s, stroke-width .2s; }
 .pl .nd.cross circle { stroke: var(--no); stroke-dasharray: 4 3; stroke-width: 3; }
 .pl .nd.guess circle { stroke-dasharray: 2 3; }
-.pl .nd.wait { opacity: .3; }
+.pl .nd.wait { opacity: 0; }
 .pl .nd.run circle { animation: pulse .7s ease-in-out infinite; }
 @keyframes pulse { 50% { stroke-width: 6; } }
 .pl .nd text { font-size: 11px; fill: var(--ink-2); pointer-events: none; }
@@ -779,7 +779,7 @@ const STORIES = [
 ];
 const plans = {};  // file -> plan, or null when it could not be read
 const pl = { story: STORIES[0].id };
-let race = null;
+let race = null, watcher = null;
 
 const nfmt = x => x == null ? "?" : x < 1e3 ? `${Math.round(x)}` : x < 1e6 ? `${(x / 1e3).toFixed(x < 1e4 ? 1 : 0)}K`
   : x < 1e9 ? `${(x / 1e6).toFixed(x < 1e7 ? 1 : 0)}M` : x < 1e12 ? `${(x / 1e9).toFixed(x < 1e10 ? 1 : 0)}B`
@@ -841,13 +841,13 @@ async function renderPlans() {
     <div class="ctl"><button class="play" id="pl-play">▶ Race</button>
       <span class="hint">Hover a step for its numbers. Click one to find the same step in the other plan.</span></div>
     <div class="duo">${card(good, "good")}${card(bad, "bad")}</div>
-    <div class="pick" id="pl-pick">The lines carry rows: the thicker, the more rows. Press Race to watch them flow.</div>
+    <div class="pick" id="pl-pick">The lines carry rows: the thicker, the more rows.</div>
     <div class="legend">
       <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="var(--ink-3)" stroke-width="2"/></svg>few rows</span>
       <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="var(--ink-3)" stroke-width="10"/></svg>many rows</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--no)" stroke-width="2.5" stroke-dasharray="3 2"/></svg>no join key: every row meets every row</span>
     </div>
-    <h3>What went wrong</h3><ol class="steps" id="pl-steps"></ol>
+    <div id="pl-why" hidden><h3>What went wrong</h3><ol class="steps" id="pl-steps"></ol></div>
     <p class="src">${[good, bad].map(p => `${name(p)} ${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))}, TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}: <a href="${esc(p.run_url || "#")}">capture run</a>`).join(" · ")}.
       Rows are what each step produced in that run; estimates are the engine's own, before it ran. Times are from these
       runs, with each engine's plan instrumentation on; the benchmark's own times are on the Performance tab.</p>`;
@@ -855,7 +855,7 @@ async function renderPlans() {
   $("pl-play").onclick = () => startRace(good, bad);
   for (const [plan, side] of [[good, "good"], [bad, "bad"]]) drawTree(plan, side);
   writeSteps(good, bad);
-  showAtEnd(good, bad);
+  autoplay(good, bad);
 }
 
 function bindStoryChips(sec) {
@@ -965,7 +965,7 @@ function pick(plan, n) {
 function clearPick() {
   for (const svg of $(PLANS.id).querySelectorAll("svg")) { svg.classList.remove("sel"); svg.querySelectorAll(".hl").forEach(g => g.classList.remove("hl")); }
   for (const li of $(PLANS.id).querySelectorAll("#pl-steps li")) li.classList.remove("on");
-  $("pl-pick").innerHTML = "The lines carry rows: the thicker, the more rows. Press Race to watch them flow.";
+  $("pl-pick").innerHTML = "The lines carry rows: the thicker, the more rows.";
 }
 
 // The steps write themselves from the two plans, so a new capture keeps them true.
@@ -1035,8 +1035,15 @@ function frame(plan, side, t) {
     if (n.rows != null) label.textContent = state === "wait" ? "" : nfmt(n.rows * (1 - Math.pow(1 - p, 2)));
     for (const c of n.children) {
       const e = svg.querySelector(`.edge[data-from="${c._id}"]`);
-      e?.classList.toggle("live", state === "run" && !died);
-      e?.classList.toggle("idle", t < c._s);
+      if (!e) continue;
+      // The line into a step draws itself as that step starts (its first quarter), then carries rows while it runs.
+      const grow = n._s + 0.25 * (n._e - n._s), drawing = t >= n._s && t < grow && !died;
+      if (drawing) {
+        const len = e.getTotalLength(), q = (t - n._s) / (grow - n._s);
+        e.style.strokeDasharray = `${len} ${len}`; e.style.strokeDashoffset = `${len * (1 - q)}`;
+      } else { e.style.strokeDasharray = ""; e.style.strokeDashoffset = ""; }
+      e.classList.toggle("live", !drawing && state === "run" && !died);
+      e.classList.toggle("idle", t < n._s);
     }
   }
   const clock = $(`pl-${side}-clock`), badges = $(`pl-${side}-badges`), cardEl = $(`pl-${side}`);
@@ -1059,7 +1066,8 @@ function startRace(good, bad) {
   const longest = Math.max(good.seconds, bad.seconds), screen = 14000, k = longest / screen;
   let t0 = null;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  $("pl-play").textContent = "■ Stop";
+  $("pl-why").hidden = true;
+  $("pl-play").textContent = "■ Skip to the end";
   $("pl-play").onclick = () => { stopRace(); showAtEnd(good, bad); };
   const tick = now => {
     t0 ??= now;  // the first frame's own clock: rAF's timestamp can be earlier than a performance.now() taken before it
@@ -1068,12 +1076,13 @@ function startRace(good, bad) {
     const winner = good.seconds <= bad.seconds ? "good" : "bad";
     if (t >= Math.min(good.seconds, bad.seconds)) $(`pl-${winner}`).classList.add("won");
     if (t < longest) race = requestAnimationFrame(tick);
-    else { race = null; $("pl-play").textContent = "▶ Race again"; $("pl-play").onclick = () => startRace(good, bad); }
+    else { race = null; showAtEnd(good, bad); }
   };
   race = requestAnimationFrame(tick);
 }
 
 function stopRace() {
+  watcher?.disconnect();
   if (race) cancelAnimationFrame(race);
   race = null;
 }
@@ -1089,7 +1098,31 @@ function showAtEnd(good, bad) {
     for (const e of c.querySelectorAll(".edge")) e.classList.remove("live", "idle");
   }
   const play = $("pl-play");
-  if (play) { play.textContent = "▶ Race"; play.onclick = () => startRace(good, bad); }
+  if (play) { play.textContent = "↺ Replay"; play.onclick = () => startRace(good, bad); }
+  if ($("pl-why")) $("pl-why").hidden = false;
+}
+
+// The plans build themselves the first time the cards come into view: only the tables at first,
+// then each step as its engine reaches it. Reduced motion: the finished picture straight away.
+function autoplay(good, bad) {
+  watcher?.disconnect();
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+    showAtEnd(good, bad); return;
+  }
+  for (const [plan, side] of [[good, "good"], [bad, "bad"]]) {
+    schedule(plan);
+    const c = $(`pl-${side}`);
+    c.dataset.ended = "1";
+    frame(plan, side, 0);
+    delete c.dataset.ended;
+    $(`pl-${side}-clock`).textContent = secs(0);
+    $(`pl-${side}-badges`).innerHTML = "";
+  }
+  $("pl-play").onclick = () => { watcher?.disconnect(); startRace(good, bad); };
+  watcher = new IntersectionObserver(entries => {
+    if (entries.some(e => e.isIntersecting)) { watcher.disconnect(); startRace(good, bad); }
+  }, { threshold: 0.35 });
+  watcher.observe($("pl-good"));
 }
 
 const tip = $("tip");
