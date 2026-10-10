@@ -113,8 +113,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap td.label { position: sticky; left: 0; background: var(--surface); z-index: 1; font-size: 14px; padding: 7px 12px 7px 0; min-width: 170px; }
 .cap tr.r td { border-top: 1px solid var(--track); }
 .cap tr.r:hover td { background: var(--track); }
-.cap tr.grp td { padding: 16px 0 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
-.cap tr.grp td span { position: sticky; left: 0; }
 .cap td.cell { text-align: center; }
 .cap .c { width: 34px; height: 30px; border: 0; background: transparent; cursor: pointer; display: inline-grid; place-items: center; border-radius: 6px; font: inherit; }
 .cap .c:hover { background: var(--raised); }
@@ -320,7 +318,7 @@ const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "details", title: "Details" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
-const DBT = { id: "dbt", title: "dbt" };
+const DBT = { id: "dbt", title: "dbt support" };
 const ENGINES = { id: "engines", title: "Engines" };
 const PAGES = [CAPABILITY, DBT, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
@@ -332,7 +330,7 @@ const GROUPS = [
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: SUITES[0].id, sf: {}, group: "All", last: {} };
+const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -430,8 +428,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 function renderCapability() {
   const cap = data.capability, sec = $(CAPABILITY.id);
   if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${CAPABILITY.json}.</div>`; return; }
-  const engines = Object.keys(cap.engines), groups = ["All", ...cap.groups];
-  if (!groups.includes(state.group)) state.group = "All";
+  const engines = Object.keys(cap.engines), groups = cap.groups;
+  if (!groups.includes(state.group)) state.group = groups[0];
   const score = e => {
     const all = cap.rows.map(r => r.cells[e].o);  // every engine out of the same total
     return [all.filter(o => o === "supported").length, all.length];
@@ -462,13 +460,8 @@ function renderCapability() {
   [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group = groups[i]; render(); });
 
   const body = sec.querySelector("tbody");
-  let last = null;
   for (const row of cap.rows) {
-    if (state.group !== "All" && row.group !== state.group) continue;
-    if (state.group === "All" && row.group !== last) {
-      body.insertAdjacentHTML("beforeend", `<tr class="grp"><td colspan="${engines.length + 1}"><span>${esc(row.group)}</span></td></tr>`);
-      last = row.group;
-    }
+    if (row.group !== state.group) continue;
     const tr = document.createElement("tr");
     tr.className = "r";
     tr.innerHTML = `<td class="label">${esc(row.label)}</td>` + engines.map(e => {
