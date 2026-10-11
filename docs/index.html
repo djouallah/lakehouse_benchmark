@@ -248,6 +248,10 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .f.ja { stroke: var(--accent); } .arch .f.ja.c { fill: var(--accent); }
 .arch .snap { fill: var(--track); transition: fill .4s; }
 .arch .snap.flash { fill: color-mix(in srgb, var(--yes) 35%, transparent); }
+.arch .sbox { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; }
+.arch .hist { opacity: .45; }
+.arch .ln.ptr { stroke: var(--ink); stroke-opacity: 1; fill: none; }
+.arch .hd.ptr { fill: var(--ink); opacity: 1; }
 .arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
 .arch .ln.live { stroke: var(--ink); stroke-opacity: 1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
 .arch .ln.ok { stroke: var(--yes); stroke-opacity: 1; stroke-width: 3; }
@@ -1219,13 +1223,13 @@ const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by 
 
 function archSay(t) {
   return [
-    "The job starts. The table is at version 7.",
-    "It reads a batch of CSV files and writes it as a new file. Readers still see version 7.",
-    "Next batch, next file. Nobody sees these files yet.",
-    `${archDone(t)} new files so far, and still no commit. Readers see version 7.`,
-    `${archDone(t)} new files so far, and still no commit. Readers see version 7.`,
-    "The last batch is written. The table is still at version 7.",
-    "The job commits once. The table moves to version 8: all the new files become visible at the same time.",
+    "The job starts. The catalog points to snapshot 7.",
+    "It reads a batch of CSV files and writes it as a new file. No snapshot lists it, so readers do not see it.",
+    "Next batch, next file. Readers still see snapshot 7.",
+    `${archDone(t)} new files so far, in no snapshot. Readers see snapshot 7.`,
+    `${archDone(t)} new files so far, in no snapshot. Readers see snapshot 7.`,
+    "The last batch is written. The catalog still points to snapshot 7.",
+    "The job commits once: a new snapshot, 8, lists the old files and the new ones, and the catalog now points to it. Snapshot 7 stays as history.",
     "The job stops. Nothing is lost: the catalog keeps the state.",
   ][t];
 }
@@ -1261,11 +1265,11 @@ function arLine(x1, y1, x2, y2, cls) {
 function drawArch() {
   const wide = WIDE.matches, t = arch.t, done = archDone(t);
   const L = wide
-    ? { W: 820, H: 190, bk: { x: 0, y: 20, w: 200, h: 160 }, job: { x: 300, y: 72, w: 110, h: 56 },
-        tb: { x: 500, y: 20, w: 320, h: 160 }, bkRow: { x: 14, y: 92 }, tr: { title: 46, pill: 28, old: 66, now: 92, note: 166 } }
-    : { W: 360, H: 490, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
-        tb: { x: 20, y: 290, w: 320, h: 190 }, bkRow: { x: 120, y: 70 }, tr: { title: 316, pill: 330, old: 382, now: 414, note: 462 } };
-  const { bk, job, tb, bkRow, tr } = L;
+    ? { W: 820, H: 190, bk: { x: 0, y: 10, w: 200, h: 170 }, job: { x: 300, y: 113, w: 110, h: 56 },
+        tb: { x: 500, y: 10, w: 320, h: 170 }, bkRow: { x: 14, y: 133 } }
+    : { W: 360, H: 470, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
+        tb: { x: 20, y: 290, w: 320, h: 170 }, bkRow: { x: 120, y: 70 } };
+  const { bk, job, tb, bkRow } = L;
   const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
   const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
   let svg = "";
@@ -1279,20 +1283,28 @@ function drawArch() {
     svg += `<rect class="f ${cls}" x="${bk.x + bkRow.x + i * 17}" y="${bkRow.y}" width="12" height="16" rx="2"/>`;
   }
 
-  // The table: the catalog's pointer, the files it already had, and the job's new files:
-  // dashed while written but not visible, filled once the commit is in.
-  const row = (y, label, n, cls) => {
-    let g = `<text class="s" x="${tb.x + 14}" y="${y + 13}">${label}</text>`;
-    for (let i = 0; i < n; i++) g += `<rect class="f ${cls}" x="${tb.x + 90 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
-    return g;
-  };
+  // The table: the catalog points to one snapshot; a snapshot lists the files readers see.
+  // The new files sit in no snapshot (dashed) until the commit makes snapshot 8: the old files plus the new ones.
+  const OLD = 8, cat = { x: tb.x + 14, y: tb.y + 44, w: 66, h: 46 };
+  const s7 = { x: tb.x + 120, y: tb.y + 44, w: 186, h: 46 }, s8 = { ...s7, y: tb.y + 108 };
+  const files = (b, from, n, cls) => Array.from({ length: n }, (_, i) =>
+    `<rect class="f ${cls}" x="${b.x + 10 + (from + i) * 12}" y="${b.y + 24}" width="9" height="12" rx="1.5"/>`).join("");
+  const committed = t >= 6;
   svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
-    <text class="t" x="${tb.x + 14}" y="${tr.title}">Table</text>
-    <rect class="snap ${t === 6 ? "flash" : ""}" x="${tb.x + tb.w - 194}" y="${tr.pill}" width="180" height="30" rx="8"/>
-    <text class="s ink" x="${tb.x + tb.w - 182}" y="${tr.pill + 20}">catalog → version ${t >= 6 ? 8 : 7}</text>`
-    + row(tr.old, "committed", 8, "old")
-    + row(tr.now, "new files", done, `ja ${t >= 6 ? "c" : "p"}`)
-    + `<text class="s" x="${tb.x + 14}" y="${tr.note}">dashed: written, not visible yet</text>`;
+    <text class="t" x="${tb.x + 14}" y="${tb.y + 26}">Table</text>
+    <rect class="snap ${t === 6 ? "flash" : ""}" x="${cat.x}" y="${cat.y}" width="${cat.w}" height="${cat.h}" rx="8"/>
+    <text class="s ink" x="${cat.x + cat.w / 2}" y="${cat.y + 28}" text-anchor="middle">Catalog</text>
+    <g class="${committed ? "hist" : ""}"><rect class="sbox" x="${s7.x}" y="${s7.y}" width="${s7.w}" height="${s7.h}" rx="8"/>
+      <text class="s" x="${s7.x + 10}" y="${s7.y + 16}">snapshot 7${committed ? " · history" : ""}</text>${files(s7, 0, OLD, "old")}</g>`;
+  svg += committed
+    ? `<rect class="sbox" x="${s8.x}" y="${s8.y}" width="${s8.w}" height="${s8.h}" rx="8"/>
+       <text class="s ink" x="${s8.x + 10}" y="${s8.y + 16}">snapshot 8</text>${files(s8, 0, OLD, "old")}${files(s8, OLD, done, "ja c")}`
+    : `<text class="lb" x="${s8.x + 10}" y="${s8.y + 16}">${done ? "new files, in no snapshot" : ""}</text>${files(s8, OLD, done, "ja p")}`;
+  // The catalog's pointer: to snapshot 7, then, after the commit, to snapshot 8.
+  const px = cat.x + cat.w + 2, py = cat.y + cat.h / 2;
+  svg += committed
+    ? `<polyline class="ln ptr" points="${px},${py} ${px + 10},${py} ${px + 10},${s8.y + s8.h / 2}"/>${arLine(px + 10, s8.y + s8.h / 2, s8.x - 2, s8.y + s8.h / 2, "ptr")}`
+    : arLine(px, py, s7.x - 2, py, "ptr");
 
   // Lines: bucket → job (read), job → table (write, then the commit).
   const gone = t === ARCH_LAST ? "off" : "";
