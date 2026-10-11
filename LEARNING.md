@@ -483,6 +483,20 @@ Largest scale each engine completes, cold, every statement answered:
   a release yet (0.7.26 does not have it). Until a release has it, the ETL engine reads and writes
   `az://` paths.
 
+## pandas: in the ETL only
+
+- **No SQL**, so no TPC-H or TPC-DS. In the ETL it reads and transforms; pyiceberg writes, in one
+  append (one commit), the same way as Polars.
+- **`read_csv` takes one file**: no glob, no list. The engine loops over the files in Python and
+  sets `filename` by hand for each one.
+- **The default C parser is one thread.** `read_csv(engine="pyarrow")` is pandas' own option for a
+  multithreaded parse, and it fails on these files: pandas does not pass `names` to Arrow, so Arrow
+  takes the column count from the first data row. A DISPATCHLOAD file starts with 25-field rows,
+  the 53-field DUNIT rows count as bad lines, and the rename fails with `Length mismatch: Expected
+  axis has 25 elements, new values have 53` (run 38108045089). Same on the nightly main build.
+  Filed: [pandas-dev/pandas#71034](https://github.com/pandas-dev/pandas/issues/71034). The bench
+  runs the C parser, and no thread pool of its own around pandas.
+
 ## DataFusion Comet: rejected on `abfss://`
 
 Comet was evaluated as a native execution plugin for Spark and rejected. The two things you'd
