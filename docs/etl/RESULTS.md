@@ -1,8 +1,8 @@
 # Light ETL results
 
-1000 AEMO daily CSV files read from OneLake, filtered, cast and written as one Iceberg table per engine, on 4 vCPU / 15.6 GB (linux-6.17.0-1022-azure, Python 3.12.14).
+1000 AEMO daily CSV files read from OneLake, filtered, cast and written as one Iceberg table per engine, on 4 vCPU / 15.6 GB (linux-6.17.0-1022-azure, Python 3.12.15).
 
-Last run: `2026-09-28T01:02:00Z` · commit `e0912e0` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/36364362101)
+Last run: `2026-10-11T04:28:38Z` · commit `a759bac` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38111666006)
 
 ## Per engine
 
@@ -17,6 +17,7 @@ Last run: `2026-09-28T01:02:00Z` · commit `e0912e0` · [Actions run](https://gi
 | chDB | `4.4.0` | 878.1s | 1.7s | 3 | 149,146,763 | — |
 | Trino | `483 (trinodb/trino:483)` | 892.3s | 18.5s | 1 | 149,146,763 | — |
 | Spark-OSS | `4.1.3 + iceberg Apache Iceberg 1.11.0 (commit 6976e020b894f6a6777704df2b8c4458cb291ae9)` | 982.2s | 15.4s | 3 | 149,146,763 | — |
+| Pandas | `3.0.6` | 2,791.3s | 1.0s | 1 | 149,146,763 | — |
 
 Each engine is the mean of its own last 3 runs at this file count, or of as many as it has (Runs). Load = drop and create the table, read the CSVs, transform, write, commit. Attach = session start and catalog attach, timed separately and excluded from Load. Rows is the count read back from the table after the latest run; every engine applies the same filter, so they agree.
 
@@ -24,6 +25,6 @@ Gluten/Velox: Velox does not read the CSVs. Open-source Gluten has no CSV reader
 
 ## History
 
-72 timed rows across 11 runs.
+102 timed rows across 18 runs.
 Raw data: one immutable JSON per run under [`results/etl/`](../../results/etl/), flattened to [`data/etl_results.csv`](../data/etl_results.csv).
 
