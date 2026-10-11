@@ -184,7 +184,7 @@ before `bench.yml`.
 
 | Engine | Why | Revisit when |
 |---|---|---|
-| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It rejects backticks (hence `IDENT_STYLE = "quoted"`). It is in the ETL but not in `bench.yml`. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532) |
+| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It rejects backticks (hence `IDENT_STYLE = "quoted"`). It is in the ETL but not in `bench.yml`. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), split into [#7601](https://github.com/Eventual-Inc/Daft/issues/7601) (decimals) and [#7602](https://github.com/Eventual-Inc/Daft/issues/7602) (`CASE`) |
 | DataFusion Comet | Its native Iceberg scan declines `abfss://` (`icebergReadableSchemes` in `CometScanRule.scala`), so OneLake scans run on the JVM anyway. It would also bypass `WorkloadIdentityTokenProvider`. | `abfss` appears in that set |
 
 TPC-DS runs seven engines, all but chDB and Daft. Why those two are out is in the comment above

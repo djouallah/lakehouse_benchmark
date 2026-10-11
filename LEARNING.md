@@ -472,6 +472,12 @@ Largest scale each engine completes, cold, every statement answered:
   arithmetic: `l_extendedprice * (1 - l_discount)` overflows where every other engine widens or
   falls back to float. Rewriting six queries isn't a benchmark, and casting to double would change
   what every other engine computes.
+
+  The maintainers asked for one issue per failure. Q1 and Q9 are
+  [Eventual-Inc/Daft#7601](https://github.com/Eventual-Inc/Daft/issues/7601), Q8 and Q14 are
+  [Eventual-Inc/Daft#7602](https://github.com/Eventual-Inc/Daft/issues/7602). Q11 has a PR,
+  [Eventual-Inc/Daft#7573](https://github.com/Eventual-Inc/Daft/pull/7573). Q22 is fixed on main by
+  [Eventual-Inc/Daft#7577](https://github.com/Eventual-Inc/Daft/pull/7577), not yet in a release.
 - **It rejects backticks outright**: "Daft only supports delimited identifiers with
   double-quotes". That failed all 22 queries at first and looked like a total dialect failure
   until the error was read. Hence the third `IDENT_STYLE`, `quoted`.
