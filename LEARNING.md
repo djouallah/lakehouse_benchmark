@@ -552,8 +552,13 @@ Reviewed on paper (2026-10-10, rechecked 2026-10-11), no CI run. DataFusion fail
   `adls.sas-token` is the path Databend's fork proved on OneLake. The Files section is reachable
   through `object_store.MicrosoftAzure(bearer_token=..., use_fabric_endpoint=True)`.
 - **Already covered.** The DataFusion core is in the bench through LakeSail.
-- **Revisit when** datafusion-python ships an Iceberg catalog provider with writes. The Rust
-  `iceberg-datafusion` crate has both (REST catalog, `INSERT INTO`), but only for Rust callers.
+- **The table provider moved to its own Apache project.** The DataFusion integration left
+  iceberg-rust main and now lives in [apache/datafusion-iceberg](https://github.com/apache/datafusion-iceberg)
+  (created 2026-09-09, on DataFusion 55.1). It reads, and it writes through `INSERT INTO` with a
+  catalog provider. On 2026-10-11 it is Rust only: no Python binding, no release (#31), and open
+  wrong-result bugs in filter pushdown (#36, #40, #44).
+- **Revisit when** datafusion-python can load that provider with writes, or the project ships a
+  Python package.
 
 ## Apache Doris: Iceberg yes, raw `abfss://` files no
 
