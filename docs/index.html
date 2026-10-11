@@ -33,18 +33,18 @@ body {
   font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-main { max-width: 880px; margin: 0 auto; padding: 20px 16px 24px; }
+main { max-width: 1440px; margin: 0 auto; padding: 20px 16px 24px; }
 h1 { font-size: clamp(24px, 5vw, 32px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .gh { color: var(--ink-2); flex: none; margin-top: 6px; transition: color .15s, transform .15s; }
 .gh:hover, .gh:focus-visible { color: var(--ink); transform: scale(1.1); }
 .sub { font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--ink-2); white-space: nowrap; margin-left: 8px; }
 .lede { color: var(--ink-2); max-width: 62ch; margin: 0 0 16px; }
-.tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--track); flex-wrap: wrap; }
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--track); flex-wrap: wrap; }
 .tabs button, .chips button {
   font: inherit; border: 0; cursor: pointer; color: var(--ink-2); background: transparent;
 }
-.tabs button { padding: 8px 16px; border-radius: 9px; font-weight: 600; }
+.tabs button { flex: 1 1 auto; padding: 8px 16px; border-radius: 9px; font-weight: 600; }
 .tabs button[aria-selected="true"] { background: var(--raised); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
 .chips { display: flex; gap: 8px; margin: 12px 0 6px; flex-wrap: wrap; }
 .chips button { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--grid); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -146,8 +146,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Engines and dbt: plain tables, one row per engine. */
 .rows table { min-width: 0; }
 #engines table { min-width: 1100px; }
-/* The Engines table is wide: it breaks out of the 880px column, centred, up to the window less the 16px gutters. */
-#engines .wrap { position: relative; left: 50%; transform: translateX(-50%); width: min(1440px, calc(100vw - 32px)); }
 .rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
