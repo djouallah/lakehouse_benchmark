@@ -449,11 +449,11 @@ const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, 
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
+  { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "concurrency", title: "Concurrency", subs: [ARCH] },
-  { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "issues", title: "Issues", subs: [DETAILS] },
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED], bar: false },  // a header link, not a tab
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
