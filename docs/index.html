@@ -263,12 +263,17 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .x { font-size: 13px; font-weight: 700; fill: var(--no); }
 .arch .ln.no { stroke: var(--no); stroke-opacity: 1; stroke-width: 3; }
 .arch .hd.no { fill: var(--no); opacity: 1; }
+.arch svg.fadein { animation: arfade .8s ease; }
+@keyframes arfade { from { opacity: 0; } }
+.arch .next { margin: 12px 0 0; padding: 12px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); font-size: 14px; color: var(--ink-2); animation: arfade .8s ease; }
+.arch .next b { color: var(--ink); }
+.arch .next p { margin: 4px 0 0; max-width: 75ch; }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng, .arch .play .dot { animation: none; }
+  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng, .arch .play .dot, .arch svg.fadein, .arch .next { animation: none; }
 }
 @media (max-width: 520px) {
   main { padding-top: 16px; }
@@ -1213,38 +1218,34 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// THE CONCURRENCY TAB: the ETL as it runs. A job streams CSV batches from a bucket into a table: every batch
-// becomes a new file, and the table changes only once, at the commit (bench/etl/iceberg.py append_stream).
-// Once that demo has played to the end, a second one shows up: two writers, one commit refused and retried.
-// Conceptual on purpose: no engine, vendor or product names.
-const BATCHES = 5, ARCH_LAST = 7, DUO_BATCHES = 3, DUO_LAST = 7;
-const arch = { t: 0, timer: null, shown: false }, duo = { t: 0, timer: null };
+// THE CONCURRENCY TAB: one run, two scenarios. First the ETL as it runs: a job streams CSV batches from a
+// bucket into a table, every batch becomes a new file, and the table changes only once, at the commit
+// (bench/etl/iceberg.py append_stream). Then two writers: one commit refused and retried. Then a note on
+// what comes next. Conceptual on purpose: no engine, vendor or product names.
+const BATCHES = 5, DUO_BATCHES = 3, SOLO_STEPS = 8, ARCH_LAST = 15;
+const arch = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
 const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by tick t
 const duoDone = t => [Math.max(0, Math.min(DUO_BATCHES, t)), Math.max(0, Math.min(DUO_BATCHES, t - 1))];  // job B one tick behind
 
-function archSay(t) {
-  return [
-    "The job starts.",
-    "It reads a batch of CSV files and writes it as a new file. Readers do not see it yet.",
-    "Next batch, next file. Readers still do not see them.",
-    `${archDone(t)} new files so far. Readers do not see them yet.`,
-    `${archDone(t)} new files so far. Readers do not see them yet.`,
-    "The last batch is written. Still nothing visible.",
-    "The work is done, so the job commits once: snapshot x+1. Readers see all the new files at the same time.",
-    "The job stops. The new data stays in the table.",
-  ][t];
-}
-const DUO_SAY = [
-  "Two jobs start at the same time. Both start from snapshot x.",
+const archSay = t => [
+  "The job starts.",
+  "It reads a batch of CSV files and writes it as a new file. Readers do not see it yet.",
+  "Next batch, next file. Readers still do not see them.",
+  `${archDone(t)} new files so far. Readers do not see them yet.`,
+  `${archDone(t)} new files so far. Readers do not see them yet.`,
+  "The last batch is written. Still nothing visible.",
+  "The work is done, so the job commits once: snapshot x+1. Readers see all the new files at the same time.",
+  "The job stops. The new data stays in the table.",
+  "Now two jobs start at the same time. Both start from snapshot x.",
   "Job A writes its first file. Readers do not see it.",
   "Job B writes too. The two jobs do not block each other.",
   "Both keep writing files. Nothing is visible yet.",
   "Job A is done first and commits: snapshot x+1.",
   "Job B is done and commits on top of snapshot x. The table is now at x+1, so the commit is refused.",
   "Job A only added files, so nothing clashes. Job B commits again on top of x+1: snapshot x+2. Its files are not written again.",
-  "Both jobs stop. Snapshot x+2 has the files of both jobs. If both jobs had changed the same rows, the retry would fail and Job B would have to run again.",
-];
+  "Both jobs stop. Snapshot x+2 has the files of both jobs. If both jobs had changed the same files, the retry would fail.",
+][t];
 
 function renderArch() {
   stopArch();
@@ -1252,36 +1253,29 @@ function renderArch() {
     <div class="ctl"><button class="play" id="ar-play"></button></div>
     <div class="ar-fig" id="ar-fig"></div>
     <p class="pick" id="ar-say"></p>
-    <div id="duo" hidden>
-      <h3>Two writers</h3>
-      <div class="ctl"><button class="play" id="duo-play"></button></div>
-      <div class="ar-fig" id="duo-fig"></div>
-      <p class="pick" id="duo-say"></p>
+    <div class="next" id="ar-next" hidden>
+      <b>What comes next</b>
+      <p>Here the retry works because both jobs only added files. When two jobs change existing data, the check
+        today is per file: if they touched the same file, the second commit fails, even if they changed different
+        rows. Checking per row is the next step for open source engines. Iceberg v3 adds row lineage (an id for
+        every row) to make this possible.</p>
     </div>`;
-  $("ar-play").onclick = () => playDemo(arch, ARCH_LAST, drawArch, () => { arch.shown = true; });
-  $("duo-play").onclick = () => playDemo(duo, DUO_LAST, drawDuo);
+  $("ar-play").onclick = playArch;
   drawArch();
-  drawDuo();
 }
 
-// One tick every 1.3 s from the first step to `last`; `end` runs once the last step is reached.
-function playDemo(st, last, draw, end) {
-  if (st.timer) return;  // already running
-  st.t = 0;
-  st.timer = setInterval(() => {
-    st.t++;
-    if (st.t >= last) { clearInterval(st.timer); st.timer = null; end?.(); }
-    draw();
+// One tick every 1.3 s through both scenarios.
+function playArch() {
+  if (arch.timer) return;  // already running
+  arch.t = 0;
+  arch.timer = setInterval(() => {
+    arch.t++;
+    if (arch.t >= ARCH_LAST) stopArch();
+    drawArch();
   }, 1300);
-  draw();
+  drawArch();
 }
-function stopArch() { for (const st of [arch, duo]) { clearInterval(st.timer); st.timer = null; } }
-function setPlay(b, st, last) {
-  const run = !!st.timer;
-  b.classList.toggle("busy", run);
-  b.setAttribute("aria-busy", run);
-  b.innerHTML = run ? `<i class="dot"></i>Running… ${st.t + 1}/${last + 1}` : st.t ? "↺ Replay" : "▶ Play";
-}
+function stopArch() { clearInterval(arch.timer); arch.timer = null; }
 
 // A line with an arrow head at its end.
 function arLine(x1, y1, x2, y2, cls) {
@@ -1313,8 +1307,10 @@ const arJob = (job, cls, name, status, work, gone) => `<g class="${cls} ${work ?
   <text class="t" x="${job.x + job.w / 2}" y="${job.y + 24}" text-anchor="middle">${name}</text>
   <text class="s" x="${job.x + job.w / 2}" y="${job.y + 43}" text-anchor="middle">${status}</text></g>`;
 
-function drawArch() {
-  const wide = WIDE.matches, t = arch.t, done = archDone(t);
+// Scenario 1, steps 0..7: one job. The new files show up dashed as they are written; only when the job
+// is done does a snapshot box, x+1, appear around them: the one commit.
+function soloSvg(wide, t) {
+  const done = archDone(t), last = SOLO_STEPS - 1;
   const L = wide
     ? { W: 820, H: 130, bk: { x: 0, y: 10, w: 200, h: 110 }, job: { x: 300, y: 54, w: 110, h: 56 },
         tb: { x: 500, y: 10, w: 320, h: 110 }, bkRow: { x: 14, y: 74 } }
@@ -1323,37 +1319,25 @@ function drawArch() {
   const { bk, job, tb, bkRow } = L;
   const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
   const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
-
-  // The bucket: CSV batches; one lights up while it is read and stays marked once read.
-  let svg = arBox(bk, "", "Bucket", "CSV files")
+  const snap = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, committed = t >= 6, gone = t === last ? "off" : "";
+  const svg = arBox(bk, "", "Bucket", "CSV files")
     + arFiles(bk.x + bkRow.x, bkRow.y, Array.from({ length: BATCHES }, (_, i) =>
-      act === "write" && i === done - 1 ? "hot" : i < done ? "read" : ""));
-
-  // The table: the new files show up dashed as they are written. Only when the job is done does
-  // a snapshot box, x+1, appear around them: the one commit.
-  const snap = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, committed = t >= 6;
-  svg += arBox(tb, "cat", "Table")
+      act === "write" && i === done - 1 ? "hot" : i < done ? "read" : ""))
+    + arBox(tb, "cat", "Table")
     + (committed ? arSnap(snap, "snapshot x+1", t === 6)
       : `<text class="lb" x="${snap.x + 10}" y="${snap.y + 16}">${done ? "new files" : ""}</text>`)
-    + arFiles(snap.x + 10, snap.y + 24, Array(done).fill(`ja ${committed ? "c" : "p"}`));
-
-  // Lines: bucket → job (read), job → table (write, then the commit). The job fades at the end.
-  const gone = t === ARCH_LAST ? "off" : "";
-  svg += arLinks(wide, bk, job, tb, act === "write" ? "live" : gone, act === "write" ? "live" : act || gone,
-    act === "ok" ? ["ok", "commit ✓"] : ["lb", "write"], true)
-    + arJob(job, "ja", "Job", status, act === "write", t === ARCH_LAST);
-
-  $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${archSay(t)}">${svg}</svg>`;
-  $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
-  setPlay($("ar-play"), arch, ARCH_LAST);
-  $("duo").hidden = !arch.shown;
+    + arFiles(snap.x + 10, snap.y + 24, Array(done).fill(`ja ${committed ? "c" : "p"}`))
+    + arLinks(wide, bk, job, tb, act === "write" ? "live" : gone, act === "write" ? "live" : act || gone,
+      act === "ok" ? ["ok", "commit ✓"] : ["lb", "write"], true)
+    + arJob(job, "ja", "Job", status, act === "write", t === last);
+  return { ...L, svg };
 }
 
-// Two writers: both stream files at the same time; Job A commits first (snapshot x+1); Job B's
-// commit, made on top of snapshot x, is refused; it is retried on top of x+1 (snapshot x+2)
-// without writing its files again.
-function drawDuo() {
-  const wide = WIDE.matches, t = duo.t, done = duoDone(t);
+// Scenario 2, steps 0..7: two writers. Both stream files at the same time; Job A commits first
+// (snapshot x+1); Job B's commit, made on top of snapshot x, is refused; it is retried on top of x+1
+// (snapshot x+2) without writing its files again.
+function duoSvg(wide, t) {
+  const done = duoDone(t), last = SOLO_STEPS - 1;
   const L = wide
     ? { W: 820, H: 210, bk: { x: 0, y: 10, w: 200, h: 190 }, tb: { x: 500, y: 10, w: 320, h: 190 },
         jobs: [{ x: 300, y: 54, w: 110, h: 56 }, { x: 300, y: 126, w: 110, h: 56 }], bkRows: [{ x: 14, y: 74 }, { x: 14, y: 146 }] }
@@ -1368,7 +1352,6 @@ function drawDuo() {
     t === 0 ? "starting" : t <= 3 ? `batch ${done[0]} of ${DUO_BATCHES}` : t === 4 ? "commit" : "done",
     t <= 1 ? "starting" : t <= 4 ? `batch ${done[1]} of ${DUO_BATCHES}` : t === 5 ? "commit refused" : t === 6 ? "commit again" : "done",
   ];
-
   let svg = arBox(bk, "", "Bucket", "CSV files");
   bkRows.forEach((r, j) => svg += arFiles(bk.x + r.x, r.y, Array.from({ length: DUO_BATCHES }, (_, i) =>
     act[j] === "write" && i === done[j] - 1 ? "hot" : i < done[j] ? "read" : "")));
@@ -1390,18 +1373,28 @@ function drawDuo() {
   }
 
   // Lines and jobs. Job B's write line says what happens to its commit.
-  const gone = t === DUO_LAST ? "off" : "";
+  const gone = t === last ? "off" : "";
   jobs.forEach((job, i) => {
     const a = act[i], label = a === "ok" ? ["ok", "commit ✓"] : a === "no" ? ["x", "✕ refused"] : i === 0 ? ["lb", "write"] : null;
     svg += arLinks(wide, bk, job, tb, a === "write" ? "live" : gone, a === "write" ? "live" : a || gone, label, i === 0);
   });
-  jobs.forEach((job, i) => svg += arJob(job, i ? "jb" : "ja", `Job ${i ? "B" : "A"}`, status[i], act[i] === "write", t === DUO_LAST));
-
-  $("duo-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${DUO_SAY[t]}">${svg}</svg>`;
-  $("duo-say").innerHTML = `<b>${t + 1}/${DUO_LAST + 1}</b> ${DUO_SAY[t]}`;
-  setPlay($("duo-play"), duo, DUO_LAST);
+  jobs.forEach((job, i) => svg += arJob(job, i ? "jb" : "ja", `Job ${i ? "B" : "A"}`, status[i], act[i] === "write", t === last));
+  return { ...L, svg };
 }
-WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) { drawArch(); drawDuo(); } });
+
+function drawArch() {
+  const t = arch.t, two = t >= SOLO_STEPS;
+  const pic = two ? duoSvg(WIDE.matches, t - SOLO_STEPS) : soloSvg(WIDE.matches, t);
+  // Scenario 2 fades in where scenario 1 was.
+  $("ar-fig").innerHTML = `<svg class="${t === SOLO_STEPS ? "fadein" : ""}" viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${archSay(t)}">${pic.svg}</svg>`;
+  $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
+  $("ar-next").hidden = t !== ARCH_LAST;
+  const b = $("ar-play"), run = !!arch.timer;
+  b.classList.toggle("busy", run);
+  b.setAttribute("aria-busy", run);
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : t ? "↺ Replay" : "▶ Play";
+}
+WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) drawArch(); });
 
 // Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
 for (const li of $("issues").querySelectorAll("li")) {
