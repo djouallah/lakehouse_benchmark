@@ -1,0 +1,24 @@
+# TEMPORARY: screenshots of the Architecture tab. Deleted after use.
+name: tmp arch screenshots
+on: workflow_dispatch
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          (cd docs && python3 -m http.server 8000 >/dev/null 2>&1 &)
+          cd .github/tmp_arch
+          npm init -y >/dev/null
+          npm i playwright@1.47.2 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          mkdir -p shots
+          node shot.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shots
+          path: .github/tmp_arch/shots
