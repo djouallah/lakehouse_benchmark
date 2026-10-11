@@ -30,6 +30,16 @@ jobs:
           ref: ${{ inputs.ref }}
       - id: sha
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      # Main still calls itself 0.7.2, the PyPI release it lacks #2753 against. Renumber it as a
+      # dev build of the next release, dated by the commit, so results and the engine's version
+      # gate (bench/tpch/engines/lakesail_iceberg.py) can tell the two apart.
+      - name: Renumber
+        run: |
+          base="$(sed -n 's/^version = "\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)"$/\1.\2.\3/p' pyproject.toml)"
+          next="$(echo "$base" | awk -F. '{print $1"."$2"."$3+1}').dev$(git log -1 --format=%cd --date=format:%Y%m%d)"
+          sed -i "s/^version = \"$base\"$/version = \"$next\"/" pyproject.toml
+          grep -n '^version' pyproject.toml
+          grep -q "^version = \"$next\"" pyproject.toml
       - uses: pierotofy/set-swap-space@master
         with:
           swap-size-gb: 10
@@ -58,7 +68,7 @@ jobs:
       - name: Import check
         run: |
           pip install dist/*.whl pyspark-client
-          python -c 'import pysail; print(pysail.__version__)' || pip show pysail
+          pip show pysail | grep '^Version: .*\.dev'
           SAIL_RUNTIME__TEMPORARY_FILES__COMPRESSION=zstd python -c '
           from pysail.spark import SparkConnectServer
           from pyspark.sql import SparkSession
