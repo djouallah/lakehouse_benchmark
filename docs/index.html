@@ -243,7 +243,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .f { fill: var(--track); stroke: var(--ink-3); stroke-width: 1; }
 .arch .f.read { fill: var(--grid); stroke: var(--grid); }
 .arch .f.hot { stroke: var(--ink); stroke-width: 2.5; }
-.arch .f.old { fill: var(--grid); stroke: var(--grid); }
 .arch .f.p { fill: none; stroke-width: 1.5; stroke-dasharray: 2 2; }
 .arch .f.ja { stroke: var(--accent); } .arch .f.ja.c { fill: var(--accent); }
 .arch .sbox { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; transition: fill .4s; }
@@ -1220,12 +1219,12 @@ const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by 
 function archSay(t) {
   return [
     "The job starts.",
-    "It reads a batch of CSV files and writes it as a new file. The file is not committed, so readers do not see it.",
-    "Next batch, next file. Readers still see only the committed files.",
-    `${archDone(t)} new files so far, none committed. Readers see only the committed files.`,
-    `${archDone(t)} new files so far, none committed. Readers see only the committed files.`,
-    "The last batch is written. Still nothing committed.",
-    "The work is done, so the job commits once: all the new files are added in one step, or none are.",
+    "It reads a batch of CSV files and writes it as a new file. Readers do not see it yet.",
+    "Next batch, next file. Readers still do not see them.",
+    `${archDone(t)} new files so far. Readers do not see them yet.`,
+    `${archDone(t)} new files so far. Readers do not see them yet.`,
+    "The last batch is written. Still nothing visible.",
+    "The work is done, so the job commits once: snapshot x+1. Readers see all the new files at the same time.",
     "The job stops. The new data stays in the table.",
   ][t];
 }
@@ -1261,10 +1260,10 @@ function arLine(x1, y1, x2, y2, cls) {
 function drawArch() {
   const wide = WIDE.matches, t = arch.t, done = archDone(t);
   const L = wide
-    ? { W: 820, H: 190, bk: { x: 0, y: 10, w: 200, h: 170 }, job: { x: 300, y: 113, w: 110, h: 56 },
-        tb: { x: 500, y: 10, w: 320, h: 170 }, bkRow: { x: 14, y: 133 } }
-    : { W: 360, H: 470, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
-        tb: { x: 20, y: 290, w: 320, h: 170 }, bkRow: { x: 120, y: 70 } };
+    ? { W: 820, H: 130, bk: { x: 0, y: 10, w: 200, h: 110 }, job: { x: 300, y: 54, w: 110, h: 56 },
+        tb: { x: 500, y: 10, w: 320, h: 110 }, bkRow: { x: 14, y: 74 } }
+    : { W: 360, H: 410, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
+        tb: { x: 20, y: 290, w: 320, h: 110 }, bkRow: { x: 120, y: 70 } };
   const { bk, job, tb, bkRow } = L;
   const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
   const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
@@ -1279,18 +1278,19 @@ function drawArch() {
     svg += `<rect class="f ${cls}" x="${bk.x + bkRow.x + i * 17}" y="${bkRow.y}" width="12" height="16" rx="2"/>`;
   }
 
-  // The table: one box of committed files. The new files wait below it (dashed) and join it
-  // all at once at the commit, when the work is done.
-  const OLD = 8, cbox = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, nrow = { ...cbox, y: tb.y + 102 };
-  const files = (b, from, n, cls) => Array.from({ length: n }, (_, i) =>
-    `<rect class="f ${cls}" x="${b.x + 10 + (from + i) * 17}" y="${b.y + 24}" width="12" height="16" rx="2"/>`).join("");
-  const committed = t >= 6;
+  // The table: the new files show up dashed as they are written. Only when the job is done does
+  // a snapshot box, x+1, appear around them: the one commit.
+  const snap = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, committed = t >= 6;
+  let files = "";
+  for (let i = 0; i < done; i++)
+    files += `<rect class="f ja ${committed ? "c" : "p"}" x="${snap.x + 10 + i * 17}" y="${snap.y + 24}" width="12" height="16" rx="2"/>`;
   svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
-    <text class="t" x="${tb.x + 14}" y="${tb.y + 26}">Table</text>
-    <rect class="sbox ${t === 6 ? "flash" : ""}" x="${cbox.x}" y="${cbox.y}" width="${cbox.w}" height="${cbox.h}" rx="8"/>
-    <text class="s ink" x="${cbox.x + 10}" y="${cbox.y + 16}">committed</text>${files(cbox, 0, OLD, "old")}`
-    + (committed ? files(cbox, OLD, done, "ja c")
-      : `<text class="lb" x="${nrow.x + 10}" y="${nrow.y + 16}">${done ? "written, not committed" : ""}</text>${files(nrow, OLD, done, "ja p")}`);
+    <text class="t" x="${tb.x + 14}" y="${tb.y + 26}">Table</text>`
+    + (committed
+      ? `<rect class="sbox ${t === 6 ? "flash" : ""}" x="${snap.x}" y="${snap.y}" width="${snap.w}" height="${snap.h}" rx="8"/>
+         <text class="s ink" x="${snap.x + 10}" y="${snap.y + 16}">snapshot x+1</text>`
+      : `<text class="lb" x="${snap.x + 10}" y="${snap.y + 16}">${done ? "new files" : ""}</text>`)
+    + files;
 
   // Lines: bucket → job (read), job → table (write, then the commit).
   const gone = t === ARCH_LAST ? "off" : "";
