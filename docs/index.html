@@ -224,29 +224,44 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl ol.steps li b { color: var(--ink); }
 .pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .pl .src a { color: var(--accent); }
-/* Architecture: two jobs read a bucket and write to one table in the catalog. */
+/* Architecture: two jobs stream CSV batches into one table; one commit each, the second one retried. */
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
+.arch .play { min-width: 170px; }
+.arch .play.busy { cursor: progress; }
+.arch .play .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 8px; vertical-align: 1px; animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .2; } }
 .arch .box { fill: var(--raised); stroke: var(--grid); stroke-width: 1.5; }
-.arch .box.cat { stroke: var(--accent); stroke-width: 2.5; }
-.arch .eng { fill: var(--raised); stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 6 5; }
-.arch .work .eng { stroke: var(--accent); animation: pulse .7s ease-in-out infinite; }
+.arch .box.cat { stroke: var(--ink-3); stroke-width: 2; }
+.arch .eng { fill: var(--raised); stroke-width: 2; stroke-dasharray: 6 5; }
+.arch .ja .eng { stroke: var(--accent); }
+.arch .jb .eng { stroke: var(--noop); }
+.arch .work .eng { animation: pulse .7s ease-in-out infinite; }
 .arch g { transition: opacity .6s; }
 .arch .gone { opacity: .15; }
 .arch .t { font-size: 15px; font-weight: 700; fill: var(--ink); }
 .arch .s { font-size: 12px; fill: var(--ink-2); }
 .arch .s.ink { fill: var(--ink); font-weight: 700; }
 .arch .f { fill: var(--track); stroke: var(--ink-3); stroke-width: 1; }
-.arch .f.hot { stroke: var(--accent); stroke-width: 2.5; }
+.arch .f.read { fill: var(--grid); stroke: var(--grid); }
+.arch .f.hot { stroke: var(--ink); stroke-width: 2.5; }
+.arch .f.old { fill: var(--grid); stroke: var(--grid); }
+.arch .f.p { fill: none; stroke-width: 1.5; stroke-dasharray: 2 2; }
+.arch .f.ja { stroke: var(--accent); } .arch .f.ja.c { fill: var(--accent); }
+.arch .f.jb { stroke: var(--noop); } .arch .f.jb.c { fill: var(--noop); }
 .arch .snap { fill: var(--track); transition: fill .4s; }
 .arch .snap.flash { fill: color-mix(in srgb, var(--yes) 35%, transparent); }
 .arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
-.arch .ln.live { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
+.arch .ln.live { stroke: var(--ink); stroke-opacity: 1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
+.arch .ln.ok { stroke: var(--yes); stroke-opacity: 1; stroke-width: 3; }
+.arch .ln.no { stroke: var(--no); stroke-opacity: 1; stroke-width: 3; }
 .arch .ln.off { stroke-opacity: .15; }
 .arch .hd { fill: var(--ink-3); opacity: .5; }
-.arch .hd.live { fill: var(--accent); opacity: 1; }
-.arch .hd.off { opacity: .15; }
-.arch .ln.no { stroke: var(--no); stroke-opacity: 1; stroke-width: 3; }
+.arch .hd.live { fill: var(--ink); opacity: 1; }
+.arch .hd.ok { fill: var(--yes); opacity: 1; }
 .arch .hd.no { fill: var(--no); opacity: 1; }
+.arch .hd.off { opacity: .15; }
+.arch .lb { font-size: 12px; fill: var(--ink-3); }
+.arch .ok { font-size: 13px; font-weight: 700; fill: var(--yes); }
 .arch .x { font-size: 13px; font-weight: 700; fill: var(--no); }
 .arch .lb { font-size: 12px; fill: var(--ink-3); }
 @media (max-width: 720px) {
@@ -254,7 +269,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng { animation: none; }
+  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng, .arch .play .dot { animation: none; }
 }
 @media (max-width: 520px) {
   main { padding-top: 16px; }
@@ -1199,27 +1214,36 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// THE ARCHITECTURE TAB: two jobs at the same time read a bucket and write to one table in the catalog.
-// Shows the concurrency rule: a commit is refused when the table changed since the job read it, then retried.
+// THE ARCHITECTURE TAB: the ETL as it runs. Two jobs at the same time stream CSV batches from a bucket
+// into one table: every batch becomes a new file, and the table changes only once, at the commit.
+// The second commit is refused because the table moved, and is retried (bench/etl/iceberg.py append_stream).
 // Conceptual on purpose: no engine, vendor or product names.
-const ARCH_SAY = [
-  "Two jobs start at the same time. Both see the table at version 7.",
-  "Both read data from the bucket.",
-  "Both work on their own copy of the data, in memory.",
-  "Job A writes first. The catalog moves the table to version 8.",
-  "Job B expected version 7, but the table is now version 8. The catalog refuses its write.",
-  "Job B tries again on top of version 8. The table moves to version 9. Both changes are kept.",
-  "Both jobs stop. Nothing is lost: the catalog keeps the state.",
-];
-const JOB_A = ["starts", "reading", "working", "writing", "done", "done", "gone"];
-const JOB_B = ["starts", "reading", "working", "working", "writing", "retrying", "gone"];
-const arch = { step: 0, timer: null };
+const BATCHES = 5, ARCH_LAST = 9;
+const arch = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
+// Batches written by tick t: job A writes at ticks 1..5, job B one tick behind.
+const archDone = t => [Math.max(0, Math.min(BATCHES, t)), Math.max(0, Math.min(BATCHES, t - 1))];
+
+function archSay(t) {
+  const [a, b] = archDone(t);
+  return [
+    "Two jobs start at the same time. The table is at version 7.",
+    "Job A reads a batch of CSV files and writes it as a new file. Readers still see version 7.",
+    "Job B starts writing too. Each batch becomes a new file. Nobody sees these files yet.",
+    "Both jobs keep going: read a batch, write a file, next batch. The table is still at version 7.",
+    `${a + b} new files so far, and still no commit. Readers see version 7.`,
+    `${a + b} new files so far, and still no commit. Readers see version 7.`,
+    "Job A is done and commits once. The table moves to version 8: all its files become visible at the same time.",
+    "Job B is done and commits on top of version 7. The catalog refuses it: the table is now version 8.",
+    "Job B commits again, on top of version 8. It does not rewrite its files. The table moves to version 9.",
+    "Both jobs stop. Nothing is lost: the catalog keeps the state.",
+  ][t];
+}
 
 function renderArch() {
   stopArch();
   $(ARCH.id).innerHTML = `
-    <div class="ctl"><button class="play" id="ar-play">▶ Play</button></div>
+    <div class="ctl"><button class="play" id="ar-play"></button></div>
     <div class="ar-fig" id="ar-fig"></div>
     <p class="pick" id="ar-say"></p>`;
   $("ar-play").onclick = playArch;
@@ -1227,12 +1251,14 @@ function renderArch() {
 }
 
 function playArch() {
-  stopArch();
-  arch.step = 0; drawArch();
+  if (arch.timer) return;  // already running
+  arch.t = 0;
   arch.timer = setInterval(() => {
-    if (arch.step >= ARCH_SAY.length - 1) return stopArch();
-    arch.step++; drawArch();
-  }, 2200);
+    arch.t++;
+    if (arch.t >= ARCH_LAST) stopArch();
+    drawArch();
+  }, 1300);
+  drawArch();
 }
 function stopArch() { clearInterval(arch.timer); arch.timer = null; }
 
@@ -1243,64 +1269,87 @@ function arLine(x1, y1, x2, y2, cls) {
 }
 
 function drawArch() {
-  const wide = WIDE.matches, s = arch.step;
+  const wide = WIDE.matches, t = arch.t, done = archDone(t);
   const L = wide
-    ? { W: 820, H: 300, bk: { x: 0, y: 40, w: 200, h: 220 }, cat: { x: 620, y: 50, w: 200, h: 200 },
-        jobs: [{ x: 330, y: 30, w: 160, h: 90 }, { x: 330, y: 180, w: 160, h: 90 }] }
-    : { W: 360, H: 560, bk: { x: 30, y: 0, w: 300, h: 130 }, cat: { x: 30, y: 350, w: 300, h: 200 },
-        jobs: [{ x: 20, y: 200, w: 150, h: 80 }, { x: 190, y: 200, w: 150, h: 80 }] };
-  const { bk, cat, jobs } = L;
-  const version = s < 3 ? 7 : s < 5 ? 8 : 9;
+    ? { W: 820, H: 280, bk: { x: 0, y: 60, w: 200, h: 210 }, tb: { x: 500, y: 10, w: 320, h: 260 },
+        jobs: [{ x: 300, y: 110, w: 110, h: 56 }, { x: 300, y: 182, w: 110, h: 56 }],
+        bkRows: [{ x: 14, y: 130 }, { x: 14, y: 202 }], tbRows: { title: 36, pill: 18, old: 82, a: 130, b: 202, note: 252 } }
+    : { W: 360, H: 530, bk: { x: 20, y: 0, w: 320, h: 110 }, tb: { x: 20, y: 290, w: 320, h: 230 },
+        jobs: [{ x: 40, y: 170, w: 110, h: 56 }, { x: 210, y: 170, w: 110, h: 56 }],
+        bkRows: [{ x: 32, y: 70 }, { x: 202, y: 70 }], tbRows: { title: 316, pill: 330, old: 382, a: 420, b: 458, note: 504 } };
+  const { bk, tb, jobs, bkRows: br, tbRows: tr } = L;
+  const version = t < 6 ? 7 : t < 8 ? 8 : 9;
+  const committed = [t >= 6, t >= 8];
+  // What each job does at this tick: "write" (a batch), "ok" (a commit that works), "no" (refused), or nothing.
+  const act = [
+    t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "",
+    t >= 2 && t <= 6 ? "write" : t === 7 ? "no" : t === 8 ? "ok" : "",
+  ];
+  const status = [
+    t === 0 ? "starting" : t <= 5 ? `batch ${done[0]} of ${BATCHES}` : t === 6 ? "commit" : "done",
+    t <= 1 ? "starting" : t <= 6 ? `batch ${done[1]} of ${BATCHES}` : t === 7 ? "commit refused" : t === 8 ? "commit again" : "done",
+  ];
   let svg = "";
 
-  // The bucket: plain files.
+  // The bucket: one row of CSV batches per job; a batch lights up while it is read and stays marked once read.
   svg += `<rect class="box" x="${bk.x}" y="${bk.y}" width="${bk.w}" height="${bk.h}" rx="14"/>
     <text class="t" x="${bk.x + 14}" y="${bk.y + 26}">Bucket</text>
-    <text class="s" x="${bk.x + 14}" y="${bk.y + 44}">plain files</text>`;
-  const cols = Math.floor((bk.w - 28) / 17), rows = wide ? 6 : 3;
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
-    svg += `<rect class="f ${s === 1 ? "hot" : ""}" x="${bk.x + 14 + c * 17}" y="${bk.y + 60 + r * 24}" width="12" height="16" rx="2"/>`;
-
-  // The catalog: one table, its version and the history of commits.
-  const hist = [["version 7", true], ["version 8, job A", s >= 3], ["version 9, job B", s >= 5]];
-  svg += `<rect class="box cat" x="${cat.x}" y="${cat.y}" width="${cat.w}" height="${cat.h}" rx="14"/>
-    <text class="t" x="${cat.x + 14}" y="${cat.y + 26}">Catalog</text>
-    <text class="s" x="${cat.x + 14}" y="${cat.y + 44}">one table</text>
-    <rect class="snap ${s === 3 || s === 5 ? "flash" : ""}" x="${cat.x + 14}" y="${cat.y + 58}" width="${cat.w - 28}" height="34" rx="8"/>
-    <text class="s ink" x="${cat.x + 26}" y="${cat.y + 80}">table → version ${version}</text>`;
-  hist.filter(h => h[1]).forEach(([t], i) =>
-    svg += `<text class="s" x="${cat.x + 14}" y="${cat.y + 116 + i * 20}">${t}</text>`);
-
-  // Lines: bucket → job (read), job → catalog (write). Job B's first write is refused.
-  const write = [s === 3 ? "live" : "", s === 4 ? "no" : s === 5 ? "live" : ""];
-  jobs.forEach((j, i) => {
-    const read = s === 1 ? "live" : s === 6 ? "off" : "", w = write[i] || (s === 6 ? "off" : "");
-    if (wide) {
-      const y = j.y + j.h / 2;
-      svg += arLine(bk.x + bk.w + 4, y, j.x - 4, y, read) + arLine(j.x + j.w + 4, y, cat.x - 4, y, w);
-      if (i === 0) svg += `<text class="lb" x="${(bk.x + bk.w + j.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>
-        <text class="lb" x="${(j.x + j.w + cat.x) / 2}" y="${y - 8}" text-anchor="middle">write</text>`;
-      if (w === "no") svg += `<text class="x" x="${(j.x + j.w + cat.x) / 2}" y="${y - 8}" text-anchor="middle">✕ refused</text>`;
-    } else {
-      const x = j.x + j.w / 2;
-      svg += arLine(x, bk.y + bk.h + 4, x, j.y - 4, read) + arLine(x, j.y + j.h + 4, x, cat.y - 4, w);
-      if (i === 0) svg += `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + j.y) / 2 + 4}">read</text>
-        <text class="lb" x="${x + 8}" y="${(j.y + j.h + cat.y) / 2 + 4}">write</text>`;
-      if (w === "no") svg += `<text class="x" x="${x + 8}" y="${(j.y + j.h + cat.y) / 2 + 4}">✕ refused</text>`;
+    <text class="s" x="${bk.x + 14}" y="${bk.y + 44}">CSV files</text>`;
+  br.forEach((r, j) => {
+    for (let i = 0; i < BATCHES; i++) {
+      const cls = act[j] === "write" && i === done[j] - 1 ? "hot" : i < done[j] ? "read" : "";
+      svg += `<rect class="f ${cls}" x="${bk.x + r.x + i * 17}" y="${r.y}" width="12" height="16" rx="2"/>`;
     }
   });
 
-  // The jobs: dashed boxes, gone at the end.
+  // The table: the catalog's pointer, the files it already had, and each job's new files:
+  // dashed while written but not visible, filled once the job's commit is in.
+  svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
+    <text class="t" x="${tb.x + 14}" y="${tr.title}">Table</text>
+    <rect class="snap ${t === 6 || t === 8 ? "flash" : ""}" x="${tb.x + tb.w - 194}" y="${tr.pill}" width="180" height="30" rx="8"/>
+    <text class="s ink" x="${tb.x + tb.w - 182}" y="${tr.pill + 20}">catalog → version ${version}</text>`;
+  const row = (y, label, n, cls) => {
+    let g = `<text class="s" x="${tb.x + 14}" y="${y + 13}">${label}</text>`;
+    for (let i = 0; i < n; i++) g += `<rect class="f ${cls}" x="${tb.x + 90 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
+    return g;
+  };
+  svg += row(tr.old, "committed", 8, "old")
+    + row(tr.a, "job A", done[0], `ja ${committed[0] ? "c" : "p"}`)
+    + row(tr.b, "job B", done[1], `jb ${committed[1] ? "c" : "p"}`)
+    + `<text class="s" x="${tb.x + 14}" y="${tr.note}">dashed: written, not visible yet</text>`;
+
+  // Lines: bucket → job (read), job → table (write, then the commit).
   jobs.forEach((j, i) => {
-    const status = (i ? JOB_B : JOB_A)[s], work = status === "working";
-    svg += `<g class="${work ? "work" : ""} ${s === 6 ? "gone" : ""}">
-      <rect class="eng" x="${j.x}" y="${j.y}" width="${j.w}" height="${j.h}" rx="10"/>
-      <text class="t" x="${j.x + j.w / 2}" y="${j.y + j.h / 2 - 4}" text-anchor="middle">Job ${i ? "B" : "A"}</text>
-      <text class="s" x="${j.x + j.w / 2}" y="${j.y + j.h / 2 + 16}" text-anchor="middle">${status}</text></g>`;
+    const a = act[i], gone = t === ARCH_LAST ? "off" : "";
+    const read = a === "write" ? "live" : gone, write = a === "write" ? "live" : a || gone;
+    const label = a === "ok" ? ["ok", "commit ✓"] : a === "no" ? ["x", "✕ refused"] : i === 0 ? ["lb", "write"] : null;
+    if (wide) {
+      const y = j.y + j.h / 2, mw = (j.x + j.w + tb.x) / 2;
+      svg += arLine(bk.x + bk.w + 4, y, j.x - 4, y, read) + arLine(j.x + j.w + 4, y, tb.x - 4, y, write);
+      if (i === 0) svg += `<text class="lb" x="${(bk.x + bk.w + j.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>`;
+      if (label) svg += `<text class="${label[0]}" x="${mw}" y="${y - 8}" text-anchor="middle">${label[1]}</text>`;
+    } else {
+      const x = j.x + j.w / 2, my = (j.y + j.h + tb.y) / 2 + 4;
+      svg += arLine(x, bk.y + bk.h + 4, x, j.y - 4, read) + arLine(x, j.y + j.h + 4, x, tb.y - 4, write);
+      if (i === 0) svg += `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + j.y) / 2 + 4}">read</text>`;
+      if (label) svg += `<text class="${label[0]}" x="${x + 8}" y="${my}">${label[1]}</text>`;
+    }
   });
 
-  $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${ARCH_SAY[s]}">${svg}</svg>`;
-  $("ar-say").innerHTML = `<b>${s + 1}/${ARCH_SAY.length}</b> ${ARCH_SAY[s]}`;
+  // The jobs: small dashed boxes, gone at the end.
+  jobs.forEach((j, i) => {
+    svg += `<g class="${i ? "jb" : "ja"} ${act[i] === "write" ? "work" : ""} ${t === ARCH_LAST ? "gone" : ""}">
+      <rect class="eng" x="${j.x}" y="${j.y}" width="${j.w}" height="${j.h}" rx="10"/>
+      <text class="t" x="${j.x + j.w / 2}" y="${j.y + 24}" text-anchor="middle">Job ${i ? "B" : "A"}</text>
+      <text class="s" x="${j.x + j.w / 2}" y="${j.y + 43}" text-anchor="middle">${status[i]}</text></g>`;
+  });
+
+  $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${archSay(t)}">${svg}</svg>`;
+  $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
+  const b = $("ar-play"), run = !!arch.timer;
+  b.classList.toggle("busy", run);
+  b.setAttribute("aria-busy", run);
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : t ? "↺ Replay" : "▶ Play";
 }
 WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) drawArch(); });
 
