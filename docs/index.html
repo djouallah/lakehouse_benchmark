@@ -224,7 +224,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl ol.steps li b { color: var(--ink); }
 .pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .pl .src a { color: var(--accent); }
-/* Architecture: two jobs stream CSV batches into one table; one commit each, the second one retried. */
+/* Architecture: a job streams CSV batches into a table, one file per batch, one commit at the end. */
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
 .arch .play { min-width: 170px; }
 .arch .play.busy { cursor: progress; }
@@ -234,7 +234,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .box.cat { stroke: var(--ink-3); stroke-width: 2; }
 .arch .eng { fill: var(--raised); stroke-width: 2; stroke-dasharray: 6 5; }
 .arch .ja .eng { stroke: var(--accent); }
-.arch .jb .eng { stroke: var(--noop); }
 .arch .work .eng { animation: pulse .7s ease-in-out infinite; }
 .arch g { transition: opacity .6s; }
 .arch .gone { opacity: .15; }
@@ -247,22 +246,18 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .f.old { fill: var(--grid); stroke: var(--grid); }
 .arch .f.p { fill: none; stroke-width: 1.5; stroke-dasharray: 2 2; }
 .arch .f.ja { stroke: var(--accent); } .arch .f.ja.c { fill: var(--accent); }
-.arch .f.jb { stroke: var(--noop); } .arch .f.jb.c { fill: var(--noop); }
 .arch .snap { fill: var(--track); transition: fill .4s; }
 .arch .snap.flash { fill: color-mix(in srgb, var(--yes) 35%, transparent); }
 .arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
 .arch .ln.live { stroke: var(--ink); stroke-opacity: 1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
 .arch .ln.ok { stroke: var(--yes); stroke-opacity: 1; stroke-width: 3; }
-.arch .ln.no { stroke: var(--no); stroke-opacity: 1; stroke-width: 3; }
 .arch .ln.off { stroke-opacity: .15; }
 .arch .hd { fill: var(--ink-3); opacity: .5; }
 .arch .hd.live { fill: var(--ink); opacity: 1; }
 .arch .hd.ok { fill: var(--yes); opacity: 1; }
-.arch .hd.no { fill: var(--no); opacity: 1; }
 .arch .hd.off { opacity: .15; }
 .arch .lb { font-size: 12px; fill: var(--ink-3); }
 .arch .ok { font-size: 13px; font-weight: 700; fill: var(--yes); }
-.arch .x { font-size: 13px; font-weight: 700; fill: var(--no); }
 .arch .lb { font-size: 12px; fill: var(--ink-3); }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
@@ -1214,29 +1209,24 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// THE ARCHITECTURE TAB: the ETL as it runs. Two jobs at the same time stream CSV batches from a bucket
-// into one table: every batch becomes a new file, and the table changes only once, at the commit.
-// The second commit is refused because the table moved, and is retried (bench/etl/iceberg.py append_stream).
+// THE ARCHITECTURE TAB: the ETL as it runs. A job streams CSV batches from a bucket into a table: every batch
+// becomes a new file, and the table changes only once, at the commit (bench/etl/iceberg.py append_stream).
 // Conceptual on purpose: no engine, vendor or product names.
-const BATCHES = 5, ARCH_LAST = 9;
+const BATCHES = 5, ARCH_LAST = 7;
 const arch = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
-// Batches written by tick t: job A writes at ticks 1..5, job B one tick behind.
-const archDone = t => [Math.max(0, Math.min(BATCHES, t)), Math.max(0, Math.min(BATCHES, t - 1))];
+const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by tick t
 
 function archSay(t) {
-  const [a, b] = archDone(t);
   return [
-    "Two jobs start at the same time. The table is at version 7.",
-    "Job A reads a batch of CSV files and writes it as a new file. Readers still see version 7.",
-    "Job B starts writing too. Each batch becomes a new file. Nobody sees these files yet.",
-    "Both jobs keep going: read a batch, write a file, next batch. The table is still at version 7.",
-    `${a + b} new files so far, and still no commit. Readers see version 7.`,
-    `${a + b} new files so far, and still no commit. Readers see version 7.`,
-    "Job A is done and commits once. The table moves to version 8: all its files become visible at the same time.",
-    "Job B is done and commits on top of version 7. The catalog refuses it: the table is now version 8.",
-    "Job B commits again, on top of version 8. It does not rewrite its files. The table moves to version 9.",
-    "Both jobs stop. Nothing is lost: the catalog keeps the state.",
+    "The job starts. The table is at version 7.",
+    "It reads a batch of CSV files and writes it as a new file. Readers still see version 7.",
+    "Next batch, next file. Nobody sees these files yet.",
+    `${archDone(t)} new files so far, and still no commit. Readers see version 7.`,
+    `${archDone(t)} new files so far, and still no commit. Readers see version 7.`,
+    "The last batch is written. The table is still at version 7.",
+    "The job commits once. The table moves to version 8: all the new files become visible at the same time.",
+    "The job stops. Nothing is lost: the catalog keeps the state.",
   ][t];
 }
 
@@ -1271,78 +1261,60 @@ function arLine(x1, y1, x2, y2, cls) {
 function drawArch() {
   const wide = WIDE.matches, t = arch.t, done = archDone(t);
   const L = wide
-    ? { W: 820, H: 280, bk: { x: 0, y: 60, w: 200, h: 210 }, tb: { x: 500, y: 10, w: 320, h: 260 },
-        jobs: [{ x: 300, y: 110, w: 110, h: 56 }, { x: 300, y: 182, w: 110, h: 56 }],
-        bkRows: [{ x: 14, y: 130 }, { x: 14, y: 202 }], tbRows: { title: 36, pill: 18, old: 82, a: 130, b: 202, note: 252 } }
-    : { W: 360, H: 530, bk: { x: 20, y: 0, w: 320, h: 110 }, tb: { x: 20, y: 290, w: 320, h: 230 },
-        jobs: [{ x: 40, y: 170, w: 110, h: 56 }, { x: 210, y: 170, w: 110, h: 56 }],
-        bkRows: [{ x: 32, y: 70 }, { x: 202, y: 70 }], tbRows: { title: 316, pill: 330, old: 382, a: 420, b: 458, note: 504 } };
-  const { bk, tb, jobs, bkRows: br, tbRows: tr } = L;
-  const version = t < 6 ? 7 : t < 8 ? 8 : 9;
-  const committed = [t >= 6, t >= 8];
-  // What each job does at this tick: "write" (a batch), "ok" (a commit that works), "no" (refused), or nothing.
-  const act = [
-    t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "",
-    t >= 2 && t <= 6 ? "write" : t === 7 ? "no" : t === 8 ? "ok" : "",
-  ];
-  const status = [
-    t === 0 ? "starting" : t <= 5 ? `batch ${done[0]} of ${BATCHES}` : t === 6 ? "commit" : "done",
-    t <= 1 ? "starting" : t <= 6 ? `batch ${done[1]} of ${BATCHES}` : t === 7 ? "commit refused" : t === 8 ? "commit again" : "done",
-  ];
+    ? { W: 820, H: 240, bk: { x: 0, y: 20, w: 200, h: 200 }, job: { x: 300, y: 92, w: 110, h: 56 },
+        tb: { x: 500, y: 20, w: 320, h: 200 }, bkRow: { x: 14, y: 112 }, tr: { title: 46, pill: 28, old: 82, now: 112, note: 204 } }
+    : { W: 360, H: 470, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
+        tb: { x: 20, y: 290, w: 320, h: 170 }, bkRow: { x: 120, y: 70 }, tr: { title: 316, pill: 330, old: 382, now: 414, note: 446 } };
+  const { bk, job, tb, bkRow, tr } = L;
+  const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
+  const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
   let svg = "";
 
-  // The bucket: one row of CSV batches per job; a batch lights up while it is read and stays marked once read.
+  // The bucket: CSV batches; one lights up while it is read and stays marked once read.
   svg += `<rect class="box" x="${bk.x}" y="${bk.y}" width="${bk.w}" height="${bk.h}" rx="14"/>
     <text class="t" x="${bk.x + 14}" y="${bk.y + 26}">Bucket</text>
     <text class="s" x="${bk.x + 14}" y="${bk.y + 44}">CSV files</text>`;
-  br.forEach((r, j) => {
-    for (let i = 0; i < BATCHES; i++) {
-      const cls = act[j] === "write" && i === done[j] - 1 ? "hot" : i < done[j] ? "read" : "";
-      svg += `<rect class="f ${cls}" x="${bk.x + r.x + i * 17}" y="${r.y}" width="12" height="16" rx="2"/>`;
-    }
-  });
+  for (let i = 0; i < BATCHES; i++) {
+    const cls = act === "write" && i === done - 1 ? "hot" : i < done ? "read" : "";
+    svg += `<rect class="f ${cls}" x="${bk.x + bkRow.x + i * 17}" y="${bkRow.y}" width="12" height="16" rx="2"/>`;
+  }
 
-  // The table: the catalog's pointer, the files it already had, and each job's new files:
-  // dashed while written but not visible, filled once the job's commit is in.
-  svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
-    <text class="t" x="${tb.x + 14}" y="${tr.title}">Table</text>
-    <rect class="snap ${t === 6 || t === 8 ? "flash" : ""}" x="${tb.x + tb.w - 194}" y="${tr.pill}" width="180" height="30" rx="8"/>
-    <text class="s ink" x="${tb.x + tb.w - 182}" y="${tr.pill + 20}">catalog → version ${version}</text>`;
+  // The table: the catalog's pointer, the files it already had, and the job's new files:
+  // dashed while written but not visible, filled once the commit is in.
   const row = (y, label, n, cls) => {
     let g = `<text class="s" x="${tb.x + 14}" y="${y + 13}">${label}</text>`;
     for (let i = 0; i < n; i++) g += `<rect class="f ${cls}" x="${tb.x + 90 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
     return g;
   };
-  svg += row(tr.old, "committed", 8, "old")
-    + row(tr.a, "job A", done[0], `ja ${committed[0] ? "c" : "p"}`)
-    + row(tr.b, "job B", done[1], `jb ${committed[1] ? "c" : "p"}`)
+  svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
+    <text class="t" x="${tb.x + 14}" y="${tr.title}">Table</text>
+    <rect class="snap ${t === 6 ? "flash" : ""}" x="${tb.x + tb.w - 194}" y="${tr.pill}" width="180" height="30" rx="8"/>
+    <text class="s ink" x="${tb.x + tb.w - 182}" y="${tr.pill + 20}">catalog → version ${t >= 6 ? 8 : 7}</text>`
+    + row(tr.old, "committed", 8, "old")
+    + row(tr.now, "new files", done, `ja ${t >= 6 ? "c" : "p"}`)
     + `<text class="s" x="${tb.x + 14}" y="${tr.note}">dashed: written, not visible yet</text>`;
 
   // Lines: bucket → job (read), job → table (write, then the commit).
-  jobs.forEach((j, i) => {
-    const a = act[i], gone = t === ARCH_LAST ? "off" : "";
-    const read = a === "write" ? "live" : gone, write = a === "write" ? "live" : a || gone;
-    const label = a === "ok" ? ["ok", "commit ✓"] : a === "no" ? ["x", "✕ refused"] : i === 0 ? ["lb", "write"] : null;
-    if (wide) {
-      const y = j.y + j.h / 2, mw = (j.x + j.w + tb.x) / 2;
-      svg += arLine(bk.x + bk.w + 4, y, j.x - 4, y, read) + arLine(j.x + j.w + 4, y, tb.x - 4, y, write);
-      if (i === 0) svg += `<text class="lb" x="${(bk.x + bk.w + j.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>`;
-      if (label) svg += `<text class="${label[0]}" x="${mw}" y="${y - 8}" text-anchor="middle">${label[1]}</text>`;
-    } else {
-      const x = j.x + j.w / 2, my = (j.y + j.h + tb.y) / 2 + 4;
-      svg += arLine(x, bk.y + bk.h + 4, x, j.y - 4, read) + arLine(x, j.y + j.h + 4, x, tb.y - 4, write);
-      if (i === 0) svg += `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + j.y) / 2 + 4}">read</text>`;
-      if (label) svg += `<text class="${label[0]}" x="${x + 8}" y="${my}">${label[1]}</text>`;
-    }
-  });
+  const gone = t === ARCH_LAST ? "off" : "";
+  const read = act === "write" ? "live" : gone, write = act === "write" ? "live" : act || gone;
+  const label = act === "ok" ? ["ok", "commit ✓"] : ["lb", "write"];
+  if (wide) {
+    const y = job.y + job.h / 2;
+    svg += arLine(bk.x + bk.w + 4, y, job.x - 4, y, read) + arLine(job.x + job.w + 4, y, tb.x - 4, y, write)
+      + `<text class="lb" x="${(bk.x + bk.w + job.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>
+         <text class="${label[0]}" x="${(job.x + job.w + tb.x) / 2}" y="${y - 8}" text-anchor="middle">${label[1]}</text>`;
+  } else {
+    const x = job.x + job.w / 2;
+    svg += arLine(x, bk.y + bk.h + 4, x, job.y - 4, read) + arLine(x, job.y + job.h + 4, x, tb.y - 4, write)
+      + `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + job.y) / 2 + 4}">read</text>
+         <text class="${label[0]}" x="${x + 8}" y="${(job.y + job.h + tb.y) / 2 + 4}">${label[1]}</text>`;
+  }
 
-  // The jobs: small dashed boxes, gone at the end.
-  jobs.forEach((j, i) => {
-    svg += `<g class="${i ? "jb" : "ja"} ${act[i] === "write" ? "work" : ""} ${t === ARCH_LAST ? "gone" : ""}">
-      <rect class="eng" x="${j.x}" y="${j.y}" width="${j.w}" height="${j.h}" rx="10"/>
-      <text class="t" x="${j.x + j.w / 2}" y="${j.y + 24}" text-anchor="middle">Job ${i ? "B" : "A"}</text>
-      <text class="s" x="${j.x + j.w / 2}" y="${j.y + 43}" text-anchor="middle">${status[i]}</text></g>`;
-  });
+  // The job: a small dashed box, gone at the end.
+  svg += `<g class="ja ${act === "write" ? "work" : ""} ${t === ARCH_LAST ? "gone" : ""}">
+    <rect class="eng" x="${job.x}" y="${job.y}" width="${job.w}" height="${job.h}" rx="10"/>
+    <text class="t" x="${job.x + job.w / 2}" y="${job.y + 24}" text-anchor="middle">Job</text>
+    <text class="s" x="${job.x + job.w / 2}" y="${job.y + 43}" text-anchor="middle">${status}</text></g>`;
 
   $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${archSay(t)}">${svg}</svg>`;
   $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
