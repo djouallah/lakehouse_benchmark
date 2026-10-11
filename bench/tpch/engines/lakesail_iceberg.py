@@ -15,7 +15,7 @@ TWO THINGS THE NOTEBOOK COULD IGNORE AND THIS CANNOT:
    slow down, it took the runner with it -- OOM-killed 46s into Q18, no traceback, no row. The
    pool is now `fair` with a ceiling under the runner's RAM (`setup`). Sort and aggregation spill
    to the OS temp directory; a HASH JOIN'S BUILD SIDE CANNOT SPILL in DataFusion 55.1 (Sail
-   0.7.2 and main; apache/datafusion#24768 is the open epic), so a join
+   0.7.2; apache/datafusion#24768 is the open epic), so a join
    that outgrows the pool fails as "Resources exhausted" -- one failed statement, like chDB's
    memory limit, instead of a dead job. An earlier version of this file invented
    `SAIL_EXECUTION__MEMORY_LIMIT`; that is not a real setting, and Sail validates its config
@@ -93,13 +93,6 @@ class LakesailIceberg:
         # (~2.7 GiB) keeps hash joins, SF=30 (~8 GiB) and up spill.
         spill_joins = self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2
         os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "false" if spill_joins else "true"
-        # COMPRESSED SPILL FILES. `runtime.temporary_files.compression` (lakehq/sail#2753) writes
-        # spills as zstd instead of raw Arrow IPC into the 64 GiB temp-file cap; zstd for the
-        # smallest files, since the cap and the runner's disk are the limit. Only past 0.7.2: that
-        # release refuses to start on an unknown key, and the ETL still runs it. TPC-H/TPC-DS run
-        # the main build (tmp_sail_main.yml, numbered 0.7.3.devYYYYMMDD) until a release has it.
-        if tuple(int(p) for p in self.version.split(".")[:3]) > (0, 7, 2):
-            os.environ["SAIL_RUNTIME__TEMPORARY_FILES__COMPRESSION"] = "zstd"
         #
         # TRIED AND REVERTED: SAIL_PARQUET__PUSHDOWN_FILTERS=true (+ REORDER_FILTERS), Sail's
         # late-materialization switch, off by default. Run 35512613884 at SF=10: the queries it

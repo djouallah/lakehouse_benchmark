@@ -450,6 +450,10 @@ Largest scale each engine completes, cold, every statement answered:
   "The used disk space during the spilling process has exceeded the allowable limit" of 64 GB
   (run 36860897295). SF=100 stops at its first query, Q64: "Resources exhausted", the 10 GiB
   `fair` pool (run 38025112678).
+- **A main build did not help.** Sail main (lakehq/sail@ac5bcace64) adds zstd spill files
+  (`runtime.temporary_files.compression`). With them, SF=60 Q72 did not fail on the 64 GB cap; it
+  ran past the 900 s limit instead (run 38115933551). The bench went back to the 0.7.2 release
+  and does not run Sail main builds.
 - **Its ETL table has no `filename` column.** The DataFrame transform it shares with Spark
   (`_spark_df.py`) leaves it out because Sail can't provide it.
 - **Late materialization made it slower.** `SAIL_PARQUET__PUSHDOWN_FILTERS` should help Q6, Q12
