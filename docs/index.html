@@ -14,6 +14,7 @@
   --duckdb_iceberg: #2a78d6; --chdb_iceberg: #eb6834; --polars_iceberg: #1baf7a;
   --lakesail_iceberg: #eda100; --daft_iceberg: #8a5cd1; --pyspark_iceberg: #d6468f;
   --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
+  --pandas_iceberg: #932601;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -22,6 +23,7 @@
     --duckdb_iceberg: #3987e5; --chdb_iceberg: #d95926; --polars_iceberg: #199e70;
     --lakesail_iceberg: #c98500; --daft_iceberg: #9b6ee0; --pyspark_iceberg: #e05a9c;
     --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
+    --pandas_iceberg: #8d4e10;
   }
 }
 * { box-sizing: border-box; }
@@ -279,6 +281,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
       <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
       <li><b>Daft</b>: ETL only; 16/22 TPC-H queries on 0.7.25, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged, not yet released). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
+      <li><b>Pandas</b>: ETL only; no SQL.</li>
       <li><b>chDB</b>: not in TPC-DS; 6 of 99 queries fail on ClickHouse issues: Q36 and Q66, an alias with the column's name (<a href="https://github.com/ClickHouse/ClickHouse/issues/9715">#9715</a>, open); Q47 and Q57, column names with three or more tables in FROM (<a href="https://github.com/ClickHouse/ClickHouse/issues/34697">#34697</a>, open); Q75, <code>SUM</code> over mixed Decimal and Float (<a href="https://github.com/ClickHouse/ClickHouse/issues/106707">#106707</a>); Q18, <code>CAST(NULL AS decimal)</code> is an error, not NULL. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
     </ul>
     <h3>Tried, not added</h3>
@@ -302,6 +305,7 @@ const LABEL = {         // bench/charts.py LABEL
   duckdb_iceberg: "DuckDB", chdb_iceberg: "chDB", polars_iceberg: "Polars",
   lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",
   pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
+  pandas_iceberg: "Pandas",
 };
 const SPARK = "pyspark_iceberg", GLUTEN = "pyspark_gluten_iceberg";
 const SUITES = [
@@ -597,6 +601,9 @@ const ENGINE_ROWS = [
   { engine: "daft_iceberg", url: "https://github.com/Eventual-Inc/Daft", started: "Eventual, 2022",
     governed: "Eventual", licence: "Apache 2.0", lang: "Rust",
     use: "DataFrames for multimodal data, distributed" },
+  { engine: "pandas_iceberg", url: "https://github.com/pandas-dev/pandas", started: "Wes McKinney, 2008",
+    governed: "NumFOCUS", licence: "BSD 3-Clause", lang: "Python, C",
+    use: "DataFrames in Python, one machine" },
   // Tried, no success: not in LABEL, so renderEngines puts them on the Tried tab.
   { engine: "doris", label: "Apache Doris", url: "https://github.com/apache/doris", started: "Baidu as Palo, 2017",
     governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "C++, Java",
@@ -659,6 +666,7 @@ const DBT_ROWS = [
   { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
     note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
   { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
+  { engine: "pandas_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
 ];
 
 function renderDbt() {
@@ -696,6 +704,8 @@ const WORKLOAD_ROWS = [
     merge: { ok: true, note: `<a href="#dbt">dbt-trino</a>` } },
   { engine: "pyspark_gluten_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
     merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
+  { engine: "pandas_iceberg", tier: "veteran", file: { ok: null, note: "No option; set per file" },
+    merge: { ok: false, note: "No Iceberg writer" } },
   { engine: "duckdb_iceberg", tier: "star", file: { ok: true, note: "<code>filename</code>" },
     merge: { ok: true, note: "" } },
   { engine: "starrocks_iceberg", tier: "star", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },

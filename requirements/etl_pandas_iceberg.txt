@@ -1,0 +1,9 @@
+# pandas has no Iceberg writer: it reads and transforms, pyiceberg appends the Arrow stream
+# (bench/etl/engines/pandas_iceberg.py). adlfs (pyiceberg's extra) is also what pandas' fsspec
+# read of abfss:// resolves to. azure-storage-file-datalake: bench/etl/data.py lists Files/csv
+# over ADLS before the engine starts. ETL only, so there is no requirements/pandas_iceberg.txt.
+azure-identity>=1.19
+azure-storage-file-datalake>=12.17
+psutil>=6
+pyiceberg[pyarrow,adlfs]>=0.12.0
+pandas>=3.0

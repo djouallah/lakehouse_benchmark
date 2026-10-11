@@ -21,6 +21,7 @@ Bonus:
 In the bench, with gaps:
 
 - **Daft**: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and `SUBSTRING` ([Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), OneLake paths [Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533)).
+- **pandas**: ETL only; no SQL engine, so no TPC-H or TPC-DS.
 - **StarRocks**: no complete TPC-DS run; Q49 fails on a SQL bug ([StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807)).
 - **chDB**: not in TPC-DS; 6 of 99 queries fail on ClickHouse issues: Q36 and Q66 ([ClickHouse#9715](https://github.com/ClickHouse/ClickHouse/issues/9715)), Q47 and Q57 ([ClickHouse#34697](https://github.com/ClickHouse/ClickHouse/issues/34697)), Q75 ([ClickHouse#106707](https://github.com/ClickHouse/ClickHouse/issues/106707)), Q18 (`CAST(NULL AS decimal)` is an error, not NULL).
 

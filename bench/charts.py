@@ -24,6 +24,12 @@ light mode and failed dark (CVD 3.5). Checked on ALL pairs, which the older slot
 sits 12.6 from orange in light and 4.7 from yellow in dark, both under the 15 normal-vision floor,
 which is what the per-bar value labels are for.
 
+Slot 10, rust, is pandas (Light ETL only), found by the same scan against all nine. No hue clears
+the 15 normal-vision floor against every slot in BOTH modes any more; rust comes closest. Light
+#932601: worst pair 14.2 normal (StarRocks) / 11.7 CVD, contrast 8.1:1. Dark #8d4e10: worst pair
+15.2 normal (Gluten/Velox) / 9.3 CVD (chDB), contrast WARN 2.68:1. The light pairs under 15 are
+again what the per-bar value labels are for.
+
 The palette is validated, not eyeballed (dataviz `scripts/validate_palette.js`), and re-validated
 whenever a slot is added -- every subset that can actually render has to pass, not just the full
 set. Light passes every gate with a contrast WARN on aqua and yellow, which obligates the relief
@@ -56,6 +62,7 @@ LIGHT = {
     "pyspark_gluten_iceberg": "#a8642a",  # slot 7 brown
     "starrocks_iceberg": "#980067",  # slot 8 plum
     "trino_iceberg": "#3c0fd9",  # slot 9 indigo
+    "pandas_iceberg": "#932601",  # slot 10 rust
 }
 DARK = {
     "duckdb_iceberg": "#3987e5",
@@ -67,6 +74,7 @@ DARK = {
     "pyspark_gluten_iceberg": "#c07a3a",
     "starrocks_iceberg": "#a0268b",
     "trino_iceberg": "#5c43ff",
+    "pandas_iceberg": "#8d4e10",
 }
 
 THEMES = {
@@ -110,6 +118,7 @@ LABEL = {
     "pyspark_gluten_iceberg": "Gluten/Velox",
     "starrocks_iceberg": "StarRocks",
     "trino_iceberg": "Trino",
+    "pandas_iceberg": "Pandas",
 }
 
 

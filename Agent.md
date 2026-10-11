@@ -80,7 +80,7 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 |---|---|
 | `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (8, no daft), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
 | `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (7, no chdb or daft), `regenerate` (false), `publish` |
-| `etl.yml` | `files` 10/100/1000 (100), `engines` (9, includes daft), `publish` |
+| `etl.yml` | `files` 10/100/1000 (100), `engines` (10, includes daft and pandas), `publish` |
 | `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
 | `capability.yml` (iceberg support) | `clients` polars/duckdb/sail/chdb/duckdb_isolation (all), `keep` (false) |
