@@ -96,6 +96,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
 .details a { color: var(--accent); }
+.details img { display: block; width: 100%; height: auto; border-radius: 12px; }
 /* Capability: operations down, engines across, one mark per cell. */
 .cap .chips { margin-top: 12px; }
 .cap .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink-2); margin: 0 0 12px; }
@@ -253,6 +254,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+  <section class="details" id="architecture" hidden>
+    <img src="architecture.png" alt="Only the catalog keeps state: a transient engine (notebook, laptop, CI, cloud function, cluster) reads arbitrary files in a cloud bucket, then writes and reads Iceberg tables in the catalog. No idle time, close to 100% used.">
+  </section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
@@ -396,10 +400,12 @@ const WORKLOAD = { id: "workload", title: "Real workload" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
 const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
 const PLANS = { id: "plans", title: "Bad joins" };
-const PAGES = [PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
+const ARCH = { id: "architecture", title: "Architecture" };
+const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
+  { id: "architecture", title: "Architecture", subs: [ARCH] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
@@ -408,7 +414,7 @@ const GROUPS = [
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES, TRIED] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
+const state = { suite: ARCH.id, sf: {}, group: null, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -1184,7 +1190,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #plans (#plans-q72 for one story), #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// Deep links: #architecture, #performance, #plans (#plans-q72 for one story), #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
