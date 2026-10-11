@@ -292,7 +292,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
-  <section class="pl arch" id="architecture" hidden></section>
+  <section class="pl arch" id="concurrency" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
@@ -436,21 +436,21 @@ const WORKLOAD = { id: "workload", title: "Real workload" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
 const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
 const PLANS = { id: "plans", title: "Bad joins" };
-const ARCH = { id: "architecture", title: "Architecture" };
+const ARCH = { id: "concurrency", title: "Concurrency" };
 const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "architecture", title: "Architecture", subs: [ARCH] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
+  { id: "concurrency", title: "Concurrency", subs: [ARCH] },
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "issues", title: "Issues", subs: [DETAILS] },
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, ENGINES, TRIED] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: ARCH.id, sf: {}, group: null, last: {} };
+const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -1213,7 +1213,7 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// THE ARCHITECTURE TAB: the ETL as it runs. A job streams CSV batches from a bucket into a table: every batch
+// THE CONCURRENCY TAB: the ETL as it runs. A job streams CSV batches from a bucket into a table: every batch
 // becomes a new file, and the table changes only once, at the commit (bench/etl/iceberg.py append_stream).
 // Once that demo has played to the end, a second one shows up: two writers, one commit refused and retried.
 // Conceptual on purpose: no engine, vendor or product names.
@@ -1418,12 +1418,13 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #architecture, #performance, #plans (#plans-q72 for one story), #features, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// Deep links: #performance, #plans (#plans-q72 for one story), #features, #concurrency, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "details") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
+  if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
   const story = h.match(/^plans-(\w+)$/);  // one Bad joins story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
