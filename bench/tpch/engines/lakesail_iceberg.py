@@ -14,8 +14,8 @@ TWO THINGS THE NOTEBOOK COULD IGNORE AND THIS CANNOT:
    spills a sort or an aggregation only when its pool says no. So at TPC-H SF=30 Sail did not
    slow down, it took the runner with it -- OOM-killed 46s into Q18, no traceback, no row. The
    pool is now `fair` with a ceiling under the runner's RAM (`setup`). Sort and aggregation spill
-   to the OS temp directory; a HASH JOIN'S BUILD SIDE CANNOT SPILL in DataFusion 55 (Sail
-   0.7.2; apache/datafusion#24768 is the open epic), so a join
+   to the OS temp directory; a HASH JOIN'S BUILD SIDE CANNOT SPILL in DataFusion 55.1 (Sail
+   0.7.2 and main; apache/datafusion#24768 is the open epic), so a join
    that outgrows the pool fails as "Resources exhausted" -- one failed statement, like chDB's
    memory limit, instead of a dead job. An earlier version of this file invented
    `SAIL_EXECUTION__MEMORY_LIMIT`; that is not a real setting, and Sail validates its config
