@@ -1290,7 +1290,7 @@ function arLine(x1, y1, x2, y2, cls, both) {
 function drawArch() {
   const wide = WIDE.matches, s = arch.step;
   const L = wide
-    ? { W: 820, H: 300, st: { x: 0, y: 40, w: 220, h: 220 }, mid: { x: 290, y: 0, w: 240, h: 300 }, cat: { x: 600, y: 70, w: 220, h: 160 } }
+    ? { W: 820, H: 280, st: { x: 0, y: 20, w: 200, h: 220 }, mid: { x: 270, y: 0, w: 280, h: 280 }, cat: { x: 620, y: 60, w: 200, h: 160 } }
     : { W: 360, H: 690, st: { x: 30, y: 0, w: 300, h: 170 }, mid: { x: 20, y: 230, w: 320, h: 260 }, cat: { x: 30, y: 550, w: 300, h: 140 } };
   const { st, cat, mid } = L;
   // Two engines: one above the other when wide, side by side when narrow, so no line crosses the other engine.
@@ -1309,7 +1309,7 @@ function drawArch() {
     svg += `<text class="s" x="${st.x + 14}" y="${y + 13}">${name}</text>`;
     for (let i = 0; i < n + add; i++) {
       const cls = i >= n ? "new" : s === 2 && r > 0 ? "hot" : "";
-      svg += `<rect class="f ${cls}" x="${st.x + 100 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
+      svg += `<rect class="f ${cls}" x="${st.x + 90 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
     }
   });
 
@@ -1323,10 +1323,11 @@ function drawArch() {
 
   // An engine in `area`: dashed boxes, a title above and its status below.
   const engine = (area, size, title, status, cls) => {
-    const inH = area.h - 48, cx = area.x + area.w / 2;
+    // At most 200 wide, so the lines to storage and catalog stay long enough for their labels.
+    const inH = area.h - 48, cx = area.x + area.w / 2, full = Math.min(area.w, 200);
     const boxes = size === "out"
-      ? [0, 1, 2].map(i => { const w = (area.w - 24) / 3; return { x: area.x + i * (w + 12), w, h: inH * .5 }; })
-      : [{ w: size === "up" ? area.w : area.w * .55, h: size === "up" ? inH : inH * .55 }].map(b => ({ ...b, x: cx - b.w / 2 }));
+      ? [0, 1, 2].map(i => { const w = (full - 24) / 3; return { x: cx - full / 2 + i * (w + 12), w, h: inH * .5 }; })
+      : [{ w: size === "up" ? full : area.w * .55, h: size === "up" ? inH : inH * .55 }].map(b => ({ ...b, x: cx - b.w / 2 }));
     const h = Math.max(...boxes.map(b => b.h)), top = area.y + 24 + (inH - h) / 2;
     const bb = { x: Math.min(...boxes.map(b => b.x)), y: top, h };
     bb.w = Math.max(...boxes.map(b => b.x + b.w)) - bb.x;
