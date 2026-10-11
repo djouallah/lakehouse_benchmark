@@ -6,7 +6,11 @@ const page = await browser.newPage();
 page.on("console", m => console.log("page:", m.text()));
 await page.setContent(`<html><body><script type="module">
   window.go = async (scene) => {
-    const { exportToBlob } = await import("https://esm.sh/@excalidraw/utils@0.1.2");
+    window.EXCALIDRAW_ASSET_PATH = "https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/";
+    const mod = await import("https://esm.sh/@excalidraw/excalidraw@0.17.6?deps=react@18.2.0,react-dom@18.2.0");
+    const exportToBlob = mod.exportToBlob ?? mod.default?.exportToBlob;
+    console.log("keys", Object.keys(mod).slice(0, 40).join(","));
+    await document.fonts.ready;
     const blob = await exportToBlob({ elements: scene.elements, appState: { ...(scene.appState||{}), exportBackground: true, viewBackgroundColor: "#ffffff", exportScale: 2 }, files: scene.files || {}, mimeType: "image/png" });
     const buf = new Uint8Array(await blob.arrayBuffer());
     let s = ""; for (const b of buf) s += String.fromCharCode(b); return btoa(s);
