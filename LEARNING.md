@@ -526,23 +526,29 @@ private val icebergReadableSchemes: Set[String] = Set("file", "s3", "s3a", "gs",
   rebuild auth in Rust from a fixed allowlist of `fs.azure.*` keys. The custom token provider
   (`WorkloadIdentityTokenProvider`) would never be called. The account is derived from the first
   host label, so OneLake's host is outside its tested URL shape anyway.
-- **Revisit when `abfss` appears in `icebergReadableSchemes`.** Filed as
+- **Revisit when `abfss` appears in the native read list.** Filed as
   [apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058).
+  Since PR #6065 (merged 2026-10-07, after 1.1.0) the JVM set is no longer written by hand. It is
+  loaded from `builtin_storage_schemes` in `native/core/src/execution/operators/iceberg_common.rs`.
+  On 2026-10-11 the read list there is `file`, `gs`, `oss`, `s3`, `s3a`. PR #6059 (Azure auth
+  through Hadoop) is for the native Parquet scan, not the Iceberg scan.
 
 ## DataFusion: no Iceberg in Python
 
-Reviewed on paper (2026-10-10), no CI run. DataFusion fails on its Iceberg support, not on Azure.
+Reviewed on paper (2026-10-10, rechecked 2026-10-11), no CI run. DataFusion fails on its Iceberg support, not on Azure.
 - **datafusion-python has no Iceberg.** There is no catalog, no scan and no write. Writes have been
   an open request since 2025 ([apache/datafusion-python#1097](https://github.com/apache/datafusion-python/issues/1097)).
 - **The only pip route is gone.** pyiceberg-core's `IcebergDataFusionTable` loaded a table from its
   metadata location into a read-only iceberg-rust `StaticTable`. Upstream removed it from main on
   2026-09-03 ([apache/iceberg-rust#3036](https://github.com/apache/iceberg-rust/issues/3036),
   PR #3143). The reason given: it ran a second Iceberg implementation behind a PyIceberg `Table`.
-  pyiceberg-core 0.10.1 is the last release that has it. It is built against DataFusion 53 and
-  needs the same major on the Python side (datafusion 54.1 is current).
+  The 0.11.0 release candidate (v0.11.0-rc.2, vote open in #3034) was cut before that PR, so
+  0.11.0 still has it. It is built against DataFusion 54 and needs the same major on the Python
+  side. datafusion 54.1 is current on PyPI, so the two match. They stop matching when
+  datafusion-python 55 ships (55.0.0-rc1 is tagged). It is still read-only, and it is gone after 0.11.
 - **Writing would not be DataFusion.** The only option is pyiceberg appending DataFusion's Arrow
   output, which tests pyiceberg's writer, not the engine's (condition 3).
-- **Azure would have worked.** pyiceberg-core 0.10.1 ships iceberg-rust's `opendal-azdls`, and
+- **Azure would have worked.** pyiceberg-core 0.10.1 and later ship iceberg-rust's `opendal-azdls`, and
   `adls.sas-token` is the path Databend's fork proved on OneLake. The Files section is reachable
   through `object_store.MicrosoftAzure(bearer_token=..., use_fabric_endpoint=True)`.
 - **Already covered.** The DataFusion core is in the bench through LakeSail.

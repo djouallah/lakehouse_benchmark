@@ -14,7 +14,8 @@ TWO THINGS THE NOTEBOOK COULD IGNORE AND THIS CANNOT:
    spills a sort or an aggregation only when its pool says no. So at TPC-H SF=30 Sail did not
    slow down, it took the runner with it -- OOM-killed 46s into Q18, no traceback, no row. The
    pool is now `fair` with a ceiling under the runner's RAM (`setup`). Sort and aggregation spill
-   to the OS temp directory; a HASH JOIN'S BUILD SIDE CANNOT SPILL in DataFusion 54, so a join
+   to the OS temp directory; a HASH JOIN'S BUILD SIDE CANNOT SPILL in DataFusion 55 (Sail
+   0.7.2; apache/datafusion#24768 is the open epic), so a join
    that outgrows the pool fails as "Resources exhausted" -- one failed statement, like chDB's
    memory limit, instead of a dead job. An earlier version of this file invented
    `SAIL_EXECUTION__MEMORY_LIMIT`; that is not a real setting, and Sail validates its config
@@ -81,7 +82,7 @@ class LakesailIceberg:
         os.environ["SAIL_RUNTIME__MEMORY_POOL__FAIR__MAX_SIZE"] = str(POOL_BYTES)
         # AND JOINS THAT CAN SPILL. The pool alone took SF=30 from a dead runner to 21/22, and the
         # one left was Q18: "Failed to allocate ... for HashJoinInput[3] with 1665.0 MB already
-        # allocated" (run 36238299506). A hash join's build side cannot spill in DataFusion 54; a
+        # allocated" (run 36238299506). A hash join's build side cannot spill in DataFusion 55; a
         # sort-merge join's buffered side can. `optimizer.prefer_hash_join` (default true) picks
         # sort-merge for the shuffled joins instead; small build sides still broadcast. With it,
         # SF=30 went 22/22 (run 36238967358).
