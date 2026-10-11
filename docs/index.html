@@ -1261,10 +1261,10 @@ function arLine(x1, y1, x2, y2, cls) {
 function drawArch() {
   const wide = WIDE.matches, t = arch.t, done = archDone(t);
   const L = wide
-    ? { W: 820, H: 240, bk: { x: 0, y: 20, w: 200, h: 200 }, job: { x: 300, y: 92, w: 110, h: 56 },
-        tb: { x: 500, y: 20, w: 320, h: 200 }, bkRow: { x: 14, y: 112 }, tr: { title: 46, pill: 28, old: 82, now: 112, note: 204 } }
-    : { W: 360, H: 470, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
-        tb: { x: 20, y: 290, w: 320, h: 170 }, bkRow: { x: 120, y: 70 }, tr: { title: 316, pill: 330, old: 382, now: 414, note: 446 } };
+    ? { W: 820, H: 190, bk: { x: 0, y: 20, w: 200, h: 160 }, job: { x: 300, y: 72, w: 110, h: 56 },
+        tb: { x: 500, y: 20, w: 320, h: 160 }, bkRow: { x: 14, y: 92 }, tr: { title: 46, pill: 28, old: 66, now: 92, note: 166 } }
+    : { W: 360, H: 490, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
+        tb: { x: 20, y: 290, w: 320, h: 190 }, bkRow: { x: 120, y: 70 }, tr: { title: 316, pill: 330, old: 382, now: 414, note: 462 } };
   const { bk, job, tb, bkRow, tr } = L;
   const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
   const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
