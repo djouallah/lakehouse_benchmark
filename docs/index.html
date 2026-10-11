@@ -37,8 +37,8 @@ main { max-width: 1440px; margin: 0 auto; padding: 20px 16px 24px; }
 h1 { font-size: clamp(24px, 5vw, 32px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .top { display: flex; align-items: center; gap: 20px; flex: none; }
-.about-link { color: var(--ink-2); font-weight: 600; text-decoration: none; margin-top: 6px; }
-.about-link:hover, .about-link[aria-current] { color: var(--ink); text-decoration: underline; }
+.top-link { color: var(--ink-2); font-weight: 600; text-decoration: none; margin-top: 6px; }
+.top-link:hover, .top-link[aria-current] { color: var(--ink); text-decoration: underline; }
 .gh { color: var(--ink-2); flex: none; margin-top: 6px; transition: color .15s, transform .15s; }
 .gh:hover, .gh:focus-visible { color: var(--ink); transform: scale(1.1); }
 .sub { font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--ink-2); white-space: nowrap; margin-left: 8px; }
@@ -230,6 +230,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Architecture: a job streams CSV batches into a table, one file per batch, one commit at the end;
    then two writers, one commit refused and retried. */
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
+.arch .ar-fig { cursor: pointer; }
+.pl .ghost:disabled { opacity: .4; cursor: default; }
 .arch .play { min-width: 170px; }
 .arch .play.busy { cursor: progress; }
 .arch .play .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 8px; vertical-align: 1px; animation: blink 1s ease-in-out infinite; }
@@ -291,7 +293,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 </head>
 <body>
 <main>
-  <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><nav class="top"><a class="about-link" id="about-link" href="#about">About</a><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></header>
+  <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><nav class="top"><a class="top-link" id="about-link" href="#about">About</a><a class="top-link" id="issues-link" href="#issues">Issues</a><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></header>
   <p class="lede">An engine is two things: how fast it runs, and what it supports.</p>
 
   <div class="tabs" role="tablist" id="tabs"></div>
@@ -449,13 +451,12 @@ const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, 
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
+  { id: "catalogs", title: "Catalogs", subs: [ARCH, STORAGE] },  // the commit is the catalog's job
   { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
-  { id: "concurrency", title: "Concurrency", subs: [ARCH] },
-  { id: "issues", title: "Issues", subs: [DETAILS] },
-  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED], bar: false },  // a header link, not a tab
+  { id: "issues", title: "Issues", subs: [DETAILS], bar: false },  // header links, not tabs
+  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED], bar: false },
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
@@ -469,6 +470,7 @@ function renderTabs() {
   state.last[current.id] = state.suite;  // a top tab reopens the sub last used in it
   $("tabs").innerHTML = ""; $("subtabs").innerHTML = "";
   $("about-link").toggleAttribute("aria-current", current.id === "about");
+  $("issues-link").toggleAttribute("aria-current", current.id === "issues");
   for (const g of GROUPS.filter(g => g.bar !== false)) {
     const b = document.createElement("button");
     b.role = "tab"; b.textContent = g.title;
@@ -572,7 +574,8 @@ function renderCapability() {
   };
   sec.innerHTML = `
     <div class="chips">${groups.map(g => `<button aria-pressed="${g === state.group}">${esc(g)}</button>`).join("")}</div>
-    <p class="caption">What each engine can do against the OneLake Iceberg REST catalog, checked by reading the result back through the catalog.</p>
+    <p class="caption">What each engine can do against the OneLake Iceberg REST catalog, checked by reading the result back through the catalog.
+      Only the engines with their own Iceberg code and no JVM: Spark, Gluten/Velox, Trino and StarRocks use the Iceberg Java library.</p>
     <div class="legend">
       <span class="supported"><i class="m"></i>yes</span>
       <span class="no"><i class="m"></i>no</span>
@@ -591,7 +594,8 @@ function renderCapability() {
       <tbody></tbody>
     </table></div>
     <p class="note">The OneLake Iceberg API is still in private preview. Some issues are already fixed upstream.</p>
-    <p class="note">In the concurrency rows a second writer commits between the engine's read and its commit.
+    <p class="note">In the concurrency rows a second writer commits between the engine's read and its commit
+      (<a href="#concurrency">Catalogs, Concurrency</a> shows how).
       Every reading, with what came back: <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/docs/capability/RESULTS.md">RESULTS.md</a>.</p>`;
   [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group = groups[i]; render(); });
 
@@ -1247,14 +1251,14 @@ const archSay = t => [
   `${archDone(t)} new files so far. Readers do not see them yet.`,
   `${archDone(t)} new files so far. Readers do not see them yet.`,
   "The last batch is written. Still nothing visible.",
-  "The work is done, so the job commits once: snapshot x+1. Readers see all the new files at the same time.",
+  "The work is done, so the job commits once to the catalog: snapshot x+1. Readers see all the new files at the same time.",
   "The job stops. The new data stays in the table.",
   "Now two jobs start at the same time. Both start from snapshot x.",
   "Job A writes its first file. Readers do not see it.",
   "Job B writes too. The two jobs do not block each other.",
   "Both keep writing files. Nothing is visible yet.",
   "Job A is done first and commits: snapshot x+1.",
-  "Job B is done and commits on top of snapshot x. The table is now at x+1, so the commit is refused.",
+  "Job B is done and commits on top of snapshot x. The table is now at x+1, so the catalog refuses the commit.",
   "Job A only added files, so nothing clashes. Job B commits again on top of x+1: snapshot x+2. Its files are not written again.",
   "Both jobs stop. Snapshot x+2 has the files of both jobs. If both jobs had changed the same files, the retry would fail.",
 ][t];
@@ -1262,7 +1266,9 @@ const archSay = t => [
 function renderArch() {
   stopArch();
   $(ARCH.id).innerHTML = `
-    <div class="ctl"><button class="play" id="ar-play"></button></div>
+    <div class="ctl"><button class="play" id="ar-play"></button>
+      <button class="ghost" id="ar-back">‹ Back</button><button class="ghost" id="ar-step">Next ›</button>
+      <span class="hint">or the arrow keys</span></div>
     <div class="ar-fig" id="ar-fig"></div>
     <p class="pick" id="ar-say"></p>
     <div class="next" id="ar-next" hidden>
@@ -1273,13 +1279,15 @@ function renderArch() {
         every row) to make this possible.</p>
     </div>`;
   $("ar-play").onclick = playArch;
+  $("ar-back").onclick = () => stepArch(-1);
+  $("ar-step").onclick = $("ar-fig").onclick = () => stepArch(1);
   drawArch();
 }
 
-// One tick every 1.3 s through both scenarios.
+// One tick every 1.3 s through both scenarios, from the step on screen; from the start once it is done.
 function playArch() {
   if (arch.timer) return;  // already running
-  arch.t = 0;
+  if (arch.t >= ARCH_END) arch.t = 0;
   arch.timer = setInterval(() => {
     arch.t++;
     if (arch.t >= ARCH_END) stopArch();
@@ -1288,6 +1296,17 @@ function playArch() {
   drawArch();
 }
 function stopArch() { clearInterval(arch.timer); arch.timer = null; }
+// By hand, for a talk: Back / Next, a click on the picture, the arrow keys, or a clicker (Page Up / Page Down).
+function stepArch(d) {
+  stopArch();
+  arch.t = Math.max(0, Math.min(ARCH_END, arch.t + d));
+  drawArch();
+}
+addEventListener("keydown", e => {
+  if (state.suite !== ARCH.id || e.altKey || e.ctrlKey || e.metaKey) return;
+  const d = { ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 }[e.key];
+  if (d) { e.preventDefault(); stepArch(d); }
+});
 
 // A line with an arrow head at its end.
 function arLine(x1, y1, x2, y2, cls) {
@@ -1335,7 +1354,7 @@ function soloSvg(wide, t) {
   const svg = arBox(bk, "", "Bucket", "CSV files")
     + arFiles(bk.x + bkRow.x, bkRow.y, Array.from({ length: BATCHES }, (_, i) =>
       act === "write" && i === done - 1 ? "hot" : i < done ? "read" : ""))
-    + arBox(tb, "cat", "Table")
+    + arBox(tb, "cat", "Catalog · table")
     + (committed ? arSnap(snap, "snapshot x+1", t === 6)
       : `<text class="lb" x="${snap.x + 10}" y="${snap.y + 16}">${done ? "new files" : ""}</text>`)
     + arFiles(snap.x + 10, snap.y + 24, Array(done).fill(`ja ${committed ? "c" : "p"}`))
@@ -1372,7 +1391,7 @@ function duoSvg(wide, t) {
   // from step 7, with x+1 moved under it. Files not in a snapshot yet are dashed.
   const top = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, low = { ...top, y: top.y + 56 };
   const fx = top.x + 10, aFiles = cls => Array(done[0]).fill(`ja ${cls}`), bFiles = cls => Array(done[1]).fill(`jb ${cls}`);
-  svg += arBox(tb, "cat", "Table");
+  svg += arBox(tb, "cat", "Catalog · table");
   if (t < 4) {
     svg += `<text class="lb" x="${fx}" y="${top.y + 16}">${done[0] ? "new files" : ""}</text>`
       + arFiles(fx, top.y + 24, aFiles("p")) + arFiles(fx, low.y + 24, bFiles("p"));
@@ -1398,7 +1417,9 @@ function drawArch() {
   const t = arch.t, end = t === ARCH_END, b = $("ar-play"), run = !!arch.timer;
   b.classList.toggle("busy", run);
   b.setAttribute("aria-busy", run);
-  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : t ? "↺ Replay" : "▶ Play";
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : end ? "↺ Replay" : "▶ Play";
+  $("ar-back").disabled = t === 0;
+  $("ar-step").disabled = end;
   // When scenario 2 is done, the note takes the place of the picture and its caption.
   $("ar-fig").hidden = $("ar-say").hidden = end;
   $("ar-next").hidden = !end;
@@ -1425,7 +1446,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #performance, #plans (#plans-q72 for one story), #features, #concurrency, #workload, #catalogs, #etl, #tpch, #tpcds, #iceberg, #dbt, #storage, #issues, #about, #engines, #tried,
+// Deep links: #catalogs, #concurrency, #storage, #performance, #plans (#plans-q72 for one story), #features, #workload, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
