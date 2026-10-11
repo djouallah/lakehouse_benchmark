@@ -798,12 +798,7 @@ function renderWorkload() {
       today; speed is a bonus. Spark-OSS has every feature but is the slowest on <a href="#performance">Performance</a>;
       Gluten/Velox keeps the Spark features and runs native.</p>
     <p class="caption">The workload: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB load AEMO CSV files
-      from OneLake Files into Iceberg tables every hour. To replace DuckDB, an engine needs all three; one red cell and it is not an option:</p>
-    <ul class="caption">
-      <li>it gives the source file name as a column: the project keys and dedupes on it;</li>
-      <li>it has a dbt 1 adapter that works on Iceberg tables;</li>
-      <li>it has <code>MERGE</code>: the incremental models are insert-only merges.</li>
-    </ul>
+      from OneLake Files into Iceberg tables every hour. To replace DuckDB, an engine needs all three columns; one red cell and it is not an option.</p>
     <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span></div>
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
     <tbody><tr class="tier"><th colspan="${head.length}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => {
