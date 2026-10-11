@@ -224,7 +224,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl ol.steps li b { color: var(--ink); }
 .pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .pl .src a { color: var(--accent); }
-/* Architecture: a job streams CSV batches into a table, one file per batch, one commit at the end. */
+/* Architecture: a job streams CSV batches into a table, one file per batch, one commit at the end;
+   then two writers, one commit refused and retried. */
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
 .arch .play { min-width: 170px; }
 .arch .play.busy { cursor: progress; }
@@ -234,6 +235,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .box.cat { stroke: var(--ink-3); stroke-width: 2; }
 .arch .eng { fill: var(--raised); stroke-width: 2; stroke-dasharray: 6 5; }
 .arch .ja .eng { stroke: var(--accent); }
+.arch .jb .eng { stroke: var(--noop); }
 .arch .work .eng { animation: pulse .7s ease-in-out infinite; }
 .arch g { transition: opacity .6s; }
 .arch .gone { opacity: .15; }
@@ -245,6 +247,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .f.hot { stroke: var(--ink); stroke-width: 2.5; }
 .arch .f.p { fill: none; stroke-width: 1.5; stroke-dasharray: 2 2; }
 .arch .f.ja { stroke: var(--accent); } .arch .f.ja.c { fill: var(--accent); }
+.arch .f.jb { stroke: var(--noop); } .arch .f.jb.c { fill: var(--noop); }
 .arch .sbox { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; transition: fill .4s; }
 .arch .sbox.flash { fill: color-mix(in srgb, var(--yes) 30%, transparent); }
 .arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
@@ -257,7 +260,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .hd.off { opacity: .15; }
 .arch .lb { font-size: 12px; fill: var(--ink-3); }
 .arch .ok { font-size: 13px; font-weight: 700; fill: var(--yes); }
-.arch .lb { font-size: 12px; fill: var(--ink-3); }
+.arch .x { font-size: 13px; font-weight: 700; fill: var(--no); }
+.arch .ln.no { stroke: var(--no); stroke-opacity: 1; stroke-width: 3; }
+.arch .hd.no { fill: var(--no); opacity: 1; }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
@@ -1210,11 +1215,13 @@ function hideTip() { tip.classList.remove("on"); }
 
 // THE ARCHITECTURE TAB: the ETL as it runs. A job streams CSV batches from a bucket into a table: every batch
 // becomes a new file, and the table changes only once, at the commit (bench/etl/iceberg.py append_stream).
+// Once that demo has played to the end, a second one shows up: two writers, one commit refused and retried.
 // Conceptual on purpose: no engine, vendor or product names.
-const BATCHES = 5, ARCH_LAST = 7;
-const arch = { t: 0, timer: null };
+const BATCHES = 5, ARCH_LAST = 7, DUO_BATCHES = 3, DUO_LAST = 7;
+const arch = { t: 0, timer: null, shown: false }, duo = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
 const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by tick t
+const duoDone = t => [Math.max(0, Math.min(DUO_BATCHES, t)), Math.max(0, Math.min(DUO_BATCHES, t - 1))];  // job B one tick behind
 
 function archSay(t) {
   return [
@@ -1228,34 +1235,83 @@ function archSay(t) {
     "The job stops. The new data stays in the table.",
   ][t];
 }
+const DUO_SAY = [
+  "Two jobs start at the same time. Both start from snapshot x.",
+  "Job A writes its first file. Readers do not see it.",
+  "Job B writes too. The two jobs do not block each other.",
+  "Both keep writing files. Nothing is visible yet.",
+  "Job A is done first and commits: snapshot x+1.",
+  "Job B is done and commits on top of snapshot x. The table is now at x+1, so the commit is refused.",
+  "Job A only added files, so nothing clashes. Job B commits again on top of x+1: snapshot x+2. Its files are not written again.",
+  "Both jobs stop. Snapshot x+2 has the files of both jobs. If both jobs had changed the same rows, the retry would fail and Job B would have to run again.",
+];
 
 function renderArch() {
   stopArch();
   $(ARCH.id).innerHTML = `
     <div class="ctl"><button class="play" id="ar-play"></button></div>
     <div class="ar-fig" id="ar-fig"></div>
-    <p class="pick" id="ar-say"></p>`;
-  $("ar-play").onclick = playArch;
+    <p class="pick" id="ar-say"></p>
+    <div id="duo" hidden>
+      <h3>Two writers</h3>
+      <div class="ctl"><button class="play" id="duo-play"></button></div>
+      <div class="ar-fig" id="duo-fig"></div>
+      <p class="pick" id="duo-say"></p>
+    </div>`;
+  $("ar-play").onclick = () => playDemo(arch, ARCH_LAST, drawArch, () => { arch.shown = true; });
+  $("duo-play").onclick = () => playDemo(duo, DUO_LAST, drawDuo);
   drawArch();
+  drawDuo();
 }
 
-function playArch() {
-  if (arch.timer) return;  // already running
-  arch.t = 0;
-  arch.timer = setInterval(() => {
-    arch.t++;
-    if (arch.t >= ARCH_LAST) stopArch();
-    drawArch();
+// One tick every 1.3 s from the first step to `last`; `end` runs once the last step is reached.
+function playDemo(st, last, draw, end) {
+  if (st.timer) return;  // already running
+  st.t = 0;
+  st.timer = setInterval(() => {
+    st.t++;
+    if (st.t >= last) { clearInterval(st.timer); st.timer = null; end?.(); }
+    draw();
   }, 1300);
-  drawArch();
+  draw();
 }
-function stopArch() { clearInterval(arch.timer); arch.timer = null; }
+function stopArch() { for (const st of [arch, duo]) { clearInterval(st.timer); st.timer = null; } }
+function setPlay(b, st, last) {
+  const run = !!st.timer;
+  b.classList.toggle("busy", run);
+  b.setAttribute("aria-busy", run);
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${st.t + 1}/${last + 1}` : st.t ? "↺ Replay" : "▶ Play";
+}
 
 // A line with an arrow head at its end.
 function arLine(x1, y1, x2, y2, cls) {
   const a = Math.atan2(y2 - y1, x2 - x1), p = d => `${x2 - 10 * Math.cos(a + d)},${y2 - 10 * Math.sin(a + d)}`;
   return `<line class="ln ${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><path class="hd ${cls}" d="M${x2},${y2} L${p(.45)} L${p(-.45)} Z"/>`;
 }
+
+// Shared pieces: a titled box, a row of files, the read and write lines of one job, and a job box.
+const arBox = (b, cls, title, sub) => `<rect class="box ${cls}" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="14"/>
+  <text class="t" x="${b.x + 14}" y="${b.y + 26}">${title}</text>${sub ? `<text class="s" x="${b.x + 14}" y="${b.y + 44}">${sub}</text>` : ""}`;
+const arFiles = (x, y, classes) => classes.map((c, i) =>
+  `<rect class="f ${c}" x="${x + i * 17}" y="${y}" width="12" height="16" rx="2"/>`).join("");
+const arSnap = (b, label, flash) => `<rect class="sbox ${flash ? "flash" : ""}" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="8"/>
+  <text class="s ink" x="${b.x + 10}" y="${b.y + 16}">${label}</text>`;
+function arLinks(wide, bk, job, tb, read, write, label, readLabel) {
+  if (wide) {
+    const y = job.y + job.h / 2;
+    return arLine(bk.x + bk.w + 4, y, job.x - 4, y, read) + arLine(job.x + job.w + 4, y, tb.x - 4, y, write)
+      + (readLabel ? `<text class="lb" x="${(bk.x + bk.w + job.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>` : "")
+      + (label ? `<text class="${label[0]}" x="${(job.x + job.w + tb.x) / 2}" y="${y - 8}" text-anchor="middle">${label[1]}</text>` : "");
+  }
+  const x = job.x + job.w / 2;
+  return arLine(x, bk.y + bk.h + 4, x, job.y - 4, read) + arLine(x, job.y + job.h + 4, x, tb.y - 4, write)
+    + (readLabel ? `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + job.y) / 2 + 4}">read</text>` : "")
+    + (label ? `<text class="${label[0]}" x="${x + 8}" y="${(job.y + job.h + tb.y) / 2 + 4}">${label[1]}</text>` : "");
+}
+const arJob = (job, cls, name, status, work, gone) => `<g class="${cls} ${work ? "work" : ""} ${gone ? "gone" : ""}">
+  <rect class="eng" x="${job.x}" y="${job.y}" width="${job.w}" height="${job.h}" rx="10"/>
+  <text class="t" x="${job.x + job.w / 2}" y="${job.y + 24}" text-anchor="middle">${name}</text>
+  <text class="s" x="${job.x + job.w / 2}" y="${job.y + 43}" text-anchor="middle">${status}</text></g>`;
 
 function drawArch() {
   const wide = WIDE.matches, t = arch.t, done = archDone(t);
@@ -1267,61 +1323,85 @@ function drawArch() {
   const { bk, job, tb, bkRow } = L;
   const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
   const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
-  let svg = "";
 
   // The bucket: CSV batches; one lights up while it is read and stays marked once read.
-  svg += `<rect class="box" x="${bk.x}" y="${bk.y}" width="${bk.w}" height="${bk.h}" rx="14"/>
-    <text class="t" x="${bk.x + 14}" y="${bk.y + 26}">Bucket</text>
-    <text class="s" x="${bk.x + 14}" y="${bk.y + 44}">CSV files</text>`;
-  for (let i = 0; i < BATCHES; i++) {
-    const cls = act === "write" && i === done - 1 ? "hot" : i < done ? "read" : "";
-    svg += `<rect class="f ${cls}" x="${bk.x + bkRow.x + i * 17}" y="${bkRow.y}" width="12" height="16" rx="2"/>`;
-  }
+  let svg = arBox(bk, "", "Bucket", "CSV files")
+    + arFiles(bk.x + bkRow.x, bkRow.y, Array.from({ length: BATCHES }, (_, i) =>
+      act === "write" && i === done - 1 ? "hot" : i < done ? "read" : ""));
 
   // The table: the new files show up dashed as they are written. Only when the job is done does
   // a snapshot box, x+1, appear around them: the one commit.
   const snap = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, committed = t >= 6;
-  let files = "";
-  for (let i = 0; i < done; i++)
-    files += `<rect class="f ja ${committed ? "c" : "p"}" x="${snap.x + 10 + i * 17}" y="${snap.y + 24}" width="12" height="16" rx="2"/>`;
-  svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
-    <text class="t" x="${tb.x + 14}" y="${tb.y + 26}">Table</text>`
-    + (committed
-      ? `<rect class="sbox ${t === 6 ? "flash" : ""}" x="${snap.x}" y="${snap.y}" width="${snap.w}" height="${snap.h}" rx="8"/>
-         <text class="s ink" x="${snap.x + 10}" y="${snap.y + 16}">snapshot x+1</text>`
+  svg += arBox(tb, "cat", "Table")
+    + (committed ? arSnap(snap, "snapshot x+1", t === 6)
       : `<text class="lb" x="${snap.x + 10}" y="${snap.y + 16}">${done ? "new files" : ""}</text>`)
-    + files;
+    + arFiles(snap.x + 10, snap.y + 24, Array(done).fill(`ja ${committed ? "c" : "p"}`));
 
-  // Lines: bucket → job (read), job → table (write, then the commit).
+  // Lines: bucket → job (read), job → table (write, then the commit). The job fades at the end.
   const gone = t === ARCH_LAST ? "off" : "";
-  const read = act === "write" ? "live" : gone, write = act === "write" ? "live" : act || gone;
-  const label = act === "ok" ? ["ok", "commit ✓"] : ["lb", "write"];
-  if (wide) {
-    const y = job.y + job.h / 2;
-    svg += arLine(bk.x + bk.w + 4, y, job.x - 4, y, read) + arLine(job.x + job.w + 4, y, tb.x - 4, y, write)
-      + `<text class="lb" x="${(bk.x + bk.w + job.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>
-         <text class="${label[0]}" x="${(job.x + job.w + tb.x) / 2}" y="${y - 8}" text-anchor="middle">${label[1]}</text>`;
-  } else {
-    const x = job.x + job.w / 2;
-    svg += arLine(x, bk.y + bk.h + 4, x, job.y - 4, read) + arLine(x, job.y + job.h + 4, x, tb.y - 4, write)
-      + `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + job.y) / 2 + 4}">read</text>
-         <text class="${label[0]}" x="${x + 8}" y="${(job.y + job.h + tb.y) / 2 + 4}">${label[1]}</text>`;
-  }
-
-  // The job: a small dashed box, gone at the end.
-  svg += `<g class="ja ${act === "write" ? "work" : ""} ${t === ARCH_LAST ? "gone" : ""}">
-    <rect class="eng" x="${job.x}" y="${job.y}" width="${job.w}" height="${job.h}" rx="10"/>
-    <text class="t" x="${job.x + job.w / 2}" y="${job.y + 24}" text-anchor="middle">Job</text>
-    <text class="s" x="${job.x + job.w / 2}" y="${job.y + 43}" text-anchor="middle">${status}</text></g>`;
+  svg += arLinks(wide, bk, job, tb, act === "write" ? "live" : gone, act === "write" ? "live" : act || gone,
+    act === "ok" ? ["ok", "commit ✓"] : ["lb", "write"], true)
+    + arJob(job, "ja", "Job", status, act === "write", t === ARCH_LAST);
 
   $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${archSay(t)}">${svg}</svg>`;
   $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
-  const b = $("ar-play"), run = !!arch.timer;
-  b.classList.toggle("busy", run);
-  b.setAttribute("aria-busy", run);
-  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : t ? "↺ Replay" : "▶ Play";
+  setPlay($("ar-play"), arch, ARCH_LAST);
+  $("duo").hidden = !arch.shown;
 }
-WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) drawArch(); });
+
+// Two writers: both stream files at the same time; Job A commits first (snapshot x+1); Job B's
+// commit, made on top of snapshot x, is refused; it is retried on top of x+1 (snapshot x+2)
+// without writing its files again.
+function drawDuo() {
+  const wide = WIDE.matches, t = duo.t, done = duoDone(t);
+  const L = wide
+    ? { W: 820, H: 210, bk: { x: 0, y: 10, w: 200, h: 190 }, tb: { x: 500, y: 10, w: 320, h: 190 },
+        jobs: [{ x: 300, y: 54, w: 110, h: 56 }, { x: 300, y: 126, w: 110, h: 56 }], bkRows: [{ x: 14, y: 74 }, { x: 14, y: 146 }] }
+    : { W: 360, H: 470, bk: { x: 20, y: 0, w: 320, h: 110 }, tb: { x: 20, y: 290, w: 320, h: 170 },
+        jobs: [{ x: 40, y: 170, w: 110, h: 56 }, { x: 210, y: 170, w: 110, h: 56 }], bkRows: [{ x: 32, y: 70 }, { x: 202, y: 70 }] };
+  const { bk, tb, jobs, bkRows } = L;
+  const act = [
+    t >= 1 && t <= 3 ? "write" : t === 4 ? "ok" : "",
+    t >= 2 && t <= 4 ? "write" : t === 5 ? "no" : t === 6 ? "ok" : "",
+  ];
+  const status = [
+    t === 0 ? "starting" : t <= 3 ? `batch ${done[0]} of ${DUO_BATCHES}` : t === 4 ? "commit" : "done",
+    t <= 1 ? "starting" : t <= 4 ? `batch ${done[1]} of ${DUO_BATCHES}` : t === 5 ? "commit refused" : t === 6 ? "commit again" : "done",
+  ];
+
+  let svg = arBox(bk, "", "Bucket", "CSV files");
+  bkRows.forEach((r, j) => svg += arFiles(bk.x + r.x, r.y, Array.from({ length: DUO_BATCHES }, (_, i) =>
+    act[j] === "write" && i === done[j] - 1 ? "hot" : i < done[j] ? "read" : "")));
+
+  // The table. Top box: snapshot x+1 (Job A's files) from step 5, snapshot x+2 (both jobs' files)
+  // from step 7, with x+1 moved under it. Files not in a snapshot yet are dashed.
+  const top = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, low = { ...top, y: top.y + 56 };
+  const fx = top.x + 10, aFiles = cls => Array(done[0]).fill(`ja ${cls}`), bFiles = cls => Array(done[1]).fill(`jb ${cls}`);
+  svg += arBox(tb, "cat", "Table");
+  if (t < 4) {
+    svg += `<text class="lb" x="${fx}" y="${top.y + 16}">${done[0] ? "new files" : ""}</text>`
+      + arFiles(fx, top.y + 24, aFiles("p")) + arFiles(fx, low.y + 24, bFiles("p"));
+  } else if (t < 6) {
+    svg += arSnap(top, "snapshot x+1", t === 4) + arFiles(fx, top.y + 24, aFiles("c"))
+      + `<text class="lb" x="${fx}" y="${low.y + 16}">new files</text>` + arFiles(fx, low.y + 24, bFiles("p"));
+  } else {
+    svg += arSnap(top, "snapshot x+2", t === 6) + arFiles(fx, top.y + 24, [...aFiles("c"), ...bFiles("c")])
+      + arSnap(low, "snapshot x+1") + arFiles(fx, low.y + 24, aFiles("c"));
+  }
+
+  // Lines and jobs. Job B's write line says what happens to its commit.
+  const gone = t === DUO_LAST ? "off" : "";
+  jobs.forEach((job, i) => {
+    const a = act[i], label = a === "ok" ? ["ok", "commit ✓"] : a === "no" ? ["x", "✕ refused"] : i === 0 ? ["lb", "write"] : null;
+    svg += arLinks(wide, bk, job, tb, a === "write" ? "live" : gone, a === "write" ? "live" : a || gone, label, i === 0);
+  });
+  jobs.forEach((job, i) => svg += arJob(job, i ? "jb" : "ja", `Job ${i ? "B" : "A"}`, status[i], act[i] === "write", t === DUO_LAST));
+
+  $("duo-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${DUO_SAY[t]}">${svg}</svg>`;
+  $("duo-say").innerHTML = `<b>${t + 1}/${DUO_LAST + 1}</b> ${DUO_SAY[t]}`;
+  setPlay($("duo-play"), duo, DUO_LAST);
+}
+WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) { drawArch(); drawDuo(); } });
 
 // Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
 for (const li of $("issues").querySelectorAll("li")) {
