@@ -495,7 +495,10 @@ Largest scale each engine completes, cold, every statement answered:
   the 53-field DUNIT rows count as bad lines, and the rename fails with `Length mismatch: Expected
   axis has 25 elements, new values have 53` (run 38108045089). Same on the nightly main build.
   Filed: [pandas-dev/pandas#71034](https://github.com/pandas-dev/pandas/issues/71034). The bench
-  runs the C parser, and no thread pool of its own around pandas.
+  runs the C parser.
+- **A thread pool, for pandas only.** Every other engine parallelises its own read. For pandas the
+  bench reads 4 files at once on a Python thread pool (the C tokenizer releases the GIL). Each
+  worker filters, types and converts its chunks to Arrow; pyiceberg drains them in one append.
 
 ## DataFusion Comet: rejected on `abfss://`
 
