@@ -224,7 +224,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl ol.steps li b { color: var(--ink); }
 .pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .pl .src a { color: var(--accent); }
-/* Architecture: one job through storage, a transient engine and the catalog. */
+/* Architecture: two jobs read a bucket and write to one table in the catalog. */
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
 .arch .box { fill: var(--raised); stroke: var(--grid); stroke-width: 1.5; }
 .arch .box.cat { stroke: var(--accent); stroke-width: 2.5; }
@@ -237,7 +237,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .s.ink { fill: var(--ink); font-weight: 700; }
 .arch .f { fill: var(--track); stroke: var(--ink-3); stroke-width: 1; }
 .arch .f.hot { stroke: var(--accent); stroke-width: 2.5; }
-.arch .f.new { fill: var(--accent); stroke: var(--accent); }
 .arch .snap { fill: var(--track); transition: fill .4s; }
 .arch .snap.flash { fill: color-mix(in srgb, var(--yes) 35%, transparent); }
 .arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
@@ -246,6 +245,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .hd { fill: var(--ink-3); opacity: .5; }
 .arch .hd.live { fill: var(--accent); opacity: 1; }
 .arch .hd.off { opacity: .15; }
+.arch .ln.no { stroke: var(--no); stroke-opacity: 1; stroke-width: 3; }
+.arch .hd.no { fill: var(--no); opacity: 1; }
+.arch .x { font-size: 13px; font-weight: 700; fill: var(--no); }
 .arch .lb { font-size: 12px; fill: var(--ink-3); }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
@@ -1197,18 +1199,29 @@ function moveTip(x, y) {
 }
 function hideTip() { tip.classList.remove("on"); }
 
-// THE ARCHITECTURE TAB: one job, step by step. Only the catalog keeps state; the engine starts, works and stops.
+// THE ARCHITECTURE TAB: two jobs at the same time read a bucket and write to one table in the catalog.
+// Shows the concurrency rule: a commit is refused when the table changed since the job read it, then retried.
 // Conceptual on purpose: no engine, vendor or product names.
-const ARCH_STATUS = ["empty", "asking", "reading", "working", "writing", "committing", "gone"];
+const ARCH_SAY = [
+  "Two jobs start at the same time. Both see the table at version 7.",
+  "Both read data from the bucket.",
+  "Both work on their own copy of the data, in memory.",
+  "Job A writes first. The catalog moves the table to version 8.",
+  "Job B expected version 7, but the table is now version 8. The catalog refuses its write.",
+  "Job B tries again on top of version 8. The table moves to version 9. Both changes are kept.",
+  "Both jobs stop. Nothing is lost: the catalog keeps the state.",
+];
+const JOB_A = ["starts", "reading", "working", "writing", "done", "done", "gone"];
+const JOB_B = ["starts", "reading", "working", "working", "writing", "retrying", "gone"];
 const arch = { step: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
 
 function renderArch() {
   stopArch();
   $(ARCH.id).innerHTML = `
-    <p class="intro"><b>Only the catalog keeps state.</b> The engine starts, does the work, and stops.</p>
-    <div class="ctl"><button class="play" id="ar-play">▶ Play a job</button></div>
-    <div class="ar-fig" id="ar-fig"></div>`;
+    <div class="ctl"><button class="play" id="ar-play">▶ Play</button></div>
+    <div class="ar-fig" id="ar-fig"></div>
+    <p class="pick" id="ar-say"></p>`;
   $("ar-play").onclick = playArch;
   drawArch();
 }
@@ -1217,77 +1230,77 @@ function playArch() {
   stopArch();
   arch.step = 0; drawArch();
   arch.timer = setInterval(() => {
-    if (arch.step >= ARCH_STATUS.length - 1) return stopArch();
+    if (arch.step >= ARCH_SAY.length - 1) return stopArch();
     arch.step++; drawArch();
-  }, 1700);
+  }, 2200);
 }
 function stopArch() { clearInterval(arch.timer); arch.timer = null; }
 
-// A line with an arrow head at its end; `both` puts a head at the start too.
-function arLine(x1, y1, x2, y2, cls, both) {
-  const head = (x, y, fx, fy) => {
-    const a = Math.atan2(y - fy, x - fx), p = d => `${x - 10 * Math.cos(a + d)},${y - 10 * Math.sin(a + d)}`;
-    return `<path class="hd ${cls}" d="M${x},${y} L${p(.45)} L${p(-.45)} Z"/>`;
-  };
-  return `<line class="ln ${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>${head(x2, y2, x1, y1)}${both ? head(x1, y1, x2, y2) : ""}`;
+// A line with an arrow head at its end.
+function arLine(x1, y1, x2, y2, cls) {
+  const a = Math.atan2(y2 - y1, x2 - x1), p = d => `${x2 - 10 * Math.cos(a + d)},${y2 - 10 * Math.sin(a + d)}`;
+  return `<line class="ln ${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><path class="hd ${cls}" d="M${x2},${y2} L${p(.45)} L${p(-.45)} Z"/>`;
 }
 
 function drawArch() {
   const wide = WIDE.matches, s = arch.step;
   const L = wide
-    ? { W: 820, H: 280, st: { x: 0, y: 20, w: 200, h: 220 }, mid: { x: 270, y: 0, w: 280, h: 280 }, cat: { x: 620, y: 60, w: 200, h: 160 } }
-    : { W: 360, H: 690, st: { x: 30, y: 0, w: 300, h: 170 }, mid: { x: 20, y: 230, w: 320, h: 260 }, cat: { x: 30, y: 550, w: 300, h: 140 } };
-  const { st, cat, mid } = L;
+    ? { W: 820, H: 300, bk: { x: 0, y: 40, w: 200, h: 220 }, cat: { x: 620, y: 50, w: 200, h: 200 },
+        jobs: [{ x: 330, y: 30, w: 160, h: 90 }, { x: 330, y: 180, w: 160, h: 90 }] }
+    : { W: 360, H: 560, bk: { x: 30, y: 0, w: 300, h: 130 }, cat: { x: 30, y: 350, w: 300, h: 200 },
+        jobs: [{ x: 20, y: 200, w: 150, h: 80 }, { x: 190, y: 200, w: 150, h: 80 }] };
+  const { bk, cat, jobs } = L;
+  const version = s < 3 ? 7 : s < 5 ? 8 : 9;
   let svg = "";
 
-  // Storage: files only. New files show up at Write and stay.
-  const files = [["raw files", 5, 0], ["data files", 4, s >= 4 ? 2 : 0], ["metadata", 2, s >= 4 ? 1 : 0]];
-  svg += `<rect class="box" x="${st.x}" y="${st.y}" width="${st.w}" height="${st.h}" rx="14"/>
-    <text class="t" x="${st.x + 14}" y="${st.y + 26}">Storage</text>
-    <text class="s" x="${st.x + 14}" y="${st.y + 44}">files only, no state</text>`;
-  files.forEach(([name, n, add], r) => {
-    const y = st.y + 66 + r * 32;
-    svg += `<text class="s" x="${st.x + 14}" y="${y + 13}">${name}</text>`;
-    for (let i = 0; i < n + add; i++) {
-      const cls = i >= n ? "new" : s === 2 && r > 0 ? "hot" : "";
-      svg += `<rect class="f ${cls}" x="${st.x + 90 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
+  // The bucket: plain files.
+  svg += `<rect class="box" x="${bk.x}" y="${bk.y}" width="${bk.w}" height="${bk.h}" rx="14"/>
+    <text class="t" x="${bk.x + 14}" y="${bk.y + 26}">Bucket</text>
+    <text class="s" x="${bk.x + 14}" y="${bk.y + 44}">plain files</text>`;
+  const cols = Math.floor((bk.w - 28) / 17), rows = wide ? 6 : 3;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
+    svg += `<rect class="f ${s === 1 ? "hot" : ""}" x="${bk.x + 14 + c * 17}" y="${bk.y + 60 + r * 24}" width="12" height="16" rx="2"/>`;
+
+  // The catalog: one table, its version and the history of commits.
+  const hist = [["version 7", true], ["version 8, job A", s >= 3], ["version 9, job B", s >= 5]];
+  svg += `<rect class="box cat" x="${cat.x}" y="${cat.y}" width="${cat.w}" height="${cat.h}" rx="14"/>
+    <text class="t" x="${cat.x + 14}" y="${cat.y + 26}">Catalog</text>
+    <text class="s" x="${cat.x + 14}" y="${cat.y + 44}">one table</text>
+    <rect class="snap ${s === 3 || s === 5 ? "flash" : ""}" x="${cat.x + 14}" y="${cat.y + 58}" width="${cat.w - 28}" height="34" rx="8"/>
+    <text class="s ink" x="${cat.x + 26}" y="${cat.y + 80}">table → version ${version}</text>`;
+  hist.filter(h => h[1]).forEach(([t], i) =>
+    svg += `<text class="s" x="${cat.x + 14}" y="${cat.y + 116 + i * 20}">${t}</text>`);
+
+  // Lines: bucket → job (read), job → catalog (write). Job B's first write is refused.
+  const write = [s === 3 ? "live" : "", s === 4 ? "no" : s === 5 ? "live" : ""];
+  jobs.forEach((j, i) => {
+    const read = s === 1 ? "live" : s === 6 ? "off" : "", w = write[i] || (s === 6 ? "off" : "");
+    if (wide) {
+      const y = j.y + j.h / 2;
+      svg += arLine(bk.x + bk.w + 4, y, j.x - 4, y, read) + arLine(j.x + j.w + 4, y, cat.x - 4, y, w);
+      if (i === 0) svg += `<text class="lb" x="${(bk.x + bk.w + j.x) / 2}" y="${y - 8}" text-anchor="middle">read</text>
+        <text class="lb" x="${(j.x + j.w + cat.x) / 2}" y="${y - 8}" text-anchor="middle">write</text>`;
+      if (w === "no") svg += `<text class="x" x="${(j.x + j.w + cat.x) / 2}" y="${y - 8}" text-anchor="middle">✕ refused</text>`;
+    } else {
+      const x = j.x + j.w / 2;
+      svg += arLine(x, bk.y + bk.h + 4, x, j.y - 4, read) + arLine(x, j.y + j.h + 4, x, cat.y - 4, w);
+      if (i === 0) svg += `<text class="lb" x="${x + 8}" y="${(bk.y + bk.h + j.y) / 2 + 4}">read</text>
+        <text class="lb" x="${x + 8}" y="${(j.y + j.h + cat.y) / 2 + 4}">write</text>`;
+      if (w === "no") svg += `<text class="x" x="${x + 8}" y="${(j.y + j.h + cat.y) / 2 + 4}">✕ refused</text>`;
     }
   });
 
-  // Catalog: the one place with state, a pointer to the current snapshot.
-  svg += `<rect class="box cat" x="${cat.x}" y="${cat.y}" width="${cat.w}" height="${cat.h}" rx="14"/>
-    <text class="t" x="${cat.x + 14}" y="${cat.y + 26}">Catalog</text>
-    <text class="s" x="${cat.x + 14}" y="${cat.y + 44}">keeps the state</text>
-    <rect class="snap ${s === 5 ? "flash" : ""}" x="${cat.x + 14}" y="${cat.y + 62}" width="${cat.w - 28}" height="34" rx="8"/>
-    <text class="s ink" x="${cat.x + 26}" y="${cat.y + 84}">table → snapshot ${s >= 5 ? 8 : 7}</text>
-    <text class="s" x="${cat.x + 14}" y="${cat.y + 120}">${s >= 5 ? "snapshot 7 is kept as history" : "one pointer per table"}</text>`;
+  // The jobs: dashed boxes, gone at the end.
+  jobs.forEach((j, i) => {
+    const status = (i ? JOB_B : JOB_A)[s], work = status === "working";
+    svg += `<g class="${work ? "work" : ""} ${s === 6 ? "gone" : ""}">
+      <rect class="eng" x="${j.x}" y="${j.y}" width="${j.w}" height="${j.h}" rx="10"/>
+      <text class="t" x="${j.x + j.w / 2}" y="${j.y + j.h / 2 - 4}" text-anchor="middle">Job ${i ? "B" : "A"}</text>
+      <text class="s" x="${j.x + j.w / 2}" y="${j.y + j.h / 2 + 16}" text-anchor="middle">${status}</text></g>`;
+  });
 
-  // The engine: a dashed box, a title above and its status below.
-  const inH = mid.h - 48, cx = mid.x + mid.w / 2, w = mid.w * .55, h = inH * .55, top = mid.y + 24 + (inH - h) / 2;
-  const bb = { x: cx - w / 2, y: top, w, h };
-  // Lines from storage and to the catalog meet the engine's sides (wide) or its top and bottom (narrow).
-  const live = { 1: ["cat"], 2: ["read"], 4: ["write"], 5: ["cat"] }[s] ?? [];
-  const on = k => live.includes(k) ? "live" : s === 6 ? "off" : "";
-  if (wide) {
-    const y = bb.y + bb.h / 2, sx = st.x + st.w + 4, ex = bb.x - 4, rx = bb.x + bb.w + 4, kx = cat.x - 4;
-    svg += arLine(sx, y - 12, ex, y - 12, on("read")) + arLine(ex, y + 12, sx, y + 12, on("write"))
-      + arLine(rx, y, kx, y, on("cat"), true)
-      + `<text class="lb" x="${(sx + ex) / 2}" y="${y - 20}" text-anchor="middle">read</text>
-         <text class="lb" x="${(sx + ex) / 2}" y="${y + 30}" text-anchor="middle">write</text>
-         <text class="lb" x="${(rx + kx) / 2}" y="${y - 10}" text-anchor="middle">ask · commit</text>`;
-  } else {
-    const x = cx, sy = st.y + st.h + 4, ey = bb.y - 26, by = bb.y + bb.h + 26, ky = cat.y - 4;
-    svg += arLine(x - 14, sy, x - 14, ey, on("read")) + arLine(x + 14, ey, x + 14, sy, on("write"))
-      + arLine(x, by, x, ky, on("cat"), true)
-      + `<text class="lb" x="${x - 22}" y="${(sy + ey) / 2 + 4}" text-anchor="end">read</text>
-         <text class="lb" x="${x + 22}" y="${(sy + ey) / 2 + 4}">write</text>
-         <text class="lb" x="${x + 10}" y="${(by + ky) / 2 + 4}">ask · commit</text>`;
-  }
-  svg += `<g class="${s === 3 ? "work" : ""} ${s === 6 ? "gone" : ""}">
-    <text class="t" x="${cx}" y="${top - 8}" text-anchor="middle">Engine on a CI runner</text>
-    <rect class="eng" x="${bb.x}" y="${top}" width="${w}" height="${h}" rx="10"/>
-    <text class="s" x="${cx}" y="${top + h + 18}" text-anchor="middle">${ARCH_STATUS[s]}</text></g>`;
-  $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="Storage, a transient engine and the catalog. The engine is ${ARCH_STATUS[s]}.">${svg}</svg>`;
+  $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="${ARCH_SAY[s]}">${svg}</svg>`;
+  $("ar-say").innerHTML = `<b>${s + 1}/${ARCH_SAY.length}</b> ${ARCH_SAY[s]}`;
 }
 WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) drawArch(); });
 
