@@ -5,7 +5,7 @@ OneLake. Free disk is ~87 GB, or ~105 GB once the workflows clear the toolchains
 numbers come from `docs/data/*.csv`, the job logs and the commits cited. The general lessons come
 first, then one section per engine.
 
-<img alt="Who reads and writes what: the runner jobs and engines, the OneLake Iceberg REST catalog, and the lakehouse Files and Tables" src="docs/architecture.png">
+<img alt="Only the catalog keeps state: a transient engine reads arbitrary files in a cloud bucket, then writes and reads Iceberg tables in the catalog" src="docs/architecture.png">
 
 ## The bottleneck is getting bytes off OneLake, not compute
 
