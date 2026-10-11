@@ -96,7 +96,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
 .details a { color: var(--accent); }
-.details img { display: block; width: 100%; height: auto; border-radius: 12px; }
 /* Capability: operations down, engines across, one mark per cell. */
 .cap .chips { margin-top: 12px; }
 .cap .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink-2); margin: 0 0 12px; }
@@ -225,12 +224,44 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl ol.steps li b { color: var(--ink); }
 .pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .pl .src a { color: var(--accent); }
+/* Architecture: one job through storage, a transient engine and the catalog. */
+.arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
+.arch .box { fill: var(--raised); stroke: var(--grid); stroke-width: 1.5; }
+.arch .box.cat { stroke: var(--accent); stroke-width: 2.5; }
+.arch .eng { fill: var(--raised); stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.arch .work .eng { stroke: var(--accent); animation: pulse .7s ease-in-out infinite; }
+.arch g { transition: opacity .6s; }
+.arch .gone { opacity: .15; }
+.arch .other .eng { stroke: var(--ink-3); }
+.arch .t { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.arch .s { font-size: 12px; fill: var(--ink-2); }
+.arch .s.ink { fill: var(--ink); font-weight: 700; }
+.arch .f { fill: var(--track); stroke: var(--ink-3); stroke-width: 1; }
+.arch .f.hot { stroke: var(--accent); stroke-width: 2.5; }
+.arch .f.new { fill: var(--accent); stroke: var(--accent); }
+.arch .snap { fill: var(--track); transition: fill .4s; }
+.arch .snap.flash { fill: color-mix(in srgb, var(--yes) 35%, transparent); }
+.arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
+.arch .ln.live { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
+.arch .ln.dim { stroke-dasharray: 4 5; stroke-opacity: .35; }
+.arch .ln.off { stroke-opacity: .15; }
+.arch .hd { fill: var(--ink-3); opacity: .5; }
+.arch .hd.live { fill: var(--accent); opacity: 1; }
+.arch .hd.dim { opacity: .35; }
+.arch .hd.off { opacity: .15; }
+.arch .lb { font-size: 12px; fill: var(--ink-3); }
+.arch .use { fill: var(--accent); }
+.arch .idle { fill: var(--track); stroke: var(--grid); }
+.arch .base { stroke: var(--grid); stroke-dasharray: 4 5; }
+.arch .ar-row { display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; margin: 6px 0; }
+.arch .ar-row > span { font-size: 12px; color: var(--ink-3); width: 64px; }
+.arch .ar-row .chips { margin: 0; }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pl .edge.live, .pl .nd.run circle, .pl .card.shake { animation: none; }
+  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng { animation: none; }
 }
 @media (max-width: 520px) {
   main { padding-top: 16px; }
@@ -254,9 +285,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
-  <section class="details" id="architecture" hidden>
-    <img src="architecture.png" alt="Only the catalog keeps state: a transient engine (notebook, laptop, CI, cloud function, cluster) reads arbitrary files in a cloud bucket, then writes and reads Iceberg tables in the catalog. No idle time, close to 100% used.">
-  </section>
+  <section class="pl arch" id="architecture" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
@@ -447,6 +476,8 @@ function render() {
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
   if (page !== PLANS) stopRace();
+  if (page !== ARCH) stopArch();
+  if (page === ARCH) { renderArch(); return; }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
@@ -1174,6 +1205,182 @@ function moveTip(x, y) {
   tip.style.top = `${Math.max(8, y - h - 12)}px`;
 }
 function hideTip() { tip.classList.remove("on"); }
+
+// THE ARCHITECTURE TAB: one job, step by step. Only the catalog keeps state; the engine starts, works and stops.
+// Conceptual on purpose: no engine, vendor or product names.
+const ARCH_STEPS = [
+  ["Start", "The engine starts empty: no data, no state."],
+  ["Ask", "It asks the catalog where the table is. The catalog answers with the current snapshot."],
+  ["Read", "It reads only the files it needs, straight from storage."],
+  ["Work", "The work happens in its memory."],
+  ["Write", "It writes new data and metadata files straight to storage. Nobody sees them yet."],
+  ["Commit", "The catalog moves the table from snapshot 7 to snapshot 8 in one step. This is the only moment the state changes."],
+  ["Stop", "The engine is gone. Nothing is lost: the catalog points to the new snapshot."],
+];
+const ARCH_STATUS = ["empty", "asking", "reading", "working", "writing", "committing", "gone"];
+const RUNS_ON = ["notebook", "laptop", "CI runner", "cloud function", "cluster"];
+const SIZES = [["one", "One machine"], ["up", "Scale up"], ["out", "Scale out"]];
+const SIZE_SAY = {
+  one: "One machine.",
+  up: "Scale up: one bigger machine for a bigger job.",
+  out: "Scale out: many machines read in parallel, then make one commit.",
+};
+const BUSY = [[1, 2.2], [6, 6.8], [9, 11], [14, 14.5], [18, 19.5], [22, 22.6]];  // hours of work in a day, an illustration
+const arch = { step: 0, on: "CI runner", size: "one", two: false, usage: "transient", say: null, timer: null };
+const WIDE = matchMedia("(min-width: 640px)");
+
+function renderArch() {
+  stopArch();
+  const chips = (k, items) => `<div class="chips">${items.map(([v, t]) =>
+    `<button data-k="${k}" data-v="${v}" aria-pressed="${arch[k] === v}">${t}</button>`).join("")}</div>`;
+  const sec = $(ARCH.id);
+  sec.innerHTML = `
+    <p class="intro"><b>Only the catalog keeps state.</b> The engine starts, does the work, and stops.</p>
+    <div class="ctl"><button class="play" id="ar-play">▶ Play a job</button><span class="hint">or click a step below</span></div>
+    <div class="ar-fig" id="ar-fig"></div>
+    <p class="pick" id="ar-say"></p>
+    <div class="ar-row"><span>Runs on</span>${chips("on", RUNS_ON.map(r => [r, r]))}</div>
+    <div class="ar-row"><span>Size</span>${chips("size", SIZES)}</div>
+    <div class="ar-row"><span>Engines</span><div class="chips"><button data-k="two" aria-pressed="${arch.two}">Add a second engine</button></div></div>
+    <ol class="steps" id="ar-steps">${ARCH_STEPS.map(([h, t], i) => `<li data-i="${i}"><b>${h}.</b> ${t}</li>`).join("")}</ol>
+    <h3>No idle time</h3>
+    <div class="ar-row"><span>Compute</span>${chips("usage", [["always", "Always on"], ["transient", "Transient"]])}</div>
+    <div class="ar-fig" id="ar-usage"></div>
+    <p class="caption" id="ar-usage-say"></p>`;
+  $("ar-play").onclick = playArch;
+  for (const li of sec.querySelectorAll("#ar-steps li"))
+    li.onclick = () => { stopArch(); arch.step = +li.dataset.i; arch.say = null; drawArch(); };
+  for (const b of sec.querySelectorAll(".chips button")) b.onclick = () => {
+    const k = b.dataset.k;
+    if (k === "two") {
+      arch.two = !arch.two;
+      b.setAttribute("aria-pressed", arch.two);
+      arch.say = arch.two ? "A second engine uses the same tables through the same catalog. Nothing is copied." : "One engine.";
+    } else {
+      arch[k] = b.dataset.v;
+      for (const o of b.parentNode.children) o.setAttribute("aria-pressed", o === b);
+      if (k === "on") arch.say = `On a ${arch.on} or anywhere else: nothing else in the picture changes.`;
+      if (k === "size") arch.say = `${SIZE_SAY[arch.size]} The engine keeps no state, so each job gets the size it needs. Storage and catalog do not change.`;
+    }
+    if (k === "usage") drawUsage(); else drawArch();
+  };
+  drawArch();
+  drawUsage();
+}
+
+function playArch() {
+  stopArch();
+  arch.step = 0; arch.say = null; drawArch();
+  arch.timer = setInterval(() => {
+    if (arch.step >= ARCH_STEPS.length - 1) return stopArch();
+    arch.step++; drawArch();
+  }, 1700);
+}
+function stopArch() { clearInterval(arch.timer); arch.timer = null; }
+
+// A line with an arrow head at its end; `both` puts a head at the start too.
+function arLine(x1, y1, x2, y2, cls, both) {
+  const head = (x, y, fx, fy) => {
+    const a = Math.atan2(y - fy, x - fx), p = d => `${x - 10 * Math.cos(a + d)},${y - 10 * Math.sin(a + d)}`;
+    return `<path class="hd ${cls}" d="M${x},${y} L${p(.45)} L${p(-.45)} Z"/>`;
+  };
+  return `<line class="ln ${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>${head(x2, y2, x1, y1)}${both ? head(x1, y1, x2, y2) : ""}`;
+}
+
+function drawArch() {
+  const wide = WIDE.matches, s = arch.step;
+  const L = wide
+    ? { W: 820, H: 300, st: { x: 0, y: 40, w: 220, h: 220 }, mid: { x: 290, y: 0, w: 240, h: 300 }, cat: { x: 600, y: 70, w: 220, h: 160 } }
+    : { W: 360, H: 690, st: { x: 30, y: 0, w: 300, h: 170 }, mid: { x: 20, y: 230, w: 320, h: 260 }, cat: { x: 30, y: 550, w: 300, h: 140 } };
+  const { st, cat, mid } = L;
+  // Two engines: one above the other when wide, side by side when narrow, so no line crosses the other engine.
+  const half = mid.h / 2, side = mid.w / 2 - 6;
+  const job = !arch.two ? mid : wide ? { ...mid, h: half } : { ...mid, w: side };
+  const other = wide ? { ...mid, y: mid.y + half, h: half } : { ...mid, x: mid.x + side + 12, w: side };
+  let svg = "";
+
+  // Storage: files only. New files show up at Write and stay.
+  const files = [["raw files", 5, 0], ["data files", 4, s >= 4 ? 2 : 0], ["metadata", 2, s >= 4 ? 1 : 0]];
+  svg += `<rect class="box" x="${st.x}" y="${st.y}" width="${st.w}" height="${st.h}" rx="14"/>
+    <text class="t" x="${st.x + 14}" y="${st.y + 26}">Storage</text>
+    <text class="s" x="${st.x + 14}" y="${st.y + 44}">files only, no state</text>`;
+  files.forEach(([name, n, add], r) => {
+    const y = st.y + 66 + r * 32;
+    svg += `<text class="s" x="${st.x + 14}" y="${y + 13}">${name}</text>`;
+    for (let i = 0; i < n + add; i++) {
+      const cls = i >= n ? "new" : s === 2 && r > 0 ? "hot" : "";
+      svg += `<rect class="f ${cls}" x="${st.x + 100 + i * 17}" y="${y}" width="12" height="16" rx="2"/>`;
+    }
+  });
+
+  // Catalog: the one place with state, a pointer to the current snapshot.
+  svg += `<rect class="box cat" x="${cat.x}" y="${cat.y}" width="${cat.w}" height="${cat.h}" rx="14"/>
+    <text class="t" x="${cat.x + 14}" y="${cat.y + 26}">Catalog</text>
+    <text class="s" x="${cat.x + 14}" y="${cat.y + 44}">keeps the state</text>
+    <rect class="snap ${s === 5 ? "flash" : ""}" x="${cat.x + 14}" y="${cat.y + 62}" width="${cat.w - 28}" height="34" rx="8"/>
+    <text class="s ink" x="${cat.x + 26}" y="${cat.y + 84}">table → snapshot ${s >= 5 ? 8 : 7}</text>
+    <text class="s" x="${cat.x + 14}" y="${cat.y + 120}">${s >= 5 ? "snapshot 7 is kept as history" : "one pointer per table"}</text>`;
+
+  // An engine in `area`: dashed boxes, a title above and its status below.
+  const engine = (area, size, title, status, cls) => {
+    const inH = area.h - 48, cx = area.x + area.w / 2;
+    const boxes = size === "out"
+      ? [0, 1, 2].map(i => { const w = (area.w - 24) / 3; return { x: area.x + i * (w + 12), w, h: inH * .5 }; })
+      : [{ w: size === "up" ? area.w : area.w * .55, h: size === "up" ? inH : inH * .55 }].map(b => ({ ...b, x: cx - b.w / 2 }));
+    const h = Math.max(...boxes.map(b => b.h)), top = area.y + 24 + (inH - h) / 2;
+    const bb = { x: Math.min(...boxes.map(b => b.x)), y: top, h };
+    bb.w = Math.max(...boxes.map(b => b.x + b.w)) - bb.x;
+    let g = `<g class="${cls}"><text class="t" x="${cx}" y="${top - 8}" text-anchor="middle">${title}</text>`;
+    for (const b of boxes) g += `<rect class="eng" x="${b.x}" y="${top + (h - b.h) / 2}" width="${b.w}" height="${b.h}" rx="10"/>`;
+    g += `<text class="s" x="${cx}" y="${top + h + 18}" text-anchor="middle">${status}</text></g>`;
+    return { g, bb };
+  };
+  // Lines from storage and to the catalog meet the engine's sides (wide) or its top and bottom (narrow).
+  const links = (bb, live, dim) => {
+    const on = k => dim ? "dim" : live.includes(k) ? "live" : s === 6 ? "off" : "";
+    if (wide) {
+      const y = bb.y + bb.h / 2, sx = st.x + st.w + 4, ex = bb.x - 4, rx = bb.x + bb.w + 4, kx = cat.x - 4;
+      return arLine(sx, y - 12, ex, y - 12, on("read")) + arLine(ex, y + 12, sx, y + 12, on("write"))
+        + arLine(rx, y, kx, y, on("cat"), true)
+        + (dim ? "" : `<text class="lb" x="${(sx + ex) / 2}" y="${y - 20}" text-anchor="middle">read</text>
+           <text class="lb" x="${(sx + ex) / 2}" y="${y + 30}" text-anchor="middle">write</text>
+           <text class="lb" x="${(rx + kx) / 2}" y="${y - 10}" text-anchor="middle">ask · commit</text>`);
+    }
+    const x = bb.x + bb.w / 2, sy = st.y + st.h + 4, ey = bb.y - 26, by = bb.y + bb.h + 26, ky = cat.y - 4;
+    return arLine(x - 14, sy, x - 14, ey, on("read")) + arLine(x + 14, ey, x + 14, sy, on("write"))
+      + arLine(x, by, x, ky, on("cat"), true)
+      + (dim ? "" : `<text class="lb" x="${x - 22}" y="${(sy + ey) / 2 + 4}" text-anchor="end">read</text>
+         <text class="lb" x="${x + 22}" y="${(sy + ey) / 2 + 4}">write</text>
+         <text class="lb" x="${x + 10}" y="${(by + ky) / 2 + 4}">ask · commit</text>`);
+  };
+  const live = { 1: ["cat"], 2: ["read"], 4: ["write"], 5: ["cat"] }[s] ?? [];
+  const where = arch.size === "out" ? "3 machines" : arch.size === "up" ? "a big machine" : `a ${arch.on}`;
+  const e = engine(job, arch.size, arch.two && !wide ? "Engine" : `Engine on ${where}`, ARCH_STATUS[s], `${s === 3 ? "work" : ""} ${s === 6 ? "gone" : ""}`);
+  svg += links(e.bb, live) + e.g;
+  if (arch.two) {
+    const o = engine(other, "one", "Another engine", "same tables, no copy", "other");
+    svg += links(o.bb, [], true) + o.g;
+  }
+  $("ar-fig").innerHTML = `<svg viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="Storage, a transient engine and the catalog. Step ${s + 1}: ${ARCH_STEPS[s][0]}.">${svg}</svg>`;
+  $("ar-say").innerHTML = arch.say ?? `<b>${s + 1}. ${ARCH_STEPS[s][0]}.</b> ${ARCH_STEPS[s][1]}`;
+  for (const li of document.querySelectorAll("#ar-steps li")) li.classList.toggle("on", +li.dataset.i === s);
+}
+
+// One day as a bar: always-on compute is paid between the jobs too; transient compute only exists during them.
+function drawUsage() {
+  const W = WIDE.matches ? 820 : 360, x = h => h / 24 * W, always = arch.usage === "always";
+  let svg = always
+    ? `<rect class="idle" x="0" y="8" width="${W}" height="26" rx="6"/>`
+    : `<line class="base" x1="0" y1="21" x2="${W}" y2="21"/>`;
+  for (const [a, b] of BUSY) svg += `<rect class="use" x="${x(a)}" y="8" width="${x(b) - x(a)}" height="26" rx="4"/>`;
+  for (const h of [0, 6, 12, 18, 24])
+    svg += `<text class="s" x="${x(h)}" y="54" text-anchor="${h === 0 ? "start" : h === 24 ? "end" : "middle"}">${h}h</text>`;
+  $("ar-usage").innerHTML = `<svg viewBox="0 0 ${W} 60" role="img" aria-label="One day of compute, ${always ? "always on" : "transient"}">${svg}</svg>`;
+  $("ar-usage-say").textContent = always
+    ? "Always on: the machine is paid all day, and busy only in the blue blocks. An illustration."
+    : "Transient: a machine exists only while there is work, so it is close to 100% used. An illustration.";
+}
+WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) { drawArch(); drawUsage(); } });
 
 // Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
 for (const li of $("issues").querySelectorAll("li")) {
