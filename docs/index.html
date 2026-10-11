@@ -1222,7 +1222,7 @@ function hideTip() { tip.classList.remove("on"); }
 // bucket into a table, every batch becomes a new file, and the table changes only once, at the commit
 // (bench/etl/iceberg.py append_stream). Then two writers: one commit refused and retried. Then a note on
 // what comes next. Conceptual on purpose: no engine, vendor or product names.
-const BATCHES = 5, DUO_BATCHES = 3, SOLO_STEPS = 8, ARCH_LAST = 15;
+const BATCHES = 5, DUO_BATCHES = 3, SOLO_STEPS = 8, ARCH_LAST = 15, ARCH_END = ARCH_LAST + 1;  // END: the note replaces the picture
 const arch = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
 const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by tick t
@@ -1270,7 +1270,7 @@ function playArch() {
   arch.t = 0;
   arch.timer = setInterval(() => {
     arch.t++;
-    if (arch.t >= ARCH_LAST) stopArch();
+    if (arch.t >= ARCH_END) stopArch();
     drawArch();
   }, 1300);
   drawArch();
@@ -1383,16 +1383,18 @@ function duoSvg(wide, t) {
 }
 
 function drawArch() {
-  const t = arch.t, two = t >= SOLO_STEPS;
-  const pic = two ? duoSvg(WIDE.matches, t - SOLO_STEPS) : soloSvg(WIDE.matches, t);
-  // Scenario 2 fades in where scenario 1 was.
-  $("ar-fig").innerHTML = `<svg class="${t === SOLO_STEPS ? "fadein" : ""}" viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${archSay(t)}">${pic.svg}</svg>`;
-  $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
-  $("ar-next").hidden = t !== ARCH_LAST;
-  const b = $("ar-play"), run = !!arch.timer;
+  const t = arch.t, end = t === ARCH_END, b = $("ar-play"), run = !!arch.timer;
   b.classList.toggle("busy", run);
   b.setAttribute("aria-busy", run);
   b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : t ? "↺ Replay" : "▶ Play";
+  // When scenario 2 is done, the note takes the place of the picture and its caption.
+  $("ar-fig").hidden = $("ar-say").hidden = end;
+  $("ar-next").hidden = !end;
+  if (end) return;
+  const pic = t >= SOLO_STEPS ? duoSvg(WIDE.matches, t - SOLO_STEPS) : soloSvg(WIDE.matches, t);
+  // Scenario 2 fades in where scenario 1 was.
+  $("ar-fig").innerHTML = `<svg class="${t === SOLO_STEPS ? "fadein" : ""}" viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${archSay(t)}">${pic.svg}</svg>`;
+  $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
 }
 WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) drawArch(); });
 
