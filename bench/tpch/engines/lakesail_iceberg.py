@@ -92,6 +92,13 @@ class LakesailIceberg:
         # (~2.7 GiB) keeps hash joins, SF=30 (~8 GiB) and up spill.
         spill_joins = self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2
         os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "false" if spill_joins else "true"
+        # COMPRESSED SPILL FILES. `runtime.temporary_files.compression` (lakehq/sail#2753) writes
+        # spills as zstd instead of raw Arrow IPC into the 64 GiB temp-file cap; zstd for the
+        # smallest files, since the cap and the runner's disk are the limit. Only past 0.7.2: that
+        # release refuses to start on an unknown key, and the ETL still runs it. TPC-H/TPC-DS run
+        # the main build (tmp_sail_main.yml, numbered 0.7.3.devYYYYMMDD) until a release has it.
+        if tuple(int(p) for p in self.version.split(".")[:3]) > (0, 7, 2):
+            os.environ["SAIL_RUNTIME__TEMPORARY_FILES__COMPRESSION"] = "zstd"
         #
         # TRIED AND REVERTED: SAIL_PARQUET__PUSHDOWN_FILTERS=true (+ REORDER_FILTERS), Sail's
         # late-materialization switch, off by default. Run 35512613884 at SF=10: the queries it
