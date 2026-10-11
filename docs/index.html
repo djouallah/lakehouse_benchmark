@@ -449,11 +449,11 @@ const GROUPS = [
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "concurrency", title: "Concurrency", subs: [ARCH] },
-  { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "issues", title: "Issues", subs: [DETAILS] },
   { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED] },
+  { id: "workload", title: "Real workload", subs: [WORKLOAD] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
 const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
