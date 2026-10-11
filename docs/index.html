@@ -246,12 +246,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .f.old { fill: var(--grid); stroke: var(--grid); }
 .arch .f.p { fill: none; stroke-width: 1.5; stroke-dasharray: 2 2; }
 .arch .f.ja { stroke: var(--accent); } .arch .f.ja.c { fill: var(--accent); }
-.arch .snap { fill: var(--track); transition: fill .4s; }
-.arch .snap.flash { fill: color-mix(in srgb, var(--yes) 35%, transparent); }
-.arch .sbox { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; }
-.arch .hist { opacity: .45; }
-.arch .ln.ptr { stroke: var(--ink); stroke-opacity: 1; fill: none; }
-.arch .hd.ptr { fill: var(--ink); opacity: 1; }
+.arch .sbox { fill: var(--raised); stroke: var(--ink-3); stroke-width: 1.5; transition: fill .4s; }
+.arch .sbox.flash { fill: color-mix(in srgb, var(--yes) 30%, transparent); }
 .arch .ln { stroke: var(--ink-3); stroke-width: 2; stroke-opacity: .5; }
 .arch .ln.live { stroke: var(--ink); stroke-opacity: 1; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 9; animation: flow .45s linear infinite; }
 .arch .ln.ok { stroke: var(--yes); stroke-opacity: 1; stroke-width: 3; }
@@ -1223,14 +1219,14 @@ const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by 
 
 function archSay(t) {
   return [
-    "The job starts. The catalog points to snapshot 7.",
-    "It reads a batch of CSV files and writes it as a new file. No snapshot lists it, so readers do not see it.",
-    "Next batch, next file. Readers still see snapshot 7.",
-    `${archDone(t)} new files so far, in no snapshot. Readers see snapshot 7.`,
-    `${archDone(t)} new files so far, in no snapshot. Readers see snapshot 7.`,
-    "The last batch is written. The catalog still points to snapshot 7.",
-    "The job commits once: a new snapshot, 8, lists the old files and the new ones, and the catalog now points to it. Snapshot 7 stays as history.",
-    "The job stops. Nothing is lost: the catalog keeps the state.",
+    "The job starts.",
+    "It reads a batch of CSV files and writes it as a new file. The file is not committed, so readers do not see it.",
+    "Next batch, next file. Readers still see only the committed files.",
+    `${archDone(t)} new files so far, none committed. Readers see only the committed files.`,
+    `${archDone(t)} new files so far, none committed. Readers see only the committed files.`,
+    "The last batch is written. Still nothing committed.",
+    "The work is done, so the job commits once: all the new files are added in one step, or none are.",
+    "The job stops. The new data stays in the table.",
   ][t];
 }
 
@@ -1283,28 +1279,18 @@ function drawArch() {
     svg += `<rect class="f ${cls}" x="${bk.x + bkRow.x + i * 17}" y="${bkRow.y}" width="12" height="16" rx="2"/>`;
   }
 
-  // The table: the catalog points to one snapshot; a snapshot lists the files readers see.
-  // The new files sit in no snapshot (dashed) until the commit makes snapshot 8: the old files plus the new ones.
-  const OLD = 8, cat = { x: tb.x + 14, y: tb.y + 44, w: 66, h: 46 };
-  const s7 = { x: tb.x + 120, y: tb.y + 44, w: 186, h: 46 }, s8 = { ...s7, y: tb.y + 108 };
+  // The table: one box of committed files. The new files wait below it (dashed) and join it
+  // all at once at the commit, when the work is done.
+  const OLD = 8, cbox = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, nrow = { ...cbox, y: tb.y + 102 };
   const files = (b, from, n, cls) => Array.from({ length: n }, (_, i) =>
-    `<rect class="f ${cls}" x="${b.x + 10 + (from + i) * 12}" y="${b.y + 24}" width="9" height="12" rx="1.5"/>`).join("");
+    `<rect class="f ${cls}" x="${b.x + 10 + (from + i) * 17}" y="${b.y + 24}" width="12" height="16" rx="2"/>`).join("");
   const committed = t >= 6;
   svg += `<rect class="box cat" x="${tb.x}" y="${tb.y}" width="${tb.w}" height="${tb.h}" rx="14"/>
     <text class="t" x="${tb.x + 14}" y="${tb.y + 26}">Table</text>
-    <rect class="snap ${t === 6 ? "flash" : ""}" x="${cat.x}" y="${cat.y}" width="${cat.w}" height="${cat.h}" rx="8"/>
-    <text class="s ink" x="${cat.x + cat.w / 2}" y="${cat.y + 28}" text-anchor="middle">Catalog</text>
-    <g class="${committed ? "hist" : ""}"><rect class="sbox" x="${s7.x}" y="${s7.y}" width="${s7.w}" height="${s7.h}" rx="8"/>
-      <text class="s" x="${s7.x + 10}" y="${s7.y + 16}">snapshot 7${committed ? " · history" : ""}</text>${files(s7, 0, OLD, "old")}</g>`;
-  svg += committed
-    ? `<rect class="sbox" x="${s8.x}" y="${s8.y}" width="${s8.w}" height="${s8.h}" rx="8"/>
-       <text class="s ink" x="${s8.x + 10}" y="${s8.y + 16}">snapshot 8</text>${files(s8, 0, OLD, "old")}${files(s8, OLD, done, "ja c")}`
-    : `<text class="lb" x="${s8.x + 10}" y="${s8.y + 16}">${done ? "new files, in no snapshot" : ""}</text>${files(s8, OLD, done, "ja p")}`;
-  // The catalog's pointer: to snapshot 7, then, after the commit, to snapshot 8.
-  const px = cat.x + cat.w + 2, py = cat.y + cat.h / 2;
-  svg += committed
-    ? `<polyline class="ln ptr" points="${px},${py} ${px + 10},${py} ${px + 10},${s8.y + s8.h / 2}"/>${arLine(px + 10, s8.y + s8.h / 2, s8.x - 2, s8.y + s8.h / 2, "ptr")}`
-    : arLine(px, py, s7.x - 2, py, "ptr");
+    <rect class="sbox ${t === 6 ? "flash" : ""}" x="${cbox.x}" y="${cbox.y}" width="${cbox.w}" height="${cbox.h}" rx="8"/>
+    <text class="s ink" x="${cbox.x + 10}" y="${cbox.y + 16}">committed</text>${files(cbox, 0, OLD, "old")}`
+    + (committed ? files(cbox, OLD, done, "ja c")
+      : `<text class="lb" x="${nrow.x + 10}" y="${nrow.y + 16}">${done ? "written, not committed" : ""}</text>${files(nrow, OLD, done, "ja p")}`);
 
   // Lines: bucket → job (read), job → table (write, then the commit).
   const gone = t === ARCH_LAST ? "off" : "";
