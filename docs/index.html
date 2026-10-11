@@ -794,18 +794,11 @@ function renderWorkload() {
   const mark = (ok, text) => `<td class="lv ${ok === true ? "excellent" : ok === false ? "none" : "partial"}"><i class="m"></i>${text}</td>`;
   const head = ["Engine", "File name column", "dbt 1", "MERGE"];
   sec.innerHTML = `
-    <p class="caption">Nobody changes an engine because it is 2× faster. The new engine must run the workload
-      you have today, and then be much better at something. What an engine supports comes before how fast it is.</p>
-    <p class="caption">A minimum set of features makes an engine an option at all. That set takes time: users bring
-      the workloads, the workloads show the gaps, the gaps get fixed, and more users come. A fast engine without the
-      set is not in that circle yet.</p>
-    <p class="caption">Spark-OSS is the baseline. It is the most mature engine here: every feature on this page, every
-      adapter, every file format. Its weak point is the executor: row by row on the JVM, so it is the slowest engine
-      on the <a href="#performance">Performance</a> tab. A native engine under the same Spark plan fixes that without
-      giving up the features; Gluten/Velox is that engine in the bench.</p>
-    <p class="caption">One real project: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB read AEMO CSV files
-      from OneLake Files and load them into Iceberg tables through the OneLake catalog, every hour. To replace DuckDB
-      there, an engine needs all three. One red cell and it is not an option:</p>
+    <p class="caption">Changing engines is a feature question. The new engine must run the workload you have
+      today; speed is a bonus. Spark-OSS has every feature but is the slowest on <a href="#performance">Performance</a>;
+      Gluten/Velox keeps the Spark features and runs native.</p>
+    <p class="caption">The workload: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB load AEMO CSV files
+      from OneLake Files into Iceberg tables every hour. To replace DuckDB, an engine needs all three; one red cell and it is not an option:</p>
     <ul class="caption">
       <li>it gives the source file name as a column: the project keys and dedupes on it;</li>
       <li>it has a dbt 1 adapter that works on Iceberg tables;</li>
