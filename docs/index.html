@@ -36,6 +36,9 @@ body {
 main { max-width: 1440px; margin: 0 auto; padding: 20px 16px 24px; }
 h1 { font-size: clamp(24px, 5vw, 32px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.top { display: flex; align-items: center; gap: 20px; flex: none; }
+.about-link { color: var(--ink-2); font-weight: 600; text-decoration: none; margin-top: 6px; }
+.about-link:hover, .about-link[aria-current] { color: var(--ink); text-decoration: underline; }
 .gh { color: var(--ink-2); flex: none; margin-top: 6px; transition: color .15s, transform .15s; }
 .gh:hover, .gh:focus-visible { color: var(--ink); transform: scale(1.1); }
 .sub { font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--ink-2); white-space: nowrap; margin-left: 8px; }
@@ -288,7 +291,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 </head>
 <body>
 <main>
-  <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></header>
+  <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><nav class="top"><a class="about-link" id="about-link" href="#about">About</a><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></header>
   <p class="lede">An engine is two things: how fast it runs, and what it supports.</p>
 
   <div class="tabs" role="tablist" id="tabs"></div>
@@ -446,13 +449,13 @@ const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, 
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
+  { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "concurrency", title: "Concurrency", subs: [ARCH] },
   { id: "catalogs", title: "Catalogs", subs: [STORAGE] },
   { id: "issues", title: "Issues", subs: [DETAILS] },
-  { id: "engines", title: "Engines", subs: [ENGINES] },
-  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED] },
+  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED], bar: false },  // a header link, not a tab
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
@@ -465,7 +468,8 @@ function renderTabs() {
   const current = groupOf(state.suite);
   state.last[current.id] = state.suite;  // a top tab reopens the sub last used in it
   $("tabs").innerHTML = ""; $("subtabs").innerHTML = "";
-  for (const g of GROUPS) {
+  $("about-link").toggleAttribute("aria-current", current.id === "about");
+  for (const g of GROUPS.filter(g => g.bar !== false)) {
     const b = document.createElement("button");
     b.role = "tab"; b.textContent = g.title;
     b.setAttribute("aria-selected", g === current);
