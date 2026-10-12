@@ -232,7 +232,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
 .arch .ar-fig { cursor: pointer; }
 .arch .an-fig svg { width: 100%; height: auto; max-width: 820px; margin-top: 12px; }
-.arch .sbox.ja { stroke: var(--accent); stroke-width: 2; }
+.arch .sbox.ja, .arch .box.ja { stroke: var(--accent); stroke-width: 2; }
+.arch .sbox.p, .arch .box.p { stroke-dasharray: 5 4; }
+.arch .box.flash { fill: color-mix(in srgb, var(--yes) 30%, transparent); }
 .pl .ghost:disabled { opacity: .4; cursor: default; }
 .arch .play { min-width: 170px; }
 .arch .play.busy { cursor: progress; }
@@ -509,6 +511,7 @@ function render() {
   for (const p of PAGES) $(p.id).hidden = p !== page;
   if (page !== PLANS) stopRace();
   if (page !== ARCH) stopArch();
+  if (page !== ANATOMY) stopAnatomy();
   if (page === ARCH) { renderArch(); return; }
   if (page === ANATOMY) { renderAnatomy(); return; }
   if (page === PLANS) { renderPlans(); return; }
@@ -1332,9 +1335,10 @@ function stepArch(d) {
   drawArch();
 }
 addEventListener("keydown", e => {
-  if (state.suite !== ARCH.id || e.altKey || e.ctrlKey || e.metaKey) return;
+  const step = { [ARCH.id]: stepArch, [ANATOMY.id]: stepAnatomy }[state.suite];
+  if (!step || e.altKey || e.ctrlKey || e.metaKey) return;
   const d = { ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 }[e.key];
-  if (d) { e.preventDefault(); stepArch(d); }
+  if (d) { e.preventDefault(); step(d); }
 });
 
 // A line with an arrow head at its end.
@@ -1456,57 +1460,75 @@ function drawArch() {
 }
 WIDE.addEventListener("change", () => {
   if (state.suite === ARCH.id) drawArch();
-  if (state.suite === ANATOMY.id) renderAnatomy();
+  if (state.suite === ANATOMY.id) drawAnatomy();
 });
 
 // THE ANATOMY TAB: what one table is made of, the standard tree from the catalog down to the Parquet
-// files. Static. Snapshot x+1 reuses manifest 1 and adds manifest 2: a commit adds files, it never
-// rewrites the old ones. In colour: what the last commit wrote, as on the Concurrency tab.
+// files, built step by step in the order a writer makes it: data files first, the catalog last. Two
+// commits. Snapshot x+1 reuses manifest 1 and adds manifest 2: a commit adds files, it never rewrites
+// the old ones. Dashed: written, not visible yet. In colour: the second commit, as on the Concurrency tab.
 // Conceptual on purpose: no engine, vendor or product names.
-const ANATOMY_SAY = [
-  "The catalog keeps one thing per table: where the current metadata file is.",
-  "A commit writes new files, then moves this pointer from v1.metadata.json to v2.metadata.json. Readers see the change only when the pointer moves.",
-  "Each snapshot is the whole table at one moment. In colour: what the last commit wrote. Snapshot x+1 reuses manifest 1 and adds manifest 2, so the old files are not written again.",
-  "The data is in Parquet files. A file is never changed. A snapshot only adds or removes files.",
-];
+const AN_LAST = 11;  // 12 steps; the last one stays on screen
+const anat = { t: 0, timer: null };
+const anatomySay = t => [
+  "The job writes the data as Parquet files. Readers do not see them yet.",
+  "It writes a manifest file: the list of these 3 data files.",
+  "It writes a manifest list: the list of manifest files in this snapshot.",
+  "That is snapshot x: the whole table at one moment.",
+  "It writes the metadata file v1.metadata.json: schema, partitions and the list of snapshots.",
+  "Commit: the catalog now points to v1.metadata.json. Readers see the 3 files.",
+  "A second job adds data. It writes 2 new Parquet files. Readers do not see them yet.",
+  "It writes manifest 2: the list of the 2 new files.",
+  "The new manifest list keeps manifest 1 and adds manifest 2. Old files are not written again.",
+  "That is snapshot x+1. Snapshot x is still there.",
+  "It writes v2.metadata.json, with snapshot x and snapshot x+1. The catalog still points to v1.",
+  "Commit: the catalog moves one pointer, from v1 to v2. Readers see all the new files at the same time.",
+][t];
 const ANATOMY_ROWS = ["Catalog", "Metadata file", "Snapshot", "Manifest list", "Manifest files", "Data files"];
 
 const anNode = (cx, y, w, label, cls = "") => `<rect class="sbox ${cls}" x="${cx - w / 2}" y="${y}" width="${w}" height="32" rx="8"/>
   <text class="s ink" x="${cx}" y="${y + 21}" text-anchor="middle">${label}</text>`;
 
-function anatomySvg(wide) {
+// Step s (1..12) shows everything written up to it. A layer with nothing yet shows only its name.
+function anatomySvg(wide, t) {
   // Wide: the layer names in a left column. Narrow: each name above its row.
   const L = wide
     ? { W: 780, H: 480, c: [330, 630], mid: 480, box: 300, node: 170, rows: [10, 96, 190, 262, 334, 420] }
     : { W: 360, H: 505, c: [95, 265], mid: 180, box: 340, node: 150, rows: [24, 118, 216, 290, 364, 450] };
-  const { c, mid, box, node, rows: r } = L, half = node / 2;
+  const { c, mid, box, node, rows: r } = L, half = node / 2, s = t + 1;
+  const pend = i => s < (i ? 12 : 6) ? "p" : "";  // commit 1 is step 6, commit 2 step 12
+  const cls = i => `${i ? "ja" : ""} ${pend(i)}`;
   let svg = ANATOMY_ROWS.map((name, i) => wide
     ? `<text class="t" x="0" y="${r[i] + (i < 2 ? 33 : i < 5 ? 21 : 19)}">${name}</text>`
     : `<text class="lb" x="10" y="${r[i] - 8}">${name}</text>`).join("");
 
-  svg += arBox({ x: mid - box / 2, y: r[0], w: box, h: 56 }, "cat", "my_table", "current: v2.metadata.json")
-    + arLine(mid, r[0] + 60, mid, r[1] - 4, "") + `<text class="lb" x="${mid + 8}" y="${(r[0] + 56 + r[1]) / 2 + 4}">points to</text>`
-    + arBox({ x: mid - box / 2, y: r[1], w: box, h: 56 }, "", "v2.metadata.json", "schema, partitions, snapshots");
+  // Catalog and metadata file. v2 replaces v1 at step 11; the pointer moves at step 12.
+  const v2 = s >= 11, commit = s === 6 || s === 12;
+  if (s >= 6) svg += arBox({ x: mid - box / 2, y: r[0], w: box, h: 56 }, `cat ${commit ? "flash" : ""}`,
+      "my_table", `current: v${s >= 12 ? 2 : 1}.metadata.json`)
+    + arLine(mid, r[0] + 60, mid, r[1] - 4, commit ? "ok" : "")
+    + `<text class="${commit ? "ok" : "lb"}" x="${mid + 8}" y="${(r[0] + 56 + r[1]) / 2 + 4}">${commit ? "commit ✓" : "points to"}</text>`;
+  if (s >= 5) svg += arBox({ x: mid - box / 2, y: r[1], w: box, h: 56 }, v2 ? cls(1) : cls(0),
+    `v${v2 ? 2 : 1}.metadata.json`, "schema, partitions, snapshots");
 
-  // Two snapshots, each with its manifest list. The new one reuses manifest 1.
+  // Two snapshots, each with its manifest list, built bottom up: manifest, list, snapshot.
   [0, 1].forEach(i => {
-    const cls = i ? "ja" : "";
-    svg += arLine(mid + (i ? 60 : -60), r[1] + 60, c[i], r[2] - 4, "")
-      + anNode(c[i], r[2], node, i ? "snapshot x+1" : "snapshot x", cls)
-      + arLine(c[i], r[2] + 36, c[i], r[3] - 4, "")
-      + anNode(c[i], r[3], node, "manifest list", cls)
-      + arLine(c[i], r[3] + 36, c[i], r[4] - 4, "")
-      + anNode(c[i], r[4], node, `manifest ${i + 1}`, cls);
+    const at = i ? 6 : 0;  // commit 2 starts 6 steps after commit 1
+    if (s >= at + 2) svg += anNode(c[i], r[4], node, `manifest ${i + 1}`, cls(i));
+    if (s >= at + 3) svg += anNode(c[i], r[3], node, "manifest list", cls(i)) + arLine(c[i], r[3] + 36, c[i], r[4] - 4, "");
+    if (s >= at + 4) svg += anNode(c[i], r[2], node, i ? "snapshot x+1" : "snapshot x", cls(i)) + arLine(c[i], r[2] + 36, c[i], r[3] - 4, "");
+    if (s >= (i ? 11 : 5)) svg += arLine(mid + (i ? 60 : -60), r[1] + 60, c[i], r[2] - 4, "");
   });
-  svg += arLine(c[1] - half + 16, r[3] + 36, c[0] + half - 16, r[4] - 4, "")
+  if (s >= 9) svg += arLine(c[1] - half + 16, r[3] + 36, c[0] + half - 16, r[4] - 4, "")
     + `<text class="lb" x="${mid}" y="${(r[3] + 32 + r[4]) / 2 - 6}" text-anchor="middle">reused</text>`;
 
-  // The Parquet files under each manifest: 3 old ones, 2 new ones.
+  // The Parquet files under each manifest: 3 from commit 1, 2 from commit 2.
   [3, 2].forEach((n, i) => {
+    if (s < (i ? 7 : 1)) return;
     for (let k = 0; k < n; k++) {
       const x = c[i] + (k - (n - 1) / 2) * 34;
-      svg += arLine(c[i], r[4] + 36, x, r[5] - 4, "")
-        + `<rect class="f ${i ? "ja c" : ""}" x="${x - 11}" y="${r[5]}" width="22" height="28" rx="3"/>`;
+      if (s >= (i ? 8 : 2)) svg += arLine(c[i], r[4] + 36, x, r[5] - 4, "");
+      svg += `<rect class="f ${i ? "ja" : ""} ${pend(i) || (i ? "c" : "")}" x="${x - 11}" y="${r[5]}" width="22" height="28" rx="3"/>`;
     }
     svg += `<text class="lb" x="${c[i]}" y="${r[5] + 46}" text-anchor="middle">.parquet</text>`;
   });
@@ -1514,10 +1536,45 @@ function anatomySvg(wide) {
 }
 
 function renderAnatomy() {
-  const pic = anatomySvg(WIDE.matches);
-  $(ANATOMY.id).innerHTML = `<div class="an-fig"><svg viewBox="0 0 ${pic.W} ${pic.H}" role="img"
-      aria-label="One table: catalog, metadata file, snapshots, manifest lists, manifest files and Parquet data files">${pic.svg}</svg></div>`
-    + ANATOMY_SAY.map(s => `<p class="intro">${s}</p>`).join("");
+  stopAnatomy();
+  $(ANATOMY.id).innerHTML = `
+    <div class="ctl"><button class="play" id="an-play"></button>
+      <button class="ghost" id="an-back">‹ Back</button><button class="ghost" id="an-step">Next ›</button>
+      <span class="hint">or the arrow keys</span></div>
+    <div class="ar-fig an-fig" id="an-fig"></div>
+    <p class="pick" id="an-say"></p>`;
+  $("an-play").onclick = playAnatomy;
+  $("an-back").onclick = () => stepAnatomy(-1);
+  $("an-step").onclick = $("an-fig").onclick = () => stepAnatomy(1);
+  drawAnatomy();
+}
+// Same controls as the Concurrency tab: Play, Back / Next, a click on the picture, the arrow keys.
+function playAnatomy() {
+  if (anat.timer) return;
+  if (anat.t >= AN_LAST) anat.t = 0;
+  anat.timer = setInterval(() => {
+    anat.t++;
+    if (anat.t >= AN_LAST) stopAnatomy();
+    drawAnatomy();
+  }, 1600);
+  drawAnatomy();
+}
+function stopAnatomy() { clearInterval(anat.timer); anat.timer = null; }
+function stepAnatomy(d) {
+  stopAnatomy();
+  anat.t = Math.max(0, Math.min(AN_LAST, anat.t + d));
+  drawAnatomy();
+}
+function drawAnatomy() {
+  const t = anat.t, end = t === AN_LAST, b = $("an-play"), run = !!anat.timer;
+  b.classList.toggle("busy", run);
+  b.setAttribute("aria-busy", run);
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${AN_LAST + 1}` : end ? "↺ Replay" : "▶ Play";
+  $("an-back").disabled = t === 0;
+  $("an-step").disabled = end;
+  const pic = anatomySvg(WIDE.matches, t);
+  $("an-fig").innerHTML = `<svg viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${anatomySay(t)}">${pic.svg}</svg>`;
+  $("an-say").innerHTML = `<b>${t + 1}/${AN_LAST + 1}</b> ${anatomySay(t)}`;
 }
 
 // Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
