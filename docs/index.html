@@ -734,7 +734,7 @@ const DBT_ROWS = [
     note: "Table and incremental models, with merge." },
   { engine: "duckdb_iceberg", level: "good", adapter: "dbt-duckdb", url: "https://github.com/duckdb/dbt-duckdb",
     note: `Works with the Iceberg catalog through <code>attach</code>. It needs two small macro overrides: <code>DESCRIBE</code> must hide Iceberg's <code>__</code> column, and <code>DROP</code> must not use <code>CASCADE</code>. <a href="${DBT_MEDALLION}/blob/main/docs/engine-nuances.md">Details</a>` },
-  { engine: "polars_iceberg", level: "good", adapter: "dbt-polars", url: "https://github.com/datamindedbe/incubator-dbt-polars",
+  { engine: "polars_iceberg", level: "partial", adapter: "dbt-polars", url: "https://github.com/datamindedbe/incubator-dbt-polars",
     note: `Builds the full gold layer on the Iceberg catalog, from a fork of the adapter with three fixes (one is <a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">#29</a>). Merge is a delete then an append: two commits. No SQL hooks, <code>merge_clauses</code> is ignored, and no <code>TIMESTAMPTZ</code>. <a href="${DBT_MEDALLION}#engines">Details</a>` },
   { engine: "starrocks_iceberg", level: "partial", adapter: "dbt-starrocks", url: "https://docs.starrocks.io/docs/integrations/dbt/",
     note: "No merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
