@@ -44,7 +44,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | Create tag | yes | na | na | no ³² | no ³³ |
 | Drop table with purge | yes | na | yes | yes | — |
 | Create / drop namespace | yes | na | yes | yes | na |
-| Credential vending | ? ³⁴ | na | yes | na | na |
+| Credential vending | no ³⁴ | na | yes | na | na |
 | A commit against a stale snapshot is refused | na | yes | yes | na | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | yes | na | yes | yes | yes |
@@ -59,7 +59,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 5. Spark, CREATE TABLE AS SELECT: CREATE TABLE ... AS SELECT: `Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request at org.apache.iceberg.rest.ErrorHandlers$DefaultErrorHandler.accept(ErrorHandlers.java:341) at org.apache.iceberg.rest.ErrorHandlers$TableErrorHandler.a…`
 6. chDB, CREATE TABLE AS SELECT: CREATE TABLE ... AS SELECT: `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
 7. Polars, Partition transform: bucket: write a table partitioned by bucket(4, id): `works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform`
-8. Spark, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type "UUID". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...2668_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^`
+8. Spark, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type "UUID". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...1583_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^`
 9. Sail, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type`
 10. Sail, Add column: ALTER TABLE ADD COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
 11. Sail, Drop column: ALTER TABLE DROP COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
@@ -85,7 +85,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 31. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
 32. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
 33. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
-34. Spark, Credential vending: read and INSERT with only the vended credentials: `Py4JError: An error occurred while calling z:org.apache.iceberg.catalog.TableIdentifier.of. Trace: py4j.Py4JException: Method of([class java.lang.String, class java.lang.String]) does not exist at py4j.reflection.ReflectionEngine.getMethod(ReflectionEngine.java:321) at py4j.reflection.ReflectionEng…`
+34. Spark, Credential vending: read and INSERT with only the vended credentials: `Py4JJavaError: An error occurred while calling o746.collectToPython. : java.lang.RuntimeException: com.azure.identity.CredentialUnavailableException: EnvironmentCredential authentication unavailable. Environment variables are not fully configured.To mitigate this issue, please refer to the troubles…`
 
 ## DuckDB: isolation levels and transactions
 
@@ -136,7 +136,7 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 
 The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`), which writes this file. Every cell is a reading taken by sending the request, not a property of the product: re-run rather than trust it.
 
-- spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38211902668](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38211902668), 2026-10-12
+- spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38213181583](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38213181583), 2026-10-12
 - polars: 2.0.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - duckdb: v2.0.0-alpha46057, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - sail: 0.7.2, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
