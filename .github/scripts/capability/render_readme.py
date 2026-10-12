@@ -216,6 +216,22 @@ def load(results: Path) -> dict:
     return found
 
 
+# A yes with a cost the probe measured: (row label, what the reading says) -> the note. The note
+# comes from the reading, so it goes away when the engine fixes it.
+CAVEATS = {
+    ("TRUNCATE", "NOT metadata-only"): (
+        "Not a metadata operation. The data files stay, and a delete file is written for them: "
+        "slower than dropping the files, and every reader then has to apply the deletes."
+    ),
+}
+
+
+def caveat(rows: dict, keys: list[str], label: str) -> str:
+    """The note for one engine's yes on one row, or '' when the readings show no cost."""
+    details = " ".join(str(rows[k]["detail"]) for k in keys if k in rows)
+    return next((n for (row, said), n in CAVEATS.items() if row == label and said in details), "")
+
+
 def cell(rows: dict, keys: list[str]) -> tuple[str, list[dict]]:
     """(outcome, the rows that made it not a yes) for one engine's probes of one table row."""
     picked = [rows[k] for k in keys if k in rows]
@@ -274,6 +290,9 @@ def capability(data: dict) -> tuple[list[str], list[str]]:
                     f"{TITLE[e]}, {label}: "
                     + "; ".join(f"{r['question']}: `{_one_line(r['detail'])}`" for r in why)
                 )
+                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
+            elif outcome == "supported" and (note := caveat(by_key[e], sources[e], label)):
+                notes.append(f"{TITLE[e]}, {label}: {note}")
                 mark += " " + str(len(notes)).translate(SUPERSCRIPT)
             cells.append(mark)
         head.append(f"| {label} | " + " | ".join(cells) + " |")
@@ -402,6 +421,8 @@ def site_matrix(data: dict) -> dict:
                     continue
                 outcome, why = cell(by_key[e], sources[label][e])
                 note = "; ".join(_one_line(r["detail"], 220) for r in why)
+                if outcome == "supported":
+                    note = caveat(by_key[e], sources[label][e], label)
                 cells[SITE_KEY[e]] = {"o": outcome, **({"n": note} if note else {})}
             rows.append({"group": group, "label": label, "cells": cells})
     return {
