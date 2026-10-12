@@ -242,7 +242,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 @keyframes blink { 50% { opacity: .2; } }
 .arch .box { fill: var(--raised); stroke: var(--grid); stroke-width: 1.5; }
 .arch .box.cat { stroke: var(--ink-3); stroke-width: 2; }
-.arch .eng { fill: var(--raised); stroke-width: 2; stroke-dasharray: 6 5; }
+.arch .eng { fill: var(--raised); stroke-width: 2; }
+.arch .rt { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 8 6; }
 .arch .ja .eng { stroke: var(--accent); }
 .arch .jb .eng { stroke: var(--noop); }
 .arch .work .eng { animation: pulse .7s ease-in-out infinite; }
@@ -1266,15 +1267,15 @@ const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by 
 const duoDone = t => [Math.max(0, Math.min(DUO_BATCHES, t)), Math.max(0, Math.min(DUO_BATCHES, t - 1))];  // job B one tick behind
 
 const archSay = t => [
-  "The job starts.",
+  "A stateless runtime starts. It has no data and no memory of earlier runs.",
   "It reads a batch of CSV files and writes it as a new file. Readers do not see it yet.",
   "Next batch, next file. Readers still do not see them.",
   `${archDone(t)} new files so far. Readers do not see them yet.`,
   `${archDone(t)} new files so far. Readers do not see them yet.`,
   "The last batch is written. Still nothing visible.",
   "The work is done, so the job commits once to the catalog: snapshot x+1. Readers see all the new files at the same time.",
-  "The job stops. The new data stays in the table.",
-  "Now two jobs start at the same time. Both start from snapshot x.",
+  "The runtime is gone. Nothing was lost: the files are in the bucket, and the table is in the catalog.",
+  "Now two jobs start at the same time, each in a new stateless runtime. Both start from snapshot x.",
   "Job A writes its first file. Readers do not see it.",
   "Job B writes too. The two jobs do not block each other.",
   "Both keep writing files. Nothing is visible yet.",
@@ -1352,17 +1353,26 @@ const arJob = (job, cls, name, status, work, gone) => `<g class="${cls} ${work ?
   <rect class="eng" x="${job.x}" y="${job.y}" width="${job.w}" height="${job.h}" rx="10"/>
   <text class="t" x="${job.x + job.w / 2}" y="${job.y + 24}" text-anchor="middle">${name}</text>
   <text class="s" x="${job.x + job.w / 2}" y="${job.y + 43}" text-anchor="middle">${status}</text></g>`;
+// Under a box: what it keeps. The runtime around the jobs keeps nothing, and is gone at the end.
+const arKeeps = (b, text, x = b.x + 14, anchor = "start") =>
+  `<text class="s" x="${x}" y="${b.y + b.h + 18}" text-anchor="${anchor}">${text}</text>`;
+const arRuntime = (rt, title, gone) => `<g class="${gone ? "gone" : ""}">
+  <rect class="rt" x="${rt.x}" y="${rt.y}" width="${rt.w}" height="${rt.h}" rx="14"/>
+  ${title.map((s, i) => `<text class="t" x="${rt.tx}" y="${rt.y + 26 + i * 18}" text-anchor="${rt.anchor}">${s}</text>`).join("")}
+  ${arKeeps(rt, "keeps nothing", rt.tx, rt.anchor)}</g>`;
 
 // Scenario 1, steps 0..7: one job. The new files show up dashed as they are written; only when the job
 // is done does a snapshot box, x+1, appear around them: the one commit.
 function soloSvg(wide, t) {
   const done = archDone(t), last = SOLO_STEPS - 1;
   const L = wide
-    ? { W: 820, H: 130, bk: { x: 0, y: 10, w: 200, h: 110 }, job: { x: 300, y: 54, w: 110, h: 56 },
-        tb: { x: 500, y: 10, w: 320, h: 110 }, bkRow: { x: 14, y: 74 } }
-    : { W: 360, H: 410, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 170, w: 110, h: 56 },
-        tb: { x: 20, y: 290, w: 320, h: 110 }, bkRow: { x: 120, y: 70 } };
-  const { bk, job, tb, bkRow } = L;
+    ? { W: 860, H: 150, bk: { x: 0, y: 10, w: 200, h: 110 }, job: { x: 300, y: 54, w: 110, h: 56 },
+        rt: { x: 265, y: 10, w: 180, h: 110, tx: 279, anchor: "start" },
+        tb: { x: 560, y: 10, w: 300, h: 110 }, bkRow: { x: 14, y: 74 } }
+    : { W: 360, H: 500, bk: { x: 20, y: 0, w: 320, h: 110 }, job: { x: 125, y: 214, w: 110, h: 56 },
+        rt: { x: 20, y: 180, w: 320, h: 120, tx: 34, anchor: "start" },
+        tb: { x: 20, y: 360, w: 320, h: 110 }, bkRow: { x: 120, y: 70 } };
+  const { bk, job, rt, tb, bkRow } = L;
   const act = t >= 1 && t <= 5 ? "write" : t === 6 ? "ok" : "";
   const status = t === 0 ? "starting" : t <= 5 ? `batch ${done} of ${BATCHES}` : t === 6 ? "commit" : "done";
   const snap = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, committed = t >= 6, gone = t === last ? "off" : "";
@@ -1370,6 +1380,8 @@ function soloSvg(wide, t) {
     + arFiles(bk.x + bkRow.x, bkRow.y, Array.from({ length: BATCHES }, (_, i) =>
       act === "write" && i === done - 1 ? "hot" : i < done ? "read" : ""))
     + arBox(tb, "cat", "Catalog · table")
+    + arKeeps(bk, "keeps the files") + arKeeps(tb, "keeps the table")
+    + arRuntime(rt, wide ? ["Stateless runtime"] : ["Stateless", "runtime"], t === last)
     + (committed ? arSnap(snap, "snapshot x+1", t === 6)
       : `<text class="lb" x="${snap.x + 10}" y="${snap.y + 16}">${done ? "new files" : ""}</text>`)
     + arFiles(snap.x + 10, snap.y + 24, Array(done).fill(`ja ${committed ? "c" : "p"}`))
@@ -1385,11 +1397,13 @@ function soloSvg(wide, t) {
 function duoSvg(wide, t) {
   const done = duoDone(t), last = SOLO_STEPS - 1;
   const L = wide
-    ? { W: 820, H: 210, bk: { x: 0, y: 10, w: 200, h: 190 }, tb: { x: 500, y: 10, w: 320, h: 190 },
+    ? { W: 860, H: 230, bk: { x: 0, y: 10, w: 200, h: 190 }, tb: { x: 560, y: 10, w: 300, h: 190 },
+        rt: { x: 265, y: 10, w: 180, h: 190, tx: 279, anchor: "start" },
         jobs: [{ x: 300, y: 54, w: 110, h: 56 }, { x: 300, y: 126, w: 110, h: 56 }], bkRows: [{ x: 14, y: 74 }, { x: 14, y: 146 }] }
-    : { W: 360, H: 470, bk: { x: 20, y: 0, w: 320, h: 110 }, tb: { x: 20, y: 290, w: 320, h: 170 },
-        jobs: [{ x: 40, y: 170, w: 110, h: 56 }, { x: 210, y: 170, w: 110, h: 56 }], bkRows: [{ x: 32, y: 70 }, { x: 202, y: 70 }] };
-  const { bk, tb, jobs, bkRows } = L;
+    : { W: 360, H: 570, bk: { x: 20, y: 0, w: 320, h: 110 }, tb: { x: 20, y: 370, w: 320, h: 170 },
+        rt: { x: 20, y: 180, w: 320, h: 130, tx: 180, anchor: "middle" },
+        jobs: [{ x: 40, y: 236, w: 110, h: 56 }, { x: 210, y: 236, w: 110, h: 56 }], bkRows: [{ x: 32, y: 70 }, { x: 202, y: 70 }] };
+  const { bk, rt, tb, jobs, bkRows } = L;
   const act = [
     t >= 1 && t <= 3 ? "write" : t === 4 ? "ok" : "",
     t >= 2 && t <= 4 ? "write" : t === 5 ? "no" : t === 6 ? "ok" : "",
@@ -1406,7 +1420,8 @@ function duoSvg(wide, t) {
   // from step 7, with x+1 moved under it. Files not in a snapshot yet are dashed.
   const top = { x: tb.x + 14, y: tb.y + 40, w: tb.w - 28, h: 48 }, low = { ...top, y: top.y + 56 };
   const fx = top.x + 10, aFiles = cls => Array(done[0]).fill(`ja ${cls}`), bFiles = cls => Array(done[1]).fill(`jb ${cls}`);
-  svg += arBox(tb, "cat", "Catalog · table");
+  svg += arBox(tb, "cat", "Catalog · table") + arKeeps(bk, "keeps the files") + arKeeps(tb, "keeps the table")
+    + arRuntime(rt, wide ? ["Stateless runtimes"] : ["Stateless", "runtimes"], t === last);
   if (t < 4) {
     svg += `<text class="lb" x="${fx}" y="${top.y + 16}">${done[0] ? "new files" : ""}</text>`
       + arFiles(fx, top.y + 24, aFiles("p")) + arFiles(fx, low.y + 24, bFiles("p"));
