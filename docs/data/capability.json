@@ -193,29 +193,6 @@
   },
   {
    "group": "Tables & types",
-   "label": "CREATE TABLE AS SELECT",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "no",
-     "n": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request at org.apache.iceberg.rest.ErrorHandlers$DefaultErrorHandler.accept(Erro…"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
-    }
-   }
-  },
-  {
-   "group": "Tables & types",
    "label": "Partitioned table",
    "cells": {
     "pyspark_iceberg": {
@@ -293,29 +270,6 @@
     },
     "lakesail_iceberg": {
      "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Tables & types",
-   "label": "Types: decimal, date, timestamp, timestamptz, uuid, binary",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "no",
-     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...0782_1_type_uuid` …"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type"
     },
     "chdb_iceberg": {
      "o": "supported"
@@ -542,28 +496,6 @@
   },
   {
    "group": "Schema",
-   "label": "Sort order at create",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "na"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "na"
-    },
-    "chdb_iceberg": {
-     "o": "skipped",
-     "n": "no table could be created"
-    }
-   }
-  },
-  {
-   "group": "Schema",
    "label": "Sort order evolution",
    "cells": {
     "pyspark_iceberg": {
@@ -582,27 +514,6 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
-    }
-   }
-  },
-  {
-   "group": "Concurrency",
-   "label": "A commit against a stale snapshot is refused",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "na"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "na"
-    },
-    "chdb_iceberg": {
-     "o": "na"
     }
    }
   },
@@ -782,30 +693,6 @@
   },
   {
    "group": "Read & maintenance",
-   "label": "Expire snapshots",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "skipped"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Catalog Error: Table Function with name iceberg_expire_snapshots does not exist! Did you mean \"iceberg_snapshots\"?"
-    },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 48. DB::Exception: expire_snapshots is not supported for Iceberg tables backed by a transactional catalog. (NOT_IMPLEMENTED)"
-    }
-   }
-  },
-  {
-   "group": "Read & maintenance",
    "label": "Create branch",
    "cells": {
     "pyspark_iceberg": {
@@ -848,28 +735,6 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
-    }
-   }
-  },
-  {
-   "group": "Read & maintenance",
-   "label": "Credential vending",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "broken",
-     "n": "read and wrote, but Spark's FileIO holds no vended SAS (no adls key)"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "na"
-    },
-    "chdb_iceberg": {
-     "o": "na"
     }
    }
   }

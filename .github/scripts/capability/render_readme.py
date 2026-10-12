@@ -54,7 +54,6 @@ ROWS = [
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in ("spark", "duckdb", "sail")}),
-    ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in ("spark", "duckdb", "sail")}),
     (
         "Partitioned table",
         {
@@ -70,10 +69,6 @@ ROWS = [
         "Partition transforms: year / month / day / hour",
         {e: ["partition_temporal"] for e in ENGINES},
     ),
-    (
-        "Types: decimal, date, timestamp, timestamptz, uuid, binary",
-        {e: ["types_scalar"] for e in ENGINES},
-    ),
     ("Nested types: struct, list, map", {e: ["types_nested"] for e in ENGINES}),
     (
         "Add column",
@@ -88,7 +83,6 @@ ROWS = [
         {e: ["write_after_evolution"] for e in ("spark", "polars", "duckdb")},
     ),
     ("Set table property", {e: ["set_property"] for e in SQL}),
-    ("Sort order at create", {"duckdb": ["create_sorted_at_create"]}),
     (
         "Sort order evolution",
         {"spark": ["sort_order"], "duckdb": ["create_sorted"], "sail": ["sort_order"]},
@@ -107,7 +101,6 @@ ROWS = [
     ("File pruning from min/max in the metadata", {e: ["file_pruning"] for e in ENGINES}),
     ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
     ("Compaction", {e: ["rewrite_data_files"] for e in ("spark", "duckdb", "sail")}),
-    ("Expire snapshots", {e: ["expire_snapshots"] for e in SQL}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
     ("Create tag", {e: ["create_tag"] for e in ("spark", "sail")}),
     (
@@ -121,12 +114,6 @@ ROWS = [
             "duckdb": ["create_schema", "drop_schema"],
             "sail": ["namespace"],
         },
-    ),
-    ("Credential vending", {e: ["credential_vending"] for e in ("spark", "duckdb")}),
-    # DuckDB's cell is its isolation run's INSERT race on the `no retries` table.
-    (
-        "A commit against a stale snapshot is refused",
-        {"polars": ["stale_assertion"], "duckdb": ["stale_assertion"]},
     ),
     # Writer B (pyiceberg) commits between the engine's read and its commit
     # (bench/capability/race.py).
@@ -147,9 +134,7 @@ CHDB = {
     # chDB has no MERGE statement at all: its MERGE INTO probe is the one-action cell's answer.
     "MERGE with one action": ["merge_into"],
     "TRUNCATE": ["truncate"],
-    "CREATE TABLE AS SELECT": ["ctas"],
     "Partitioned table": ["partitioned"],
-    "Sort order at create": ["sorted_at_create"],
     "Sort order evolution": ["sort_order_evolution"],
     "Metadata tables": ["metadata_tables"],
     "Compaction": ["compaction"],
@@ -172,12 +157,10 @@ GROUPS = {
     ],
     "Tables & types": [
         "CREATE TABLE",
-        "CREATE TABLE AS SELECT",
         "Partitioned table",
         "Partition transform: bucket",
         "Partition transform: truncate",
         "Partition transforms: year / month / day / hour",
-        "Types: decimal, date, timestamp, timestamptz, uuid, binary",
         "Nested types: struct, list, map",
         "Drop table with purge",
         "Create / drop namespace",
@@ -190,11 +173,9 @@ GROUPS = {
         "Partition evolution",
         "Write after partition evolution",
         "Set table property",
-        "Sort order at create",
         "Sort order evolution",
     ],
     "Concurrency": [
-        "A commit against a stale snapshot is refused",
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
@@ -207,10 +188,8 @@ GROUPS = {
         "Time travel",
         "Metadata tables",
         "Compaction",
-        "Expire snapshots",
         "Create branch",
         "Create tag",
-        "Credential vending",
     ],
 }
 # The site's engine keys, which are lakehouse_benchmark's.
