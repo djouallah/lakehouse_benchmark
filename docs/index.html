@@ -840,10 +840,6 @@ const NEXT_ROWS = [
     text: `Today every commit writes a new metadata.json, a new manifest list and at least one manifest, even for one
       small file. The Iceberg v4 proposal keeps small changes in one file near the root and tidies up later. Delta 5.0
       may use the same metadata. It is still a proposal.` },
-  { title: "Spark with no JVM",
-    text: `The Spark API, and no JVM anywhere: no heap to size, no slow start. Here a Spark session takes 9 to 28 s
-      to start; the engines with no JVM take 2 to 9 s. <a href="https://github.com/lakehq/sail">Sail</a> does it
-      today. Next is for it to become normal.` },
   { title: "DataFusion",
     text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
       its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
@@ -864,6 +860,10 @@ const NEXT_ROWS = [
       other users' data. Mixing SQL and code made engines powerful, but it broke the isolation between users. The
       fix is to run each user's code in a sandbox, like gVisor or WebAssembly, with no access to files or the
       network. One more reason to keep the work in SQL.` },
+  { title: "Spark executors with no JVM",
+    text: `Spark executors in native code, and no JVM anywhere: no heap to size, no slow start. Here a Spark session
+      takes 9 to 28 s to start; the engines with no JVM take 2 to 9 s. <a href="https://github.com/lakehq/sail">Sail</a>
+      does it today. Next is for it to become normal.` },
 ];
 
 function renderNext() {
