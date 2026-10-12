@@ -49,13 +49,13 @@ def test_cell_takes_the_worst_outcome_and_keeps_the_reasons():
 
 def test_unprobed_is_a_dash_and_absent_engine_is_na():
     line = next(ln for ln in render_readme.render(DATA).splitlines() if ln.startswith("| UPDATE |"))
-    assert line == "| UPDATE | na | — |"
+    assert line == "| UPDATE | — | na |"
 
 
 def test_refusals_get_a_note_quoting_the_detail():
     text = render_readme.render(DATA)
     merge = next(ln for ln in text.splitlines() if ln.startswith("| MERGE with one action |"))
-    assert merge == "| MERGE with one action | na | no ¹ |"
+    assert merge == "| MERGE with one action | no ¹ | na |"
     assert "merge_delete_only: `400 Duplicate types: add-snapshot`" in text
 
 
@@ -76,9 +76,11 @@ def test_duckdb_isolation_rows_fill_the_duckdb_column():
         },
     }
     lines = render_readme.render(data).splitlines()
-    assert "| Concurrent append: both kept | — | yes |" in lines
+    assert "| Concurrent append: both kept | yes | — |" in lines
     assert any(
-        ln.startswith("| Concurrent writer: DELETE loses nothing") and "| na | no " in ln
+        ln.startswith("| Concurrent writer: DELETE loses nothing")
+        and ln.endswith("| na |")
+        and "| no " in ln
         for ln in lines
     )
 
