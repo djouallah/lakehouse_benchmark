@@ -646,7 +646,7 @@ class SparkCapability:
         return f"gone from the catalog; DELETE sent {', '.join(sent) or 'nothing seen'}; {files}"
 
     def _vended_keys(self, table: str) -> list[str]:
-        """The SAS keys in the FileIO Spark's `vended` catalog opens the table with: its config
+        """The storage keys in the FileIO Spark's `vended` catalog opens the table with: its config
         properties, and the REST `storage-credentials` Iceberg 1.12 hands ADLSFileIO apart from
         them. Key names only; a value is a credential."""
         from py4j.java_gateway import java_import
@@ -661,7 +661,7 @@ class SparkCapability:
         with contextlib.suppress(Exception):
             for cred in io.credentials():
                 keys += [f"storage-credentials {cred.prefix()} {k}" for k in cred.config().keySet()]
-        return sorted(k for k in keys if "sas" in k.lower())
+        return sorted(k for k in keys if "adls" in k.lower() or "storage-credentials" in k)
 
     def credential_vending(self) -> str:
         """Through the `vended` catalog only: its FileIO is ADLSFileIO, which never sees the
@@ -670,13 +670,19 @@ class SparkCapability:
         (the runner's az login), and a success proves nothing."""
         table = self._fresh("vended")
         where = f"vended.`{self.ns}`.`{table}`"
-        read = self.sql(f"SELECT count(*) FROM {where}")[0][0]
-        self.sql(f"INSERT INTO {where} {_select([(4, 40)])}")
-        vended = self._vended_keys(table)
-        if not vended:
-            raise Broken("read and wrote, but Spark's FileIO holds no vended SAS: not proven")
+        keys = self._vended_keys(table)
+        got = ", ".join(keys) or "no adls key"
+        _say(f"       Spark's FileIO for the vended catalog holds: {got}")
+        try:
+            read = self.sql(f"SELECT count(*) FROM {where}")[0][0]
+            self.sql(f"INSERT INTO {where} {_select([(4, 40)])}")
+        except Refused as exc:
+            raise Refused(f"Spark's FileIO holds {got}; {exc}") from None
+        sas = [k for k in keys if "sas" in k.lower()]
+        if not sas:
+            raise Broken(f"read and wrote, but Spark's FileIO holds no vended SAS ({got})")
         return self._expect(
-            table, SEED + [(4, 40)], f"ADLSFileIO with {vended[0]}, read {read} rows then INSERT"
+            table, SEED + [(4, 40)], f"ADLSFileIO with {sas[0]}, read {read} rows then INSERT"
         )
 
     # -- concurrency -------------------------------------------------------------------------
