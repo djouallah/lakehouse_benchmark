@@ -38,9 +38,7 @@ class PysparkCapability(PysparkIceberg):
         catalogs = ["onelake", "vended"]
         vended = _catalog_conf("vended", self.cfg.warehouse)
         vended["spark.sql.catalog.vended.io-impl"] = "org.apache.iceberg.azure.adlsv2.ADLSFileIO"
-        vended["spark.sql.catalog.vended.header.X-Iceberg-Access-Delegation"] = (
-            "vended-credentials"
-        )
+        vended["spark.sql.catalog.vended.header.X-Iceberg-Access-Delegation"] = "vended-credentials"
         conf.update(vended)
         if self._race_endpoint:
             race = _catalog_conf("race", self.cfg.warehouse)
