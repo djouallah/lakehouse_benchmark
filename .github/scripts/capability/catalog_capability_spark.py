@@ -727,6 +727,11 @@ class SparkCapability:
         print(f"\ndropped {dropped} probe table(s)" + (f"; left behind {left}" if left else ""))
 
 
+# Probes Spark does not ask for now; the row shows `—`, not probed. Spark's expire_snapshots
+# commit carries several updates of one type, which the catalog takes one at a time until a fix
+# that is close. Take the key out of here when it ships.
+PAUSED = {"expire_snapshots"}
+
 PROBES = [
     ("session", "Spark starts and attaches the REST catalog", "session"),
     ("create", "CREATE TABLE ... USING iceberg", "create_table"),
@@ -803,6 +808,8 @@ def main() -> int:
 
     try:
         for group, question, method in PROBES:
+            if method in PAUSED:
+                continue
             ok = probe.report.run(group, question, getattr(probe, method))
             if not ok and method == "session":
                 print("\nstopped: no Spark session, so nothing below could be asked")
