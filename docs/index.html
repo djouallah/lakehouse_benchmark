@@ -851,6 +851,9 @@ const NEXT_ROWS = [
     text: `When two jobs change existing data, the check today is per file: if they touched the same file, the second
       commit fails, even if they changed different rows. Iceberg v3 gives every row an id (row lineage), so the check
       can be per row. See <a href="#concurrency">Concurrency</a>.` },
+  { title: "Control flow in SQL",
+    text: `<code>IF</code> and <code>WHILE</code> inside SQL. A host language like Python can do it today, but then
+      the optimizer sees one statement at a time and nothing around it. Nothing beats one SQL file.` },
 ];
 
 function renderNext() {
