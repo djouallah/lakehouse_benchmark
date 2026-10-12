@@ -22,6 +22,8 @@ import sys
 
 from harness import (
     BROKEN,
+    EVOLVE_FIRST,
+    EVOLVE_THEN,
     MAX_EXPECTED,
     NAMESPACE,
     NESTED_TYPES,
@@ -38,6 +40,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    evolution_check,
+    evolve_spec,
     iceberg_schema,
     partition_result,
     promotion_check,
@@ -468,6 +472,20 @@ class SailCapability:
             raise NoOp("returned success and the table is still unpartitioned")
         return f"spec now {spec}"
 
+    def write_after_evolution(self) -> str:
+        """Sail cannot evolve the spec in SQL, so pyiceberg adds bucket(4, id), as for Polars;
+        Sail writes before and after."""
+        if not self.can_create:
+            raise Skip("no table could be created")
+        table = self._create("evowrite")
+        first = ", ".join(f"({i}, {v})" for i, v in EVOLVE_FIRST)
+        then = ", ".join(f"({i}, {v})" for i, v in EVOLVE_THEN)
+        self.sql(f"INSERT INTO {self.t(table)} VALUES {first}")
+        evolve_spec(self.iceberg(table))
+        self.sql(f"INSERT INTO {self.t(table)} VALUES {then}")
+        count = self.sql(f"SELECT count(*) FROM {self.t(table)}")[0][0]
+        return evolution_check(self.iceberg(table), count)
+
     def set_property(self) -> str:
         table = self._fresh("props")
         self.sql(f"ALTER TABLE {self.t(table)} SET TBLPROPERTIES ('probed-at' = '{self.run}')")
@@ -695,6 +713,7 @@ PROBES = [
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
     ("schema", "ALTER COLUMN c TYPE BIGINT (int -> long)", "type_promotion"),
     ("schema", "ALTER TABLE ADD PARTITION FIELD (partition evolution)", "partition_evolution"),
+    ("schema", "INSERT, pyiceberg adds bucket(4, id), INSERT", "write_after_evolution"),
     ("schema", "ALTER TABLE SET TBLPROPERTIES", "set_property"),
     ("read", "time travel, VERSION AS OF", "time_travel"),
     ("read", "metadata tables (t.snapshots)", "metadata_tables"),

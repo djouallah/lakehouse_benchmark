@@ -659,6 +659,14 @@ class DuckDBCapability:
             raise NoOp(f"returned success and the refs are {sorted(refs)}")
         return f"refs now {sorted(refs)}"
 
+    def create_tag(self) -> str:
+        table = self._fresh("tag")
+        self.sql(f"ALTER TABLE {self.t(table)} CREATE TAG probe_tag")
+        refs = sorted(self.iceberg(table).metadata.refs)
+        if "probe_tag" not in refs:
+            raise NoOp(f"returned success and the refs are {refs}")
+        return f"refs now {refs}"
+
     def expire_snapshots(self) -> str:
         table = self._fresh("expire")
         self.sql(f"INSERT INTO {self.t(table)} VALUES (4, 40)")
@@ -808,6 +816,7 @@ PROBES = [
     ("read", "WHERE id = 22 with the other data files deleted (file pruning)", "file_pruning"),
     ("read", "max(id) with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("refs", "ALTER TABLE ... CREATE BRANCH", "create_branch"),
+    ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "iceberg_expire_snapshots", "expire_snapshots"),
     ("maintenance", "iceberg_rewrite_data_files (compaction)", "rewrite_data_files"),
     ("catalog", "DROP TABLE", "drop_table"),

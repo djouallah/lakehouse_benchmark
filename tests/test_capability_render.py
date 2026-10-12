@@ -141,18 +141,21 @@ def test_every_spark_cell_has_a_probe():
         assert f'"{key}"),' in text, f"{key} is not in PROBES"
 
 
-def test_every_sql_engine_is_probed_on_every_basic_row():
-    """Basic, the grid's first group, is the minimum to be usable: no SQL engine is left unasked,
-    and each probe key a Basic row reads is defined and in PROBES."""
-    sources = dict(render_readme.ROWS)
-    for label in render_readme.GROUPS["Basic"]:
-        assert set(render_readme.SQL) <= set(sources[label]), label
-        for engine, keys in sources[label].items():
-            script = (
-                _ROOT / ".github" / "scripts" / "capability" / f"catalog_capability_{engine}.py"
-            )
+def test_every_sql_engine_is_probed_on_every_row():
+    """No SQL engine is left unasked on any row, so a "—" never hides a missing probe. Each probe
+    key a row reads is defined in the engine's script and listed in its PROBES. DuckDB's race_*
+    cells are its isolation run's (isolation_duckdb.py), so they are checked there."""
+    scripts = _ROOT / ".github" / "scripts" / "capability"
+    isolation = (scripts / "isolation_duckdb.py").read_text(encoding="utf-8")
+    for label, sources in render_readme.ROWS:
+        assert set(render_readme.SQL) <= set(sources), label
+        for engine, keys in sources.items():
+            script = scripts / f"catalog_capability_{engine}.py"
             text = script.read_text(encoding="utf-8")
             for key in keys:
+                if engine == "duckdb" and key.startswith("race_"):
+                    assert f'"{key}": (' in isolation, f"isolation_duckdb.py: {key}"
+                    continue
                 assert f"def {key}(self)" in text, f"{script.name}: {key}"
                 assert f'"{key}"),' in text, f"{script.name}: {key} is not in PROBES"
 

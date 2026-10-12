@@ -28,7 +28,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | Rename column | yes | yes | no ⁹ | yes | na |
 | Type promotion (int → long) | yes | yes | no ¹⁰ | yes | yes |
 | Partition evolution | yes | yes | no ¹¹ | no ¹² | na |
-| Write after partition evolution | yes | yes | na | na | yes |
+| Write after partition evolution | yes | yes | — | — | yes |
 | Set table property | yes | yes | no ¹³ | no ¹⁴ | na |
 | Sort order evolution | yes | yes | no ¹⁵ | no ¹⁶ | na |
 | Time travel | yes | yes | yes | yes | yes |
@@ -37,9 +37,9 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | MAX from the metadata, no data file read | yes | no ¹⁸ | yes | no ¹⁹ | no ²⁰ |
 | Compaction | yes | yes | no ²¹ | no-op ²² | na |
 | Create branch | yes | no ²³ | no ²⁴ | no ²⁵ | na |
-| Create tag | yes | na | no ²⁶ | no ²⁷ | na |
+| Create tag | yes | — | no ²⁶ | no ²⁷ | na |
 | Drop table with purge | yes | yes | yes | no ²⁸ | na |
-| Create / drop namespace | yes | yes | yes | na | na |
+| Create / drop namespace | yes | yes | yes | — | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | yes | yes | yes | yes | na |
 | Concurrent writer: UPDATE loses nothing | yes | yes | yes | yes | na |

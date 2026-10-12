@@ -26,6 +26,8 @@ from datetime import UTC, datetime
 
 from harness import (
     BROKEN,
+    EVOLVE_FIRST,
+    EVOLVE_THEN,
     MAX_EXPECTED,
     NAMESPACE,
     NESTED_TYPES,
@@ -43,6 +45,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    evolution_check,
+    evolve_spec,
     iceberg_schema,
     partition_result,
     promotion_check,
@@ -404,6 +408,18 @@ class ChdbCapability:
             raise NoOp("returned success and the table is still unpartitioned")
         return f"spec now {spec}"
 
+    def write_after_evolution(self) -> str:
+        """chDB cannot evolve the spec in SQL, so pyiceberg adds bucket(4, id), as for Polars;
+        chDB writes before and after."""
+        table = self._empty("evowrite")
+        first = ", ".join(f"({i}, {v})" for i, v in EVOLVE_FIRST)
+        then = ", ".join(f"({i}, {v})" for i, v in EVOLVE_THEN)
+        self.sql(f"INSERT INTO {self.t(table)} VALUES {first}")
+        evolve_spec(self.iceberg(table))
+        self.sql(f"INSERT INTO {self.t(table)} VALUES {then}")
+        count = self.sql(f"SELECT count(*) FROM {self.t(table)}")[0][0]
+        return evolution_check(self.iceberg(table), count)
+
     def set_property(self) -> str:
         table = self._fresh("props")
         self.sql(f"ALTER TABLE {self.t(table)} SET TBLPROPERTIES ('probed-at' = '{self.run}')")
@@ -533,6 +549,23 @@ class ChdbCapability:
             raise NoOp(f"renamed, and the data is unreadable under the new name: {found}")
         return "renamed, and its 3 rows read back"
 
+    def namespace(self) -> str:
+        """ClickHouse has no statement for a catalog namespace. Its only way to make one is a
+        CREATE TABLE inside it (RestCatalog creates the namespace first), and none drops one."""
+        ns = self.name("ns")
+        table = f"{DB}.`{ns}.t`"
+        try:
+            self.sql(f"CREATE TABLE {table} (id Int64, v Int64)")
+        finally:
+            listed = (ns,) in self.pyiceberg().list_namespaces()
+            if listed:
+                for ident in self.pyiceberg().list_tables(ns):
+                    self.pyiceberg().purge_table(ident)
+                self.pyiceberg().drop_namespace(ns)
+        if not listed:
+            raise NoOp("CREATE TABLE in a new namespace returned success and pyiceberg lists none")
+        raise Refused("created through CREATE TABLE; ClickHouse has no statement to drop one")
+
     def drop_table(self) -> str:
         table = self._fresh("drop")
         made = "; table made by pyiceberg" if table in self.by_pyiceberg else ""
@@ -619,6 +652,7 @@ PROBES = [
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
     ("schema", "MODIFY COLUMN c Int64 (int -> long)", "type_promotion"),
     ("schema", "ALTER TABLE ADD PARTITION FIELD (partition evolution)", "partition_evolution"),
+    ("schema", "INSERT, pyiceberg adds bucket(4, id), INSERT", "write_after_evolution"),
     ("schema", "ALTER TABLE SET TBLPROPERTIES", "set_property"),
     ("schema", "ALTER TABLE MODIFY ORDER BY (sort order evolution)", "sort_order_evolution"),
     ("read", "time travel, SETTINGS iceberg_snapshot_id", "time_travel"),
@@ -629,6 +663,7 @@ PROBES = [
     ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "ALTER TABLE ... EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE (compaction)", "compaction"),
+    ("catalog", "CREATE TABLE in a new namespace (no namespace statement)", "namespace"),
     ("catalog", "RENAME TABLE, then read", "rename_table"),
     ("catalog", "DROP TABLE", "drop_table"),
     ("concurrency", "INSERT INTO; B appends between chDB's read and commit", "race_append"),

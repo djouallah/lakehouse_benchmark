@@ -81,7 +81,7 @@ ROWS = [
     ("Partition evolution", {e: ["partition_evolution"] for e in SQL}),
     (
         "Write after partition evolution",
-        {e: ["write_after_evolution"] for e in ("spark", "polars", "duckdb")},
+        {e: ["write_after_evolution"] for e in ENGINES},
     ),
     ("Set table property", {e: ["set_property"] for e in SQL}),
     (
@@ -103,7 +103,7 @@ ROWS = [
     ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
     ("Compaction", {e: ["rewrite_data_files"] for e in ("spark", "duckdb", "sail")}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
-    ("Create tag", {e: ["create_tag"] for e in ("spark", "sail")}),
+    ("Create tag", {e: ["create_tag"] for e in ("spark", "duckdb", "sail")}),
     (
         "Drop table with purge",
         {"spark": ["drop_purge"], "duckdb": ["drop_table"], "sail": ["drop_purge"]},
@@ -141,6 +141,7 @@ CHDB = {
     "Compaction": ["compaction"],
     "Create tag": ["create_tag"],
     "Drop table with purge": ["drop_table"],
+    "Create / drop namespace": ["namespace"],
 }
 for _label, _sources in ROWS:
     if _label in CHDB:
