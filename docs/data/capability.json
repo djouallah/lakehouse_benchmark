@@ -6,12 +6,6 @@
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38239533754",
    "date": "2026-10-12"
   },
-  "polars_iceberg": {
-   "version": "2.0.0",
-   "run": "38022167812",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
-   "date": "2026-10-10"
-  },
   "duckdb_iceberg": {
    "version": "v2.0.0-alpha46057",
    "run": "38022167812",
@@ -26,6 +20,12 @@
   },
   "chdb_iceberg": {
    "version": "4.4.0",
+   "run": "38022167812",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
+   "date": "2026-10-10"
+  },
+  "polars_iceberg": {
+   "version": "2.0.0",
    "run": "38022167812",
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
    "date": "2026-10-10"
@@ -49,9 +49,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -61,6 +58,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -71,9 +71,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -81,6 +78,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -92,9 +92,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -103,6 +100,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -113,9 +113,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -124,6 +121,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -134,9 +134,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -145,6 +142,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -155,9 +155,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -166,6 +163,9 @@
     },
     "chdb_iceberg": {
      "o": "skipped"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -176,9 +176,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -188,6 +185,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38022167812_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -197,9 +197,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -212,6 +209,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -222,9 +222,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -232,6 +229,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -243,10 +243,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "no",
-     "n": "works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -255,6 +251,10 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform"
     }
    }
   },
@@ -265,9 +265,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -275,6 +272,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -286,9 +286,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -296,6 +293,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -307,9 +307,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -317,6 +314,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -328,9 +328,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -338,6 +335,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "na"
+    },
+    "polars_iceberg": {
      "o": "na"
     }
    }
@@ -349,9 +349,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -360,6 +357,9 @@
      "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -371,9 +371,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -383,6 +380,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -393,9 +393,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -405,6 +402,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -413,9 +413,6 @@
    "label": "Type promotion (int → long)",
    "cells": {
     "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -427,6 +424,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
     }
    }
   },
@@ -436,9 +436,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -450,6 +447,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -460,9 +460,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -471,6 +468,9 @@
     },
     "chdb_iceberg": {
      "o": "na"
+    },
+    "polars_iceberg": {
+     "o": "supported"
     }
    }
   },
@@ -480,9 +480,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -494,6 +491,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38022167812_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -503,9 +503,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -517,6 +514,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -527,9 +527,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -537,6 +534,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -548,9 +548,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -559,6 +556,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -569,9 +569,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -580,6 +577,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -590,9 +590,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -600,6 +597,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -611,10 +611,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "no",
-     "n": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/…"
-    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-…"
@@ -625,6 +621,10 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 9ea857cb-f01e-0074-1372-5…"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/…"
     }
    }
   },
@@ -635,9 +635,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "supported"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -645,6 +642,9 @@
      "o": "supported"
     },
     "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
      "o": "supported"
     }
    }
@@ -656,9 +656,6 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
-     "o": "na"
-    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -668,6 +665,9 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -677,9 +677,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -692,6 +689,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, …"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -701,9 +701,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "na"
@@ -715,6 +712,9 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   },
@@ -724,9 +724,6 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -738,6 +735,9 @@
     "chdb_iceberg": {
      "o": "no-op",
      "n": "returned success and data files went 2 -> 2"
+    },
+    "polars_iceberg": {
+     "o": "na"
     }
    }
   }

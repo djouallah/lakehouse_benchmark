@@ -167,6 +167,10 @@ def test_insert_select_reads_the_table_it_writes():
         assert 'SELECT id + 10, v FROM {self.t(table)}"' in probe, engine
 
 
+def test_the_columns_go_from_most_to_least_usable():
+    assert render_readme.ENGINES == ("spark", "duckdb", "sail", "chdb", "polars")
+
+
 def test_spark_sends_the_purge_to_the_catalog():
     """Iceberg 1.12's rest-catalog-purge is on for every catalog the Spark probe session opens."""
     text = (_ROOT / "bench" / "capability" / "engines" / "pyspark_iceberg.py").read_text(

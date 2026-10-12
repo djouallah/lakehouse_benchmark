@@ -17,8 +17,9 @@ import re
 import sys
 from pathlib import Path
 
-# Spark first: the reference, the Iceberg Java library the others are read against.
-ENGINES = ("spark", "polars", "duckdb", "sail", "chdb")
+# The column order, most usable first. Spark is the reference: the Iceberg Java library the others
+# are read against. Polars is last because it has no SQL writes (no CREATE, DELETE, UPDATE, DROP).
+ENGINES = ("spark", "duckdb", "sail", "chdb", "polars")
 # The ones with SQL, for the rows Polars has no operation for.
 SQL = ("spark", "duckdb", "sail", "chdb")
 TITLE = {"spark": "Spark", "polars": "Polars", "duckdb": "DuckDB", "sail": "Sail", "chdb": "chDB"}

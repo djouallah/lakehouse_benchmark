@@ -6,43 +6,43 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 
 `yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no such operation · `—` not probed · `?` the probe could not ask
 
-| Operation | Spark | Polars | DuckDB | Sail | chDB |
+| Operation | Spark | DuckDB | Sail | chDB | Polars |
 |---|---|---|---|---|---|
-| Version | 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01) | 2.0.0 | v2.0.0-alpha46057 | 0.7.2 | 4.4.0 |
-| Language | Java | Rust | C++ | Rust | C++ |
-| Iceberg implementation | the Iceberg Java library, the reference | own parquet reader and writer, pyiceberg for the catalog and commit | own | own, on DataFusion | ClickHouse's own |
-| CREATE TABLE | yes | na | yes | yes | no ¹ |
+| Version | 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01) | v2.0.0-alpha46057 | 0.7.2 | 4.4.0 | 2.0.0 |
+| Language | Java | C++ | Rust | C++ | Rust |
+| Iceberg implementation | the Iceberg Java library, the reference | own | own, on DataFusion | ClickHouse's own | own parquet reader and writer, pyiceberg for the catalog and commit |
+| CREATE TABLE | yes | yes | yes | no ¹ | na |
 | INSERT / append | yes | yes | yes | yes | yes |
-| INSERT ... SELECT | yes | na | yes | — | yes |
-| DELETE | yes | na | yes | yes | yes |
-| UPDATE | yes | na | yes | yes | yes |
-| MERGE with one action | yes | na | yes | yes | no ² |
-| TRUNCATE | yes | na | no ³ | no ⁴ | no ⁵ |
+| INSERT ... SELECT | yes | yes | — | yes | na |
+| DELETE | yes | yes | yes | yes | na |
+| UPDATE | yes | yes | yes | yes | na |
+| MERGE with one action | yes | yes | yes | no ² | na |
+| TRUNCATE | yes | no ³ | no ⁴ | no ⁵ | na |
 | Partitioned table | yes | yes | yes | yes | yes |
-| Partition transform: bucket | yes | no ⁶ | yes | yes | yes |
+| Partition transform: bucket | yes | yes | yes | yes | no ⁶ |
 | Partition transform: truncate | yes | yes | yes | yes | yes |
 | Partition transforms: year / month / day / hour | yes | yes | yes | yes | yes |
 | Nested types: struct, list, map | yes | yes | yes | yes | yes |
-| Add column | yes | yes | yes | no ⁷ | yes |
-| Drop column | yes | na | yes | no ⁸ | yes |
-| Rename column | yes | na | yes | no ⁹ | yes |
-| Type promotion (int → long) | yes | yes | yes | no ¹⁰ | yes |
-| Partition evolution | yes | na | yes | no ¹¹ | no ¹² |
-| Write after partition evolution | yes | yes | yes | na | na |
-| Set table property | yes | na | yes | no ¹³ | no ¹⁴ |
-| Sort order evolution | yes | na | yes | no ¹⁵ | no ¹⁶ |
+| Add column | yes | yes | no ⁷ | yes | yes |
+| Drop column | yes | yes | no ⁸ | yes | na |
+| Rename column | yes | yes | no ⁹ | yes | na |
+| Type promotion (int → long) | yes | yes | no ¹⁰ | yes | yes |
+| Partition evolution | yes | yes | no ¹¹ | no ¹² | na |
+| Write after partition evolution | yes | yes | na | na | yes |
+| Set table property | yes | yes | no ¹³ | no ¹⁴ | na |
+| Sort order evolution | yes | yes | no ¹⁵ | no ¹⁶ | na |
 | Time travel | yes | yes | yes | yes | yes |
-| Metadata tables | yes | na | yes | no ¹⁷ | yes |
+| Metadata tables | yes | yes | no ¹⁷ | yes | na |
 | File pruning from min/max in the metadata | yes | yes | yes | yes | yes |
-| MAX from the metadata, no data file read | yes | no ¹⁸ | no ¹⁹ | yes | no ²⁰ |
-| Compaction | yes | na | yes | no ²¹ | no-op ²² |
-| Create branch | yes | na | no ²³ | no ²⁴ | no ²⁵ |
-| Create tag | yes | na | na | no ²⁶ | no ²⁷ |
-| Drop table with purge | yes | na | yes | yes | — |
-| Create / drop namespace | yes | na | yes | yes | na |
+| MAX from the metadata, no data file read | yes | no ¹⁸ | yes | no ¹⁹ | no ²⁰ |
+| Compaction | yes | yes | no ²¹ | no-op ²² | na |
+| Create branch | yes | no ²³ | no ²⁴ | no ²⁵ | na |
+| Create tag | yes | na | no ²⁶ | no ²⁷ | na |
+| Drop table with purge | yes | yes | yes | — | na |
+| Create / drop namespace | yes | yes | yes | na | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes |
-| Concurrent writer: DELETE loses nothing | yes | na | yes | yes | yes |
-| Concurrent writer: UPDATE loses nothing | yes | na | yes | yes | yes |
+| Concurrent writer: DELETE loses nothing | yes | yes | yes | yes | na |
+| Concurrent writer: UPDATE loses nothing | yes | yes | yes | yes | na |
 
 ## Notes
 
@@ -63,9 +63,9 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 15. Sail, Sort order evolution: ALTER TABLE ... WRITE ORDERED BY (sort order): `IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
 16. chDB, Sort order evolution: ALTER TABLE MODIFY ORDER BY (sort order evolution): `ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)`
 17. Sail, Metadata tables: metadata tables (t.snapshots): `IllegalArgumentException: invalid argument: table reference: [Identifier("onelake"), Identifier("_bench_capability"), Identifier("sl_38022167812_1_inspect"), Identifier("snapshots")]`
-18. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
-19. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38022167812_1_max/data/00000-0-2e122c73…`
-20. chDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 9ea857cb-f01e-0074-1372-58309b000000. (STD_EXCEPTION)`
+18. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38022167812_1_max/data/00000-0-2e122c73…`
+19. chDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 9ea857cb-f01e-0074-1372-58309b000000. (STD_EXCEPTION)`
+20. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
 21. Sail, Compaction: CALL system.rewrite_data_files (compaction): `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
 22. chDB, Compaction: OPTIMIZE TABLE (compaction): `returned success and data files went 2 -> 2`
 23. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38022167812_1_branch" CREATE BRANCH probe_branch ^^^^^^`
@@ -124,8 +124,8 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`), which writes this file. Every cell is a reading taken by sending the request, not a property of the product: re-run rather than trust it.
 
 - spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38239533754](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38239533754), 2026-10-12
-- polars: 2.0.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - duckdb: v2.0.0-alpha46057, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - sail: 0.7.2, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - chdb: 4.4.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
+- polars: 2.0.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - duckdb_isolation: v2.0.0-alpha46057, [run 38042313677](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38042313677), 2026-10-10
