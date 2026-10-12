@@ -26,7 +26,9 @@ def test_every_engine_has_an_engines_row():
     for engine in LABEL:
         assert f'engine: "{engine}"' in rows("ENGINE_ROWS"), engine
         row = rows("ENGINE_ROWS").split(f'engine: "{engine}"')[1].split("{ engine:")[0]
-        assert 'install: "' in row and 'runs: "' in row and 'scheduling: "' in row and ('execution: "Columnar"' in row or 'execution: "Row"' in row), engine
+        for field in ('install: "', 'runs: "', 'scheduling: "'):
+            assert field in row, (engine, field)
+        assert 'execution: "Columnar"' in row or 'execution: "Row"' in row, engine
 
 
 def test_every_engine_has_a_dbt_row():
