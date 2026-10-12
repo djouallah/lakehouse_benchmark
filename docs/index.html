@@ -312,7 +312,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <section class="cap rows" id="storage" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
-    <p>The view is from storage: the tables live in the lake, and every engine is just a client of them.</p>
+    <p>The bench looks from the storage side. The data stays in the lake. Engines are tools you swap to finish a task.</p>
     <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
     <p>The work is done in SQL. SQL is a shared language; a new syntax for every engine is not progress.</p>
     <p>Iceberg, because an engine attached to a catalog becomes a real database: tables, transactions, many writers.</p>
@@ -324,7 +324,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <p>When an engine fails, the bug is filed upstream (see <a href="#issues">Issues</a>).</p>
   </section>
   <section class="cap rows" id="engines" hidden></section>
-  <section class="cap rows" id="tried" hidden></section>
   <section class="details" id="issues" hidden>
     <h3>In the bench</h3>
     <ul>
@@ -447,11 +446,11 @@ const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capabi
 const DBT = { id: "dbt", title: "dbt support" };
 const WORKLOAD = { id: "workload", title: "Real workload" };
 const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
-const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
+const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Bad joins" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const NEXT = { id: "next", title: "Next" };
-const PAGES = [ARCH, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
+const PAGES = [ARCH, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is what it supports, and speed is a bonus.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
@@ -460,7 +459,7 @@ const GROUPS = [
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },  // header links, not tabs
-  { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED], bar: false },
+  { id: "about", title: "About", subs: [ABOUT], bar: false },
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "next", title: "Next", subs: [NEXT] },
 ];
@@ -678,51 +677,28 @@ const ENGINE_ROWS = [
     governed: "NumFOCUS", licence: "BSD 3-Clause", lang: "Python, C",
     use: "DataFrames in Python, one machine",
     scheduling: "Eager, one operation at a time", execution: "Columnar", install: "pip install pandas", runs: "In-process" },
-  // Tried, no success: not in LABEL, so renderEngines puts them on the Tried tab.
-  { engine: "doris", label: "Apache Doris", url: "https://github.com/apache/doris", started: "Baidu as Palo, 2017",
-    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "C++, Java",
-    use: "Distributed SQL, real-time analytics" },
-  { engine: "firebolt", label: "Firebolt Core", url: "https://github.com/firebolt-db/firebolt-core", started: "Firebolt, 2025",
-    governed: "Firebolt", licence: "Elastic 2.0", lang: "C++",
-    use: "Distributed SQL, self-hosted" },
-  { engine: "databend", label: "Databend", url: "https://github.com/databendlabs/databend", started: "Datafuse Labs, 2020",
-    governed: "Databend Labs", licence: "Apache 2.0", lang: "Rust",
-    use: "Data warehouse on object storage" },
-  { engine: "comet", label: "DataFusion Comet", url: "https://github.com/apache/datafusion-comet", started: "Apple, 2024",
-    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "Rust, Scala",
-    use: "Native execution inside Spark" },
-  { engine: "datafusion", label: "DataFusion", url: "https://github.com/apache/datafusion", started: "Andy Grove, 2017",
-    governed: "Apache Software Foundation", licence: "Apache 2.0", lang: "Rust",
-    use: "Query engine library for other engines" },
-  { engine: "pg_lake", label: "pg_lake", url: "https://github.com/Snowflake-Labs/pg_lake", started: "Snowflake, 2025",
-    governed: "Snowflake", licence: "Apache 2.0", lang: "C",
-    use: "Iceberg inside Postgres" },
 ];
 
 function renderEngines() {
-  // Install, Runs as, Scheduling and Execution only for the engines in the bench; Tried keeps the short table.
-  const table = (rows, run) => {
-    const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", ...(run ? ["Install", "Runs as", "Scheduling", "Execution"] : [])];
+  const table = rows => {
+    const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", "Install", "Runs as", "Scheduling", "Execution"];
     return `
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
-        <td class="e"><i class="sw"></i><a href="${r.url}">${esc(r.label ?? LABEL[r.engine] ?? r.engine)}</a></td>
+        <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
-        <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>${run ? `
+        <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>
         <td class="n">${r.install}</td><td class="n">${r.runs}</td>
-        <td class="n">${r.scheduling}</td><td class="n">${r.execution}</td>` : ""}
+        <td class="n">${r.scheduling}</td><td class="n">${r.execution}</td>
       </tr>`).join("")}</tbody></table></div>`;
   };
   $("engines").innerHTML = `
     <p class="caption">The engines in the bench. From each project's own repo and site.</p>
-    ${table(ENGINE_ROWS.filter(r => r.engine in LABEL), true)}
+    ${table(ENGINE_ROWS)}
     <p class="note">Runs as: In-process is a library inside the Python process; Client-server is a separate server that Python sends SQL to.
       Scheduling: how work is split and handed to threads. Morsel-driven: small chunks of data
       pushed through pipelines, any free thread takes the next chunk. Volcano: each operator pulls rows or
       batches from the one below it. Execution: Columnar works on batches of column values; Row works one row at a time.</p>`;
-  $("tried").innerHTML = `
-    <p class="caption">Engines tried that did not work here; <a href="#issues">Issues</a> says why.</p>
-    ${table(ENGINE_ROWS.filter(r => !(r.engine in LABEL)))}`;
 }
 
 // THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB,
@@ -1286,8 +1262,8 @@ function hideTip() { tip.classList.remove("on"); }
 
 // THE CONCURRENCY TAB: one run, two scenarios. First the ETL as it runs: a job streams CSV batches from a
 // bucket into a table, every batch becomes a new file, and the table changes only once, at the commit
-// (bench/etl/iceberg.py append_stream). Then two writers: one commit refused and retried. Then a note on
-// what comes next. Conceptual on purpose: no engine, vendor or product names.
+// (bench/etl/iceberg.py append_stream). Then two writers: one commit refused and retried.
+// Conceptual on purpose: no engine, vendor or product names.
 const BATCHES = 5, DUO_BATCHES = 3, SOLO_STEPS = 8, ARCH_LAST = 15;  // the last step stays on screen
 const arch = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
@@ -1485,13 +1461,14 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #catalogs, #storage, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines, #tried,
+// Deep links: #catalogs, #storage, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "details") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
+  if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
   const story = h.match(/^plans-(\w+)$/);  // one Bad joins story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
