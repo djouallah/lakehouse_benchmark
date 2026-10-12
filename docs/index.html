@@ -860,10 +860,13 @@ const NEXT_ROWS = [
   { title: "Friendly DataFusion",
     text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
       its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
-  { title: "Spark executors with no JVM",
-    text: `Spark executors in native code, and no JVM anywhere: no heap to size, no slow start. Here a Spark session
-      takes 9 to 28 s to start; the engines with no JVM take 2 to 9 s. <a href="https://github.com/lakehq/sail">Sail</a>
-      does it today. Next is for it to become normal.` },
+  { title: "Spark Connect for everything",
+    text: `Spark becomes an API. The client speaks Spark Connect, and the engine behind it can change: Spark with a
+      native accelerator (<a href="https://github.com/apache/gluten">Gluten/Velox</a>,
+      <a href="https://github.com/apache/datafusion-comet">Comet</a>), or a full rewrite with no JVM
+      (<a href="https://github.com/lakehq/sail">Sail</a>). Several servers now speak the protocol, so a Spark proposal
+      lets a server say what it supports: <a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>.
+      Someone will still say streaming needs the JVM.` },
 ];
 
 function renderNext() {
