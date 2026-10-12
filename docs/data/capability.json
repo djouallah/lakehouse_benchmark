@@ -2,8 +2,8 @@
  "engines": {
   "pyspark_iceberg": {
    "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
-   "run": "38210422696",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38210422696",
+   "run": "38211902668",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38211902668",
    "date": "2026-10-12"
   },
   "polars_iceberg": {
@@ -305,7 +305,7 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "no",
-     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...2696_1_type_uuid` …"
+     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...2668_1_type_uuid` …"
     },
     "polars_iceberg": {
      "o": "supported"
@@ -785,8 +785,7 @@
    "label": "Expire snapshots",
    "cells": {
     "pyspark_iceberg": {
-     "o": "no",
-     "n": "Only one instance of each update type is allowed per request. Duplicate types: remove-snapshots"
+     "o": "skipped"
     },
     "polars_iceberg": {
      "o": "na"
@@ -858,7 +857,7 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "broken",
-     "n": "read and wrote, but the catalog vended no adls.sas-token: not proven"
+     "n": "Py4JError: An error occurred while calling z:org.apache.iceberg.catalog.TableIdentifier.of. Trace: py4j.Py4JException: Method of([class java.lang.String, class java.lang.String]) does not exist at py4j.reflection.Reflec…"
     },
     "polars_iceberg": {
      "o": "na"
