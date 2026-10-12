@@ -840,10 +840,10 @@ const NEXT_ROWS = [
     text: `Today every commit writes a new metadata.json, a new manifest list and at least one manifest, even for one
       small file. The Iceberg v4 proposal keeps small changes in one file near the root and tidies up later. Delta 5.0
       may use the same metadata. It is still a proposal.` },
-  { title: "Native executors for Spark",
-    text: `Keep the Spark API, run the work in C++ or Rust. <a href="#tpcds">Gluten/Velox</a> already does it here and
-      finishes TPC-DS at SF 100 on 16 GB. <a href="https://github.com/apache/datafusion-comet">Comet</a> does the same
-      on DataFusion. <a href="https://github.com/lakehq/sail">Sail</a> goes further: the Spark API with no JVM.` },
+  { title: "Spark with no JVM",
+    text: `The Spark API, and no JVM anywhere: no heap to size, no slow start. Here a Spark session takes 9 to 28 s
+      to start; the engines with no JVM take 2 to 9 s. <a href="https://github.com/lakehq/sail">Sail</a> does it
+      today. Next is for it to become normal.` },
   { title: "DataFusion",
     text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
       its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
