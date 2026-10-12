@@ -314,12 +314,11 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
   <section class="nx-page" id="next" hidden></section>
-  <section class="cap rows" id="storage" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
     <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
     <p>So the state lives in the catalog, not in the engine. The engine starts, does the work, and stops
-      (<a href="#storage">Catalogs</a>).</p>
+      (<a href="#concurrency">Catalogs</a>).</p>
     <p>The work is done in SQL. An agent writes the same SQL for every engine; a new syntax for every engine is not progress.</p>
     <p>The first test is simple: read the files, write the tables. Most engines that were tried failed here,
       on the object store, not on SQL (<a href="#issues">Issues</a>).</p>
@@ -455,17 +454,16 @@ const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title:
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const DBT = { id: "dbt", title: "dbt support" };
 const WORKLOAD = { id: "workload", title: "Real workload" };
-const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_token.json" };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Bad joins" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const NEXT = { id: "next", title: "Next" };
-const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is what it supports, and speed is a bonus.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "catalogs", title: "Catalogs", subs: [STORAGE, ARCH, ANATOMY] },  // the commit is the catalog's job
+  { id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] },  // the commit is the catalog's job
   { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
@@ -519,7 +517,6 @@ function render() {
   if (page === DBT) { renderDbt(); return; }
   if (page === WORKLOAD) { renderWorkload(); return; }
   if (page === NEXT) { renderNext(); return; }
-  if (page === STORAGE) { renderStorage(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -860,27 +857,6 @@ const NEXT_ROWS = [
 function renderNext() {
   $(NEXT.id).innerHTML = `
     <div class="nx">${NEXT_ROWS.map(r => `<article><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
-}
-
-// THE CATALOGS TAB (storage token): the bench runs on OneLake, but the engines do not need it. With only the
-// catalog address and a token, DuckDB writes one row and reads it back. Most catalogs give the storage
-// token; the AWS ones give none, and DuckDB uses an AWS key there (`storage` in the data). The test and its secrets live in testing-iceberg-rest-catalog; its storage-token workflow
-// pushes the catalogs that worked to data/storage_token.json.
-const STORAGE_REPO = "https://github.com/djouallah/testing-iceberg-rest-catalog";
-function renderStorage() {
-  const sec = $(STORAGE.id), st = data.storage;
-  if (!st) { sec.innerHTML = `<div class="empty">No results yet.</div>`; return; }
-  sec.innerHTML = `
-    <p class="caption">The bench runs on OneLake. The engines do not need OneLake: DuckDB needs only the
-      catalog address and a token. Most catalogs also give the storage token for the data; the AWS
-      catalogs give none, so DuckDB uses an AWS key there. The test writes one row and reads it back (<a href="${STORAGE_REPO}/blob/main/storage_token.py">storage_token.py</a>).
-      It works on these catalogs:</p>
-    <div class="wrap"><table><tbody>${st.catalogs.map(c => `
-      <tr>
-        <td class="e">${esc(c.label)}</td>
-        <td class="lv excellent"><i class="m"></i>Works</td>
-      </tr>`).join("")}</tbody></table></div>
-    <p class="note"><a href="${st.run}">Run</a> of ${esc(st.date)}.</p>`;
 }
 
 // THE BAD JOINS TAB: the same query on two engines, each engine's executed plan side by side, with the rows every
@@ -1592,7 +1568,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #catalogs, #storage, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines,
+// Deep links: #catalogs, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -1615,8 +1591,6 @@ Promise.all([
     .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})),
   fetch(CAPABILITY.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.capability = j; }).catch(() => {}),
-  fetch(STORAGE.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(j => { data.storage = j; }).catch(() => {}),
 ]).then(render);
 </script>
 </body>

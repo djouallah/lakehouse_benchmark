@@ -57,8 +57,7 @@ Each step fails cheaply and points at one of the settings above. All workflows r
 share the concurrency group `onelake`, so a second dispatch queues and never runs alongside the
 first. In the three benchmarks `publish` defaults to **true** and commits results and charts to
 `main`, so pass `-f publish=false` for trial runs. `capability.yml` has no such input: it always
-commits. `docs/data/storage_token.json` (the Catalogs tab) is not made here: testing-iceberg-rest-catalog's
-storage-token workflow pushes it, through a deploy key.
+commits.
 
 ```bash
 gh workflow run smoke.yml -f catalog=false                     # dialect only: SF=1 local parquet, no Azure

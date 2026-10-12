@@ -36,9 +36,8 @@ def test_every_engine_has_a_dbt_row():
         assert f'engine: "{engine}"' in rows("DBT_ROWS"), engine
 
 
-def test_storage_token_concurrency_and_anatomy_are_the_catalogs_top_tab():
-    assert '{ id: "catalogs", title: "Catalogs", subs: [STORAGE, ARCH, ANATOMY] }' in PAGE
-    assert 'const STORAGE = { id: "storage", title: "Storage token",' in PAGE
+def test_concurrency_and_anatomy_are_the_catalogs_top_tab():
+    assert '{ id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] }' in PAGE
 
 
 def test_every_engine_has_a_workload_row():
