@@ -221,8 +221,6 @@ SITE_KEY = {
     "sail": "lakesail_iceberg",
     "chdb": "chdb_iceberg",
 }
-# Readings saved before the probes moved here carry no `url`; they ran in iceberg-probe-native.
-RUN_URL = "https://github.com/djouallah/iceberg-probe-native/actions/runs/{}"
 
 # Worst first: the cell shows the worst outcome among the row's probes.
 SEVERITY = ["broken", "no", "no-op", "skipped", "supported"]
@@ -376,7 +374,7 @@ def provenance(data: dict) -> list[str]:
     for name in (*ENGINES, "duckdb_isolation"):
         if name in data:
             d = data[name]
-            url = d.get("url") or RUN_URL.format(d["run"])
+            url = d["url"]
             lines.append(f"- {name}: {d['version']}, [run {d['run']}]({url}), {d['date']}")
     return lines + [""]
 
@@ -431,7 +429,7 @@ def site_matrix(data: dict) -> dict:
             SITE_KEY[e]: {
                 "version": data[e]["version"],
                 "run": data[e]["run"],
-                "url": data[e].get("url") or RUN_URL.format(data[e]["run"]),
+                "url": data[e]["url"],
                 "date": data[e]["date"],
             }
             for e in engines
