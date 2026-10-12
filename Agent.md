@@ -56,8 +56,9 @@ Each step fails cheaply and points at one of the settings above. All workflows r
 `ubuntu-latest`. `bench.yml`, `tpcds.yml`, `etl.yml`, `candidate_engine.yml` and `capability.yml`
 share the concurrency group `onelake`, so a second dispatch queues and never runs alongside the
 first. In the three benchmarks `publish` defaults to **true** and commits results and charts to
-`main`, so pass `-f publish=false` for trial runs. `capability.yml` and `storage_token.yml` have no
-such input: they always commit.
+`main`, so pass `-f publish=false` for trial runs. `capability.yml` has no such input: it always
+commits. `docs/data/storage_token.json` (the Catalogs tab) is not made here: testing-iceberg-rest-catalog's
+storage-token workflow pushes it, through a deploy key.
 
 ```bash
 gh workflow run smoke.yml -f catalog=false                     # dialect only: SF=1 local parquet, no Azure
@@ -84,7 +85,6 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 | `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
 | `capability.yml` (iceberg support) | `clients` polars/duckdb/sail/chdb/duckdb_isolation (all), `keep` (false) |
-| `storage_token.yml` | none; run by hand. Copies `storage_token.json` from testing-iceberg-rest-catalog to `docs/data/` for the Catalogs tab |
 | `auth_smoke.yml` | none |
 | `tmp_polars_main.yml` | `ref` (main). Temporary: builds the Polars main wheel `requirements/polars_iceberg.txt` pins, until a release has the fixes |
 | `tmp_chdb_core_main.yml` | `run-id` (a successful chdb-core main build), `version-base` (26.9.2). Copies its wheels, renumbered from the 0.0.1b1 every main build carries, to the prerelease the chDB requirements pin |

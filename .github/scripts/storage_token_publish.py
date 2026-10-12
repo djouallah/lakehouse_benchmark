@@ -1,8 +1,9 @@
 """Keep the catalogs that worked, check them, and write them for the page.
 
-testing-iceberg-rest-catalog's storage-token workflow writes results/storage_token.json there;
-.github/workflows/storage_token.yml downloads it and runs this. Only the catalogs where DuckDB wrote
-a row and read it back are kept: the Catalogs tab of docs/index.html shows what works.
+testing-iceberg-rest-catalog's storage-token workflow checks this repo out, runs this on its merged
+answers and pushes docs/data/storage_token.json here (a deploy key, write on this repo only). Only
+the catalogs where DuckDB wrote a row and read it back are kept: the Catalogs tab of
+docs/index.html shows what works.
 
     python .github/scripts/storage_token_publish.py SOURCE [TARGET]
 """

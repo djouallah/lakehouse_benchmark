@@ -864,8 +864,8 @@ function renderNext() {
 
 // THE CATALOGS TAB (storage token): the bench runs on OneLake, but the engines do not need it. With only the
 // catalog address and a token, DuckDB writes one row and reads it back. Most catalogs give the storage
-// token; the AWS ones give none, and DuckDB uses an AWS key there (`storage` in the data). The test and its secrets live in testing-iceberg-rest-catalog; .github/workflows/storage_token.yml
-// copies the catalogs that worked to data/storage_token.json.
+// token; the AWS ones give none, and DuckDB uses an AWS key there (`storage` in the data). The test and its secrets live in testing-iceberg-rest-catalog; its storage-token workflow
+// pushes the catalogs that worked to data/storage_token.json.
 const STORAGE_REPO = "https://github.com/djouallah/testing-iceberg-rest-catalog";
 function renderStorage() {
   const sec = $(STORAGE.id), st = data.storage;
