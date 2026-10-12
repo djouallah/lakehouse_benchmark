@@ -41,14 +41,9 @@ def test_storage_token_and_concurrency_are_the_catalogs_top_tab():
     assert 'const STORAGE = { id: "storage", title: "Storage token",' in PAGE
 
 
-# Gluten/Velox is a plugin inside Spark, not an engine you would move a workload to.
-NOT_A_WORKLOAD_ENGINE = {"pyspark_gluten_iceberg"}
-
-
 def test_every_engine_has_a_workload_row():
     for engine in LABEL:
-        has_row = f'engine: "{engine}"' in rows("WORKLOAD_ROWS")
-        assert has_row != (engine in NOT_A_WORKLOAD_ENGINE), engine
+        assert f'engine: "{engine}"' in rows("WORKLOAD_ROWS"), engine
 
 
 def test_the_real_workload_is_a_top_tab():
@@ -76,4 +71,4 @@ def test_every_workload_row_is_in_one_of_the_three_tiers():
     tiers = set(re.findall(r'\{ id: "(\w+)", title: "[^"]+" \}', rows("WORKLOAD_TIERS")))
     assert tiers == {"veteran", "star", "niche"}
     assert set(re.findall(r'tier: "(\w+)"', rows("WORKLOAD_ROWS"))) <= tiers
-    assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL) - len(NOT_A_WORKLOAD_ENGINE)
+    assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL)

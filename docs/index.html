@@ -765,10 +765,9 @@ function renderDbt() {
 // are not columns: every engine in the bench does both, README conditions 2 and 3); the dbt
 // column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt note
 // for the others (tests/test_results_page.py keeps the two in step); the file name column is what
-// each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row but Gluten/Velox: a plugin
-// inside Spark, not an engine of its own.
+// each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
 const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
-// Three groups by age and purpose: veteran (Spark, Trino, Pandas), new star
+// Three groups by age and purpose: veteran (Spark, Trino, and Gluten/Velox which runs Spark's plan), new star
 // (started 2019-2024, general purpose), niche (built for one job). Names only, no judgement in the header.
 const WORKLOAD_TIERS = [
   { id: "veteran", title: "Veteran" },
@@ -780,6 +779,8 @@ const WORKLOAD_ROWS = [
     merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
   { engine: "trino_iceberg", tier: "veteran", file: { ok: true, note: "<code>\"$path\"</code>" },
     merge: { ok: true, note: `<a href="#dbt">dbt-trino</a>` } },
+  { engine: "pyspark_gluten_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
+    merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
   { engine: "pandas_iceberg", tier: "veteran", file: { ok: null, note: "No option; set per file" },
     merge: { ok: false, note: "No Iceberg writer" } },
   { engine: "duckdb_iceberg", tier: "star", file: { ok: true, note: "<code>filename</code>" },
