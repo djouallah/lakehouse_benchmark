@@ -77,10 +77,10 @@ def test_every_workload_row_is_in_one_of_the_three_tiers():
     assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL)
 
 
-def test_maintenance_is_an_iceberg_support_tab_fed_by_its_capability_group():
+def test_maintenance_is_a_group_of_the_iceberg_support_grid():
     import json
 
-    assert '{ id: "features", title: "Iceberg support", subs: [CAPABILITY, MAINT] }' in PAGE
+    assert '{ id: "features", title: "Iceberg support", subs: [CAPABILITY] }' in PAGE
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
     assert [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"] == ["Compaction"]
