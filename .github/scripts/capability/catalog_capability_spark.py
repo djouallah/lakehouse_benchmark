@@ -654,7 +654,8 @@ class SparkCapability:
         jvm = self.spark._jvm
         java_import(jvm, "org.apache.iceberg.catalog.TableIdentifier")
         catalog = self.spark._jsparkSession.sessionState().catalogManager().catalog("vended")
-        io = catalog.icebergCatalog().loadTable(jvm.TableIdentifier.of(self.ns, table)).io()
+        # parse, not of(): of() is varargs, which py4j cannot call with two strings.
+        io = catalog.icebergCatalog().loadTable(jvm.TableIdentifier.parse(self.ident(table))).io()
         keys = [f"config {k}" for k in io.properties().keySet()]
         # py4j answers every attribute, so a FileIO without credentials() only shows on the call.
         with contextlib.suppress(Exception):
