@@ -1,5 +1,11 @@
 {
  "engines": {
+  "pyspark_iceberg": {
+   "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
+   "run": "38210422696",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38210422696",
+   "date": "2026-10-12"
+  },
   "polars_iceberg": {
    "version": "2.0.0",
    "run": "38022167812",
@@ -38,6 +44,9 @@
    "group": "Write",
    "label": "INSERT / append",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -56,6 +65,9 @@
    "group": "Write",
    "label": "INSERT ... SELECT",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -74,6 +86,9 @@
    "group": "Write",
    "label": "DELETE",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -92,6 +107,9 @@
    "group": "Write",
    "label": "UPDATE",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -110,6 +128,9 @@
    "group": "Write",
    "label": "MERGE with one action",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -129,6 +150,9 @@
    "group": "Write",
    "label": "TRUNCATE",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -149,6 +173,9 @@
    "group": "Tables & types",
    "label": "CREATE TABLE",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -168,6 +195,10 @@
    "group": "Tables & types",
    "label": "CREATE TABLE AS SELECT",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "no",
+     "n": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request at org.apache.iceberg.rest.ErrorHandlers$DefaultErrorHandler.accept(Erro…"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -187,6 +218,9 @@
    "group": "Tables & types",
    "label": "Partitioned table",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -205,6 +239,9 @@
    "group": "Tables & types",
    "label": "Partition transform: bucket",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "no",
      "n": "works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform"
@@ -224,6 +261,9 @@
    "group": "Tables & types",
    "label": "Partition transform: truncate",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -242,6 +282,9 @@
    "group": "Tables & types",
    "label": "Partition transforms: year / month / day / hour",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -260,6 +303,10 @@
    "group": "Tables & types",
    "label": "Types: decimal, date, timestamp, timestamptz, uuid, binary",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "no",
+     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...2696_1_type_uuid` …"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -279,6 +326,9 @@
    "group": "Tables & types",
    "label": "Nested types: struct, list, map",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -297,6 +347,9 @@
    "group": "Tables & types",
    "label": "Drop table with purge",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -315,6 +368,9 @@
    "group": "Tables & types",
    "label": "Create / drop namespace",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -333,6 +389,9 @@
    "group": "Schema",
    "label": "Add column",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -352,6 +411,9 @@
    "group": "Schema",
    "label": "Drop column",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -371,6 +433,9 @@
    "group": "Schema",
    "label": "Rename column",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -390,6 +455,9 @@
    "group": "Schema",
    "label": "Type promotion (int → long)",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -409,6 +477,9 @@
    "group": "Schema",
    "label": "Partition evolution",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -429,6 +500,9 @@
    "group": "Schema",
    "label": "Write after partition evolution",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -447,6 +521,9 @@
    "group": "Schema",
    "label": "Set table property",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -467,6 +544,9 @@
    "group": "Schema",
    "label": "Sort order at create",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "na"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -486,6 +566,9 @@
    "group": "Schema",
    "label": "Sort order evolution",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -506,6 +589,9 @@
    "group": "Concurrency",
    "label": "A commit against a stale snapshot is refused",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "na"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -524,6 +610,9 @@
    "group": "Concurrency",
    "label": "Concurrent append: both kept",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -542,6 +631,9 @@
    "group": "Concurrency",
    "label": "Concurrent writer: DELETE loses nothing",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -560,6 +652,9 @@
    "group": "Concurrency",
    "label": "Concurrent writer: UPDATE loses nothing",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -578,6 +673,9 @@
    "group": "Reading from metadata",
    "label": "File pruning from min/max in the metadata",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -596,6 +694,9 @@
    "group": "Reading from metadata",
    "label": "MAX from the metadata, no data file read",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "no",
      "n": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/…"
@@ -617,6 +718,9 @@
    "group": "Read & maintenance",
    "label": "Time travel",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "supported"
     },
@@ -635,6 +739,9 @@
    "group": "Read & maintenance",
    "label": "Metadata tables",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -654,6 +761,9 @@
    "group": "Read & maintenance",
    "label": "Compaction",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -674,6 +784,10 @@
    "group": "Read & maintenance",
    "label": "Expire snapshots",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "no",
+     "n": "Only one instance of each update type is allowed per request. Duplicate types: remove-snapshots"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -695,6 +809,9 @@
    "group": "Read & maintenance",
    "label": "Create branch",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -716,6 +833,9 @@
    "group": "Read & maintenance",
    "label": "Create tag",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
     "polars_iceberg": {
      "o": "na"
     },
@@ -736,6 +856,10 @@
    "group": "Read & maintenance",
    "label": "Credential vending",
    "cells": {
+    "pyspark_iceberg": {
+     "o": "broken",
+     "n": "read and wrote, but the catalog vended no adls.sas-token: not proven"
+    },
     "polars_iceberg": {
      "o": "na"
     },
