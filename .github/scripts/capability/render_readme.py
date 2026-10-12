@@ -147,22 +147,25 @@ for _label, _sources in ROWS:
 
 # THE SITE'S GRID (docs/data/capability.json, the Iceberg support tab): every row of ROWS, grouped.
 GROUPS = {
-    "Write": [
+    # The grid opens on Basic: the minimum an engine needs to be usable on Iceberg.
+    "Basic": [
+        "CREATE TABLE",
         "INSERT / append",
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
+        "Drop table with purge",
+    ],
+    "Advanced": [
         "MERGE with one action",
         "TRUNCATE",
     ],
     "Tables & types": [
-        "CREATE TABLE",
         "Partitioned table",
         "Partition transform: bucket",
         "Partition transform: truncate",
         "Partition transforms: year / month / day / hour",
         "Nested types: struct, list, map",
-        "Drop table with purge",
         "Create / drop namespace",
     ],
     "Schema": [

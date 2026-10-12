@@ -32,7 +32,8 @@
   }
  },
  "groups": [
-  "Write",
+  "Basic",
+  "Advanced",
   "Tables & types",
   "Schema",
   "Concurrency",
@@ -42,7 +43,29 @@
  ],
  "rows": [
   {
-   "group": "Write",
+   "group": "Basic",
+   "label": "CREATE TABLE",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    }
+   }
+  },
+  {
+   "group": "Basic",
    "label": "INSERT / append",
    "cells": {
     "pyspark_iceberg": {
@@ -63,7 +86,7 @@
    }
   },
   {
-   "group": "Write",
+   "group": "Basic",
    "label": "INSERT ... SELECT",
    "cells": {
     "pyspark_iceberg": {
@@ -84,7 +107,7 @@
    }
   },
   {
-   "group": "Write",
+   "group": "Basic",
    "label": "DELETE",
    "cells": {
     "pyspark_iceberg": {
@@ -105,7 +128,7 @@
    }
   },
   {
-   "group": "Write",
+   "group": "Basic",
    "label": "UPDATE",
    "cells": {
     "pyspark_iceberg": {
@@ -126,7 +149,28 @@
    }
   },
   {
-   "group": "Write",
+   "group": "Basic",
+   "label": "Drop table with purge",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Advanced",
    "label": "MERGE with one action",
    "cells": {
     "pyspark_iceberg": {
@@ -148,7 +192,7 @@
    }
   },
   {
-   "group": "Write",
+   "group": "Advanced",
    "label": "TRUNCATE",
    "cells": {
     "pyspark_iceberg": {
@@ -168,28 +212,6 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
-    }
-   }
-  },
-  {
-   "group": "Tables & types",
-   "label": "CREATE TABLE",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
     }
    }
   },
@@ -296,27 +318,6 @@
     },
     "chdb_iceberg": {
      "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Tables & types",
-   "label": "Drop table with purge",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "skipped"
     }
    }
   },
