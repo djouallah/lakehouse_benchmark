@@ -75,3 +75,12 @@ def test_every_workload_row_is_in_one_of_the_three_tiers():
     assert tiers == {"veteran", "star", "niche"}
     assert set(re.findall(r'tier: "(\w+)"', rows("WORKLOAD_ROWS"))) <= tiers
     assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL)
+
+
+def test_maintenance_is_a_features_tab_fed_by_its_capability_group():
+    import json
+
+    assert '{ id: "features", title: "Features", subs: [CAPABILITY, MAINT, DBT] }' in PAGE
+    cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
+    cap = json.loads(cap_path.read_text(encoding="utf-8"))
+    assert [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"] == ["Compaction"]

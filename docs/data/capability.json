@@ -37,7 +37,8 @@
   "Schema",
   "Concurrency",
   "Reading from metadata",
-  "Read & maintenance"
+  "Read & refs",
+  "Maintenance"
  ],
  "rows": [
   {
@@ -626,7 +627,7 @@
    }
   },
   {
-   "group": "Read & maintenance",
+   "group": "Read & refs",
    "label": "Time travel",
    "cells": {
     "pyspark_iceberg": {
@@ -647,7 +648,7 @@
    }
   },
   {
-   "group": "Read & maintenance",
+   "group": "Read & refs",
    "label": "Metadata tables",
    "cells": {
     "pyspark_iceberg": {
@@ -669,30 +670,7 @@
    }
   },
   {
-   "group": "Read & maintenance",
-   "label": "Compaction",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
-    },
-    "chdb_iceberg": {
-     "o": "no-op",
-     "n": "returned success and data files went 2 -> 2"
-    }
-   }
-  },
-  {
-   "group": "Read & maintenance",
+   "group": "Read & refs",
    "label": "Create branch",
    "cells": {
     "pyspark_iceberg": {
@@ -716,7 +694,7 @@
    }
   },
   {
-   "group": "Read & maintenance",
+   "group": "Read & refs",
    "label": "Create tag",
    "cells": {
     "pyspark_iceberg": {
@@ -735,6 +713,29 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Compaction",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+    },
+    "chdb_iceberg": {
+     "o": "no-op",
+     "n": "returned success and data files went 2 -> 2"
     }
    }
   }

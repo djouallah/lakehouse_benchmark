@@ -184,13 +184,14 @@ GROUPS = {
         "File pruning from min/max in the metadata",
         "MAX from the metadata, no data file read",
     ],
-    "Read & maintenance": [
+    "Read & refs": [
         "Time travel",
         "Metadata tables",
-        "Compaction",
         "Create branch",
         "Create tag",
     ],
+    # The site shows this group on a tab of its own, Maintenance.
+    "Maintenance": ["Compaction"],
 }
 # The site's engine keys, which are lakehouse_benchmark's.
 SITE_KEY = {
