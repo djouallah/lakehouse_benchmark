@@ -50,6 +50,10 @@ def test_the_real_workload_is_a_top_tab():
     assert '{ id: "workload", title: "Real workload", subs: [WORKLOAD] }' in PAGE
 
 
+def test_next_is_the_last_top_tab():
+    assert rows("GROUPS").rstrip().endswith('{ id: "next", title: "Next", subs: [NEXT] },')
+
+
 def test_the_workload_merge_cells_match_the_iceberg_support_tab():
     """The Real workload tab's MERGE column never disagrees with the probe that measured it."""
     import json

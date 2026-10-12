@@ -270,15 +270,17 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .hd.no { fill: var(--no); opacity: 1; }
 .arch svg.fadein { animation: arfade .8s ease; }
 @keyframes arfade { from { opacity: 0; } }
-.arch .next { margin: 12px 0 0; padding: 12px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); font-size: 14px; color: var(--ink-2); animation: arfade .8s ease; }
-.arch .next b { color: var(--ink); }
-.arch .next p { margin: 4px 0 0; }
+.nx { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 4px; }
+.nx article { padding: 14px 16px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: var(--ink-2); font-size: 14px; }
+.nx h3 { font-size: 16px; color: var(--ink); margin: 0 0 6px; }
+.nx p { margin: 0; }
+.nx a { color: var(--accent); }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng, .arch .play .dot, .arch svg.fadein, .arch .next { animation: none; }
+  .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng, .arch .play .dot, .arch svg.fadein { animation: none; }
 }
 @media (max-width: 520px) {
   main { padding-top: 16px; }
@@ -306,6 +308,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
+  <section class="nx-page" id="next" hidden></section>
   <section class="cap rows" id="storage" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
@@ -447,7 +450,8 @@ const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_tok
 const ENGINES = { id: "engines", title: "Engines" }, TRIED = { id: "tried", title: "Tried, no success" };
 const PLANS = { id: "plans", title: "Bad joins" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
-const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
+const NEXT = { id: "next", title: "Next" };
+const PAGES = [ARCH, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES, TRIED];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is what it supports, and speed is a bonus.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
@@ -458,6 +462,7 @@ const GROUPS = [
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },  // header links, not tabs
   { id: "about", title: "About", subs: [{ ...ABOUT, title: "Approach" }, TRIED], bar: false },
   { id: "workload", title: "Real workload", subs: [WORKLOAD] },
+  { id: "next", title: "Next", subs: [NEXT] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
 const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
@@ -501,6 +506,7 @@ function render() {
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
   if (page === WORKLOAD) { renderWorkload(); return; }
+  if (page === NEXT) { renderNext(); return; }
   if (page === STORAGE) { renderStorage(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
@@ -821,6 +827,32 @@ function renderWorkload() {
       </tr>`; }).join("")}</tbody>`).join("")}</table></div>
     <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: the <a href="#dbt">dbt support</a> tab.
       MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
+}
+
+// THE NEXT TAB: what is coming for single-node engines that I am excited about. Things on the way, not bugs:
+// those are on the Issues tab. Each card is checked against its upstream project before it goes here.
+const NEXT_ROWS = [
+  { title: "Server-side planning",
+    text: `The catalog reads the manifests and gives the engine the list of files to read. The engine gets thinner:
+      no metadata work, only reading and computing. It is in the Iceberg REST spec, and the Java client has it since
+      Iceberg 1.11. The Rust, C++ and Go clients are working on it.` },
+  { title: "Native executors for Spark",
+    text: `Keep the Spark API, run the work in C++ or Rust. <a href="#tpcds">Gluten/Velox</a> already does it here and
+      finishes TPC-DS at SF 100 on 16 GB. <a href="https://github.com/apache/datafusion-comet">Comet</a> does the same
+      on DataFusion. <a href="https://github.com/lakehq/sail">Sail</a> goes further: the Spark API with no JVM.` },
+  { title: "DataFusion",
+    text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
+      its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
+  { title: "Row-level commits",
+    text: `When two jobs change existing data, the check today is per file: if they touched the same file, the second
+      commit fails, even if they changed different rows. Iceberg v3 gives every row an id (row lineage), so the check
+      can be per row. See <a href="#concurrency">Concurrency</a>.` },
+];
+
+function renderNext() {
+  $(NEXT.id).innerHTML = `
+    <p class="caption">What I am excited about for single-node engines.</p>
+    <div class="nx">${NEXT_ROWS.map(r => `<article><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
 }
 
 // THE CATALOGS TAB (storage token): the bench runs on OneLake, but the engines do not need it. With only the
@@ -1238,7 +1270,7 @@ function hideTip() { tip.classList.remove("on"); }
 // bucket into a table, every batch becomes a new file, and the table changes only once, at the commit
 // (bench/etl/iceberg.py append_stream). Then two writers: one commit refused and retried. Then a note on
 // what comes next. Conceptual on purpose: no engine, vendor or product names.
-const BATCHES = 5, DUO_BATCHES = 3, SOLO_STEPS = 8, ARCH_LAST = 15, ARCH_END = ARCH_LAST + 1;  // END: the note replaces the picture
+const BATCHES = 5, DUO_BATCHES = 3, SOLO_STEPS = 8, ARCH_LAST = 15;  // the last step stays on screen
 const arch = { t: 0, timer: null };
 const WIDE = matchMedia("(min-width: 640px)");
 const archDone = t => Math.max(0, Math.min(BATCHES, t));  // batches written by tick t
@@ -1270,14 +1302,7 @@ function renderArch() {
       <button class="ghost" id="ar-back">‹ Back</button><button class="ghost" id="ar-step">Next ›</button>
       <span class="hint">or the arrow keys</span></div>
     <div class="ar-fig" id="ar-fig"></div>
-    <p class="pick" id="ar-say"></p>
-    <div class="next" id="ar-next" hidden>
-      <b>What comes next</b>
-      <p>Here the retry works because both jobs only added files. When two jobs change existing data, the check
-        today is per file: if they touched the same file, the second commit fails, even if they changed different
-        rows. Checking per row is the next step for open source engines. Iceberg v3 adds row lineage (an id for
-        every row) to make this possible.</p>
-    </div>`;
+    <p class="pick" id="ar-say"></p>`;
   $("ar-play").onclick = playArch;
   $("ar-back").onclick = () => stepArch(-1);
   $("ar-step").onclick = $("ar-fig").onclick = () => stepArch(1);
@@ -1287,10 +1312,10 @@ function renderArch() {
 // One tick every 1.3 s through both scenarios, from the step on screen; from the start once it is done.
 function playArch() {
   if (arch.timer) return;  // already running
-  if (arch.t >= ARCH_END) arch.t = 0;
+  if (arch.t >= ARCH_LAST) arch.t = 0;
   arch.timer = setInterval(() => {
     arch.t++;
-    if (arch.t >= ARCH_END) stopArch();
+    if (arch.t >= ARCH_LAST) stopArch();
     drawArch();
   }, 1300);
   drawArch();
@@ -1299,7 +1324,7 @@ function stopArch() { clearInterval(arch.timer); arch.timer = null; }
 // By hand, for a talk: Back / Next, a click on the picture, the arrow keys, or a clicker (Page Up / Page Down).
 function stepArch(d) {
   stopArch();
-  arch.t = Math.max(0, Math.min(ARCH_END, arch.t + d));
+  arch.t = Math.max(0, Math.min(ARCH_LAST, arch.t + d));
   drawArch();
 }
 addEventListener("keydown", e => {
@@ -1414,16 +1439,12 @@ function duoSvg(wide, t) {
 }
 
 function drawArch() {
-  const t = arch.t, end = t === ARCH_END, b = $("ar-play"), run = !!arch.timer;
+  const t = arch.t, end = t === ARCH_LAST, b = $("ar-play"), run = !!arch.timer;
   b.classList.toggle("busy", run);
   b.setAttribute("aria-busy", run);
   b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${ARCH_LAST + 1}` : end ? "↺ Replay" : "▶ Play";
   $("ar-back").disabled = t === 0;
   $("ar-step").disabled = end;
-  // When scenario 2 is done, the note takes the place of the picture and its caption.
-  $("ar-fig").hidden = $("ar-say").hidden = end;
-  $("ar-next").hidden = !end;
-  if (end) return;
   const pic = t >= SOLO_STEPS ? duoSvg(WIDE.matches, t - SOLO_STEPS) : soloSvg(WIDE.matches, t);
   // Scenario 2 fades in where scenario 1 was.
   $("ar-fig").innerHTML = `<svg class="${t === SOLO_STEPS ? "fadein" : ""}" viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${archSay(t)}">${pic.svg}</svg>`;
@@ -1446,7 +1467,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #catalogs, #storage, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines, #tried,
+// Deep links: #catalogs, #storage, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
