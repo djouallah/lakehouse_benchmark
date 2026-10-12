@@ -160,3 +160,13 @@ def test_a_truncate_that_is_not_metadata_only_gets_a_note():
     assert row["cells"]["duckdb_iceberg"]["n"].startswith("Not a metadata operation.")
     fast = {"duckdb": {**DATA["duckdb"], "rows": [_row("truncate", detail="metadata-only")]}}
     assert "| TRUNCATE | yes |" in render_readme.render(fast).splitlines()
+
+
+def test_every_truncate_probe_reads_how_it_committed():
+    """Each engine with a TRUNCATE row asks the same metadata-only question of its snapshot."""
+    for engine in dict(render_readme.ROWS)["TRUNCATE"]:
+        script = _ROOT / ".github" / "scripts" / "capability" / f"catalog_capability_{engine}.py"
+        probe = (
+            script.read_text(encoding="utf-8").split("def truncate(self)")[1].split("\n    def ")[0]
+        )
+        assert "truncate_kind(self.iceberg(table))" in probe, engine

@@ -418,6 +418,26 @@ def partition_result(tbl, kind: str, parts: int) -> tuple[str, str, str]:
     return kind, SUPPORTED, f"{spec[0]} over {parts} partitions"
 
 
+def truncate_kind(table) -> str:
+    """How a TRUNCATE committed, from the pyiceberg table after it. Metadata-only means the
+    snapshot drops the data files and writes nothing new; the other way is a delete file per data
+    file, which every reader then has to apply. render_readme turns "NOT metadata-only" into a
+    note on the yes."""
+    summary = table.current_snapshot().summary
+    counts = {
+        k: summary.get(k, "0")
+        for k in ("deleted-data-files", "added-data-files", "added-delete-files")
+    }
+    kind = (
+        "metadata-only"
+        if counts["added-data-files"] in ("0", None) and counts["added-delete-files"] in ("0", None)
+        else "NOT metadata-only"
+    )
+    return f"{kind}: {summary.operation.value} snapshot, " + ", ".join(
+        f"{k} {v}" for k, v in counts.items()
+    )
+
+
 def verdict(results: list[tuple[str, str, str]]) -> str:
     """One probe asking several things: yes only if every one of them is."""
     ok = [label for label, outcome, _ in results if outcome == SUPPORTED]

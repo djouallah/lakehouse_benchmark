@@ -55,6 +55,7 @@ from harness import (
     remove_data_files,
     rows,
     transform_case,
+    truncate_kind,
     type_result,
     verdict,
     write_stats_files,
@@ -430,7 +431,8 @@ class SparkCapability:
     def truncate(self) -> str:
         table = self._fresh("truncate")
         self.sql(f"TRUNCATE TABLE {self.t(table)}")
-        return self._expect(table, [], "TRUNCATE")
+        result = self._expect(table, [], "TRUNCATE")
+        return f"{result}; {truncate_kind(self.iceberg(table))}"
 
     # -- schema ------------------------------------------------------------------------------
 
