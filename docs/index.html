@@ -312,15 +312,19 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <section class="cap rows" id="storage" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
-    <p>Every engine gets the same 16 GB machine. An engine that streams its data does not need more.</p>
-    <p>The work is done in SQL. SQL is a shared language; a new syntax for every engine is not progress.</p>
-    <p>Iceberg, because an engine attached to a catalog becomes a real database: tables, transactions, many writers.</p>
-    <p>The state lives in the catalog, so the engine can be stateless: start, do the work, stop. With AI agents
-      starting engines on demand, that matters.</p>
-    <p>The best query is the one that does the least work. A good optimizer and good pruning beat brute force.</p>
+    <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
+    <p>So the state lives in the catalog, not in the engine. The engine starts, does the work, and stops
+      (<a href="#storage">Catalogs</a>).</p>
+    <p>The work is done in SQL. An agent writes the same SQL for every engine; a new syntax for every engine is not progress.</p>
+    <p>The first test is simple: read the files, write the tables. Most engines that were tried failed here,
+      on the object store, not on SQL (<a href="#issues">Issues</a>).</p>
+    <p>Every engine gets the same 16 GB machine. When a query fails, the agent must get an error. An engine with
+      no memory limit kills the machine, and there is no error to read.</p>
+    <p>The best query is the one that does the least work. A good optimizer beats brute force (<a href="#plans">Bad joins</a>).</p>
+    <p>No engine is the fastest on every test. What an engine supports decides; speed is a bonus
+      (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
-    <p>The object store integration matters as much as the engine itself.</p>
-    <p>When an engine fails, the bug is filed upstream (see <a href="#issues">Issues</a>).</p>
+    <p>When an engine fails, the bug is filed upstream (<a href="#issues">Issues</a>).</p>
   </section>
   <section class="cap rows" id="engines" hidden></section>
   <section class="details" id="issues" hidden>
