@@ -858,6 +858,12 @@ const NEXT_ROWS = [
     text: `The machine gets more CPU and memory while the job runs, with no restart, and gives them back after.
       Containers can already be resized while they run. Most engines size their memory once, at start, so the
       engine must also see the new memory and use it.` },
+  { title: "A sandbox for user code",
+    text: `SQL is safe to share: the engine decides what each user can read. A Python function inside a query is
+      different: it runs inside the engine, with the engine's rights, and by default nothing stops it from reading
+      other users' data. Mixing SQL and code made engines powerful, but it broke the isolation between users. The
+      fix is to run each user's code in a sandbox, like gVisor or WebAssembly, with no access to files or the
+      network. One more reason to keep the work in SQL.` },
 ];
 
 function renderNext() {
