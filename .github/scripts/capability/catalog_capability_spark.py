@@ -22,6 +22,7 @@ carrying its full message, so the log says whose limit it is.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 
@@ -644,22 +645,37 @@ class SparkCapability:
             files = f"could not check storage: {_one_line(scrub.scrub_exc(exc, 200), 200)}"
         return f"gone from the catalog; DELETE sent {', '.join(sent) or 'nothing seen'}; {files}"
 
+    def _vended_keys(self, table: str) -> list[str]:
+        """The SAS keys in the FileIO Spark's `vended` catalog opens the table with: its config
+        properties, and the REST `storage-credentials` Iceberg 1.12 hands ADLSFileIO apart from
+        them. Key names only; a value is a credential."""
+        from py4j.java_gateway import java_import
+
+        jvm = self.spark._jvm
+        java_import(jvm, "org.apache.iceberg.catalog.TableIdentifier")
+        catalog = self.spark._jsparkSession.sessionState().catalogManager().catalog("vended")
+        io = catalog.icebergCatalog().loadTable(jvm.TableIdentifier.of(self.ns, table)).io()
+        keys = [f"config {k}" for k in io.properties().keySet()]
+        # py4j answers every attribute, so a FileIO without credentials() only shows on the call.
+        with contextlib.suppress(Exception):
+            for cred in io.credentials():
+                keys += [f"storage-credentials {cred.prefix()} {k}" for k in cred.config().keySet()]
+        return sorted(k for k in keys if "sas" in k.lower())
+
     def credential_vending(self) -> str:
         """Through the `vended` catalog only: its FileIO is ADLSFileIO, which never sees the
-        hadoop-azure login, so a read and a write that land used the SAS the catalog vends.
-        pyiceberg asks for vended credentials too, and its FileIO shows whether a SAS came back:
-        without one, a success would have come from an ambient credential and prove nothing."""
+        hadoop-azure login, so a read and a write that land used what the catalog vends -- if a
+        SAS is in that FileIO. Without one, ADLSFileIO falls back to an ambient Azure credential
+        (the runner's az login), and a success proves nothing."""
         table = self._fresh("vended")
-        vended = sorted(k for k in self.iceberg(table).io.properties if k.startswith("adls.sas"))
         where = f"vended.`{self.ns}`.`{table}`"
         read = self.sql(f"SELECT count(*) FROM {where}")[0][0]
         self.sql(f"INSERT INTO {where} {_select([(4, 40)])}")
+        vended = self._vended_keys(table)
         if not vended:
-            raise Broken("read and wrote, but the catalog vended no adls.sas-token: not proven")
+            raise Broken("read and wrote, but Spark's FileIO holds no vended SAS: not proven")
         return self._expect(
-            table,
-            SEED + [(4, 40)],
-            f"ADLSFileIO on {vended[0]}, read {read} rows then INSERT",
+            table, SEED + [(4, 40)], f"ADLSFileIO with {vended[0]}, read {read} rows then INSERT"
         )
 
     # -- concurrency -------------------------------------------------------------------------
