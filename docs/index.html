@@ -231,6 +231,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
    then two writers, one commit refused and retried. */
 .arch .ar-fig svg { width: 100%; height: auto; overflow: visible; }
 .arch .ar-fig { cursor: pointer; }
+.arch .an-fig svg { width: 100%; height: auto; max-width: 820px; margin-top: 12px; }
+.arch .sbox.ja { stroke: var(--accent); stroke-width: 2; }
 .pl .ghost:disabled { opacity: .4; cursor: default; }
 .arch .play { min-width: 170px; }
 .arch .play.busy { cursor: progress; }
@@ -305,6 +307,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="pl arch" id="concurrency" hidden></section>
+  <section class="pl arch" id="anatomy" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
@@ -454,12 +457,13 @@ const STORAGE = { id: "storage", title: "Storage token", json: "data/storage_tok
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Bad joins" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
+const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const NEXT = { id: "next", title: "Next" };
-const PAGES = [ARCH, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is what it supports, and speed is a bonus.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "catalogs", title: "Catalogs", subs: [STORAGE, ARCH] },  // the commit is the catalog's job
+  { id: "catalogs", title: "Catalogs", subs: [STORAGE, ARCH, ANATOMY] },  // the commit is the catalog's job
   { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
@@ -506,6 +510,7 @@ function render() {
   if (page !== PLANS) stopRace();
   if (page !== ARCH) stopArch();
   if (page === ARCH) { renderArch(); return; }
+  if (page === ANATOMY) { renderAnatomy(); return; }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === DBT) { renderDbt(); return; }
@@ -1449,7 +1454,71 @@ function drawArch() {
   $("ar-fig").innerHTML = `<svg class="${t === SOLO_STEPS ? "fadein" : ""}" viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${archSay(t)}">${pic.svg}</svg>`;
   $("ar-say").innerHTML = `<b>${t + 1}/${ARCH_LAST + 1}</b> ${archSay(t)}`;
 }
-WIDE.addEventListener("change", () => { if (state.suite === ARCH.id) drawArch(); });
+WIDE.addEventListener("change", () => {
+  if (state.suite === ARCH.id) drawArch();
+  if (state.suite === ANATOMY.id) renderAnatomy();
+});
+
+// THE ANATOMY TAB: what one table is made of, the standard tree from the catalog down to the Parquet
+// files. Static. Snapshot x+1 reuses manifest 1 and adds manifest 2: a commit adds files, it never
+// rewrites the old ones. In colour: what the last commit wrote, as on the Concurrency tab.
+// Conceptual on purpose: no engine, vendor or product names.
+const ANATOMY_SAY = [
+  "The catalog keeps one thing per table: where the current metadata file is.",
+  "A commit writes new files, then moves this pointer from v1.metadata.json to v2.metadata.json. Readers see the change only when the pointer moves.",
+  "Each snapshot is the whole table at one moment. In colour: what the last commit wrote. Snapshot x+1 reuses manifest 1 and adds manifest 2, so the old files are not written again.",
+  "The data is in Parquet files. A file is never changed. A snapshot only adds or removes files.",
+];
+const ANATOMY_ROWS = ["Catalog", "Metadata file", "Snapshot", "Manifest list", "Manifest files", "Data files"];
+
+const anNode = (cx, y, w, label, cls = "") => `<rect class="sbox ${cls}" x="${cx - w / 2}" y="${y}" width="${w}" height="32" rx="8"/>
+  <text class="s ink" x="${cx}" y="${y + 21}" text-anchor="middle">${label}</text>`;
+
+function anatomySvg(wide) {
+  // Wide: the layer names in a left column. Narrow: each name above its row.
+  const L = wide
+    ? { W: 780, H: 480, c: [330, 630], mid: 480, box: 300, node: 170, rows: [10, 96, 190, 262, 334, 420] }
+    : { W: 360, H: 505, c: [95, 265], mid: 180, box: 340, node: 150, rows: [24, 118, 216, 290, 364, 450] };
+  const { c, mid, box, node, rows: r } = L, half = node / 2;
+  let svg = ANATOMY_ROWS.map((name, i) => wide
+    ? `<text class="t" x="0" y="${r[i] + (i < 2 ? 33 : i < 5 ? 21 : 19)}">${name}</text>`
+    : `<text class="lb" x="10" y="${r[i] - 8}">${name}</text>`).join("");
+
+  svg += arBox({ x: mid - box / 2, y: r[0], w: box, h: 56 }, "cat", "my_table", "current: v2.metadata.json")
+    + arLine(mid, r[0] + 60, mid, r[1] - 4, "") + `<text class="lb" x="${mid + 8}" y="${(r[0] + 56 + r[1]) / 2 + 4}">points to</text>`
+    + arBox({ x: mid - box / 2, y: r[1], w: box, h: 56 }, "", "v2.metadata.json", "schema, partitions, snapshots");
+
+  // Two snapshots, each with its manifest list. The new one reuses manifest 1.
+  [0, 1].forEach(i => {
+    const cls = i ? "ja" : "";
+    svg += arLine(mid + (i ? 60 : -60), r[1] + 60, c[i], r[2] - 4, "")
+      + anNode(c[i], r[2], node, i ? "snapshot x+1" : "snapshot x", cls)
+      + arLine(c[i], r[2] + 36, c[i], r[3] - 4, "")
+      + anNode(c[i], r[3], node, "manifest list", cls)
+      + arLine(c[i], r[3] + 36, c[i], r[4] - 4, "")
+      + anNode(c[i], r[4], node, `manifest ${i + 1}`, cls);
+  });
+  svg += arLine(c[1] - half + 16, r[3] + 36, c[0] + half - 16, r[4] - 4, "")
+    + `<text class="lb" x="${mid}" y="${(r[3] + 32 + r[4]) / 2 - 6}" text-anchor="middle">reused</text>`;
+
+  // The Parquet files under each manifest: 3 old ones, 2 new ones.
+  [3, 2].forEach((n, i) => {
+    for (let k = 0; k < n; k++) {
+      const x = c[i] + (k - (n - 1) / 2) * 34;
+      svg += arLine(c[i], r[4] + 36, x, r[5] - 4, "")
+        + `<rect class="f ${i ? "ja c" : ""}" x="${x - 11}" y="${r[5]}" width="22" height="28" rx="3"/>`;
+    }
+    svg += `<text class="lb" x="${c[i]}" y="${r[5] + 46}" text-anchor="middle">.parquet</text>`;
+  });
+  return { ...L, svg };
+}
+
+function renderAnatomy() {
+  const pic = anatomySvg(WIDE.matches);
+  $(ANATOMY.id).innerHTML = `<div class="an-fig"><svg viewBox="0 0 ${pic.W} ${pic.H}" role="img"
+      aria-label="One table: catalog, metadata file, snapshots, manifest lists, manifest files and Parquet data files">${pic.svg}</svg></div>`
+    + ANATOMY_SAY.map(s => `<p class="intro">${s}</p>`).join("");
+}
 
 // Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
 for (const li of $("issues").querySelectorAll("li")) {
