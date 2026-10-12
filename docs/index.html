@@ -451,7 +451,7 @@ const PAGES = [ARCH, PLANS, CAPABILITY, DBT, WORKLOAD, STORAGE, DETAILS, ABOUT, 
 // The top tabs and their pill sub-tabs: an engine is how fast it runs and what it supports.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "catalogs", title: "Catalogs", subs: [ARCH, STORAGE] },  // the commit is the catalog's job
+  { id: "catalogs", title: "Catalogs", subs: [STORAGE, ARCH] },  // the commit is the catalog's job
   { id: "engines", title: "Engines", subs: [ENGINES] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "features", title: "Features", subs: [CAPABILITY, DBT] },
@@ -1446,7 +1446,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #catalogs, #concurrency, #storage, #performance, #plans (#plans-q72 for one story), #features, #workload, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines, #tried,
+// Deep links: #catalogs, #storage, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines, #tried,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
