@@ -80,6 +80,13 @@
    "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Sail agrees; 1 commit(s)"
   },
   {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; Sail agrees"
+  },
+  {
    "key": "delete_from",
    "group": "write",
    "question": "DELETE FROM",
@@ -175,7 +182,7 @@
    "group": "schema",
    "question": "ALTER COLUMN c TYPE BIGINT (int -> long)",
    "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38022167812_1_promote"
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38248034626_1_promote"
   },
   {
    "key": "partition_evolution",
@@ -189,7 +196,7 @@
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
    "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38022167812_1_props"
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38248034626_1_props"
   },
   {
    "key": "time_travel",
@@ -203,7 +210,7 @@
    "group": "read",
    "question": "metadata tables (t.snapshots)",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38022167812_1_inspect\"), Identifier(\"snapshots\")]"
+   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38248034626_1_inspect\"), Identifier(\"snapshots\")]"
   },
   {
    "key": "file_pruning",
@@ -259,7 +266,7 @@
    "group": "catalog",
    "question": "CREATE DATABASE, then DROP DATABASE",
    "outcome": "supported",
-   "detail": "`sl_38022167812_1_ns` created, listed, dropped"
+   "detail": "`sl_38248034626_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -273,7 +280,7 @@
    "group": "catalog",
    "question": "DROP TABLE ... PURGE",
    "outcome": "supported",
-   "detail": "gone from the catalog"
+   "detail": "gone from the catalog; 0 of 1 data file(s) still in storage"
   },
   {
    "key": "race_append",
@@ -287,17 +294,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(983907278193906374) but found Some(3416877485051537164)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6831137120563279514) but found Some(242224847364839748)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(2491847467689763520) but found Some(9060942395765580840)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1249021820564336249) but found Some(9041128820509824826)"
   }
  ],
- "run": "38022167812",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812",
- "date": "2026-10-10"
+ "run": "38248034626",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38248034626",
+ "date": "2026-10-12"
 }
