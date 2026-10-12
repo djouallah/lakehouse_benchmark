@@ -216,20 +216,23 @@ def load(results: Path) -> dict:
     return found
 
 
-# A yes with a cost the probe measured: (row label, what the reading says) -> the note. The note
-# comes from the reading, so it goes away when the engine fixes it.
-CAVEATS = {
+# A statement that runs but does not do what the row means is a no: (row label, what the reading
+# says) -> why. TRUNCATE means metadata-only. It comes from the reading, so it goes when the engine
+# fixes it.
+FALLS_SHORT = {
     ("TRUNCATE", "NOT metadata-only"): (
-        "Not a metadata operation. The data files stay, and a delete file is written for them: "
-        "slower than dropping the files, and every reader then has to apply the deletes."
+        "Runs, but not as a metadata operation. The data files stay, and a delete file is written "
+        "for them: slower than dropping the files, and every reader then has to apply the deletes."
     ),
 }
 
 
-def caveat(rows: dict, keys: list[str], label: str) -> str:
-    """The note for one engine's yes on one row, or '' when the readings show no cost."""
+def falls_short(rows: dict, keys: list[str], label: str) -> str:
+    """Why one engine's yes on one row is really a no, or '' when it is a yes."""
     details = " ".join(str(rows[k]["detail"]) for k in keys if k in rows)
-    return next((n for (row, said), n in CAVEATS.items() if row == label and said in details), "")
+    return next(
+        (why for (row, said), why in FALLS_SHORT.items() if row == label and said in details), ""
+    )
 
 
 def cell(rows: dict, keys: list[str]) -> tuple[str, list[dict]]:
@@ -284,15 +287,16 @@ def capability(data: dict) -> tuple[list[str], list[str]]:
                 cells.append("na")
                 continue
             outcome, why = cell(by_key[e], sources[e])
-            mark = MARK[outcome]
-            if why and outcome != "skipped":
+            short = falls_short(by_key[e], sources[e], label) if outcome == "supported" else ""
+            mark = MARK["no" if short else outcome]
+            if short:
+                notes.append(f"{TITLE[e]}, {label}: {short}")
+                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
+            elif why and outcome != "skipped":
                 notes.append(
                     f"{TITLE[e]}, {label}: "
                     + "; ".join(f"{r['question']}: `{_one_line(r['detail'])}`" for r in why)
                 )
-                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
-            elif outcome == "supported" and (note := caveat(by_key[e], sources[e], label)):
-                notes.append(f"{TITLE[e]}, {label}: {note}")
                 mark += " " + str(len(notes)).translate(SUPERSCRIPT)
             cells.append(mark)
         head.append(f"| {label} | " + " | ".join(cells) + " |")
@@ -421,8 +425,10 @@ def site_matrix(data: dict) -> dict:
                     continue
                 outcome, why = cell(by_key[e], sources[label][e])
                 note = "; ".join(_one_line(r["detail"], 220) for r in why)
-                if outcome == "supported":
-                    note = caveat(by_key[e], sources[label][e], label)
+                if outcome == "supported" and (
+                    short := falls_short(by_key[e], sources[label][e], label)
+                ):
+                    outcome, note = "no", short
                 cells[SITE_KEY[e]] = {"o": outcome, **({"n": note} if note else {})}
             rows.append({"group": group, "label": label, "cells": cells})
     return {

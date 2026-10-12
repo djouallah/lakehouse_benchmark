@@ -629,7 +629,7 @@ function renderCapability() {
         tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
         tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>
           <div class="k">${esc(row.label)}</div><div><b>${WORD[c.o]}</b></div>` +
-          (c.n ? (c.o === "supported" ? `<div>${esc(c.n)}</div>` : `<div><code>${esc(c.n)}</code></div>`) : "") +
+          (c.n ? `<div><code>${esc(c.n)}</code></div>` : "") +
           (c.o === "na" ? "" : `<div class="k">version ${esc(run.version)} · ${esc(run.date)} · click to open the run</div>`);
         const r = btn.getBoundingClientRect();
         moveTip(r.left + r.width / 2, r.top);

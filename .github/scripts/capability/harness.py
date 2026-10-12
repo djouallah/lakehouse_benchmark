@@ -421,8 +421,8 @@ def partition_result(tbl, kind: str, parts: int) -> tuple[str, str, str]:
 def truncate_kind(table) -> str:
     """How a TRUNCATE committed, from the pyiceberg table after it. Metadata-only means the
     snapshot drops the data files and writes nothing new; the other way is a delete file per data
-    file, which every reader then has to apply. render_readme turns "NOT metadata-only" into a
-    note on the yes."""
+    file, which every reader then has to apply. render_readme makes "NOT metadata-only" a no:
+    TRUNCATE means metadata-only."""
     summary = table.current_snapshot().summary
     counts = {
         k: summary.get(k, "0")

@@ -148,16 +148,16 @@ def test_spark_sends_the_purge_to_the_catalog():
     assert render_readme.ENGINES[0] == "spark"
 
 
-def test_a_truncate_that_is_not_metadata_only_gets_a_note():
-    """A yes keeps its mark; the reading's cost becomes the note, on RESULTS.md and the site."""
+def test_a_truncate_that_is_not_metadata_only_is_a_no():
+    """TRUNCATE means metadata-only: a delete file instead is a no, with the reason as the note."""
     slow = "TRUNCATE: DuckDB reads []; NOT metadata-only: delete snapshot, added-delete-files 1"
     data = {"duckdb": {**DATA["duckdb"], "rows": [_row("truncate", detail=slow)]}}
     text = render_readme.render(data)
-    assert "| TRUNCATE | yes ¹ |" in text.splitlines()
-    assert "DuckDB, TRUNCATE: Not a metadata operation." in text
+    assert "| TRUNCATE | no ¹ |" in text.splitlines()
+    assert "DuckDB, TRUNCATE: Runs, but not as a metadata operation." in text
     row = next(r for r in render_readme.site_matrix(data)["rows"] if r["label"] == "TRUNCATE")
-    assert row["cells"]["duckdb_iceberg"]["o"] == "supported"
-    assert row["cells"]["duckdb_iceberg"]["n"].startswith("Not a metadata operation.")
+    assert row["cells"]["duckdb_iceberg"]["o"] == "no"
+    assert row["cells"]["duckdb_iceberg"]["n"].startswith("Runs, but not as a metadata operation.")
     fast = {"duckdb": {**DATA["duckdb"], "rows": [_row("truncate", detail="metadata-only")]}}
     assert "| TRUNCATE | yes |" in render_readme.render(fast).splitlines()
 

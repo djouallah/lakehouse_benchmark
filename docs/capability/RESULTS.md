@@ -17,7 +17,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | DELETE | yes | na | yes | yes | yes |
 | UPDATE | yes | na | yes | yes | yes |
 | MERGE with one action | yes | na | yes | yes | no ² |
-| TRUNCATE | yes | na | yes ³ | no ⁴ | no ⁵ |
+| TRUNCATE | yes | na | no ³ | no ⁴ | no ⁵ |
 | Partitioned table | yes | yes | yes | yes | yes |
 | Partition transform: bucket | yes | no ⁶ | yes | yes | yes |
 | Partition transform: truncate | yes | yes | yes | yes | yes |
@@ -48,7 +48,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 
 1. chDB, CREATE TABLE: CREATE TABLE: `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
 2. chDB, MERGE with one action: MERGE INTO: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38022167812_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)`
-3. DuckDB, TRUNCATE: Not a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes.
+3. DuckDB, TRUNCATE: Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes.
 4. Sail, TRUNCATE: TRUNCATE TABLE: `IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input`
 5. chDB, TRUNCATE: TRUNCATE TABLE: `ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)`
 6. Polars, Partition transform: bucket: write a table partitioned by bucket(4, id): `works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform`
