@@ -37,8 +37,8 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | MAX from the metadata, no data file read | yes | no ¹⁸ | yes | no ¹⁹ | no ²⁰ |
 | Compaction | yes | yes | no ²¹ | no-op ²² | na |
 | Create branch | yes | no ²³ | no ²⁴ | no ²⁵ | na |
-| Create tag | yes | — | no ²⁶ | no ²⁷ | na |
-| Drop table with purge | yes | yes | yes | no ²⁸ | na |
+| Create tag | yes | no ²⁶ | no ²⁷ | no ²⁸ | na |
+| Drop table with purge | yes | yes | yes | no ²⁹ | na |
 | Create / drop namespace | yes | yes | yes | — | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | yes | yes | yes | yes | na |
@@ -63,17 +63,18 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 15. Sail, Sort order evolution: ALTER TABLE ... WRITE ORDERED BY (sort order): `IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
 16. chDB, Sort order evolution: ALTER TABLE MODIFY ORDER BY (sort order evolution): `ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)`
 17. Sail, Metadata tables: metadata tables (t.snapshots): `IllegalArgumentException: invalid argument: table reference: [Identifier("onelake"), Identifier("_bench_capability"), Identifier("sl_38248034626_1_inspect"), Identifier("snapshots")]`
-18. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38022167812_1_max/data/00000-0-2e122c73…`
+18. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38253695277_1_max/data/00000-0-9fcb972d…`
 19. chDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 2737b6f6-e01e-0060-2b45-5af3ff000000. (STD_EXCEPTION)`
 20. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
 21. Sail, Compaction: CALL system.rewrite_data_files (compaction): `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
 22. chDB, Compaction: OPTIMIZE TABLE (compaction): `returned success and data files went 2 -> 2`
-23. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38022167812_1_branch" CREATE BRANCH probe_branch ^^^^^^`
+23. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38253695277_1_branch" CREATE BRANCH probe_branch ^^^^^^`
 24. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
 25. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
-26. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
-27. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
-28. chDB, Drop table with purge: DROP TABLE: `ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38248101546_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body lengt…`
+26. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38253695277_1_tag" CREATE TAG probe_tag ^^^^^^`
+27. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
+28. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
+29. chDB, Drop table with purge: DROP TABLE: `ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38248101546_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body lengt…`
 
 ## DuckDB: isolation levels and transactions
 
@@ -125,7 +126,7 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`), which writes this file. Every cell is a reading taken by sending the request, not a property of the product: re-run rather than trust it.
 
 - spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38239533754](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38239533754), 2026-10-12
-- duckdb: v2.0.0-alpha46057, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
+- duckdb: v2.0.0-alpha46057, [run 38253695277](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38253695277), 2026-10-12
 - sail: 0.7.2, [run 38248034626](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38248034626), 2026-10-12
 - chdb: 4.4.0, [run 38248101546](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38248101546), 2026-10-12
 - polars: 2.0.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
