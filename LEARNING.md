@@ -504,8 +504,11 @@ Largest scale each engine completes, cold, every statement answered:
   takes the column count from the first data row. A DISPATCHLOAD file starts with 25-field rows,
   the 53-field DUNIT rows count as bad lines, and the rename fails with `Length mismatch: Expected
   axis has 25 elements, new values have 53` (run 38108045089). Same on the nightly main build.
-  Filed: [pandas-dev/pandas#71034](https://github.com/pandas-dev/pandas/issues/71034). The bench
-  runs the C parser.
+  Filed: [pandas-dev/pandas#71034](https://github.com/pandas-dev/pandas/issues/71034). pandas
+  marked it as an Arrow limitation: passing `names` to Arrow does not help, because Arrow fails on
+  any row shorter than `column_names`, and `invalid_row_handler` can only skip or error. Filed in
+  Arrow: [apache/arrow#53290](https://github.com/apache/arrow/issues/53290), an option to pad short
+  rows with nulls (an earlier request, #27832, was closed as stale). The bench runs the C parser.
 - **A thread pool, for pandas only.** Every other engine parallelises its own read. For pandas the
   bench reads 4 files at once on a Python thread pool (the C tokenizer releases the GIL). Each
   worker filters, types and converts its chunks to Arrow; pyiceberg drains them in one append.
