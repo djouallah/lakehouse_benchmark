@@ -20,8 +20,8 @@
   },
   "chdb_iceberg": {
    "version": "4.4.0",
-   "run": "38248101546",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38248101546",
+   "run": "38254816796",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38254816796",
    "date": "2026-10-12"
   },
   "polars_iceberg": {
@@ -163,7 +163,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38248101546_1_d…"
+     "n": "ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_d…"
     },
     "polars_iceberg": {
      "o": "na"
@@ -185,7 +185,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38248101546_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "polars_iceberg": {
      "o": "na"
@@ -336,7 +336,8 @@
      "o": "supported"
     },
     "chdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
     },
     "polars_iceberg": {
      "o": "na"
@@ -468,7 +469,7 @@
      "o": "supported"
     },
     "chdb_iceberg": {
-     "o": "skipped"
+     "o": "supported"
     },
     "polars_iceberg": {
      "o": "supported"
@@ -491,7 +492,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38248101546_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38254816796_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     },
     "polars_iceberg": {
      "o": "na"
@@ -621,7 +622,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 2737b6f6-e01e-0060-2b45-5…"
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: a9be9bfa-501e-00be-744f-5…"
     },
     "polars_iceberg": {
      "o": "no",
