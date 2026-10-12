@@ -63,7 +63,7 @@
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
    "outcome": "no",
-   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...1583_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^"
+   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...0782_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^"
   },
   {
    "key": "types_nested",
@@ -266,7 +266,7 @@
    "group": "catalog",
    "question": "CREATE DATABASE, then DROP DATABASE",
    "outcome": "supported",
-   "detail": "`sp_38213181583_1_ns` created, listed, dropped"
+   "detail": "`sp_38214610782_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -286,8 +286,8 @@
    "key": "credential_vending",
    "group": "catalog",
    "question": "read and INSERT with only the vended credentials",
-   "outcome": "no",
-   "detail": "Py4JJavaError: An error occurred while calling o746.collectToPython. : java.lang.RuntimeException: com.azure.identity.CredentialUnavailableException: EnvironmentCredential authentication unavailable. Environment variables are not fully configured.To mitigate this issue, please refer to the troubleshooting guidelines here at https://aka.ms/azsdk/java/identity/environmentcredential/troubleshoot WorkloadIdentityCredential authentication unavailable. The workload options are not fully configured. See the troubleshooting guide for more information. https://aka.ms/azsdk/java/identity/workloadidentitycredential/troubleshoot Managed Identity authentication is not available. IntelliJ authentication \u2026"
+   "outcome": "broken",
+   "detail": "read and wrote, but Spark's FileIO holds no vended SAS (no adls key)"
   },
   {
    "key": "race_append",
@@ -311,7 +311,7 @@
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "38213181583",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38213181583",
+ "run": "38214610782",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38214610782",
  "date": "2026-10-12"
 }
