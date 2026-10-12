@@ -76,6 +76,8 @@ class RaceProxy:
         # Every request: (method, path without the query, status, the current-snapshot-id a
         # loadTable answered with), for tracing an engine.
         self.log: list[tuple[str, str, int, int | None]] = []
+        # Every DELETE with its query, which `log` drops: dropTable carries purgeRequested there.
+        self.deletes: list[tuple[str, int]] = []
         self._server = ThreadingHTTPServer(("127.0.0.1", 0), self._handler())
         self._server.daemon_threads = True
         self.endpoint = f"http://127.0.0.1:{self._server.server_address[1]}{parts.path}"
@@ -172,6 +174,8 @@ class RaceProxy:
                     with contextlib.suppress(ValueError, KeyError, TypeError):
                         snapshot = json.loads(out)["metadata"].get("current-snapshot-id")
                 proxy.log.append((self.command, self.path.split("?")[0], status, snapshot))
+                if self.command == "DELETE":
+                    proxy.deletes.append((self.path, status))
                 if self.command == "GET" and self.path.split("?")[0].endswith("/v1/config"):
                     out = proxy._rewrite_config(out)
                 for key in targets:

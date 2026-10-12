@@ -19,13 +19,14 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - polars,duckdb,sail,chdb,duckdb_isolation
+          - spark,polars,duckdb,sail,chdb,duckdb_isolation
+          - spark
           - polars
           - duckdb
           - sail
           - chdb
           - duckdb_isolation
-        default: polars,duckdb,sail,chdb,duckdb_isolation
+        default: spark,polars,duckdb,sail,chdb,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -45,7 +46,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'polars,duckdb,sail,chdb,duckdb_isolation' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,polars,duckdb,sail,chdb,duckdb_isolation' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -53,7 +54,8 @@ jobs:
   ask:
     needs: plan
     name: >-
-      ${{ matrix.client == 'duckdb' && 'DuckDB (nightly)'
+      ${{ matrix.client == 'spark' && 'Spark'
+      || matrix.client == 'duckdb' && 'DuckDB (nightly)'
       || matrix.client == 'polars' && 'Polars'
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'chdb' && 'chDB'
@@ -77,6 +79,8 @@ jobs:
       FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      # Local-mode Spark: the driver heap is fixed before Python starts the JVM, so it is env.
+      SPARK_DRIVER_MEMORY: 11g
       CAPABILITY_KEEP: ${{ inputs.keep && '1' || '0' }}
       RESULTS_FILE: results/capability/${{ matrix.client }}.json
       REQS: >-
@@ -95,7 +99,24 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|chdb|polars)=' || true
+          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars)=' || true
+
+      - uses: actions/setup-java@v5
+        if: matrix.client == 'spark'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # spark.jars.packages resolves the Iceberg runtime, hadoop-azure and the Iceberg Azure
+      # bundle from Maven at every SparkSession start; without this it is a download per job.
+      - uses: actions/cache@v4
+        if: matrix.client == 'spark'
+        with:
+          path: |
+            ~/.ivy2
+            ~/.ivy2.5.2
+            ~/.m2/repository
+          key: ivy-spark41-iceberg112-azure-v1
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why.
       - name: DuckDB nightly CLI

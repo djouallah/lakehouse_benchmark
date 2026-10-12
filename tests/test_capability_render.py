@@ -123,3 +123,24 @@ def test_every_engine_asks_the_metadata_read_probes():
             text = script.read_text(encoding="utf-8")
             assert f"def {key}(self)" in text, f"{script.name}: {key}"
             assert f'"{key}"),' in text, f"{script.name}: {key} is not in PROBES"
+
+
+def test_every_spark_cell_has_a_probe():
+    """Spark is the reference column: each probe key a row reads for it is asked by its script."""
+    text = (_ROOT / ".github" / "scripts" / "capability" / "catalog_capability_spark.py").read_text(
+        encoding="utf-8"
+    )
+    keys = {k for _, sources in render_readme.ROWS for k in sources.get("spark", [])}
+    assert keys
+    for key in keys:
+        assert f"def {key}(self)" in text, key
+        assert f'"{key}"),' in text, f"{key} is not in PROBES"
+
+
+def test_spark_sends_the_purge_to_the_catalog():
+    """Iceberg 1.12's rest-catalog-purge is on for every catalog the Spark probe session opens."""
+    text = (_ROOT / "bench" / "capability" / "engines" / "pyspark_iceberg.py").read_text(
+        encoding="utf-8"
+    )
+    assert 'f"spark.sql.catalog.{name}.rest-catalog-purge"] = "true"' in text
+    assert render_readme.ENGINES[0] == "spark"

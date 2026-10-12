@@ -17,12 +17,14 @@ import re
 import sys
 from pathlib import Path
 
-ENGINES = ("polars", "duckdb", "sail", "chdb")
+# Spark first: the reference, the Iceberg Java library the others are read against.
+ENGINES = ("spark", "polars", "duckdb", "sail", "chdb")
 # The ones with SQL, for the rows Polars has no operation for.
-SQL = ("duckdb", "sail", "chdb")
-TITLE = {"polars": "Polars", "duckdb": "DuckDB", "sail": "Sail", "chdb": "chDB"}
-LANGUAGE = {"polars": "Rust", "duckdb": "C++", "sail": "Rust", "chdb": "C++"}
+SQL = ("spark", "duckdb", "sail", "chdb")
+TITLE = {"spark": "Spark", "polars": "Polars", "duckdb": "DuckDB", "sail": "Sail", "chdb": "chDB"}
+LANGUAGE = {"spark": "Java", "polars": "Rust", "duckdb": "C++", "sail": "Rust", "chdb": "C++"}
 IMPLEMENTATION = {
+    "spark": "the Iceberg Java library, the reference",
     "polars": "own parquet reader and writer, pyiceberg for the catalog and commit",
     "duckdb": "own",
     "sail": "own, on DataFusion",
@@ -31,26 +33,32 @@ IMPLEMENTATION = {
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
-    ("CREATE TABLE", {"duckdb": ["create_table"], "sail": ["create_table"]}),
+    ("CREATE TABLE", {e: ["create_table"] for e in ("spark", "duckdb", "sail")}),
     (
         "INSERT / append",
-        {"polars": ["sink_append"], "duckdb": ["insert_values"], "sail": ["insert_into"]},
+        {
+            "spark": ["insert_into"],
+            "polars": ["sink_append"],
+            "duckdb": ["insert_values"],
+            "sail": ["insert_into"],
+        },
     ),
-    ("INSERT ... SELECT", {"duckdb": ["insert_select"]}),
-    ("DELETE", {"duckdb": ["delete_from"], "sail": ["delete_from"]}),
-    ("UPDATE", {"duckdb": ["update"], "sail": ["update"]}),
+    ("INSERT ... SELECT", {e: ["insert_select"] for e in ("spark", "duckdb")}),
+    ("DELETE", {e: ["delete_from"] for e in ("spark", "duckdb", "sail")}),
+    ("UPDATE", {e: ["update"] for e in ("spark", "duckdb", "sail")}),
     (
         "MERGE with one action",
         {
             e: [f"merge_{a}_only" for a in ("update", "delete", "insert", "by_source")]
-            for e in ("duckdb", "sail")
+            for e in ("spark", "duckdb", "sail")
         },
     ),
-    ("TRUNCATE", {"duckdb": ["truncate"], "sail": ["truncate"]}),
-    ("CREATE TABLE AS SELECT", {"duckdb": ["ctas"], "sail": ["ctas"]}),
+    ("TRUNCATE", {e: ["truncate"] for e in ("spark", "duckdb", "sail")}),
+    ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in ("spark", "duckdb", "sail")}),
     (
         "Partitioned table",
         {
+            "spark": ["partitioned"],
             "polars": ["partitioned"],
             "duckdb": ["create_partitioned"],
             "sail": ["partitioned"],
@@ -77,30 +85,44 @@ ROWS = [
     ("Partition evolution", {e: ["partition_evolution"] for e in SQL}),
     (
         "Write after partition evolution",
-        {"polars": ["write_after_evolution"], "duckdb": ["write_after_evolution"]},
+        {e: ["write_after_evolution"] for e in ("spark", "polars", "duckdb")},
     ),
     ("Set table property", {e: ["set_property"] for e in SQL}),
     ("Sort order at create", {"duckdb": ["create_sorted_at_create"]}),
-    ("Sort order evolution", {"duckdb": ["create_sorted"], "sail": ["sort_order"]}),
+    (
+        "Sort order evolution",
+        {"spark": ["sort_order"], "duckdb": ["create_sorted"], "sail": ["sort_order"]},
+    ),
     ("Time travel", {e: ["time_travel"] for e in ENGINES}),
     (
         "Metadata tables",
-        {"duckdb": ["metadata_snapshots", "metadata_files"], "sail": ["metadata_tables"]},
+        {
+            "spark": ["metadata_tables"],
+            "duckdb": ["metadata_snapshots", "metadata_files"],
+            "sail": ["metadata_tables"],
+        },
     ),
     # pyiceberg writes four data files with known min/max bounds, then deletes some of them from
     # storage and keeps the metadata. A right answer means the engine never opened them.
     ("File pruning from min/max in the metadata", {e: ["file_pruning"] for e in ENGINES}),
     ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
-    ("Compaction", {"duckdb": ["rewrite_data_files"], "sail": ["rewrite_data_files"]}),
+    ("Compaction", {e: ["rewrite_data_files"] for e in ("spark", "duckdb", "sail")}),
     ("Expire snapshots", {e: ["expire_snapshots"] for e in SQL}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
-    ("Create tag", {"sail": ["create_tag"]}),
-    ("Drop table with purge", {"duckdb": ["drop_table"], "sail": ["drop_purge"]}),
+    ("Create tag", {e: ["create_tag"] for e in ("spark", "sail")}),
+    (
+        "Drop table with purge",
+        {"spark": ["drop_purge"], "duckdb": ["drop_table"], "sail": ["drop_purge"]},
+    ),
     (
         "Create / drop namespace",
-        {"duckdb": ["create_schema", "drop_schema"], "sail": ["namespace"]},
+        {
+            "spark": ["namespace"],
+            "duckdb": ["create_schema", "drop_schema"],
+            "sail": ["namespace"],
+        },
     ),
-    ("Credential vending", {"duckdb": ["credential_vending"]}),
+    ("Credential vending", {e: ["credential_vending"] for e in ("spark", "duckdb")}),
     # DuckDB's cell is its isolation run's INSERT race on the `no retries` table.
     (
         "A commit against a stale snapshot is refused",
@@ -193,6 +215,7 @@ GROUPS = {
 }
 # The site's engine keys, which are lakehouse_benchmark's.
 SITE_KEY = {
+    "spark": "pyspark_iceberg",
     "polars": "polars_iceberg",
     "duckdb": "duckdb_iceberg",
     "sail": "lakesail_iceberg",
@@ -368,7 +391,8 @@ def render(data: dict) -> str:
     out = [
         "# Iceberg support: what each engine can do against the OneLake Iceberg REST catalog",
         "",
-        "Polars, DuckDB, Sail and chDB: engines with their own Iceberg implementation, no JVM.",
+        "Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail and chDB "
+        "have their own Iceberg code, no JVM.",
         "",
         PREVIEW,
         "",
