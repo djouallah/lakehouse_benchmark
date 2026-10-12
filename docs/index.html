@@ -313,7 +313,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <section class="pl arch" id="anatomy" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap" id="maintenance" hidden></section>
-  <section class="cap rows" id="dbt" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
   <section class="nx-page" id="next" hidden></section>
   <section class="pl" id="plans" hidden></section>
@@ -455,19 +454,18 @@ const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const MAINT = { id: "maintenance", title: "Maintenance" };  // capability.json's Maintenance group
-const DBT = { id: "dbt", title: "dbt support" };
 const WORKLOAD = { id: "workload", title: "Real workload" };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Bad joins" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const NEXT = { id: "next", title: "Next" };
-const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, MAINT, DBT, WORKLOAD, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, MAINT, WORKLOAD, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs: an engine is what it supports, and speed is a bonus.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] },  // the commit is the catalog's job
-  { id: "features", title: "Features", subs: [CAPABILITY, MAINT, DBT] },
+  { id: "features", title: "Iceberg support", subs: [CAPABILITY, MAINT] },
   { id: "performance", title: "Performance", subs: [...SUITES, PLANS] },
   { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
@@ -518,7 +516,6 @@ function render() {
   if (page === ANATOMY) { renderAnatomy(); return; }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY || page === MAINT) { renderCapability(page); return; }
-  if (page === DBT) { renderDbt(); return; }
   if (page === WORKLOAD) { renderWorkload(); return; }
   if (page === NEXT) { renderNext(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
@@ -719,11 +716,11 @@ function renderEngines() {
       batches from the one below it. Execution: Columnar works on batches of column values; Row works one row at a time.</p>`;
 }
 
-// THE DBT TAB: how well dbt 1 (dbt Core) works with each engine on Iceberg tables. DuckDB,
-// LakeSail and Polars were tried in fabric-medallion-dbt-community; the others come from their adapter docs.
-// Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in LABEL has a row
-// (tests/test_results_page.py).
-const DBT_LEVEL = { excellent: "Excellent", good: "Good", partial: "Partial", none: "None" };
+// THE DBT 1 COLUMN of the Real workload tab: how well dbt 1 (dbt Core) works with each engine on Iceberg
+// tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
+// level. DuckDB, LakeSail and Polars were tried in fabric-medallion-dbt-community; the others come from
+// their adapter docs. Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in
+// LABEL has a row (tests/test_results_page.py).
 const DBT_MEDALLION = "https://github.com/djouallah/fabric-medallion-dbt-community";
 const DBT_ROWS = [
   { engine: "pyspark_iceberg", level: "excellent", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
@@ -746,19 +743,6 @@ const DBT_ROWS = [
   { engine: "pandas_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
 ];
 
-function renderDbt() {
-  const sec = $(DBT.id);
-  sec.innerHTML = `
-    <p class="caption">dbt 1 (dbt Core) with Iceberg tables. DuckDB, LakeSail and Polars were tried in
-      <a href="${DBT_MEDALLION}">fabric-medallion-dbt-community</a>; the others come from their adapter docs.</p>
-    <div class="legend">${Object.entries(DBT_LEVEL).map(([k, w]) => `<span class="${k}"><i class="m"></i>${w}</span>`).join("")}</div>
-    <div class="wrap"><table><tbody>${DBT_ROWS.map(r => `
-      <tr style="--c: var(--${r.engine}, var(--ink-3))">
-        <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
-        <td class="lv ${r.level}"><i class="m"></i>${DBT_LEVEL[r.level]}</td>
-        <td class="n">${r.adapter ? `<a href="${r.url}">${r.adapter}</a>: ` : ""}${r.note}</td>
-      </tr>`).join("")}</tbody></table></div>`;
-}
 
 // THE REAL WORKLOAD TAB: can the engine replace DuckDB in one real dbt project, analytics-as-code?
 // Three requirements, all measured elsewhere on this page (reading CSV from Files and writing Iceberg
@@ -776,11 +760,11 @@ const WORKLOAD_TIERS = [
 ];
 const WORKLOAD_ROWS = [
   { engine: "pyspark_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
-    merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
+    merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
   { engine: "trino_iceberg", tier: "veteran", file: { ok: true, note: "<code>\"$path\"</code>" },
-    merge: { ok: true, note: `<a href="#dbt">dbt-trino</a>` } },
+    merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/trino-configs">dbt-trino</a>` } },
   { engine: "pyspark_gluten_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
-    merge: { ok: true, note: `<a href="#dbt">dbt-spark</a>` } },
+    merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
   { engine: "pandas_iceberg", tier: "veteran", file: { ok: null, note: "No option; set per file" },
     merge: { ok: false, note: "No Iceberg writer" } },
   { engine: "duckdb_iceberg", tier: "star", file: { ok: true, note: "<code>filename</code>" },
@@ -816,10 +800,10 @@ function renderWorkload() {
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
         ${mark(r.file.ok, r.file.note)}
-        ${mark(dbtOk, dbt.adapter ? `<a href="#dbt">${esc(dbt.adapter)}</a>` : `<a href="#dbt">no adapter</a>`)}
+        ${mark(dbtOk, dbt.adapter ? `<a href="${dbt.url}">${esc(dbt.adapter)}</a>` : "no adapter")}
         ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
       </tr>`; }).join("")}</tbody>`).join("")}</table></div>
-    <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: the <a href="#dbt">dbt support</a> tab.
+    <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: tried in <a href="${DBT_MEDALLION}">fabric-medallion-dbt-community</a> for DuckDB, LakeSail and Polars, the adapter docs for the others.
       MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
 }
 
@@ -1590,13 +1574,14 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #catalogs, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #dbt, #issues, #about, #engines,
+// Deep links: #catalogs, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "details") h = DETAILS.id;  // the tab's old name
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
+  if (h === "dbt") h = WORKLOAD.id;  // the dbt support tab is now the Real workload tab's dbt 1 column
   if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
   const story = h.match(/^plans-(\w+)$/);  // one Bad joins story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
