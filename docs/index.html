@@ -854,6 +854,10 @@ const NEXT_ROWS = [
   { title: "Control flow in SQL",
     text: `<code>IF</code> and <code>WHILE</code> inside SQL. A host language like Python can do it today, but then
       the optimizer sees one statement at a time and nothing around it. Nothing beats one SQL file.` },
+  { title: "Dynamic vertical scaling",
+    text: `The machine gets more CPU and memory while the job runs, with no restart, and gives them back after.
+      Containers can already be resized while they run. Most engines size their memory once, at start, so the
+      engine must also see the new memory and use it.` },
 ];
 
 function renderNext() {
