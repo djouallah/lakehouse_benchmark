@@ -182,7 +182,7 @@
    "group": "schema",
    "question": "ALTER COLUMN c TYPE BIGINT (int -> long)",
    "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38248034626_1_promote"
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_promote"
   },
   {
    "key": "partition_evolution",
@@ -192,11 +192,18 @@
    "detail": "IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('"
   },
   {
+   "key": "write_after_evolution",
+   "group": "schema",
+   "question": "INSERT, pyiceberg adds bucket(4, id), INSERT",
+   "outcome": "supported",
+   "detail": "data files on specs [0, 1]; all 8 rows read, by pyiceberg and the engine"
+  },
+  {
    "key": "set_property",
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
    "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38248034626_1_props"
+   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_props"
   },
   {
    "key": "time_travel",
@@ -210,7 +217,7 @@
    "group": "read",
    "question": "metadata tables (t.snapshots)",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38248034626_1_inspect\"), Identifier(\"snapshots\")]"
+   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38253752194_1_inspect\"), Identifier(\"snapshots\")]"
   },
   {
    "key": "file_pruning",
@@ -266,7 +273,7 @@
    "group": "catalog",
    "question": "CREATE DATABASE, then DROP DATABASE",
    "outcome": "supported",
-   "detail": "`sl_38248034626_1_ns` created, listed, dropped"
+   "detail": "`sl_38253752194_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -294,17 +301,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6831137120563279514) but found Some(242224847364839748)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1623046067900522122) but found Some(6813285193694807785)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1249021820564336249) but found Some(9041128820509824826)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(8008174343184680755) but found Some(1801932485903141403)"
   }
  ],
- "run": "38248034626",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38248034626",
+ "run": "38253752194",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38253752194",
  "date": "2026-10-12"
 }
