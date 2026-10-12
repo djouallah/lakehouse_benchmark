@@ -63,7 +63,7 @@
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
    "outcome": "no",
-   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...0782_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^"
+   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^"
   },
   {
    "key": "types_nested",
@@ -154,7 +154,7 @@
    "group": "write",
    "question": "TRUNCATE TABLE",
    "outcome": "supported",
-   "detail": "TRUNCATE: pyiceberg reads []; Spark agrees"
+   "detail": "TRUNCATE: pyiceberg reads []; Spark agrees; metadata-only: delete snapshot, deleted-data-files 3, added-data-files None, added-delete-files None"
   },
   {
    "key": "add_column",
@@ -266,7 +266,7 @@
    "group": "catalog",
    "question": "CREATE DATABASE, then DROP DATABASE",
    "outcome": "supported",
-   "detail": "`sp_38214610782_1_ns` created, listed, dropped"
+   "detail": "`sp_38239533754_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -311,7 +311,7 @@
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "38214610782",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38214610782",
+ "run": "38239533754",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38239533754",
  "date": "2026-10-12"
 }

@@ -123,7 +123,7 @@ Columns are table properties: `serializable` nothing set; `snapshot` `write.dele
 
 The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`), which writes this file. Every cell is a reading taken by sending the request, not a property of the product: re-run rather than trust it.
 
-- spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38214610782](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38214610782), 2026-10-12
+- spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38239533754](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38239533754), 2026-10-12
 - polars: 2.0.0, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - duckdb: v2.0.0-alpha46057, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
 - sail: 0.7.2, [run 38022167812](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38022167812), 2026-10-10
