@@ -829,37 +829,37 @@ function renderWorkload() {
       MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
 }
 
-// THE NEXT TAB: what is coming for single-node engines that I am excited about. Things on the way, not bugs:
+// THE NEXT TAB: what is coming for single-node engines that I am excited about, most important first. Things on the way, not bugs:
 // those are on the Issues tab. Each card is checked against its upstream project before it goes here.
 const NEXT_ROWS = [
   { title: "Server-side planning",
     text: `The catalog reads the manifests and gives the engine the list of files to read. The engine gets thinner:
       no metadata work, only reading and computing. It is in the Iceberg REST spec, and the Java client has it since
       Iceberg 1.11. The Rust, C++ and Go clients are working on it.` },
+  { title: "Control flow in SQL",
+    text: `<code>IF</code> and <code>WHILE</code> inside SQL. A host language like Python can do it today, but then
+      the optimizer sees one statement at a time and nothing around it. Nothing beats one SQL file.` },
   { title: "One-file commits (Iceberg v4)",
     text: `Today every commit writes a new metadata.json, a new manifest list and at least one manifest, even for one
       small file. The Iceberg v4 proposal keeps small changes in one file near the root and tidies up later. Delta 5.0
       may use the same metadata. It is still a proposal.` },
-  { title: "DataFusion",
-    text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
-      its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
-  { title: "Row-level commits",
-    text: `When two jobs change existing data, the check today is per file: if they touched the same file, the second
-      commit fails, even if they changed different rows. Iceberg v3 gives every row an id (row lineage), so the check
-      can be per row. See <a href="#concurrency">Concurrency</a>.` },
-  { title: "Control flow in SQL",
-    text: `<code>IF</code> and <code>WHILE</code> inside SQL. A host language like Python can do it today, but then
-      the optimizer sees one statement at a time and nothing around it. Nothing beats one SQL file.` },
-  { title: "Dynamic vertical scaling",
-    text: `The machine gets more CPU and memory while the job runs, with no restart, and gives them back after.
-      Containers can already be resized while they run. Most engines size their memory once, at start, so the
-      engine must also see the new memory and use it.` },
   { title: "A sandbox for user code",
     text: `SQL is safe to share: the engine decides what each user can read. A Python function inside a query is
       different: it runs inside the engine, with the engine's rights, and by default nothing stops it from reading
       other users' data. Mixing SQL and code made engines powerful, but it broke the isolation between users. The
       fix is to run each user's code in a sandbox, like gVisor or WebAssembly, with no access to files or the
       network. One more reason to keep the work in SQL.` },
+  { title: "Row-level commits",
+    text: `When two jobs change existing data, the check today is per file: if they touched the same file, the second
+      commit fails, even if they changed different rows. Iceberg v3 gives every row an id (row lineage), so the check
+      can be per row. See <a href="#concurrency">Concurrency</a>.` },
+  { title: "Dynamic vertical scaling",
+    text: `The machine gets more CPU and memory while the job runs, with no restart, and gives them back after.
+      Containers can already be resized while they run. Most engines size their memory once, at start, so the
+      engine must also see the new memory and use it.` },
+  { title: "DataFusion",
+    text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
+      its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
   { title: "Spark executors with no JVM",
     text: `Spark executors in native code, and no JVM anywhere: no heap to size, no slow start. Here a Spark session
       takes 9 to 28 s to start; the engines with no JVM take 2 to 9 s. <a href="https://github.com/lakehq/sail">Sail</a>
