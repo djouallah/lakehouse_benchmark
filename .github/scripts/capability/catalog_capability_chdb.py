@@ -326,8 +326,8 @@ class ChdbCapability:
 
     def insert_select(self) -> str:
         table = self._fresh("insertsel")
-        self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
-        return self._expect(table, SEED + [(4, 40)], "INSERT ... SELECT")
+        self.sql(f"INSERT INTO {self.t(table)} SELECT id + 10, v FROM {self.t(table)}")
+        return self._expect(table, SEED + [(11, 10), (12, 20), (13, 30)], "INSERT INTO ... SELECT")
 
     def delete_from(self) -> str:
         table = self._fresh("delete")
@@ -533,6 +533,22 @@ class ChdbCapability:
             raise NoOp(f"renamed, and the data is unreadable under the new name: {found}")
         return "renamed, and its 3 rows read back"
 
+    def drop_table(self) -> str:
+        table = self._fresh("drop")
+        made = "; table made by pyiceberg" if table in self.by_pyiceberg else ""
+        tbl = self.iceberg(table)
+        data = [task.file.file_path for task in tbl.scan().plan_files()]
+        self.sql(f"DROP TABLE {self.t(table)}")
+        if self.pyiceberg().table_exists((self.ns, table)):
+            raise NoOp(f"returned success and the catalog still has it{made}")
+        self.created.remove(table)
+        try:
+            left = sum(1 for path in data if tbl.io.new_input(path).exists())
+            files = f"{left} of {len(data)} data file(s) still in storage"
+        except Exception as exc:  # noqa: BLE001 - informational
+            files = f"could not check storage: {_one_line(scrub.scrub_exc(exc, 200), 200)}"
+        return f"gone from the catalog; {files}{made}"
+
     # -- concurrency -------------------------------------------------------------------------
 
     def _race(self, key: str, statement: str) -> str:
@@ -614,6 +630,7 @@ PROBES = [
     ("maintenance", "ALTER TABLE ... EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE (compaction)", "compaction"),
     ("catalog", "RENAME TABLE, then read", "rename_table"),
+    ("catalog", "DROP TABLE", "drop_table"),
     ("concurrency", "INSERT INTO; B appends between chDB's read and commit", "race_append"),
     ("concurrency", "DELETE id 1; B appends", "race_delete"),
     ("concurrency", "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends", "race_update"),

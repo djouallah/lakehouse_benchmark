@@ -139,6 +139,34 @@ def test_every_spark_cell_has_a_probe():
         assert f'"{key}"),' in text, f"{key} is not in PROBES"
 
 
+def test_every_sql_engine_is_probed_on_every_basic_row():
+    """Basic, the grid's first group, is the minimum to be usable: no SQL engine is left unasked,
+    and each probe key a Basic row reads is defined and in PROBES."""
+    sources = dict(render_readme.ROWS)
+    for label in render_readme.GROUPS["Basic"]:
+        assert set(render_readme.SQL) <= set(sources[label]), label
+        for engine, keys in sources[label].items():
+            script = (
+                _ROOT / ".github" / "scripts" / "capability" / f"catalog_capability_{engine}.py"
+            )
+            text = script.read_text(encoding="utf-8")
+            for key in keys:
+                assert f"def {key}(self)" in text, f"{script.name}: {key}"
+                assert f'"{key}"),' in text, f"{script.name}: {key} is not in PROBES"
+
+
+def test_insert_select_reads_the_table_it_writes():
+    """Every engine's INSERT ... SELECT is the same statement: the table into itself."""
+    for engine in dict(render_readme.ROWS)["INSERT ... SELECT"]:
+        script = _ROOT / ".github" / "scripts" / "capability" / f"catalog_capability_{engine}.py"
+        probe = (
+            script.read_text(encoding="utf-8")
+            .split("def insert_select(self)")[1]
+            .split("\n    def ")[0]
+        )
+        assert 'SELECT id + 10, v FROM {self.t(table)}"' in probe, engine
+
+
 def test_spark_sends_the_purge_to_the_catalog():
     """Iceberg 1.12's rest-catalog-purge is on for every catalog the Spark probe session opens."""
     text = (_ROOT / "bench" / "capability" / "engines" / "pyspark_iceberg.py").read_text(

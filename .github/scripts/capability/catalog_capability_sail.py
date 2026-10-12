@@ -335,6 +335,11 @@ class SailCapability:
             f"; {len(self._snapshots(table))} commit(s)"
         )
 
+    def insert_select(self) -> str:
+        table = self._fresh("insertsel")
+        self.sql(f"INSERT INTO {self.t(table)} SELECT id + 10, v FROM {self.t(table)}")
+        return self._expect(table, SEED + [(11, 10), (12, 20), (13, 30)], "INSERT INTO ... SELECT")
+
     def delete_from(self) -> str:
         table = self._fresh("delete")
         self.sql(f"DELETE FROM {self.t(table)} WHERE id = 1")
@@ -599,14 +604,19 @@ class SailCapability:
         return "renamed, and its 3 rows read back"
 
     def drop_purge(self) -> str:
-        if not self.can_create:
-            raise Skip("no table could be created")
-        table = self._create("droppable")
+        table = self._fresh("droppable")
+        tbl = self.iceberg(table)
+        data = [task.file.file_path for task in tbl.scan().plan_files()]
         self.sql(f"DROP TABLE {self.t(table)} PURGE")
         if self.pyiceberg().table_exists((self.ns, table)):
             raise NoOp("returned success and the catalog still has it")
         self.created.remove(table)
-        return "gone from the catalog"
+        try:
+            left = sum(1 for path in data if tbl.io.new_input(path).exists())
+            files = f"{left} of {len(data)} data file(s) still in storage"
+        except Exception as exc:  # noqa: BLE001 - informational
+            files = f"could not check storage: {_one_line(scrub.scrub_exc(exc, 200), 200)}"
+        return f"gone from the catalog; {files}"
 
     # -- concurrency -------------------------------------------------------------------------
 
@@ -669,6 +679,7 @@ PROBES = [
     ("create", "types: decimal, date, timestamp, timestamptz, uuid, binary", "types_scalar"),
     ("create", "nested types: struct, list, map", "types_nested"),
     ("write", "INSERT INTO", "insert_into"),
+    ("write", "INSERT INTO ... SELECT", "insert_select"),
     ("write", "DELETE FROM", "delete_from"),
     ("write", "DELETE FROM, merge-on-read table", "delete_mor"),
     ("write", "UPDATE", "update"),

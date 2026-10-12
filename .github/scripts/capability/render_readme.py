@@ -43,7 +43,7 @@ ROWS = [
             "sail": ["insert_into"],
         },
     ),
-    ("INSERT ... SELECT", {e: ["insert_select"] for e in ("spark", "duckdb")}),
+    ("INSERT ... SELECT", {e: ["insert_select"] for e in ("spark", "duckdb", "sail")}),
     ("DELETE", {e: ["delete_from"] for e in ("spark", "duckdb", "sail")}),
     ("UPDATE", {e: ["update"] for e in ("spark", "duckdb", "sail")}),
     (

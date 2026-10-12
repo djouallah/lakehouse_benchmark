@@ -13,7 +13,7 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | Iceberg implementation | the Iceberg Java library, the reference | own parquet reader and writer, pyiceberg for the catalog and commit | own | own, on DataFusion | ClickHouse's own |
 | CREATE TABLE | yes | na | yes | yes | no ¹ |
 | INSERT / append | yes | yes | yes | yes | yes |
-| INSERT ... SELECT | yes | na | yes | na | yes |
+| INSERT ... SELECT | yes | na | yes | — | yes |
 | DELETE | yes | na | yes | yes | yes |
 | UPDATE | yes | na | yes | yes | yes |
 | MERGE with one action | yes | na | yes | yes | no ² |
