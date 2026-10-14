@@ -9,8 +9,8 @@ Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail a
 | Version | 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01) | v2.0.0-alpha46057 | 0.7.2 | 4.4.0 | 2.0.0 |
 | Language | Java | C++ | Rust | C++ | Rust |
 | Iceberg implementation | the Iceberg Java library, the reference | own | own, on DataFusion | ClickHouse's own | own parquet reader and writer, pyiceberg for the catalog and commit |
-| CREATE TABLE | yes | yes | yes | no ¹ | na |
-| CREATE TABLE AS SELECT | no ² | yes | yes | no ³ | na |
+| CREATE TABLE | yes | yes | yes | no ¹ | — |
+| CREATE TABLE AS SELECT | no ² | yes | yes | no ³ | — |
 | CREATE TABLE IF NOT EXISTS, existing table | yes | yes | yes | yes | na |
 | INSERT / append | yes | yes | yes | yes | yes |
 | INSERT ... SELECT | yes | yes | yes | yes | na |

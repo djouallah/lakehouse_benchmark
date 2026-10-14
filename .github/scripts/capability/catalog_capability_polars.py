@@ -6,10 +6,12 @@ OneLake, and the commit goes through a pyiceberg Transaction on the table it is 
 frame converted to Arrow, so it would only repeat pyiceberg's answers. Reads are `scan_iceberg`
 with Polars' native reader.
 
-POLARS HAS NO DDL. It cannot create a table, delete, update, merge, evolve a spec, or touch refs
-and snapshots, so pyiceberg creates every table and those rows are `na` in the readme. What is
-asked here is everything Polars itself can send: append, overwrite, the schema changes
-`schema_mode` folds into a write, partitioned and typed writes, time travel.
+POLARS HAS NO DDL. It cannot delete, update, merge, evolve a spec, or touch refs and snapshots,
+so those rows are `na` in the readme. Its one create is `sink_iceberg(create_if_not_exists=True)`
+(Polars main, pola-rs/polars#29908): an unpartitioned table from the frame's schema. Every other
+table here pyiceberg creates. What is asked here is everything Polars itself can send: create,
+append, overwrite, the schema changes `schema_mode` folds into a write, partitioned and typed
+writes, time travel.
 
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says. Polars'
 own read is reported beside it. Every error Polars raises is a `no` carrying its full message, so
@@ -192,6 +194,34 @@ class PolarsCapability:
         self.sink(table, rows(SEED))
         op = self.load(table).current_snapshot().summary.operation
         return self._expect(table, SEED, f"sink_iceberg(mode='append'), a {op.value} snapshot")
+
+    def sink_create(self) -> str:
+        """sink_iceberg(create_if_not_exists=True): Polars creates the table it writes, from the
+        frame's schema, unpartitioned. Its CREATE TABLE, and its CREATE TABLE AS SELECT."""
+        import polars as pl
+
+        if self.catalog is None:
+            raise Skip("the catalog never loaded")
+        table = self.name("create")
+        try:
+            pl.from_arrow(rows(SEED)).lazy().sink_iceberg(
+                self.identifier(table),
+                mode="append",
+                create_if_not_exists=True,
+                catalog=self.catalog,
+                storage_options=self.storage,
+            )
+        except Exception as exc:  # noqa: BLE001 - every Polars error is an answer
+            message = f"{type(exc).__name__}: {scrub.scrub_exc(exc, 2000)}"
+            raise Refused(_one_line(message)) from None
+        finally:
+            if self.catalog.table_exists(self.identifier(table)):
+                self.created.append(table)
+        made = self.catalog.load_table(self.identifier(table))
+        ids = [f.field_id for f in made.schema().fields]
+        return self._expect(made, SEED, "sink_iceberg(create_if_not_exists=True)") + (
+            f"; field ids {ids}"
+        )
 
     def sink_overwrite(self) -> str:
         table = self.fresh("overwrite")
@@ -407,6 +437,7 @@ class PolarsCapability:
 
 PROBES = [
     ("session", "Polars imports and the pyiceberg catalog attaches", "session"),
+    ("create", "sink_iceberg(create_if_not_exists=True) to a new table", "sink_create"),
     ("write", "sink_iceberg(mode='append')", "sink_append"),
     ("write", "sink_iceberg(mode='overwrite')", "sink_overwrite"),
     ("create", "write an identity-partitioned table", "partitioned"),

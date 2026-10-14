@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 # The column order, most usable first. Spark is the reference: the Iceberg Java library the others
-# are read against. Polars is last because it has no SQL writes (no CREATE, DELETE, UPDATE, DROP).
+# are read against. Polars is last because it has no SQL writes (no DELETE, UPDATE, DROP).
 ENGINES = ("spark", "duckdb", "sail", "chdb", "polars")
 # The ones with SQL, for the rows Polars has no operation for.
 SQL = ("spark", "duckdb", "sail", "chdb")
@@ -34,8 +34,12 @@ IMPLEMENTATION = {
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
-    ("CREATE TABLE", {e: ["create_table"] for e in ("spark", "duckdb", "sail")}),
-    ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in SQL}),
+    # Polars' CREATE TABLE is sink_iceberg creating the table it writes: a CTAS too.
+    (
+        "CREATE TABLE",
+        {"polars": ["sink_create"], **{e: ["create_table"] for e in ("spark", "duckdb", "sail")}},
+    ),
+    ("CREATE TABLE AS SELECT", {"polars": ["sink_create"], **{e: ["ctas"] for e in SQL}}),
     ("CREATE TABLE IF NOT EXISTS, existing table", {e: ["create_if_not_exists"] for e in SQL}),
     (
         "INSERT / append",
