@@ -216,6 +216,27 @@
   },
   {
    "group": "Basic",
+   "label": "CREATE SCHEMA IF NOT EXISTS, existing schema",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Basic",
    "label": "Concurrent append: both kept",
    "cells": {
     "pyspark_iceberg": {
@@ -324,6 +345,27 @@
   },
   {
    "group": "Advanced",
+   "label": "INSERT OVERWRITE, whole table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
+    },
+    "polars_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Advanced",
    "label": "TRUNCATE",
    "cells": {
     "pyspark_iceberg": {
@@ -340,6 +382,27 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "CREATE TABLE IF NOT EXISTS, existing table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
     },
     "polars_iceberg": {
      "o": "na"
@@ -806,6 +869,28 @@
     "chdb_iceberg": {
      "o": "no-op",
      "n": "returned success and data files went 2 -> 2"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Rewrite manifests",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
     },
     "polars_iceberg": {
      "o": "na"

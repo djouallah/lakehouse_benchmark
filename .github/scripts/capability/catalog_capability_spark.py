@@ -47,6 +47,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    any_wanted,
+    asked,
     evolution_check,
     iceberg_schema,
     partition_result,
@@ -58,6 +60,7 @@ from harness import (
     truncate_kind,
     type_result,
     verdict,
+    wanted,
     write_stats_files,
 )
 from isolation_duckdb import race_probe
@@ -270,6 +273,18 @@ class SparkCapability:
         tbl = self.iceberg(table)
         ids = [f.field_id for f in tbl.schema().fields]
         return f"field ids {ids}, format-version {tbl.metadata.format_version}"
+
+    def create_if_not_exists(self) -> str:
+        table = self._fresh("ine")
+        self.sql(
+            f"CREATE TABLE IF NOT EXISTS {self.t(table)} (id BIGINT, v BIGINT, extra BIGINT) "
+            f"USING iceberg"
+        )
+        names = [f.name for f in self.iceberg(table).schema().fields]
+        rows = self._py_rows(table)
+        if "extra" in names or rows != SEED:
+            raise NoOp(f"IF NOT EXISTS replaced the existing table: columns {names}, rows {rows}")
+        return f"accepted, the existing table untouched: columns {names}, rows {rows}"
 
     def ctas(self) -> str:
         table = self.name("ctas")
@@ -619,6 +634,10 @@ class SparkCapability:
         self.namespaces.remove(ns)
         return f"`{ns}` created, listed, dropped"
 
+    def namespace_existing(self) -> str:
+        self.sql(f"CREATE DATABASE IF NOT EXISTS {CATALOG}.`{self.ns}`")
+        return f"accepted on the existing `{self.ns}`"
+
     def rename_table(self) -> str:
         """Renamed AND readable. OneLake moves the folder on a rename; every engine so far found
         the manifest list still pointing at the old one."""
@@ -749,6 +768,7 @@ class SparkCapability:
 PROBES = [
     ("session", "Spark starts and attaches the REST catalog", "session"),
     ("create", "CREATE TABLE ... USING iceberg", "create_table"),
+    ("create", "CREATE TABLE IF NOT EXISTS on an existing table", "create_if_not_exists"),
     ("create", "CREATE TABLE ... AS SELECT", "ctas"),
     ("create", "PARTITIONED BY (p), then INSERT", "partitioned"),
     ("create", "ALTER TABLE ... WRITE ORDERED BY (sort order)", "sort_order"),
@@ -787,6 +807,7 @@ PROBES = [
     ("maintenance", "CALL system.rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "CALL system.rewrite_manifests", "rewrite_manifests"),
     ("catalog", "CREATE DATABASE, then DROP DATABASE", "namespace"),
+    ("catalog", "CREATE DATABASE IF NOT EXISTS, existing namespace", "namespace_existing"),
     ("catalog", "ALTER TABLE ... RENAME TO, then read", "rename_table"),
     ("catalog", "DROP TABLE ... PURGE, rest-catalog-purge on", "drop_purge"),
     ("catalog", "read and INSERT with only the vended credentials", "credential_vending"),
@@ -817,12 +838,17 @@ def write_step_summary(probe: SparkCapability) -> None:
 
 
 def main() -> int:
+    if not any_wanted(PROBES):
+        print(f"this run asks none of {', '.join(sorted(asked()))} of this client")
+        return 0
     cfg = Config.from_env()
     probe = SparkCapability(cfg)
     print(f"workspace {cfg.workspace_id}  lakehouse {cfg.lakehouse_id}  namespace {NAMESPACE}")
 
     try:
         for group, question, method in PROBES:
+            if not wanted(method):
+                continue
             ok = probe.report.run(group, question, getattr(probe, method))
             if not ok and method == "session":
                 print("\nstopped: no Spark session, so nothing below could be asked")

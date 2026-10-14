@@ -103,7 +103,7 @@ def test_site_matrix_uses_the_site_engine_keys_and_each_runs_own_url():
 def test_nothing_the_catalog_decides_is_probed_or_shown():
     """The capability suite tests engines: no row, probe or text whose answer is the catalog's."""
     labels = {label for label, _ in render_readme.ROWS}
-    for gone in ("MERGE INTO / upsert", "INSERT OVERWRITE, whole table", "format-version 3"):
+    for gone in ("MERGE INTO / upsert", "format-version 3"):
         assert gone not in labels
     scripts = (_ROOT / ".github" / "scripts" / "capability").glob("*.py")
     for script in scripts:

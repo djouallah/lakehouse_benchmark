@@ -45,6 +45,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    any_wanted,
+    asked,
     evolution_check,
     evolve_spec,
     iceberg_schema,
@@ -59,6 +61,7 @@ from harness import (
     type_result,
     type_schema,
     verdict,
+    wanted,
     write_stats_files,
 )
 from isolation_duckdb import race_probe
@@ -258,6 +261,15 @@ class ChdbCapability:
         fields = [(f.field_id, f.name, str(f.field_type)) for f in tbl.schema().fields]
         return f"fields {fields}, format-version {tbl.metadata.format_version}"
 
+    def create_if_not_exists(self) -> str:
+        table = self._fresh("ine")
+        self.sql(f"CREATE TABLE IF NOT EXISTS {self.t(table)} (id Int64, v Int64, extra Int64)")
+        names = [f.name for f in self.iceberg(table).schema().fields]
+        rows = self._py_rows(table)
+        if "extra" in names or rows != SEED:
+            raise NoOp(f"IF NOT EXISTS replaced the existing table: columns {names}, rows {rows}")
+        return f"accepted, the existing table untouched: columns {names}, rows {rows}"
+
     def ctas(self) -> str:
         table = self.name("ctas")
         self.created.append(table)
@@ -367,6 +379,11 @@ class ChdbCapability:
         self.sql(f"TRUNCATE TABLE {self.t(table)}")
         result = self._expect(table, [], "TRUNCATE")
         return f"{result}; {truncate_kind(self.iceberg(table))}"
+
+    def insert_overwrite(self) -> str:
+        table = self._fresh("overwrite")
+        self.sql(f"INSERT OVERWRITE TABLE {self.t(table)} {_select([(7, 70), (8, 80)])}")
+        return self._expect(table, [(7, 70), (8, 80)], "INSERT OVERWRITE")
 
     # -- schema ------------------------------------------------------------------------------
 
@@ -539,6 +556,9 @@ class ChdbCapability:
 
     # -- catalog -----------------------------------------------------------------------------
 
+    def rewrite_manifests(self) -> str:
+        raise Refused("ClickHouse has no statement to rewrite an Iceberg table's manifests")
+
     def rename_table(self) -> str:
         table = self._fresh("rename")
         target = self.name("renamed")
@@ -565,6 +585,9 @@ class ChdbCapability:
         if not listed:
             raise NoOp("CREATE TABLE in a new namespace returned success and pyiceberg lists none")
         raise Refused("created through CREATE TABLE; ClickHouse has no statement to drop one")
+
+    def namespace_existing(self) -> str:
+        raise Refused("ClickHouse has no statement for a catalog namespace")
 
     def drop_table(self) -> str:
         table = self._fresh("drop")
@@ -631,6 +654,7 @@ class ChdbCapability:
 PROBES = [
     ("session", "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')", "session"),
     ("create", "CREATE TABLE", "create_table"),
+    ("create", "CREATE TABLE IF NOT EXISTS on an existing table", "create_if_not_exists"),
     ("create", "CREATE TABLE ... AS SELECT", "ctas"),
     ("create", "PARTITION BY p, then INSERT", "partitioned"),
     ("create", "ORDER BY at create (sort order)", "sorted_at_create"),
@@ -647,6 +671,7 @@ PROBES = [
     ("write", "ALTER TABLE ... UPDATE", "alter_update"),
     ("write", "MERGE INTO", "merge_into"),
     ("write", "TRUNCATE TABLE", "truncate"),
+    ("write", "INSERT OVERWRITE TABLE", "insert_overwrite"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
@@ -663,7 +688,9 @@ PROBES = [
     ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "ALTER TABLE ... EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE (compaction)", "compaction"),
+    ("maintenance", "rewrite manifests (no statement)", "rewrite_manifests"),
     ("catalog", "CREATE TABLE in a new namespace (no namespace statement)", "namespace"),
+    ("catalog", "namespace IF NOT EXISTS (no namespace statement)", "namespace_existing"),
     ("catalog", "RENAME TABLE, then read", "rename_table"),
     ("catalog", "DROP TABLE", "drop_table"),
     ("concurrency", "INSERT INTO; B appends between chDB's read and commit", "race_append"),
@@ -693,12 +720,17 @@ def write_step_summary(probe: ChdbCapability) -> None:
 
 
 def main() -> int:
+    if not any_wanted(PROBES):
+        print(f"this run asks none of {', '.join(sorted(asked()))} of this client")
+        return 0
     cfg = Config.from_env()
     probe = ChdbCapability(cfg)
     print(f"workspace {cfg.workspace_id}  lakehouse {cfg.lakehouse_id}  namespace {NAMESPACE}")
 
     try:
         for group, question, method in PROBES:
+            if not wanted(method):
+                continue
             ok = probe.report.run(group, question, getattr(probe, method))
             if not ok and method == "session":
                 print("\nstopped: no chDB session, so nothing below could be asked")

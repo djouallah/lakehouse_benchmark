@@ -21,6 +21,7 @@ on:
         type: choice
         options:
           - spark,polars,duckdb,sail,chdb,duckdb_isolation
+          - spark,polars,duckdb,sail,chdb
           - spark
           - polars
           - duckdb
@@ -32,6 +33,12 @@ on:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
         default: false
+      probes:
+        description: >-
+          Probe keys to ask, comma-separated (e.g. insert_overwrite,rewrite_manifests). Empty asks
+          them all. A client's other readings stay as they are; duckdb_isolation always runs whole.
+        type: string
+        default: ""
       publish:
         description: Publish the readings to results/capability/ and the site.
         type: boolean
@@ -87,6 +94,7 @@ jobs:
       # Local-mode Spark: the driver heap is fixed before Python starts the JVM, so it is env.
       SPARK_DRIVER_MEMORY: 11g
       CAPABILITY_KEEP: ${{ inputs.keep && '1' || '0' }}
+      CAPABILITY_PROBES: ${{ inputs.probes }}
       RESULTS_FILE: results/capability/${{ matrix.client }}.json
       REQS: >-
         requirements/capability_${{ matrix.client == 'duckdb_isolation' && 'duckdb' || matrix.client }}.txt

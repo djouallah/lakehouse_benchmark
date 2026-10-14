@@ -45,6 +45,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    any_wanted,
+    asked,
     evolution_check,
     iceberg_schema,
     partition_result,
@@ -58,6 +60,7 @@ from harness import (
     type_result,
     type_schema,
     verdict,
+    wanted,
     write_stats_files,
 )
 from isolation_duckdb import race_probe
@@ -189,6 +192,14 @@ class PolarsCapability:
         self.sink(table, rows(SEED))
         op = self.load(table).current_snapshot().summary.operation
         return self._expect(table, SEED, f"sink_iceberg(mode='append'), a {op.value} snapshot")
+
+    def sink_overwrite(self) -> str:
+        table = self.fresh("overwrite")
+        self.sink(table, rows([(7, 70), (8, 80)]), mode="overwrite")
+        op = self.load(table).current_snapshot().summary.operation
+        return self._expect(
+            table, [(7, 70), (8, 80)], f"sink_iceberg(mode='overwrite'), a {op.value} snapshot"
+        )
 
     # -- partitions and types ----------------------------------------------------------------
 
@@ -397,6 +408,7 @@ class PolarsCapability:
 PROBES = [
     ("session", "Polars imports and the pyiceberg catalog attaches", "session"),
     ("write", "sink_iceberg(mode='append')", "sink_append"),
+    ("write", "sink_iceberg(mode='overwrite')", "sink_overwrite"),
     ("create", "write an identity-partitioned table", "partitioned"),
     ("create", "write a table partitioned by bucket(4, id)", "partition_bucket"),
     ("create", "write a table partitioned by truncate(2, x)", "partition_truncate"),
@@ -435,12 +447,17 @@ def write_step_summary(probe: PolarsCapability) -> None:
 
 
 def main() -> int:
+    if not any_wanted(PROBES):
+        print(f"this run asks none of {', '.join(sorted(asked()))} of this client")
+        return 0
     cfg = Config.from_env()
     probe = PolarsCapability(cfg)
     print(f"workspace {cfg.workspace_id}  lakehouse {cfg.lakehouse_id}  namespace {NAMESPACE}")
 
     try:
         for group, question, method in PROBES:
+            if not wanted(method):
+                continue
             ok = probe.report.run(group, question, getattr(probe, method))
             if not ok and method == "session":
                 print("\nstopped: no catalog, so nothing below could be asked")

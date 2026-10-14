@@ -43,3 +43,31 @@ def test_the_stats_files_do_not_overlap_and_hold_the_expected_answers():
     assert len(holding) == 1
     assert [(v,) for i, v in holding[0] if i == harness.PRUNE_ID] == harness.PRUNE_EXPECTED
     assert [(bounds[-1][1],)] == harness.MAX_EXPECTED
+
+
+def test_a_run_that_asks_some_probes_keeps_the_other_readings(tmp_path, monkeypatch):
+    import json
+
+    path = tmp_path / "spark.json"
+    old = [{"key": "session"}, {"key": "a", "outcome": "no"}, {"key": "b", "outcome": "no"}]
+    path.write_text(json.dumps({"engine": "spark", "rows": old}), encoding="utf-8")
+    monkeypatch.setenv("RESULTS_FILE", str(path))
+    monkeypatch.setenv("CAPABILITY_PROBES", "b,c")
+    assert harness.wanted("session") and harness.wanted("b") and not harness.wanted("a")
+    fresh = [{"key": "session"}, {"key": "b", "outcome": "supported"}, {"key": "c"}]
+    harness.save_results({"engine": "spark", "version": "v", "rows": fresh})
+    rows = json.loads(path.read_text(encoding="utf-8"))["rows"]
+    assert [r["key"] for r in rows] == ["session", "a", "b", "c"]
+    assert rows[1]["outcome"] == "no" and rows[2]["outcome"] == "supported"
+
+
+def test_no_probe_list_asks_everything_and_replaces_the_file(tmp_path, monkeypatch):
+    import json
+
+    path = tmp_path / "spark.json"
+    path.write_text(json.dumps({"engine": "spark", "rows": [{"key": "a"}]}), encoding="utf-8")
+    monkeypatch.setenv("RESULTS_FILE", str(path))
+    monkeypatch.delenv("CAPABILITY_PROBES", raising=False)
+    assert harness.wanted("anything")
+    harness.save_results({"engine": "spark", "version": "v", "rows": [{"key": "b"}]})
+    assert [r["key"] for r in json.loads(path.read_text(encoding="utf-8"))["rows"]] == ["b"]

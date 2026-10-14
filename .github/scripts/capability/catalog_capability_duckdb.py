@@ -49,6 +49,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    any_wanted,
+    asked,
     evolution_check,
     iceberg_schema,
     partition_result,
@@ -59,6 +61,7 @@ from harness import (
     truncate_kind,
     type_result,
     verdict,
+    wanted,
     write_stats_files,
 )
 
@@ -506,6 +509,14 @@ class DuckDBCapability:
         result = self._expect(table, [], "TRUNCATE")
         return f"{result}; {truncate_kind(self.iceberg(table))}"
 
+    def insert_overwrite(self) -> str:
+        table = self._fresh("overwrite")
+        self.sql(
+            f"INSERT OVERWRITE {self.t(table)} "
+            f"SELECT * FROM (VALUES (7::BIGINT, 70::BIGINT), (8, 80)) AS s(id, v)"
+        )
+        return self._expect(table, [(7, 70), (8, 80)], "INSERT OVERWRITE")
+
     # -- probes: schema ----------------------------------------------------------------------
 
     def add_column(self) -> str:
@@ -691,6 +702,15 @@ class DuckDBCapability:
         """The dotted name the maintenance functions take as a string argument."""
         return f"'{CATALOG}.{self.ns}.{table}'"
 
+    def rewrite_manifests(self) -> str:
+        table = self._fresh("manifests")
+        self.sql(f"INSERT INTO {self.t(table)} VALUES (4, 40)")
+        before = len(self._snapshots(table))
+        self.sql(f"CALL iceberg_rewrite_manifests({self._name_arg(table)})")
+        if len(self._snapshots(table)) == before:
+            raise NoOp("returned success and no new snapshot was committed")
+        return "a new snapshot rewrote the manifests"
+
     def rewrite_data_files(self) -> str:
         """Compaction, duckdb-iceberg's own: one `replace` snapshot over the small files. Its
         planner skips a bucket under min_input_files (run 36227802079 rewrote 0 of 3), so
@@ -780,11 +800,7 @@ class DuckDBCapability:
 
 PROBES = [
     ("session", "DuckDB attaches the REST catalog", "session"),
-    (
-        "catalog",
-        "CREATE SCHEMA IF NOT EXISTS on the existing `_bench_capability`",
-        "namespace_existing",
-    ),
+    ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),
     ("create", "CREATE TABLE (the catalog assigns the location)", "create_table"),
     ("create", "CREATE TABLE IF NOT EXISTS on an existing table", "create_if_not_exists"),
     ("create", "CREATE TABLE ... AS SELECT", "ctas"),
@@ -812,6 +828,7 @@ PROBES = [
     ("write", "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT", "merge_upsert"),
     ("write", "MERGE, three actions: UPDATE + INSERT + BY SOURCE DELETE", "merge_three"),
     ("write", "TRUNCATE", "truncate"),
+    ("write", "INSERT OVERWRITE, whole table", "insert_overwrite"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
@@ -829,6 +846,7 @@ PROBES = [
     ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "iceberg_expire_snapshots", "expire_snapshots"),
     ("maintenance", "iceberg_rewrite_data_files (compaction)", "rewrite_data_files"),
+    ("maintenance", "iceberg_rewrite_manifests", "rewrite_manifests"),
     ("catalog", "DROP TABLE", "drop_table"),
     (
         "catalog",
@@ -861,12 +879,17 @@ def write_step_summary(probe: DuckDBCapability) -> None:
 
 
 def main() -> int:
+    if not any_wanted(PROBES):
+        print(f"this run asks none of {', '.join(sorted(asked()))} of this client")
+        return 0
     cfg = Config.from_env()
     probe = DuckDBCapability(cfg)
     print(f"workspace {cfg.workspace_id}  lakehouse {cfg.lakehouse_id}  namespace {NAMESPACE}")
 
     try:
         for group, question, method in PROBES:
+            if not wanted(method):
+                continue
             ok = probe.report.run(group, question, getattr(probe, method))
             if not ok and method == "session":
                 print("\nstopped: no DuckDB session, so nothing below could be asked")

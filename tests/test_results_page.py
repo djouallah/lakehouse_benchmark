@@ -83,7 +83,8 @@ def test_maintenance_is_a_group_of_the_iceberg_support_grid():
     assert '{ id: "features", title: "Iceberg support", subs: [CAPABILITY] }' in PAGE
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
-    assert [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"] == ["Compaction"]
+    maintenance = [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"]
+    assert maintenance == ["Compaction", "Rewrite manifests"]
 
 
 def test_the_iceberg_support_grid_opens_on_basic():
@@ -102,6 +103,7 @@ def test_the_iceberg_support_grid_opens_on_basic():
         "UPDATE",
         "Drop table with purge",
         "Create / drop namespace",
+        "CREATE SCHEMA IF NOT EXISTS, existing schema",
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
@@ -110,5 +112,6 @@ def test_the_iceberg_support_grid_opens_on_basic():
     assert advanced == [
         "MERGE with one action",
         "MERGE with two actions (UPDATE + INSERT)",
+        "INSERT OVERWRITE, whole table",
         "TRUNCATE",
     ]

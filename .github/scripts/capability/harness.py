@@ -87,6 +87,34 @@ def _is_server_refusal(message: str) -> bool:
     return any(mark in lowered for mark in marks)
 
 
+def asked() -> set[str]:
+    """The probe keys this run asks: $CAPABILITY_PROBES, comma-separated. Empty asks them all."""
+    return {k.strip() for k in os.environ.get("CAPABILITY_PROBES", "").split(",") if k.strip()}
+
+
+def wanted(method: str) -> bool:
+    """Is this probe asked this run? The session always is: nothing runs without it."""
+    keys = asked()
+    return not keys or method in keys or method == "session"
+
+
+def any_wanted(probes) -> bool:
+    """Does this run ask this client anything beyond its session?"""
+    return any(wanted(method) for _, _, method in probes if method != "session")
+
+
+def _merged(path: str, payload: dict) -> dict:
+    """A run that asks some probes keeps the client's other readings: its rows replace the rows
+    with the same key in the results file, and the rest stay as they were."""
+    if not asked() or "rows" not in payload or not os.path.exists(path):
+        return payload
+    with open(path, encoding="utf-8") as handle:
+        kept = json.load(handle).get("rows", [])
+    fresh = {row["key"]: row for row in payload["rows"]}
+    rows = [fresh.pop(row["key"], row) for row in kept]
+    return {**payload, "rows": rows + list(fresh.values())}
+
+
 def save_results(payload: dict) -> None:
     """Write a probe's readings to $RESULTS_FILE as JSON, for render_readme.py. No-op without it."""
     import datetime as dt
@@ -94,6 +122,7 @@ def save_results(payload: dict) -> None:
     path = os.environ.get("RESULTS_FILE")
     if not path:
         return
+    payload = _merged(path, payload)
     payload = {
         **payload,
         "run": os.environ.get("GITHUB_RUN_ID", "local"),

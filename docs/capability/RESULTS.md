@@ -13,12 +13,14 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | Iceberg implementation | the Iceberg Java library, the reference | own | own, on DataFusion | ClickHouse's own | own parquet reader and writer, pyiceberg for the catalog and commit |
 | CREATE TABLE | yes | yes | yes | no ¹ | na |
 | CREATE TABLE AS SELECT | no ² | yes | yes | no ³ | na |
+| CREATE TABLE IF NOT EXISTS, existing table | — | yes | — | — | na |
 | INSERT / append | yes | yes | yes | yes | yes |
 | INSERT ... SELECT | yes | yes | yes | yes | na |
 | DELETE | yes | yes | yes | yes | na |
 | UPDATE | yes | yes | yes | yes | na |
 | MERGE with one action | yes | yes | yes | no ⁴ | na |
 | MERGE with two actions (UPDATE + INSERT) | yes | no ⁵ | yes | no ⁶ | na |
+| INSERT OVERWRITE, whole table | — | — | — | — | — |
 | TRUNCATE | yes | no ⁷ | no ⁸ | no ⁹ | na |
 | Partitioned table | yes | yes | yes | yes | yes |
 | Partition transform: bucket | yes | yes | yes | yes | no ¹⁰ |
@@ -39,10 +41,12 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 | File pruning from min/max in the metadata | yes | yes | yes | yes | yes |
 | MAX from the metadata, no data file read | yes | no ²⁴ | yes | no ²⁵ | no ²⁶ |
 | Compaction | yes | yes | no ²⁷ | no-op ²⁸ | na |
-| Create branch | yes | no ²⁹ | no ³⁰ | no ³¹ | na |
-| Create tag | yes | no ³² | no ³³ | no ³⁴ | na |
-| Drop table with purge | yes | yes | yes | no ³⁵ | na |
-| Create / drop namespace | yes | yes | yes | no ³⁶ | na |
+| Rewrite manifests | yes | — | no ²⁹ | — | na |
+| Create branch | yes | no ³⁰ | no ³¹ | no ³² | na |
+| Create tag | yes | no ³³ | no ³⁴ | no ³⁵ | na |
+| Drop table with purge | yes | yes | yes | no ³⁶ | na |
+| Create / drop namespace | yes | yes | yes | no ³⁷ | na |
+| CREATE SCHEMA IF NOT EXISTS, existing schema | — | yes | — | — | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | yes | yes | yes | yes | na |
 | Concurrent writer: UPDATE loses nothing | yes | yes | yes | yes | na |
@@ -77,14 +81,15 @@ The OneLake Iceberg API is still in private preview. Some issues are already fix
 26. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
 27. Sail, Compaction: CALL system.rewrite_data_files (compaction): `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
 28. chDB, Compaction: OPTIMIZE TABLE (compaction): `returned success and data files went 2 -> 2`
-29. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38499696276_1_branch" CREATE BRANCH probe_branch ^^^^^^`
-30. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
-31. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
-32. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38499696276_1_tag" CREATE TAG probe_tag ^^^^^^`
-33. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
-34. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
-35. chDB, Drop table with purge: DROP TABLE: `ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body lengt…`
-36. chDB, Create / drop namespace: CREATE TABLE in a new namespace (no namespace statement): `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
+29. Sail, Rewrite manifests: CALL system.rewrite_manifests: `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
+30. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38499696276_1_branch" CREATE BRANCH probe_branch ^^^^^^`
+31. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
+32. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
+33. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38499696276_1_tag" CREATE TAG probe_tag ^^^^^^`
+34. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
+35. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
+36. chDB, Drop table with purge: DROP TABLE: `ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body lengt…`
+37. chDB, Create / drop namespace: CREATE TABLE in a new namespace (no namespace statement): `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
 
 ## DuckDB: isolation levels and transactions
 

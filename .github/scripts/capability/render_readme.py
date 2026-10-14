@@ -36,6 +36,7 @@ IMPLEMENTATION = {
 ROWS = [
     ("CREATE TABLE", {e: ["create_table"] for e in ("spark", "duckdb", "sail")}),
     ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in SQL}),
+    ("CREATE TABLE IF NOT EXISTS, existing table", {e: ["create_if_not_exists"] for e in SQL}),
     (
         "INSERT / append",
         {
@@ -63,6 +64,16 @@ ROWS = [
             "duckdb": ["merge_upsert"],
             "sail": ["merge_mor"],
             "chdb": ["merge_into"],
+        },
+    ),
+    (
+        "INSERT OVERWRITE, whole table",
+        {
+            "spark": ["insert_overwrite"],
+            "duckdb": ["insert_overwrite"],
+            "sail": ["insert_overwrite"],
+            "chdb": ["insert_overwrite"],
+            "polars": ["sink_overwrite"],
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in ("spark", "duckdb", "sail")}),
@@ -117,6 +128,7 @@ ROWS = [
     ("File pruning from min/max in the metadata", {e: ["file_pruning"] for e in ENGINES}),
     ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
     ("Compaction", {e: ["rewrite_data_files"] for e in ("spark", "duckdb", "sail")}),
+    ("Rewrite manifests", {e: ["rewrite_manifests"] for e in SQL}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
     ("Create tag", {e: ["create_tag"] for e in ("spark", "duckdb", "sail")}),
     (
@@ -131,6 +143,7 @@ ROWS = [
             "sail": ["namespace"],
         },
     ),
+    ("CREATE SCHEMA IF NOT EXISTS, existing schema", {e: ["namespace_existing"] for e in SQL}),
     # Writer B (pyiceberg) commits between the engine's read and its commit
     # (bench/capability/race.py).
     # DuckDB's cells are its isolation run's, at Iceberg's default level.
@@ -174,6 +187,7 @@ GROUPS = {
         "UPDATE",
         "Drop table with purge",
         "Create / drop namespace",
+        "CREATE SCHEMA IF NOT EXISTS, existing schema",
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
@@ -181,9 +195,11 @@ GROUPS = {
     "Advanced": [
         "MERGE with one action",
         "MERGE with two actions (UPDATE + INSERT)",
+        "INSERT OVERWRITE, whole table",
         "TRUNCATE",
     ],
     "Tables & types": [
+        "CREATE TABLE IF NOT EXISTS, existing table",
         "Partitioned table",
         "Partition transform: bucket",
         "Partition transform: truncate",
@@ -212,7 +228,7 @@ GROUPS = {
         "Create tag",
     ],
     # The site shows this group on a tab of its own, Maintenance.
-    "Maintenance": ["Compaction"],
+    "Maintenance": ["Compaction", "Rewrite manifests"],
 }
 # The site's engine keys, which are lakehouse_benchmark's.
 SITE_KEY = {
