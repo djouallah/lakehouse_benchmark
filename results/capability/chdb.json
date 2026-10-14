@@ -7,7 +7,7 @@
    "group": "session",
    "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
    "outcome": "supported",
-   "detail": "chdb 4.4.0; 386 catalog table(s) listed"
+   "detail": "chdb 4.4.0; 416 catalog table(s) listed"
   },
   {
    "key": "create_table",
@@ -281,9 +281,37 @@
    "question": "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE TABLE",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38506561909_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, ORDER BY, LIMIT, OFFSET, FETCH, SETTINGS, end of query. (SYNTAX_ERROR)"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "rewrite manifests (no statement)",
+   "outcome": "no",
+   "detail": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "namespace IF NOT EXISTS (no namespace statement)",
+   "outcome": "no",
+   "detail": "ClickHouse has no statement for a catalog namespace"
   }
  ],
- "run": "38254816796",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38254816796",
- "date": "2026-10-12"
+ "run": "38506561909",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38506561909",
+ "date": "2026-10-14"
 }

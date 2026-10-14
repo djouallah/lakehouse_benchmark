@@ -264,9 +264,9 @@
   {
    "key": "namespace",
    "group": "catalog",
-   "question": "CREATE DATABASE, then DROP DATABASE",
+   "question": "CREATE SCHEMA, then DROP SCHEMA",
    "outcome": "supported",
-   "detail": "`sp_38239533754_1_ns` created, listed, dropped"
+   "detail": "`sp_38506561909_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -309,9 +309,30 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "supported",
+   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Spark agrees; 1 snapshot(s), operation overwrite"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
   }
  ],
- "run": "38239533754",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38239533754",
- "date": "2026-10-12"
+ "run": "38506561909",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38506561909",
+ "date": "2026-10-14"
 }

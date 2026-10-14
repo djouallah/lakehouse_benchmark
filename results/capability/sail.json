@@ -271,9 +271,9 @@
   {
    "key": "namespace",
    "group": "catalog",
-   "question": "CREATE DATABASE, then DROP DATABASE",
+   "question": "CREATE SCHEMA, then DROP SCHEMA",
    "outcome": "supported",
-   "detail": "`sl_38253752194_1_ns` created, listed, dropped"
+   "detail": "`sl_38506561909_1_ns` created, listed, dropped"
   },
   {
    "key": "rename_table",
@@ -309,9 +309,30 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(8008174343184680755) but found Some(1801932485903141403)"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "supported",
+   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Sail agrees; 1 snapshot(s), operation overwrite"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
   }
  ],
- "run": "38253752194",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38253752194",
- "date": "2026-10-12"
+ "run": "38506561909",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38506561909",
+ "date": "2026-10-14"
 }

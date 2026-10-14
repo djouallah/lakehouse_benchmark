@@ -12,7 +12,7 @@
   {
    "key": "namespace_existing",
    "group": "catalog",
-   "question": "CREATE SCHEMA IF NOT EXISTS on the existing `_bench_capability`",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
    "outcome": "supported",
    "detail": "accepted on the existing `_bench_capability`"
   },
@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38499696276_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38506561909_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -323,9 +323,23 @@
    "question": "DROP SCHEMA (namespace)",
    "outcome": "supported",
    "detail": "the empty namespace is gone"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "no",
+   "detail": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38506561909_1_ove... ^^^^^^^^^"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "iceberg_rewrite_manifests",
+   "outcome": "no",
+   "detail": "Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean \"iceberg_rewrite_data_files\"?"
   }
  ],
- "run": "38499696276",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38499696276",
+ "run": "38506561909",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38506561909",
  "date": "2026-10-14"
 }
