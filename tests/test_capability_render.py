@@ -207,3 +207,17 @@ def test_every_truncate_probe_reads_how_it_committed():
             script.read_text(encoding="utf-8").split("def truncate(self)")[1].split("\n    def ")[0]
         )
         assert "truncate_kind(self.iceberg(table))" in probe, engine
+
+
+def test_a_catalog_no_gets_its_reason_and_goes_when_the_cell_is_a_yes():
+    spark = {"engine": "spark", "version": "4.1", "run": "1", "url": "u", "date": "d"}
+    refused = {"spark": {**spark, "rows": [_row("ctas", "no", "400 Malformed request")]}}
+    text = render_readme.render(refused)
+    assert "| CREATE TABLE AS SELECT | no ¹ |" in text
+    assert "Spark, CREATE TABLE AS SELECT: the OneLake catalog does not support staged" in text
+    site = render_readme.site_matrix(refused)
+    ctas = next(r for r in site["rows"] if r["label"] == "CREATE TABLE AS SELECT")
+    assert "staged create" in ctas["cells"]["pyspark_iceberg"]["n"]
+
+    works = {"spark": {**spark, "rows": [_row("ctas")]}}
+    assert "staged create" not in render_readme.render(works)

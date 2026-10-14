@@ -35,6 +35,7 @@ IMPLEMENTATION = {
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
     ("CREATE TABLE", {e: ["create_table"] for e in ("spark", "duckdb", "sail")}),
+    ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in SQL}),
     (
         "INSERT / append",
         {
@@ -152,6 +153,7 @@ GROUPS = {
     # The grid opens on Basic: the minimum an engine needs to be usable on Iceberg.
     "Basic": [
         "CREATE TABLE",
+        "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
         "DELETE",
@@ -232,6 +234,16 @@ FALLS_SHORT = {
 }
 
 
+# A no the catalog decides, where the reading's own message does not say why: (row label, engine)
+# -> why, shown in place of the quoted detail while the cell is a no. Spark's CTAS is an atomic
+# staged create, refused with a bare 400 "Malformed request".
+CATALOG_NO = {
+    ("CREATE TABLE AS SELECT", "spark"): (
+        "the OneLake catalog does not support staged create, which Spark's CTAS uses."
+    ),
+}
+
+
 def falls_short(rows: dict, keys: list[str], label: str) -> str:
     """Why one engine's yes on one row is really a no, or '' when it is a yes."""
     details = " ".join(str(rows[k]["detail"]) for k in keys if k in rows)
@@ -296,6 +308,9 @@ def capability(data: dict) -> tuple[list[str], list[str]]:
             mark = MARK["no" if short else outcome]
             if short:
                 notes.append(f"{TITLE[e]}, {label}: {short}")
+                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
+            elif outcome == "no" and (label, e) in CATALOG_NO:
+                notes.append(f"{TITLE[e]}, {label}: {CATALOG_NO[(label, e)]}")
                 mark += " " + str(len(notes)).translate(SUPERSCRIPT)
             elif why and outcome != "skipped":
                 notes.append(
@@ -434,6 +449,8 @@ def site_matrix(data: dict) -> dict:
                     short := falls_short(by_key[e], sources[label][e], label)
                 ):
                     outcome, note = "no", short
+                elif outcome == "no" and (label, e) in CATALOG_NO:
+                    note = CATALOG_NO[(label, e)]
                 cells[SITE_KEY[e]] = {"o": outcome, **({"n": note} if note else {})}
             rows.append({"group": group, "label": label, "cells": cells})
     return {
