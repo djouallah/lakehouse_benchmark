@@ -55,6 +55,16 @@ ROWS = [
             for e in ("spark", "duckdb", "sail")
         },
     ),
+    # The upsert. Spark and Sail ask it of a merge-on-read table; chDB has no MERGE statement.
+    (
+        "MERGE with two actions (UPDATE + INSERT)",
+        {
+            "spark": ["merge_mor"],
+            "duckdb": ["merge_upsert"],
+            "sail": ["merge_mor"],
+            "chdb": ["merge_into"],
+        },
+    ),
     ("TRUNCATE", {e: ["truncate"] for e in ("spark", "duckdb", "sail")}),
     (
         "Partitioned table",
@@ -70,6 +80,10 @@ ROWS = [
     (
         "Partition transforms: year / month / day / hour",
         {e: ["partition_temporal"] for e in ENGINES},
+    ),
+    (
+        "Types: decimal, date, timestamp, timestamptz, uuid, binary",
+        {e: ["types_scalar"] for e in ENGINES},
     ),
     ("Nested types: struct, list, map", {e: ["types_nested"] for e in ENGINES}),
     (
@@ -162,6 +176,7 @@ GROUPS = {
     ],
     "Advanced": [
         "MERGE with one action",
+        "MERGE with two actions (UPDATE + INSERT)",
         "TRUNCATE",
     ],
     "Tables & types": [
@@ -169,6 +184,7 @@ GROUPS = {
         "Partition transform: bucket",
         "Partition transform: truncate",
         "Partition transforms: year / month / day / hour",
+        "Types: decimal, date, timestamp, timestamptz, uuid, binary",
         "Nested types: struct, list, map",
         "Create / drop namespace",
     ],
@@ -240,6 +256,10 @@ FALLS_SHORT = {
 CATALOG_NO = {
     ("CREATE TABLE AS SELECT", "spark"): (
         "the OneLake catalog does not support staged create, which Spark's CTAS uses."
+    ),
+    ("MERGE with two actions (UPDATE + INSERT)", "duckdb"): (
+        "the OneLake catalog does not yet take two snapshots in one commit, which DuckDB's "
+        "upsert sends."
     ),
 }
 

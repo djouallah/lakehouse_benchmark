@@ -464,6 +464,15 @@ class DuckDBCapability:
             "MERGE, UPDATE + NOT MATCHED BY SOURCE DELETE",
         )
 
+    def merge_upsert(self) -> str:
+        return self._merge(
+            "mergeupsert",
+            "WHEN MATCHED THEN UPDATE SET v = s.v "
+            "WHEN NOT MATCHED THEN INSERT (id, v) VALUES (s.id, s.v)",
+            [(1, 777), (2, 20), (3, 30), (9, 90)],
+            "MERGE, UPDATE + INSERT",
+        )
+
     def merge_three(self) -> str:
         return self._merge(
             "mergethree",
@@ -800,6 +809,7 @@ PROBES = [
         "MERGE, two actions: MATCHED UPDATE + NOT MATCHED BY SOURCE DELETE",
         "merge_update_by_source",
     ),
+    ("write", "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT", "merge_upsert"),
     ("write", "MERGE, three actions: UPDATE + INSERT + BY SOURCE DELETE", "merge_three"),
     ("write", "TRUNCATE", "truncate"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),

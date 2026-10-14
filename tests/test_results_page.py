@@ -103,4 +103,8 @@ def test_the_iceberg_support_grid_opens_on_basic():
         "Drop table with purge",
     ]
     advanced = [r["label"] for r in cap["rows"] if r["group"] == "Advanced"]
-    assert advanced == ["MERGE with one action", "TRUNCATE"]
+    assert advanced == [
+        "MERGE with one action",
+        "MERGE with two actions (UPDATE + INSERT)",
+        "TRUNCATE",
+    ]
