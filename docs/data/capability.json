@@ -194,6 +194,28 @@
    }
   },
   {
+   "group": "Basic",
+   "label": "Create / drop namespace",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
    "group": "Advanced",
    "label": "MERGE with one action",
    "cells": {
@@ -388,28 +410,6 @@
     },
     "polars_iceberg": {
      "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Tables & types",
-   "label": "Create / drop namespace",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
-    },
-    "polars_iceberg": {
-     "o": "na"
     }
    }
   },

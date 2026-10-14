@@ -101,6 +101,7 @@ def test_the_iceberg_support_grid_opens_on_basic():
         "DELETE",
         "UPDATE",
         "Drop table with purge",
+        "Create / drop namespace",
     ]
     advanced = [r["label"] for r in cap["rows"] if r["group"] == "Advanced"]
     assert advanced == [

@@ -173,6 +173,7 @@ GROUPS = {
         "DELETE",
         "UPDATE",
         "Drop table with purge",
+        "Create / drop namespace",
     ],
     "Advanced": [
         "MERGE with one action",
@@ -186,7 +187,6 @@ GROUPS = {
         "Partition transforms: year / month / day / hour",
         "Types: decimal, date, timestamp, timestamptz, uuid, binary",
         "Nested types: struct, list, map",
-        "Create / drop namespace",
     ],
     "Schema": [
         "Add column",
