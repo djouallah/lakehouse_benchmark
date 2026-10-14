@@ -177,8 +177,8 @@ for _label, _sources in ROWS:
 
 # THE SITE'S GRID (docs/data/capability.json, the Iceberg support tab): every row of ROWS, grouped.
 GROUPS = {
-    # The grid opens on Basic: the minimum an engine needs to be usable on Iceberg.
-    "Basic": [
+    # The grid opens on Core: the minimum an engine needs to be usable on Iceberg.
+    "Core": [
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
@@ -432,11 +432,6 @@ def provenance(data: dict) -> list[str]:
     return lines + [""]
 
 
-PREVIEW = (
-    "The OneLake Iceberg API is still in private preview. Some issues are already fixed upstream."
-)
-
-
 def render(data: dict) -> str:
     table, notes = capability(data)
     out = [
@@ -444,8 +439,6 @@ def render(data: dict) -> str:
         "",
         "Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail and chDB "
         "have their own Iceberg code, no JVM.",
-        "",
-        PREVIEW,
         "",
         "`yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no "
         "such operation · `—` not probed · `?` the probe could not ask",

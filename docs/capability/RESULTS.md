@@ -2,8 +2,6 @@
 
 Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail and chDB have their own Iceberg code, no JVM.
 
-The OneLake Iceberg API is still in private preview. Some issues are already fixed upstream.
-
 `yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no such operation · `—` not probed · `?` the probe could not ask
 
 | Operation | Spark | DuckDB | Sail | chDB | Polars |

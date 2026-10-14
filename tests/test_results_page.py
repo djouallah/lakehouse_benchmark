@@ -87,14 +87,14 @@ def test_maintenance_is_a_group_of_the_iceberg_support_grid():
     assert maintenance == ["Compaction", "Rewrite manifests"]
 
 
-def test_the_iceberg_support_grid_opens_on_basic():
-    """Basic, the first chip, holds only the minimum an engine needs to be usable."""
+def test_the_iceberg_support_grid_opens_on_core():
+    """Core, the first chip, holds only the minimum an engine needs to be usable."""
     import json
 
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
-    assert cap["groups"][:2] == ["Basic", "Advanced"]
-    assert [r["label"] for r in cap["rows"] if r["group"] == "Basic"] == [
+    assert cap["groups"][:2] == ["Core", "Advanced"]
+    assert [r["label"] for r in cap["rows"] if r["group"] == "Core"] == [
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
