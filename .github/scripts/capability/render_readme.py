@@ -174,6 +174,9 @@ GROUPS = {
         "UPDATE",
         "Drop table with purge",
         "Create / drop namespace",
+        "Concurrent append: both kept",
+        "Concurrent writer: DELETE loses nothing",
+        "Concurrent writer: UPDATE loses nothing",
     ],
     "Advanced": [
         "MERGE with one action",
@@ -197,11 +200,6 @@ GROUPS = {
         "Write after partition evolution",
         "Set table property",
         "Sort order evolution",
-    ],
-    "Concurrency": [
-        "Concurrent append: both kept",
-        "Concurrent writer: DELETE loses nothing",
-        "Concurrent writer: UPDATE loses nothing",
     ],
     "Reading from metadata": [
         "File pruning from min/max in the metadata",

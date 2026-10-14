@@ -36,7 +36,6 @@
   "Advanced",
   "Tables & types",
   "Schema",
-  "Concurrency",
   "Reading from metadata",
   "Read & refs",
   "Maintenance"
@@ -209,6 +208,69 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Basic",
+   "label": "Concurrent append: both kept",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Basic",
+   "label": "Concurrent writer: DELETE loses nothing",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Basic",
+   "label": "Concurrent writer: UPDATE loses nothing",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
     },
     "polars_iceberg": {
      "o": "na"
@@ -585,69 +647,6 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    }
-   }
-  },
-  {
-   "group": "Concurrency",
-   "label": "Concurrent append: both kept",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Concurrency",
-   "label": "Concurrent writer: DELETE loses nothing",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    }
-   }
-  },
-  {
-   "group": "Concurrency",
-   "label": "Concurrent writer: UPDATE loses nothing",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "polars_iceberg": {
      "o": "na"

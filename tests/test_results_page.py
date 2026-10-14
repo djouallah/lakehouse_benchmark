@@ -102,6 +102,9 @@ def test_the_iceberg_support_grid_opens_on_basic():
         "UPDATE",
         "Drop table with purge",
         "Create / drop namespace",
+        "Concurrent append: both kept",
+        "Concurrent writer: DELETE loses nothing",
+        "Concurrent writer: UPDATE loses nothing",
     ]
     advanced = [r["label"] for r in cap["rows"] if r["group"] == "Advanced"]
     assert advanced == [
