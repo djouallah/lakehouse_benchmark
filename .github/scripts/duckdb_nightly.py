@@ -1,4 +1,4 @@
-"""Install the newest DuckDB 2.0 nightly CLI whose extensions are published.
+"""Install the newest DuckDB 2.0 nightly CLI whose extensions can be had.
 
 WHY NOT artifacts.duckdb.org/v2.0-cyanoptera/duckdb-cli-linux-amd64.tar.gz. That link is the CLI
 from the LAST nightly, and the last nightly usually has no extensions: DuckDB's `Main (alphaN)`
@@ -7,12 +7,22 @@ extensions.duckdb.org/v2.0.0-alphaN/... -- is skipped whenever any extension bui
 fails. Checked 2026-10-06: it ran on 1 of the last 10 nightlies, and the newest CLI got a 404 for
 iceberg.duckdb_extension, so `ATTACH ... TYPE ICEBERG` could not even load.
 
-So: walk the nightlies newest first and take the first whose CLI artifact still exists and whose
-EXTENSIONS are all on extensions.duckdb.org. `DUCKDB_RUN_ID` pins one instead (a workflow passes
-the run its generator used, so generator and reader are one build).
+AND NOT ONLY THE DEPLOYED ONES. The deploy also waits on every platform: alpha48043 (run
+38578625719, 2026-10-14) built every Linux extension but sat `queued` on the osx_amd64 builds, so
+nothing was deployed -- while the Linux builds sat in the run's own artifacts. So a nightly is
+usable when its extensions are on extensions.duckdb.org (signed) OR in its artifacts
+(`EXTENSION_ARTIFACTS`, unsigned). Those go into a local repository under $RUNNER_TEMP, and
+bench/duckdb_cli.py runs the CLI with `-unsigned` and that repository when DUCKDB_EXTENSION_REPO
+is set.
 
-Writes the binary under $RUNNER_TEMP/duckdb, adds it to $GITHUB_PATH, and outputs `run-id` and
-`version`. Needs `gh` and GH_TOKEN: artifact downloads are authenticated even on a public repo.
+So: walk the nightlies newest first and take the first whose CLI artifact still exists and whose
+EXTENSIONS are published or in its artifacts. `DUCKDB_RUN_ID` pins one instead (a workflow passes
+the run its generator used, so generator and reader are one build). Then load all of them once,
+so a bad install fails here and not mid-benchmark.
+
+Writes the binary under $RUNNER_TEMP/duckdb, adds it to $GITHUB_PATH, and outputs `run-id`,
+`version` and `extensions` (published|artifacts). Needs `gh` and GH_TOKEN: artifact downloads are
+authenticated even on a public repo.
 """
 
 from __future__ import annotations
@@ -37,6 +47,17 @@ PLATFORM = "linux_amd64"
 # What the DuckDB jobs load: the catalog (iceberg, which reads manifests with avro), storage
 # (azure, httpfs for the REST calls) and the TPC-DS generator.
 EXTENSIONS = ("iceberg", "avro", "azure", "httpfs", "tpcds")
+# Where each one sits among a nightly's run artifacts when it was never deployed: DuckDB's
+# .github/config/{cloud,core}.cmake builds, and the Linux release build's own extensions.
+EXTENSION_ARTIFACTS = {
+    "iceberg": "cloud-extensions-linux_amd64",
+    "azure": "cloud-extensions-linux_amd64",
+    "avro": "core-extensions-linux_amd64",
+    "httpfs": "release-core-extensions-linux-amd64",
+    "tpcds": "release-core-extensions-linux-amd64",
+}
+# Set (in $GITHUB_ENV) to the local repository when the extensions came from artifacts.
+REPO_ENV = "DUCKDB_EXTENSION_REPO"
 _RUN_NAME = re.compile(r"^Main \(alpha(\d+)\)$")
 
 
@@ -55,10 +76,13 @@ def extension_url(number: int, extension: str) -> str:
     return f"{base}/{extension}.duckdb_extension.gz"
 
 
-def pick(runs: list[dict], missing_extensions, has_artifact, log=print) -> tuple[dict, int]:
-    """The first run (newest first) that is a nightly, has its CLI artifact and every extension.
+def pick(
+    runs: list[dict], missing_extensions, has_artifact, has_extension_artifacts, log=print
+) -> tuple[dict, int, str]:
+    """The first run (newest first) that is a nightly with its CLI artifact and every extension,
+    and where the extensions come from: `published`, else `artifacts`.
 
-    Pure apart from the two callables, so tests/test_duckdb_nightly.py can drive it.
+    Pure apart from the three callables, so tests/test_duckdb_nightly.py can drive it.
     """
     for run in runs:
         number = alpha(run.get("name", ""))
@@ -68,11 +92,50 @@ def pick(runs: list[dict], missing_extensions, has_artifact, log=print) -> tuple
             log(f"  alpha{number} (run {run['id']}): CLI artifact gone")
             continue
         missing = missing_extensions(number)
-        if missing:
-            log(f"  alpha{number} (run {run['id']}): not published: {', '.join(missing)}")
-            continue
-        return run, number
+        if not missing:
+            return run, number, "published"
+        if has_extension_artifacts(run["id"]):
+            log(f"  alpha{number} (run {run['id']}): not published, taking its artifacts")
+            return run, number, "artifacts"
+        log(
+            f"  alpha{number} (run {run['id']}): not published: {', '.join(missing)}; "
+            "no extension artifacts"
+        )
     raise RuntimeError(f"no {BRANCH} nightly has a CLI artifact and {', '.join(EXTENSIONS)}")
+
+
+def extract_extensions(blobs: dict[str, bytes], number: int, repo: Path) -> list[Path]:
+    """EXTENSIONS out of their artifact zips (by artifact name) into `repo`, in the layout DuckDB
+    reads a local repository with: <repo>/<version>/<platform>/<name>.duckdb_extension. The zips
+    already hold that layout; only the members named in EXTENSIONS are written."""
+    written = []
+    for extension in EXTENSIONS:
+        group = EXTENSION_ARTIFACTS[extension]
+        member = f"{version(number)}/{PLATFORM}/{extension}.duckdb_extension"
+        with zipfile.ZipFile(io.BytesIO(blobs[group])) as archive:
+            if member not in archive.namelist():
+                raise RuntimeError(f"{member} is not in {group}")
+            target = repo / member
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(archive.read(member))
+        written.append(target)
+    return written
+
+
+def check_script(repo: str | None) -> str:
+    """Install and load every extension the way a session will, then list what loaded."""
+    lines = []
+    if repo:
+        lines += [
+            f"SET custom_extension_repository = '{repo}';",
+            f"SET autoinstall_extension_repository = '{repo}';",
+        ]
+    lines += [f"INSTALL {e}; LOAD {e};" for e in EXTENSIONS]
+    lines.append(
+        "SELECT extension_name, extension_version, install_mode FROM duckdb_extensions() "
+        "WHERE loaded ORDER BY 1;"
+    )
+    return "\n".join(lines) + "\n"
 
 
 # --- I/O ----------------------------------------------------------------------------------------
@@ -81,6 +144,10 @@ def pick(runs: list[dict], missing_extensions, has_artifact, log=print) -> tuple
 def _gh(path: str) -> dict:
     out = subprocess.run(["gh", "api", path], capture_output=True, text=True, check=True)
     return json.loads(out.stdout)
+
+
+def _gh_bytes(path: str) -> bytes:
+    return subprocess.run(["gh", "api", path], capture_output=True, check=True).stdout
 
 
 def _missing_extensions(number: int) -> list[str]:
@@ -104,6 +171,17 @@ def _artifact(run_id: int) -> dict | None:
 
 def _has_artifact(run_id: int) -> bool:
     return _artifact(run_id) is not None
+
+
+def _extension_artifacts(run_id: int) -> dict[str, dict]:
+    """The run's live artifacts among EXTENSION_ARTIFACTS' groups, by name."""
+    groups = set(EXTENSION_ARTIFACTS.values())
+    found = _gh(f"repos/{REPO}/actions/runs/{run_id}/artifacts?per_page=100")["artifacts"]
+    return {a["name"]: a for a in found if a["name"] in groups and not a["expired"]}
+
+
+def _has_extension_artifacts(run_id: int) -> bool:
+    return set(_extension_artifacts(run_id)) == set(EXTENSION_ARTIFACTS.values())
 
 
 def _nightlies() -> list[dict]:
@@ -134,6 +212,14 @@ def _unpack(blob: bytes, dest: Path) -> Path:
     return binary
 
 
+def _check(binary: Path, repo: str | None) -> None:
+    cmd = [str(binary), "-batch", "-bail", *(["-unsigned"] if repo else [])]
+    out = subprocess.run(cmd, input=check_script(repo), capture_output=True, text=True)
+    print(out.stdout)
+    if out.returncode or out.stderr.strip():
+        raise RuntimeError(f"loading {', '.join(EXTENSIONS)} failed: {out.stderr.strip()}")
+
+
 def _append(env_file: str, line: str) -> None:
     path = os.environ.get(env_file)
     if path:
@@ -142,36 +228,46 @@ def _append(env_file: str, line: str) -> None:
 
 
 def main() -> int:
+    sources = (_missing_extensions, _has_artifact, _has_extension_artifacts)
     pinned = os.environ.get("DUCKDB_RUN_ID", "").strip()
     if pinned:
-        run = _gh(f"repos/{REPO}/actions/runs/{pinned}")
-        run, number = pick([run], _missing_extensions, _has_artifact)
+        run, number, source = pick([_gh(f"repos/{REPO}/actions/runs/{pinned}")], *sources)
         print(f"pinned run {pinned}: {version(number)}")
     else:
-        print(f"newest {BRANCH} nightly with {', '.join(EXTENSIONS)} published:")
+        print(f"newest {BRANCH} nightly with {', '.join(EXTENSIONS)} published or in artifacts:")
         runs = _nightlies()
         newest = next((r for r in runs if alpha(r.get("name", "")) is not None), None)
         if newest is not None:
             print(f"  newest listed: {newest['name']} ({newest['created_at']})")
-        run, number = pick(runs, _missing_extensions, _has_artifact)
+        run, number, source = pick(runs, *sources)
 
-    artifact = _artifact(run["id"])
-    blob = subprocess.run(
-        ["gh", "api", f"repos/{REPO}/actions/artifacts/{artifact['id']}/zip"],
-        capture_output=True,
-        check=True,
-    ).stdout
-    dest = Path(os.environ.get("RUNNER_TEMP", ".")) / "duckdb"
+    temp = Path(os.environ.get("RUNNER_TEMP", "."))
+    dest = temp / "duckdb"
     dest.mkdir(parents=True, exist_ok=True)
-    binary = _unpack(blob, dest)
+    artifact = _artifact(run["id"])
+    binary = _unpack(_gh_bytes(f"repos/{REPO}/actions/artifacts/{artifact['id']}/zip"), dest)
+
+    repo = None
+    if source == "artifacts":
+        blobs = {
+            name: _gh_bytes(f"repos/{REPO}/actions/artifacts/{a['id']}/zip")
+            for name, a in _extension_artifacts(run["id"]).items()
+        }
+        repo = str((temp / "duckdb-extensions").resolve())
+        for path in extract_extensions(blobs, number, Path(repo)):
+            print(f"  {path}")
 
     print(
         f"{version(number)} from run {run['id']} ({run['head_sha'][:10]}, {run['created_at']}) "
-        f"-> {binary}"
+        f"-> {binary}, extensions {source}"
     )
+    _check(binary, repo)
     _append("GITHUB_PATH", str(binary.parent))
+    if repo:
+        _append("GITHUB_ENV", f"{REPO_ENV}={repo}")
     _append("GITHUB_OUTPUT", f"run-id={run['id']}")
     _append("GITHUB_OUTPUT", f"version={version(number)}")
+    _append("GITHUB_OUTPUT", f"extensions={source}")
     return 0
 
 

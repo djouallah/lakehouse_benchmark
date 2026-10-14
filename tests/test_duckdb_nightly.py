@@ -39,6 +39,10 @@ def test_extension_url_is_the_versioned_core_repository():
     )
 
 
+def _none(rid):
+    return False
+
+
 def test_pick_skips_nightlies_whose_extensions_were_not_deployed():
     """The 2026-10-06 shape: the newest nightly built its CLI but published no extensions."""
     runs = [
@@ -49,20 +53,87 @@ def test_pick_skips_nightlies_whose_extensions_were_not_deployed():
     ]
     missing = {44578: ["iceberg", "azure"], 44357: [], 44297: []}
     log = []
-    run, number = nightly.pick(runs, missing.__getitem__, lambda rid: True, log.append)
-    assert (run["id"], number) == (2, 44357)
-    assert log == ["  alpha44578 (run 3): not published: iceberg, azure"]
+    run, number, source = nightly.pick(
+        runs, missing.__getitem__, lambda rid: True, _none, log.append
+    )
+    assert (run["id"], number, source) == (2, 44357, "published")
+    assert log == ["  alpha44578 (run 3): not published: iceberg, azure; no extension artifacts"]
+
+
+def test_pick_takes_a_newer_nightly_from_its_artifacts():
+    """The 2026-10-14 shape: alpha48043 stuck on osx_amd64, never deployed, Linux builds in its
+    artifacts; alpha47600 deployed. The newer build wins."""
+    runs = [_run(38578625719, "Main (alpha48043)"), _run(38440753121, "Main (alpha47600)")]
+    missing = {48043: list(nightly.EXTENSIONS), 47600: []}
+    log = []
+    run, number, source = nightly.pick(
+        runs, missing.__getitem__, lambda rid: True, lambda rid: rid == 38578625719, log.append
+    )
+    assert (number, source) == (48043, "artifacts")
+    assert log == ["  alpha48043 (run 38578625719): not published, taking its artifacts"]
+
+
+def test_pick_prefers_published_extensions_within_a_run():
+    run, _, source = nightly.pick(
+        [_run(1, "Main (alpha1)")], lambda n: [], lambda rid: True, lambda rid: True, print
+    )
+    assert source == "published"
 
 
 def test_pick_skips_a_run_whose_cli_artifact_expired():
     runs = [_run(2, "Main (alpha2)"), _run(1, "Main (alpha1)")]
-    run, _ = nightly.pick(runs, lambda n: [], lambda rid: rid == 1, lambda line: None)
+    run, _, _ = nightly.pick(
+        runs, lambda n: [], lambda rid: rid == 1, lambda rid: True, lambda line: None
+    )
     assert run["id"] == 1
 
 
 def test_pick_fails_loudly_when_nothing_is_usable():
     with pytest.raises(RuntimeError, match="iceberg"):
-        nightly.pick([_run(1, "Main (alpha1)")], lambda n: ["iceberg"], lambda r: True, print)
+        nightly.pick(
+            [_run(1, "Main (alpha1)")], lambda n: ["iceberg"], lambda r: True, _none, print
+        )
+
+
+def _extension_zip(names, number=48043):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as archive:
+        for name in names:
+            archive.writestr(f"v2.0.0-alpha{number}/linux_amd64/{name}.duckdb_extension", name)
+    return buf.getvalue()
+
+
+def test_extensions_come_out_of_their_artifacts_in_repository_layout(tmp_path):
+    blobs = {
+        "cloud-extensions-linux_amd64": _extension_zip(["azure", "iceberg", "aws"]),
+        "core-extensions-linux_amd64": _extension_zip(["avro", "excel"]),
+        "release-core-extensions-linux-amd64": _extension_zip(["httpfs", "tpcds", "json"]),
+    }
+    written = nightly.extract_extensions(blobs, 48043, tmp_path)
+    assert sorted(p.name for p in written) == sorted(
+        f"{e}.duckdb_extension" for e in nightly.EXTENSIONS
+    )
+    iceberg = tmp_path / "v2.0.0-alpha48043" / "linux_amd64" / "iceberg.duckdb_extension"
+    assert iceberg.read_text() == "iceberg"
+    assert not (tmp_path / "v2.0.0-alpha48043" / "linux_amd64" / "aws.duckdb_extension").exists()
+
+
+def test_a_missing_extension_in_its_artifact_fails(tmp_path):
+    blobs = {
+        "cloud-extensions-linux_amd64": _extension_zip(["azure"]),
+        "core-extensions-linux_amd64": _extension_zip(["avro"]),
+        "release-core-extensions-linux-amd64": _extension_zip(["httpfs", "tpcds"]),
+    }
+    with pytest.raises(RuntimeError, match="iceberg"):
+        nightly.extract_extensions(blobs, 48043, tmp_path)
+
+
+def test_check_script_points_install_at_the_local_repository():
+    script = nightly.check_script("/tmp/ext")
+    assert "SET custom_extension_repository = '/tmp/ext';" in script
+    assert "SET autoinstall_extension_repository = '/tmp/ext';" in script
+    assert all(f"INSTALL {e}; LOAD {e};" in script for e in nightly.EXTENSIONS)
+    assert "repository" not in nightly.check_script(None)
 
 
 def _tar_gz(tmp_path):
@@ -154,6 +225,7 @@ class _FakeCli:
 @pytest.fixture
 def cli(monkeypatch):
     monkeypatch.setenv(duckdb_cli.BINARY_ENV, "/opt/duckdb")
+    monkeypatch.delenv(duckdb_cli.EXTENSION_REPO_ENV, raising=False)
     monkeypatch.setattr(duckdb_cli.shutil, "which", lambda name: None)
     monkeypatch.setattr(duckdb_cli.subprocess, "Popen", _FakeCli)
     _FakeCli.answers = {}
@@ -165,6 +237,16 @@ def test_the_session_is_one_process_set_up_for_csv(cli):
     conn = duckdb_cli.DuckDBCli("/tmp/sf10.duckdb")
     assert conn._proc.cmd == ["/opt/duckdb", "-batch", "/tmp/sf10.duckdb"]
     assert ".mode csv" in conn._proc.scripts[0] and ".headers off" in conn._proc.scripts[0]
+    assert "extension_repository" not in conn._proc.scripts[0]
+
+
+def test_artifact_extensions_run_unsigned_from_the_local_repository(cli, monkeypatch):
+    monkeypatch.setenv(duckdb_cli.EXTENSION_REPO_ENV, "/runner/_temp/duckdb-extensions")
+    conn = duckdb_cli.DuckDBCli()
+    assert conn._proc.cmd == ["/opt/duckdb", "-batch", "-unsigned"]
+    init = conn._proc.scripts[0]
+    assert "SET custom_extension_repository = '/runner/_temp/duckdb-extensions';" in init
+    assert "SET autoinstall_extension_repository = '/runner/_temp/duckdb-extensions';" in init
 
 
 def test_rows_come_back_as_csv_tuples(cli):

@@ -1,7 +1,7 @@
 name: DuckDB nightly CLI
 description: >-
-  Put the newest DuckDB 2.0 nightly CLI whose extensions are published on PATH
-  (.github/scripts/duckdb_nightly.py says why not simply the latest one).
+  Put the newest DuckDB 2.0 nightly CLI whose extensions are published, or in its run's
+  artifacts, on PATH (.github/scripts/duckdb_nightly.py says why not simply the latest one).
 
 inputs:
   run-id:
@@ -16,6 +16,11 @@ outputs:
   version:
     description: The CLI's version, e.g. v2.0.0-alpha44357.
     value: ${{ steps.resolve.outputs.version }}
+  extensions:
+    description: >-
+      Where the extensions came from: published (signed, extensions.duckdb.org) or artifacts
+      (unsigned; DUCKDB_EXTENSION_REPO is then set for later steps).
+    value: ${{ steps.resolve.outputs.extensions }}
 
 runs:
   using: composite

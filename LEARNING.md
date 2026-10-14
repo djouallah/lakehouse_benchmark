@@ -248,6 +248,15 @@ Largest scale each engine completes, cold, every statement answered:
   `.github/scripts/duckdb_nightly.py` takes the newest nightly whose iceberg, avro, azure, httpfs
   and tpcds are on extensions.duckdb.org. `bench/duckdb_cli.py` drives one CLI process per run
   over stdin.
+- **A nightly that never deployed can still be used from its own artifacts** (2026-10-15).
+  alpha48043 (run 38578625719) built every Linux job, then sat `queued` on the osx_amd64 extension
+  builds, so "Deploy extensions" never ran. Its run artifacts hold the five we need:
+  `cloud-extensions-linux_amd64` (iceberg, azure), `core-extensions-linux_amd64` (avro),
+  `release-core-extensions-linux-amd64` (httpfs, tpcds). Those builds are UNSIGNED (the 256-byte
+  signature footer is zeros), so the picker puts them in a local repository, sets
+  `DUCKDB_EXTENSION_REPO`, and the CLI runs with `-unsigned` and `custom_extension_repository` /
+  `autoinstall_extension_repository` pointing there. Deployed extensions still win for the same
+  run; a newer run from artifacts beats an older deployed one.
 
 ## Spark-OSS
 
