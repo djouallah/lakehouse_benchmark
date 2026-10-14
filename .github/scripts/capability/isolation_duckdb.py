@@ -542,7 +542,7 @@ class DuckDBIsolation:
         self.created.append(n)
         before = self.state(t)
         mark = len(self.proxy.log)
-        sent_before = len(self.proxy.updates.get((NAMESPACE, t), []))
+        sent_before = {x: len(self.proxy.updates.get((NAMESPACE, x), [])) for x in (t, n)}
         conn = self.conn()
         failed = ""
         conn.execute("BEGIN")
@@ -578,9 +578,10 @@ class DuckDBIsolation:
         else:
             outcome = "WRONG"
         detail = f"t {got_t}; n {got_n}; sent {sent}"
-        updates = self.proxy.updates.get((NAMESPACE, t), [])[sent_before:]
-        if any(updates):
-            detail += "; t's commit updates " + " | ".join(", ".join(u) for u in updates)
+        for label, x in (("t", t), ("n", n)):
+            updates = self.proxy.updates.get((NAMESPACE, x), [])[sent_before[x] :]
+            if any(updates):
+                detail += f"; {label}'s commit updates " + " | ".join(", ".join(u) for u in updates)
         if spec:
             detail += f"; spec {spec}"
         if failed:
@@ -701,6 +702,20 @@ COMBOS = [
         "INSERT, DELETE",
         ("INSERT INTO {t} VALUES (4, 40)", "DELETE FROM {t} WHERE id = 1", "COMMIT"),
         (SEED_COLS, [(2, 20), (3, 30), (4, 40)]),
+    ),
+    # The upsert: DuckDB takes one UPDATE/DELETE action per MERGE, plus an INSERT, so this is the
+    # two-action MERGE it can send.
+    Combo(
+        "merge_upsert",
+        "MERGE, WHEN MATCHED UPDATE + WHEN NOT MATCHED INSERT",
+        (
+            "MERGE INTO {t} AS tg "
+            "USING (SELECT * FROM (VALUES (1::BIGINT, 777::BIGINT), (9, 90)) AS s(id, v)) AS s "
+            "ON tg.id = s.id WHEN MATCHED THEN UPDATE SET v = s.v "
+            "WHEN NOT MATCHED THEN INSERT VALUES (s.id, s.v)",
+            "COMMIT",
+        ),
+        (SEED_COLS, [(1, 777), (2, 20), (3, 30), (9, 90)]),
     ),
     Combo(
         "add_column_insert",
