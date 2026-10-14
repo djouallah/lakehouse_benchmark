@@ -66,6 +66,29 @@
   },
   {
    "group": "Basic",
+   "label": "CREATE TABLE AS SELECT",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "no",
+     "n": "the OneLake catalog does not support staged create, which Spark's CTAS uses."
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Basic",
    "label": "INSERT / append",
    "cells": {
     "pyspark_iceberg": {
