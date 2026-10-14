@@ -542,6 +542,7 @@ class DuckDBIsolation:
         self.created.append(n)
         before = self.state(t)
         mark = len(self.proxy.log)
+        sent_before = len(self.proxy.updates.get((NAMESPACE, t), []))
         conn = self.conn()
         failed = ""
         conn.execute("BEGIN")
@@ -577,6 +578,9 @@ class DuckDBIsolation:
         else:
             outcome = "WRONG"
         detail = f"t {got_t}; n {got_n}; sent {sent}"
+        updates = self.proxy.updates.get((NAMESPACE, t), [])[sent_before:]
+        if any(updates):
+            detail += "; t's commit updates " + " | ".join(", ".join(u) for u in updates)
         if spec:
             detail += f"; spec {spec}"
         if failed:
@@ -683,6 +687,20 @@ COMBOS = [
         ("CREATE TABLE {n} AS SELECT id, v * 2 AS v FROM {t}", "COMMIT"),
         UNCHANGED,
         DOUBLED_T,
+    ),
+    # Two writes, so two snapshots, in one commit: whether DuckDB sends both, and the catalog
+    # takes several updates of one kind (add-snapshot, set-snapshot-ref) in one request.
+    Combo(
+        "insert_insert",
+        "INSERT, INSERT",
+        ("INSERT INTO {t} VALUES (4, 40)", "INSERT INTO {t} VALUES (5, 50)", "COMMIT"),
+        (SEED_COLS, [*SEED, (4, 40), (5, 50)]),
+    ),
+    Combo(
+        "insert_delete",
+        "INSERT, DELETE",
+        ("INSERT INTO {t} VALUES (4, 40)", "DELETE FROM {t} WHERE id = 1", "COMMIT"),
+        (SEED_COLS, [(2, 20), (3, 30), (4, 40)]),
     ),
     Combo(
         "add_column_insert",

@@ -62,6 +62,23 @@ def commit_target(method: str, path: str, body: bytes) -> list[tuple[str, str]]:
     return []
 
 
+def update_actions(path: str, body: bytes) -> dict[tuple[str, str], list[str]]:
+    """Each table a commit request names, with the actions of its updates in order
+    (`add-snapshot`, `set-snapshot-ref`, ...): how many of one kind a single commit carries."""
+    targets = commit_target("POST", path, body)
+    if not targets:
+        return {}
+    try:
+        doc = json.loads(body or b"{}")
+    except ValueError:
+        return {}
+    changes = doc.get("table-changes") or [doc]
+    return {
+        key: [str(u.get("action", "?")) for u in change.get("updates", [])]
+        for key, change in zip(targets, changes, strict=False)
+    }
+
+
 class RaceProxy:
     """`arm(ns, table, inject)` makes the next commit to that table wait for `inject()` first."""
 
@@ -72,6 +89,8 @@ class RaceProxy:
         self._armed: dict[tuple[str, str], object] = {}
         # Every commit seen per table: (HTTP status, first line of the error body or "").
         self.commits: dict[tuple[str, str], list[tuple[int, str]]] = {}
+        # Every commit's update actions per table, in the order sent (update_actions).
+        self.updates: dict[tuple[str, str], list[list[str]]] = {}
         self.injected: dict[tuple[str, str], str] = {}
         # Every request: (method, path without the query, status, the current-snapshot-id a
         # loadTable answered with), for tracing an engine.
@@ -178,12 +197,14 @@ class RaceProxy:
                     proxy.deletes.append((self.path, status))
                 if self.command == "GET" and self.path.split("?")[0].endswith("/v1/config"):
                     out = proxy._rewrite_config(out)
+                actions = update_actions(self.path, body or b"") if targets else {}
                 for key in targets:
                     first = " ".join(out[:300].decode("utf-8", "replace").split())
                     with proxy._lock:
                         proxy.commits.setdefault(key, []).append(
                             (status, "" if status < 300 else first)
                         )
+                        proxy.updates.setdefault(key, []).append(actions.get(key, []))
                 self.send_response(status)
                 for k, v in out_headers:
                     if k.lower() not in _HOP_BY_HOP:
