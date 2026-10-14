@@ -2,7 +2,7 @@ name: iceberg support
 
 # WHAT EACH ENGINE CAN DO against the OneLake Iceberg REST catalog: the site's Iceberg support tab.
 #
-#   plan  ->  ask (one job per client, one at a time)  ->  publish
+#   plan  ->  ask (one job per client, one at a time)  ->  publish (only when asked)
 #
 # Each client's probe script creates its own tables under _bench_capability, sends one operation
 # per probe through the engine, and checks the effect through pyiceberg. The concurrency rows put
@@ -10,7 +10,8 @@ name: iceberg support
 #
 # `publish` is the SINGLE WRITER of results/capability/, docs/capability/RESULTS.md and
 # docs/data/capability.json. results/capability/ keeps each client's latest reading, so a run
-# that asks one client leaves the others' cells as they were.
+# that asks one client leaves the others' cells as they were. It runs only with `publish` ticked:
+# by default a run is a check, read from its job summaries and artifacts, and the site stays put.
 
 on:
   workflow_dispatch:
@@ -29,6 +30,10 @@ on:
         default: spark,polars,duckdb,sail,chdb,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
+        type: boolean
+        default: false
+      publish:
+        description: Publish the readings to results/capability/ and the site.
         type: boolean
         default: false
 
@@ -147,7 +152,7 @@ jobs:
   publish:
     needs: ask
     # !cancelled(), not always(): a cancelled run publishes nothing (see etl.yml's publish).
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && inputs.publish && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
