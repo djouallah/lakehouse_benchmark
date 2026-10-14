@@ -95,6 +95,7 @@ def test_the_iceberg_support_grid_opens_on_basic():
     assert cap["groups"][:2] == ["Basic", "Advanced"]
     assert [r["label"] for r in cap["rows"] if r["group"] == "Basic"] == [
         "CREATE TABLE",
+        "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
         "DELETE",
