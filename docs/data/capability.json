@@ -172,6 +172,54 @@
   },
   {
    "group": "Basic",
+   "label": "INSERT OVERWRITE, whole table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38506561909_1_ove... ^^^^^^^^^"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38506561909_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "BadRequestError: BadRequestError: BadRequestException: Malformed request"
+    }
+   }
+  },
+  {
+   "group": "Basic",
+   "label": "TRUNCATE",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes."
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Basic",
    "label": "Drop table with purge",
    "cells": {
     "pyspark_iceberg": {
@@ -338,54 +386,6 @@
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    }
-   }
-  },
-  {
-   "group": "Advanced",
-   "label": "INSERT OVERWRITE, whole table",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38506561909_1_ove... ^^^^^^^^^"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38506561909_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
-    },
-    "polars_iceberg": {
-     "o": "no",
-     "n": "BadRequestError: BadRequestError: BadRequestException: Malformed request"
-    }
-   }
-  },
-  {
-   "group": "Advanced",
-   "label": "TRUNCATE",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes."
-    },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
     },
     "polars_iceberg": {
      "o": "na"

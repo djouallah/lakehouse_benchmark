@@ -101,6 +101,8 @@ def test_the_iceberg_support_grid_opens_on_basic():
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
+        "INSERT OVERWRITE, whole table",
+        "TRUNCATE",
         "Drop table with purge",
         "Create / drop namespace",
         "CREATE SCHEMA IF NOT EXISTS, existing schema",
@@ -112,6 +114,4 @@ def test_the_iceberg_support_grid_opens_on_basic():
     assert advanced == [
         "MERGE with one action",
         "MERGE with two actions (UPDATE + INSERT)",
-        "INSERT OVERWRITE, whole table",
-        "TRUNCATE",
     ]

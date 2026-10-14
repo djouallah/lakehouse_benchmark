@@ -185,6 +185,8 @@ GROUPS = {
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
+        "INSERT OVERWRITE, whole table",
+        "TRUNCATE",
         "Drop table with purge",
         "Create / drop namespace",
         "CREATE SCHEMA IF NOT EXISTS, existing schema",
@@ -195,8 +197,6 @@ GROUPS = {
     "Advanced": [
         "MERGE with one action",
         "MERGE with two actions (UPDATE + INSERT)",
-        "INSERT OVERWRITE, whole table",
-        "TRUNCATE",
     ],
     "Tables & types": [
         "CREATE TABLE IF NOT EXISTS, existing table",
