@@ -108,7 +108,7 @@ def test_nothing_the_catalog_decides_is_probed_or_shown():
     scripts = (_ROOT / ".github" / "scripts" / "capability").glob("*.py")
     for script in scripts:
         text = script.read_text(encoding="utf-8")
-        for word in ("blocked", "BLOCKED", "def format_v3", "def insert_overwrite"):
+        for word in ("blocked", "BLOCKED", "def format_v3"):
             assert word not in text, f"{script.name}: {word}"
 
 

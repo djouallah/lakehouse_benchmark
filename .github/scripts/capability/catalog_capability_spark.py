@@ -434,6 +434,16 @@ class SparkCapability:
         result = self._expect(table, [], "TRUNCATE")
         return f"{result}; {truncate_kind(self.iceberg(table))}"
 
+    def insert_overwrite(self) -> str:
+        table = self._fresh("overwrite")
+        before = len(self._snapshots(table))
+        self.sql(f"INSERT OVERWRITE {self.t(table)} {_select([(7, 70), (8, 80)])}")
+        snapshots = self._snapshots(table)
+        summary = snapshots[-1].summary
+        operation = summary.operation.value if summary is not None else "?"
+        result = self._expect(table, [(7, 70), (8, 80)], "INSERT OVERWRITE")
+        return f"{result}; {len(snapshots) - before} snapshot(s), operation {operation}"
+
     # -- schema ------------------------------------------------------------------------------
 
     def add_column(self) -> str:
@@ -759,6 +769,7 @@ PROBES = [
     ("write", "MERGE INTO, merge-on-read table", "merge_mor"),
     ("write", "MERGE ... WHEN MATCHED THEN DELETE, merge-on-read table", "merge_delete_mor"),
     ("write", "TRUNCATE TABLE", "truncate"),
+    ("write", "INSERT OVERWRITE, whole table", "insert_overwrite"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
