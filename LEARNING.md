@@ -396,6 +396,24 @@ Largest scale each engine completes, cold, every statement answered:
   as a maintainer suggested on [#27776](https://github.com/pola-rs/polars/issues/27776): lazy,
   with the REST scan and manifest caches of #29790 / #29623. The registration loop stays, because
   Polars SQL has no catalog. There is no data-file disk cache to turn on: Polars 2.0 removed it.
+- **Iceberg writes go through `sink_iceberg`, and Polars has no DDL.** What the capability grid
+  shows, and what was filed:
+  - Fixed: Polars now creates the table it sinks. [#29845](https://github.com/pola-rs/polars/issues/29845)
+    was fixed on main by [PR #29908](https://github.com/pola-rs/polars/pull/29908),
+    `sink_iceberg(create_if_not_exists=True)`, which makes an unpartitioned table from the frame's
+    schema. It is in no release yet, so the capability probe runs the main build. That fills
+    Polars' CREATE TABLE and CREATE TABLE AS SELECT cells.
+  - Open: it does not create a missing namespace
+    ([#29968](https://github.com/pola-rs/polars/issues/29968)). `create_if_not_exists` calls
+    `create_table_if_not_exists` only, and the one `create_namespace` in Polars is `pl.Catalog`'s,
+    which is Unity-only. The namespace still comes from pyiceberg
+    (`create_namespace_if_not_exists`), so the namespace rows are `na`.
+  - Open: the `bucket` partition transform
+    ([#29844](https://github.com/pola-rs/polars/issues/29844)), which Polars refuses before the
+    catalog is asked; overwrite by filter ([#29842](https://github.com/pola-rs/polars/issues/29842));
+    delete rows by predicate ([#29843](https://github.com/pola-rs/polars/issues/29843)).
+  - Open: SQL writes to Iceberg, [#29892](https://github.com/pola-rs/polars/issues/29892)–[#29896](https://github.com/pola-rs/polars/issues/29896)
+    (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE).
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
   1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s). That was
   2.0.0-rc.2. The ETL runs the PyPI release, not the main build the query suites use.
