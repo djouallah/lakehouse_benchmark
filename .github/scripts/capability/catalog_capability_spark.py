@@ -624,18 +624,18 @@ class SparkCapability:
 
     def namespace(self) -> str:
         ns = self.name("ns")
-        self.sql(f"CREATE DATABASE {CATALOG}.`{ns}`")
+        self.sql(f"CREATE SCHEMA {CATALOG}.`{ns}`")
         self.namespaces.append(ns)
         if (ns,) not in self.pyiceberg().list_namespaces():
-            raise NoOp("CREATE DATABASE returned success and pyiceberg does not list it")
-        self.sql(f"DROP DATABASE {CATALOG}.`{ns}`")
+            raise NoOp("CREATE SCHEMA returned success and pyiceberg does not list it")
+        self.sql(f"DROP SCHEMA {CATALOG}.`{ns}`")
         if (ns,) in self.pyiceberg().list_namespaces():
-            raise NoOp("DROP DATABASE returned success and pyiceberg still lists it")
+            raise NoOp("DROP SCHEMA returned success and pyiceberg still lists it")
         self.namespaces.remove(ns)
         return f"`{ns}` created, listed, dropped"
 
     def namespace_existing(self) -> str:
-        self.sql(f"CREATE DATABASE IF NOT EXISTS {CATALOG}.`{self.ns}`")
+        self.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.`{self.ns}`")
         return f"accepted on the existing `{self.ns}`"
 
     def rename_table(self) -> str:
@@ -806,8 +806,8 @@ PROBES = [
     ("maintenance", "CALL system.expire_snapshots", "expire_snapshots"),
     ("maintenance", "CALL system.rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "CALL system.rewrite_manifests", "rewrite_manifests"),
-    ("catalog", "CREATE DATABASE, then DROP DATABASE", "namespace"),
-    ("catalog", "CREATE DATABASE IF NOT EXISTS, existing namespace", "namespace_existing"),
+    ("catalog", "CREATE SCHEMA, then DROP SCHEMA", "namespace"),
+    ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),
     ("catalog", "ALTER TABLE ... RENAME TO, then read", "rename_table"),
     ("catalog", "DROP TABLE ... PURGE, rest-catalog-purge on", "drop_purge"),
     ("catalog", "read and INSERT with only the vended credentials", "credential_vending"),

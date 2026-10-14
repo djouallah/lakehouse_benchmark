@@ -92,15 +92,20 @@ def asked() -> set[str]:
     return {k.strip() for k in os.environ.get("CAPABILITY_PROBES", "").split(",") if k.strip()}
 
 
+# Asked on every run: the session, and CREATE TABLE, which tells the probes that need a table
+# whether the engine can make one.
+ALWAYS = ("session", "create_table")
+
+
 def wanted(method: str) -> bool:
-    """Is this probe asked this run? The session always is: nothing runs without it."""
+    """Is this probe asked this run? ALWAYS ones are, whatever the list."""
     keys = asked()
-    return not keys or method in keys or method == "session"
+    return not keys or method in keys or method in ALWAYS
 
 
 def any_wanted(probes) -> bool:
-    """Does this run ask this client anything beyond its session?"""
-    return any(wanted(method) for _, _, method in probes if method != "session")
+    """Does this run ask this client anything beyond the ALWAYS probes?"""
+    return any(wanted(method) for _, _, method in probes if method not in ALWAYS)
 
 
 def _merged(path: str, payload: dict) -> dict:

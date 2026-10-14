@@ -53,7 +53,10 @@ def test_a_run_that_asks_some_probes_keeps_the_other_readings(tmp_path, monkeypa
     path.write_text(json.dumps({"engine": "spark", "rows": old}), encoding="utf-8")
     monkeypatch.setenv("RESULTS_FILE", str(path))
     monkeypatch.setenv("CAPABILITY_PROBES", "b,c")
-    assert harness.wanted("session") and harness.wanted("b") and not harness.wanted("a")
+    assert harness.wanted("session") and harness.wanted("create_table")
+    assert harness.wanted("b") and not harness.wanted("a")
+    assert harness.any_wanted([("g", "q", "session"), ("g", "q", "b")])
+    assert not harness.any_wanted([("g", "q", "session"), ("g", "q", "create_table")])
     fresh = [{"key": "session"}, {"key": "b", "outcome": "supported"}, {"key": "c"}]
     harness.save_results({"engine": "spark", "version": "v", "rows": fresh})
     rows = json.loads(path.read_text(encoding="utf-8"))["rows"]
