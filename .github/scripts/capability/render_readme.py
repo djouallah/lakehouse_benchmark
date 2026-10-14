@@ -257,8 +257,6 @@ CATALOG_NO = {
     ("CREATE TABLE AS SELECT", "spark"): (
         "the OneLake catalog does not support staged create, which Spark's CTAS uses."
     ),
-    # A plain no, no note.
-    ("MERGE with two actions (UPDATE + INSERT)", "duckdb"): "",
 }
 
 
@@ -328,9 +326,8 @@ def capability(data: dict) -> tuple[list[str], list[str]]:
                 notes.append(f"{TITLE[e]}, {label}: {short}")
                 mark += " " + str(len(notes)).translate(SUPERSCRIPT)
             elif outcome == "no" and (label, e) in CATALOG_NO:
-                if CATALOG_NO[(label, e)]:
-                    notes.append(f"{TITLE[e]}, {label}: {CATALOG_NO[(label, e)]}")
-                    mark += " " + str(len(notes)).translate(SUPERSCRIPT)
+                notes.append(f"{TITLE[e]}, {label}: {CATALOG_NO[(label, e)]}")
+                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
             elif why and outcome != "skipped":
                 notes.append(
                     f"{TITLE[e]}, {label}: "

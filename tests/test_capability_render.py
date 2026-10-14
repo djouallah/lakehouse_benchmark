@@ -221,11 +221,3 @@ def test_a_catalog_no_gets_its_reason_and_goes_when_the_cell_is_a_yes():
 
     works = {"spark": {**spark, "rows": [_row("ctas")]}}
     assert "staged create" not in render_readme.render(works)
-
-
-def test_an_empty_catalog_no_is_a_plain_no():
-    duck = {"engine": "duckdb", "version": "v2", "run": "1", "url": "u", "date": "d"}
-    data = {"duckdb": {**duck, "rows": [_row("merge_upsert", "no", "400 Malformed request")]}}
-    text = render_readme.render(data)
-    assert "| MERGE with two actions (UPDATE + INSERT) | no |" in text
-    assert "Malformed" not in text
