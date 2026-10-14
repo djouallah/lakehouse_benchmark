@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38253695277_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38499696276_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -157,6 +157,13 @@
    "detail": "Not implemented Error: MERGE INTO with Iceberg only supports a single UPDATE/DELETE action currently"
   },
   {
+   "key": "merge_upsert",
+   "group": "write",
+   "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
+   "outcome": "no",
+   "detail": "TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'https://onelake.table.fabric.microsoft.com/iceberg/v1' returned a non-200 status code (BadRequest_400). message: Malformed request type: BadRequestException reason: Bad Request"
+  },
+  {
    "key": "merge_three",
    "group": "write",
    "question": "MERGE, three actions: UPDATE + INSERT + BY SOURCE DELETE",
@@ -203,7 +210,7 @@
    "group": "schema",
    "question": "ALTER TABLE ... RENAME TO (table)",
    "outcome": "no",
-   "detail": "TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/tables/rename' returned a non-200 status code (NotImplemented_501), with reason: Not Implemented, body: {\"error\":{\"code\":\"NotImplemented\",\"message\":\"The Iceberg rename table operation is not supported.\",\"target\":null,\"details\":null}}"
+   "detail": "TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/tables/rename' returned a non-200 status code (NotAcceptable_406), with reason: Not Acceptable, body: {\"error\":{\"message\":\"The server does not support this operation\",\"type\":\"UnsupportedOperationException\",\"code\":406}}"
   },
   {
    "key": "set_property",
@@ -259,21 +266,21 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38253695277_1_max/data/00000-0-9fcb972d-0543-4fd5-a41d-8e16db7f17a5.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38499696276_1_max/data/00000-0-ad51d51e-b23d-4e06-abb3-b3b0b93d7551.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
   },
   {
    "key": "create_branch",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE BRANCH",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38253695277_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38499696276_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
   },
   {
    "key": "create_tag",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE TAG",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38253695277_1_tag\" CREATE TAG probe_tag ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38499696276_1_tag\" CREATE TAG probe_tag ^^^^^^"
   },
   {
    "key": "expire_snapshots",
@@ -308,7 +315,7 @@
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`dk_38253695277_1_ns` created; pyiceberg lists it"
+   "detail": "`dk_38499696276_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "drop_schema",
@@ -318,7 +325,7 @@
    "detail": "the empty namespace is gone"
   }
  ],
- "run": "38253695277",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38253695277",
- "date": "2026-10-12"
+ "run": "38499696276",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38499696276",
+ "date": "2026-10-14"
 }
