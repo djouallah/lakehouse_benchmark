@@ -665,13 +665,13 @@ class Doris(StarRocks):
     keeps "genuine Fabric OneLake locations" on this Hadoop path. On 4.1.3 the BE crashed on that
     path with workload identity / SAS; on 4.1.4.1, with JVM container support off, it does not.
 
-    4.1.4.x ships only FE and BE component images (no all-in-one), so the default runs two
+    4.1.x ships only FE and BE component images (no all-in-one), so the default runs two
     containers on their own network. An `all-in-one-*` CANDIDATE_IMAGE runs the single container
     StarRocks does.
     """
 
     name = "doris"
-    default_image = "apache/doris:fe-4.1.4.1"
+    default_image = "apache/doris:fe-4.1.5"
     list_namespaces = "SHOW DATABASES FROM onelake"
     be_logs = tuple(
         f"/opt/apache-doris/be/log/{name}" for name in ("be.out", "be.WARNING", "be.INFO")
