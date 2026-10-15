@@ -2,7 +2,7 @@
 
 TPC-DS-like, scale factor 100, 99 queries, on 4 vCPU / 15.6 GB (linux-6.17.0-1022-azure, Python 3.12.15).
 
-Last run: `2026-10-10T13:08:23Z` · commit `115fa41` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38054455096)
+Last run: `2026-10-15T23:24:06Z` · commit `a3c468a` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38823033107)
 
 ## Latest run
 
@@ -13,7 +13,7 @@ Each engine's most recent run at this scale; the newest run may not include ever
 | Polars | `2.0.0` | 1,167.0s | 2.6s | — |
 | Trino | `483 (trinodb/trino:483)` | 4,017.5s | 13.0s | — |
 | Gluten/Velox | `4.1.1 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)` | 4,767.5s | 39.9s | — |
-| DuckDB | `v2.0.0-alpha46057` | — | 5.3s | Q64 |
+| DuckDB | `v2.0.0-alpha48256` | — | 4.9s | Q64 |
 | StarRocks | `4.1.6-6862092 (starrocks/allin1-ubuntu:4.1-latest)` | — | 21.7s | Q49 |
 | LakeSail | `0.7.2` | — | 2.6s | Q64 |
 
@@ -23,7 +23,7 @@ One cold pass, the first after attaching the catalog. Attach is timed separately
 
 | Engine | Pass | Query | Error |
 |---|---|---|---|
-| DuckDB | cold | Q64 | `RuntimeError: Out of Memory Error: could not allocate block of size 256.0 KiB (12.4 GiB/12.4 GiB used) Possible solutions: * Reducing the number of threads (SET threads=X) * Disabling insertion-order preservation (SET preserve_insertion_order=false) * Increasing the memory limit (SET memory_limit='.` |
+| DuckDB | cold | Q64 | `RuntimeError: Out of Memory Error: failed to offload data block of size 96.0 KiB (90.3 GiB/90.3 GiB used). This limit was set by the 'max_temp_directory_size' setting. By default, this setting utilizes the available disk space on the drive where the 'temp_directory' is located. You can adjust this s` |
 | StarRocks | cold | Q49 | `ProgrammingError: (1064, "Getting analyzing error. Detail message: Column '`catalog`.`return_rank`' cannot be resolved.")` |
 | LakeSail | cold | Q64 | `SparkRuntimeException: Resources exhausted: Failed to allocate additional 10.0 MB for ExternalSorterMerge[3] with 0.0 B already allocated for this reservation - 2000.0 KB remain available for the total memory pool: fair(pool_size: 10.0 GB)` |
 
@@ -135,6 +135,6 @@ Seconds, cold pass. `—` means the query failed or did not run; see Failures ab
 
 ## History
 
-3,464 timed statements across 33 runs.
+3,466 timed statements across 34 runs.
 Raw data: one immutable JSON per run under [`results/tpcds/`](../../results/tpcds/), flattened to [`data/tpcds_results.csv`](../data/tpcds_results.csv).
 

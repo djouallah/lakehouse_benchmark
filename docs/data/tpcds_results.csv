@@ -6266,3 +6266,13 @@ See also https://duckdb.org/docs/current/guides/performance/how_to_tune_workload
 38115933551-1,2026-10-11T05:50:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/38115933551,ed0c7fe,60,tpcds,linux-6.17.0-1022-azure,4,15.6,3.12.15,lakesail_iceberg,0.7.3.dev20261010,timed_out,cold,setup,0,3.0864,,ok,
 38115933551-1,2026-10-11T05:50:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/38115933551,ed0c7fe,60,tpcds,linux-6.17.0-1022-azure,4,15.6,3.12.15,lakesail_iceberg,0.7.3.dev20261010,timed_out,cold,query,64,336.199,287,ok,
 38115933551-1,2026-10-11T05:50:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/38115933551,ed0c7fe,60,tpcds,linux-6.17.0-1022-azure,4,15.6,3.12.15,lakesail_iceberg,0.7.3.dev20261010,timed_out,cold,query,72,,,error,QueryTimeout: did not finish in 900 s
+38823033107-1,2026-10-15T23:24:06Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/38823033107,a3c468a,100,tpcds,linux-6.17.0-1022-azure,4,15.6,3.12.15,duckdb_iceberg,v2.0.0-alpha48256,ok,cold,setup,0,4.8907,,ok,
+38823033107-1,2026-10-15T23:24:06Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/38823033107,a3c468a,100,tpcds,linux-6.17.0-1022-azure,4,15.6,3.12.15,duckdb_iceberg,v2.0.0-alpha48256,ok,cold,query,64,,,error,"RuntimeError: Out of Memory Error: failed to offload data block of size 96.0 KiB (90.3 GiB/90.3 GiB used).
+This limit was set by the 'max_temp_directory_size' setting.
+By default, this setting utilizes the available disk space on the drive where the 'temp_directory' is located.
+You can adjust this setting, by using (for example) PRAGMA max_temp_directory_size='10GiB'
+Possible solutions:
+* Reducing the number of threads (SET threads=X)
+* Disabling insertion-order preservation (SET preserve_insertion_order=false)
+* Increasing the memory limit (SET memory_limit='...GB')
+See also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
