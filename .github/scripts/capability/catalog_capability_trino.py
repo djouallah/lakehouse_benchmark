@@ -456,14 +456,22 @@ class TrinoCapability:
         return f"{result}; {truncate_kind(self.iceberg(table))}"
 
     def insert_overwrite(self) -> str:
+        """Trino has no INSERT OVERWRITE: its whole-table overwrite is CREATE OR REPLACE TABLE ...
+        AS, one commit on the same table, history kept (as Polars is asked its sink mode)."""
         table = self._fresh("overwrite")
+        uuid = self.iceberg(table).metadata.table_uuid
         before = len(self._snapshots(table))
-        self.sql(f"INSERT OVERWRITE {self.t(table)} {_select([(7, 70), (8, 80)])}")
+        self.sql(f"CREATE OR REPLACE TABLE {self.t(table)} AS {_select([(7, 70), (8, 80)])}")
+        tbl = self.iceberg(table)
         snapshots = self._snapshots(table)
         summary = snapshots[-1].summary
         operation = summary.operation.value if summary is not None else "?"
-        result = self._expect(table, [(7, 70), (8, 80)], "INSERT OVERWRITE")
-        return f"{result}; {len(snapshots) - before} snapshot(s), operation {operation}"
+        same = "same table" if tbl.metadata.table_uuid == uuid else "a NEW table (uuid changed)"
+        result = self._expect(table, [(7, 70), (8, 80)], "CREATE OR REPLACE TABLE ... AS")
+        return (
+            f"{result}; {same}, {len(snapshots) - before} snapshot(s) added, "
+            f"{len(snapshots)} kept, operation {operation}"
+        )
 
     # -- schema ------------------------------------------------------------------------------
 
@@ -735,7 +743,7 @@ PROBES = [
     ("write", "UPDATE", "update"),
     ("write", "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT", "merge_upsert"),
     ("write", "TRUNCATE TABLE", "truncate"),
-    ("write", "INSERT OVERWRITE, whole table", "insert_overwrite"),
+    ("write", "CREATE OR REPLACE TABLE ... AS (whole-table overwrite)", "insert_overwrite"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
