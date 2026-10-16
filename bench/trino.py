@@ -180,6 +180,9 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
                 CONTAINER_MEMORY,
                 "-p",
                 f"127.0.0.1:{PORT}:{PORT}",
+                # The host as the container sees it: the capability probe's race proxy runs there.
+                "--add-host",
+                "host.docker.internal:host-gateway",
                 IMAGE,
             ],
             check=True,

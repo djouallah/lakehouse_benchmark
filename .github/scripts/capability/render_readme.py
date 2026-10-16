@@ -18,14 +18,30 @@ import sys
 from pathlib import Path
 
 # The column order, most usable first. Spark is the reference: the Iceberg Java library the others
-# are read against. Polars is last because it has no SQL writes (no DELETE, UPDATE, DROP).
-ENGINES = ("spark", "duckdb", "sail", "chdb", "polars")
+# are read against; Trino is built on the same library, with its own SQL and planning. Polars is
+# last because it has no SQL writes (no DELETE, UPDATE, DROP).
+ENGINES = ("spark", "trino", "duckdb", "sail", "chdb", "polars")
 # The ones with SQL, for the rows Polars has no operation for.
-SQL = ("spark", "duckdb", "sail", "chdb")
-TITLE = {"spark": "Spark", "polars": "Polars", "duckdb": "DuckDB", "sail": "Sail", "chdb": "chDB"}
-LANGUAGE = {"spark": "Java", "polars": "Rust", "duckdb": "C++", "sail": "Rust", "chdb": "C++"}
+SQL = ("spark", "trino", "duckdb", "sail", "chdb")
+TITLE = {
+    "spark": "Spark",
+    "trino": "Trino",
+    "polars": "Polars",
+    "duckdb": "DuckDB",
+    "sail": "Sail",
+    "chdb": "chDB",
+}
+LANGUAGE = {
+    "spark": "Java",
+    "trino": "Java",
+    "polars": "Rust",
+    "duckdb": "C++",
+    "sail": "Rust",
+    "chdb": "C++",
+}
 IMPLEMENTATION = {
     "spark": "the Iceberg Java library, the reference",
+    "trino": "the Iceberg Java library, Trino's own SQL",
     "polars": "own parquet reader and writer, pyiceberg for the catalog and commit",
     "duckdb": "own",
     "sail": "own, on DataFusion",
@@ -37,7 +53,10 @@ ROWS = [
     # Polars' CREATE TABLE is sink_iceberg creating the table it writes: a CTAS too.
     (
         "CREATE TABLE",
-        {"polars": ["sink_create"], **{e: ["create_table"] for e in ("spark", "duckdb", "sail")}},
+        {
+            "polars": ["sink_create"],
+            **{e: ["create_table"] for e in ("spark", "trino", "duckdb", "sail")},
+        },
     ),
     ("CREATE TABLE AS SELECT", {"polars": ["sink_create"], **{e: ["ctas"] for e in SQL}}),
     ("CREATE TABLE IF NOT EXISTS, existing table", {e: ["create_if_not_exists"] for e in SQL}),
@@ -45,19 +64,21 @@ ROWS = [
         "INSERT / append",
         {
             "spark": ["insert_into"],
+            "trino": ["insert_into"],
             "polars": ["sink_append"],
             "duckdb": ["insert_values"],
             "sail": ["insert_into"],
         },
     ),
-    ("INSERT ... SELECT", {e: ["insert_select"] for e in ("spark", "duckdb", "sail")}),
-    ("DELETE", {e: ["delete_from"] for e in ("spark", "duckdb", "sail")}),
-    ("UPDATE", {e: ["update"] for e in ("spark", "duckdb", "sail")}),
+    ("INSERT ... SELECT", {e: ["insert_select"] for e in ("spark", "trino", "duckdb", "sail")}),
+    ("DELETE", {e: ["delete_from"] for e in ("spark", "trino", "duckdb", "sail")}),
+    ("UPDATE", {e: ["update"] for e in ("spark", "trino", "duckdb", "sail")}),
     # The upsert. Spark and Sail ask it of a merge-on-read table; chDB has no MERGE statement.
     (
         "MERGE with two actions (UPDATE + INSERT)",
         {
             "spark": ["merge_mor"],
+            "trino": ["merge_upsert"],
             "duckdb": ["merge_upsert"],
             "sail": ["merge_mor"],
             "chdb": ["merge_into"],
@@ -67,17 +88,19 @@ ROWS = [
         "INSERT OVERWRITE, whole table",
         {
             "spark": ["insert_overwrite"],
+            "trino": ["insert_overwrite"],
             "duckdb": ["insert_overwrite"],
             "sail": ["insert_overwrite"],
             "chdb": ["insert_overwrite"],
             "polars": ["sink_overwrite"],
         },
     ),
-    ("TRUNCATE", {e: ["truncate"] for e in ("spark", "duckdb", "sail")}),
+    ("TRUNCATE", {e: ["truncate"] for e in ("spark", "trino", "duckdb", "sail")}),
     (
         "Partitioned table",
         {
             "spark": ["partitioned"],
+            "trino": ["partitioned"],
             "polars": ["partitioned"],
             "duckdb": ["create_partitioned"],
             "sail": ["partitioned"],
@@ -109,13 +132,19 @@ ROWS = [
     ("Set table property", {e: ["set_property"] for e in SQL}),
     (
         "Sort order evolution",
-        {"spark": ["sort_order"], "duckdb": ["create_sorted"], "sail": ["sort_order"]},
+        {
+            "spark": ["sort_order"],
+            "trino": ["sort_order"],
+            "duckdb": ["create_sorted"],
+            "sail": ["sort_order"],
+        },
     ),
     ("Time travel", {e: ["time_travel"] for e in ENGINES}),
     (
         "Metadata tables",
         {
             "spark": ["metadata_tables"],
+            "trino": ["metadata_tables"],
             "duckdb": ["metadata_snapshots", "metadata_files"],
             "sail": ["metadata_tables"],
         },
@@ -124,18 +153,24 @@ ROWS = [
     # storage and keeps the metadata. A right answer means the engine never opened them.
     ("File pruning from min/max in the metadata", {e: ["file_pruning"] for e in ENGINES}),
     ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
-    ("Compaction", {e: ["rewrite_data_files"] for e in ("spark", "duckdb", "sail")}),
+    ("Compaction", {e: ["rewrite_data_files"] for e in ("spark", "trino", "duckdb", "sail")}),
     ("Rewrite manifests", {e: ["rewrite_manifests"] for e in SQL}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
-    ("Create tag", {e: ["create_tag"] for e in ("spark", "duckdb", "sail")}),
+    ("Create tag", {e: ["create_tag"] for e in ("spark", "trino", "duckdb", "sail")}),
     (
         "Drop table with purge",
-        {"spark": ["drop_purge"], "duckdb": ["drop_table"], "sail": ["drop_purge"]},
+        {
+            "spark": ["drop_purge"],
+            "trino": ["drop_purge"],
+            "duckdb": ["drop_table"],
+            "sail": ["drop_purge"],
+        },
     ),
     (
         "Create / drop namespace",
         {
             "spark": ["namespace"],
+            "trino": ["namespace"],
             "duckdb": ["create_schema", "drop_schema"],
             "sail": ["namespace"],
         },
@@ -225,6 +260,7 @@ GROUPS = {
 # The site's engine keys, which are lakehouse_benchmark's.
 SITE_KEY = {
     "spark": "pyspark_iceberg",
+    "trino": "trino_iceberg",
     "polars": "polars_iceberg",
     "duckdb": "duckdb_iceberg",
     "sail": "lakesail_iceberg",
@@ -429,8 +465,8 @@ def render(data: dict) -> str:
     out = [
         "# Iceberg support: what each engine can do against the OneLake Iceberg REST catalog",
         "",
-        "Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail and chDB "
-        "have their own Iceberg code, no JVM.",
+        "Spark is the reference: it uses the Iceberg Java library, as Trino does under its own "
+        "SQL. Polars, DuckDB, Sail and chDB have their own Iceberg code, no JVM.",
         "",
         "`yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no "
         "such operation · `—` not probed · `?` the probe could not ask",

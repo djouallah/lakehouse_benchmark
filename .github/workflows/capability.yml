@@ -20,15 +20,16 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,polars,duckdb,sail,chdb,duckdb_isolation
-          - spark,polars,duckdb,sail,chdb
+          - spark,trino,polars,duckdb,sail,chdb,duckdb_isolation
+          - spark,trino,polars,duckdb,sail,chdb
           - spark
+          - trino
           - polars
           - duckdb
           - sail
           - chdb
           - duckdb_isolation
-        default: spark,polars,duckdb,sail,chdb,duckdb_isolation
+        default: spark,trino,polars,duckdb,sail,chdb,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -58,7 +59,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,polars,duckdb,sail,chdb,duckdb_isolation' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,duckdb_isolation' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -67,6 +68,7 @@ jobs:
     needs: plan
     name: >-
       ${{ matrix.client == 'spark' && 'Spark'
+      || matrix.client == 'trino' && 'Trino'
       || matrix.client == 'duckdb' && 'DuckDB (nightly)'
       || matrix.client == 'polars' && 'Polars'
       || matrix.client == 'sail' && 'LakeSail'
@@ -112,7 +114,7 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars)=' || true
+          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars|trino)=' || true
 
       - uses: actions/setup-java@v5
         if: matrix.client == 'spark'

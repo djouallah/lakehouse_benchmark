@@ -82,7 +82,9 @@ def update_actions(path: str, body: bytes) -> dict[tuple[str, str], list[str]]:
 class RaceProxy:
     """`arm(ns, table, inject)` makes the next commit to that table wait for `inject()` first."""
 
-    def __init__(self, upstream: str = ICEBERG_ENDPOINT):
+    def __init__(self, upstream: str = ICEBERG_ENDPOINT, bind: str = "127.0.0.1"):
+        """`bind` 0.0.0.0 lets an engine in a container reach the proxy through the host's
+        gateway (bench/trino.py adds host.docker.internal); `endpoint` still names 127.0.0.1."""
         parts = urllib.parse.urlsplit(upstream)
         self._origin = f"{parts.scheme}://{parts.netloc}"
         self._lock = threading.Lock()
@@ -97,7 +99,7 @@ class RaceProxy:
         self.log: list[tuple[str, str, int, int | None]] = []
         # Every DELETE with its query, which `log` drops: dropTable carries purgeRequested there.
         self.deletes: list[tuple[str, int]] = []
-        self._server = ThreadingHTTPServer(("127.0.0.1", 0), self._handler())
+        self._server = ThreadingHTTPServer((bind, 0), self._handler())
         self._server.daemon_threads = True
         self.endpoint = f"http://127.0.0.1:{self._server.server_address[1]}{parts.path}"
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
