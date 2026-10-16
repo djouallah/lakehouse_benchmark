@@ -1,0 +1,44 @@
+{
+  "run_id": "38877269045-1",
+  "run_started_at": "2026-10-16T09:01:09Z",
+  "sf": 100,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38877269045",
+  "git_sha": "07c4637",
+  "test": "tpcds",
+  "runner": "linux-6.17.0-1022-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "duckdb_iceberg": {
+      "version": "v2.0.0-alpha48444",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 2.9273,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "RuntimeError: Out of Memory Error: could not allocate block of size 256.0 KiB (12.4 GiB/12.4 GiB used)\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+        }
+      ],
+      "host": {
+        "runner": "linux-6.17.0-1022-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
