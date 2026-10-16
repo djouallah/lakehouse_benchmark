@@ -80,15 +80,8 @@ def _say(text: str) -> None:
     print(scrub.scrub(text), flush=True)
 
 
-def _create_unstaged(cfg, table: str) -> None:
-    """`candidate.<table>` with nation's schema, created through the catalog in one request.
-
-    The unstaged create bench/etl/iceberg.py `recreate` makes for the ETL -- the way around the
-    catalog's refusal of an engine's own create (staged, or field ids from 0). Drops any previous
-    table and its folder first.
-    """
-    from bench.tpch.generate import _all_optional
-
+def _drop_table(cfg, table: str):
+    """`candidate.<table>` gone from the catalog and its folder; returns the pyiceberg catalog."""
     catalog = auth.catalog(cfg)
     identifier = f"{WRITE_NS}.{table}"
     if catalog.table_exists(identifier):
@@ -98,8 +91,21 @@ def _create_unstaged(cfg, table: str) -> None:
     )
     if directory.exists():
         directory.delete_directory()
+    return catalog
+
+
+def _create_unstaged(cfg, table: str) -> None:
+    """`candidate.<table>` with nation's schema, created through the catalog in one request.
+
+    The unstaged create bench/etl/iceberg.py `recreate` makes for the ETL -- the way around the
+    catalog's refusal of an engine's own create (staged, or field ids from 0). Drops any previous
+    table and its folder first.
+    """
+    from bench.tpch.generate import _all_optional
+
+    catalog = _drop_table(cfg, table)
     catalog.create_table(
-        identifier,
+        f"{WRITE_NS}.{table}",
         schema=_all_optional(catalog.load_table(f"{cfg.schema}.nation").schema().as_arrow()),
         location=f"{cfg.base_path}/Tables/{WRITE_NS}/{table}",
     )
@@ -529,6 +535,8 @@ class Trino(Candidate):
             ]
 
         no_vending = {"iceberg.rest-catalog.vended-credentials-enabled": "false"}
+        # The write gate re-creates the catalog with one more property: kept for it.
+        self._catalog_ddl = lambda extra: ddl(no_vending | self.AZURE | extra)
         return {
             "oauth2 token + workload identity (azure.auth-type DEFAULT)": ddl(
                 no_vending | {"azure.auth-type": "DEFAULT"}
@@ -619,25 +627,47 @@ class Trino(Candidate):
         except Exception as exc:  # noqa: BLE001
             _say(f"    listing Tables/{WRITE_NS} failed: {scrub.scrub_exc(exc, 500)}")
 
-    def write_variants(self, table: str, source: str) -> dict[str, list[str]]:
-        """The catalog does not support staged creates, and Trino stages every create.
+    def write_variants(self, table: str, source: str) -> dict[str, list]:
+        """Trino's own create first, then the catalog's create filled by one Trino INSERT.
 
         Trino (483) stages a CREATE TABLE or CTAS whenever the table has a location, and it takes
         one from the namespace, which this catalog always reports. The stage is accepted; the
-        commit that finishes it is refused with a bare 400 "Malformed request". So a NEW table
-        is created unstaged through the catalog -- bench/etl/iceberg.py `recreate`, the create
-        chDB and Polars already use -- and Trino fills it with one INSERT, one commit, with its
-        extended statistics off (below).
+        commit that finishes it is refused with a bare 400 "Malformed request". 484 adds
+        `iceberg.rest-catalog.server-assigned-table-location-enabled` (trinodb/trino#30438, for
+        BigLake): Trino sends no location and lets the catalog assign it, which may skip the
+        stage. The first two variants try that; the last is the way around it -- a table created
+        unstaged through the catalog (bench/etl/iceberg.py `recreate`, as chDB and Polars do) and
+        one Trino INSERT, one commit.
+
+        Every variant writes with extended statistics off. Trino's default writes Puffin
+        statistics into the same commit, and the catalog refuses that commit with a bare 400 (run
+        36362007273); without them the commit is add-snapshot + set-snapshot-ref and is accepted
+        (run 36362665394). The same 400 hit CREATE OR REPLACE on the existing table.
         """
-        _create_unstaged(self.cfg, table)
+        target = f"onelake.{WRITE_NS}.{table}"
+        no_stats = "SET SESSION onelake.collect_extended_statistics_on_write = false"
+        assigned = self._catalog_ddl(
+            {"iceberg.rest-catalog.server-assigned-table-location-enabled": "true"}
+        )
         return {
-            # With extended statistics off. Trino's default writes Puffin statistics into the
-            # same commit, and the catalog refuses that commit with a bare 400 (run 36362007273);
-            # without them the commit is add-snapshot + set-snapshot-ref and is accepted (run
-            # 36362665394). The same 400 hit CREATE OR REPLACE on the existing table.
+            "Trino CTAS, location assigned by the catalog": [
+                lambda: _drop_table(self.cfg, table) and None,
+                *assigned,
+                no_stats,
+                f"CREATE TABLE {target} AS SELECT * FROM {source}",
+            ],
+            "Trino CREATE TABLE + INSERT, location assigned by the catalog": [
+                lambda: _drop_table(self.cfg, table) and None,
+                *assigned,
+                no_stats,
+                f"CREATE TABLE {target} (LIKE {source})",
+                f"INSERT INTO {target} SELECT * FROM {source}",
+            ],
             "catalog create + Trino INSERT, no extended statistics": [
-                "SET SESSION onelake.collect_extended_statistics_on_write = false",
-                f"INSERT INTO onelake.{WRITE_NS}.{table} SELECT * FROM {source}",
+                lambda: _create_unstaged(self.cfg, table),
+                *self._catalog_ddl({}),
+                no_stats,
+                f"INSERT INTO {target} SELECT * FROM {source}",
             ],
         }
 
