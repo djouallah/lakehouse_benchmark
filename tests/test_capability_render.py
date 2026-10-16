@@ -27,6 +27,7 @@ DATA = {
             _row("merge_delete_only", "no", "400 Duplicate types: add-snapshot"),
             _row("merge_insert_only", "no-op", "nothing written"),
             _row("merge_by_source_only"),
+            _row("merge_upsert", "no", "400 Duplicate types: add-snapshot"),
         ],
     },
     "polars": {
@@ -54,9 +55,9 @@ def test_unprobed_is_a_dash_and_absent_engine_is_na():
 
 def test_refusals_get_a_note_quoting_the_detail():
     text = render_readme.render(DATA)
-    merge = next(ln for ln in text.splitlines() if ln.startswith("| MERGE with one action |"))
-    assert merge == "| MERGE with one action | no ¹ | na |"
-    assert "merge_delete_only: `400 Duplicate types: add-snapshot`" in text
+    merge = next(ln for ln in text.splitlines() if ln.startswith("| MERGE with two actions (UPDATE + INSERT) |"))
+    assert merge == "| MERGE with two actions (UPDATE + INSERT) | no ¹ | na |"
+    assert "merge_upsert: `400 Duplicate types: add-snapshot`" in text
 
 
 def test_duckdb_isolation_rows_fill_the_duckdb_column():

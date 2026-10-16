@@ -16,35 +16,34 @@ Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail a
 | INSERT ... SELECT | yes | yes | yes | yes | na |
 | DELETE | yes | yes | yes | yes | na |
 | UPDATE | yes | yes | yes | yes | na |
-| MERGE with one action | yes | yes | yes | no ⁴ | na |
-| MERGE with two actions (UPDATE + INSERT) | yes | yes | yes | no ⁵ | na |
-| INSERT OVERWRITE, whole table | yes | no ⁶ | yes | no ⁷ | no ⁸ |
-| TRUNCATE | yes | no ⁹ | no ¹⁰ | no ¹¹ | na |
+| MERGE with two actions (UPDATE + INSERT) | yes | yes | yes | no ⁴ | na |
+| INSERT OVERWRITE, whole table | yes | no ⁵ | yes | no ⁶ | no ⁷ |
+| TRUNCATE | yes | no ⁸ | no ⁹ | no ¹⁰ | na |
 | Partitioned table | yes | yes | yes | yes | yes |
-| Partition transform: bucket | yes | yes | yes | yes | no ¹² |
+| Partition transform: bucket | yes | yes | yes | yes | no ¹¹ |
 | Partition transform: truncate | yes | yes | yes | yes | yes |
 | Partition transforms: year / month / day / hour | yes | yes | yes | yes | yes |
-| Types: decimal, date, timestamp, timestamptz, uuid, binary | no ¹³ | yes | no ¹⁴ | yes | yes |
+| Types: decimal, date, timestamp, timestamptz, uuid, binary | no ¹² | yes | no ¹³ | yes | yes |
 | Nested types: struct, list, map | yes | yes | yes | yes | yes |
-| Add column | yes | yes | no ¹⁵ | yes | yes |
-| Drop column | yes | yes | no ¹⁶ | yes | na |
-| Rename column | yes | yes | no ¹⁷ | yes | na |
-| Type promotion (int → long) | yes | yes | no ¹⁸ | yes | yes |
-| Partition evolution | yes | yes | no ¹⁹ | no ²⁰ | na |
+| Add column | yes | yes | no ¹⁴ | yes | yes |
+| Drop column | yes | yes | no ¹⁵ | yes | na |
+| Rename column | yes | yes | no ¹⁶ | yes | na |
+| Type promotion (int → long) | yes | yes | no ¹⁷ | yes | yes |
+| Partition evolution | yes | yes | no ¹⁸ | no ¹⁹ | na |
 | Write after partition evolution | yes | yes | yes | yes | yes |
-| Set table property | yes | yes | no ²¹ | no ²² | na |
-| Sort order evolution | yes | yes | no ²³ | no ²⁴ | na |
+| Set table property | yes | yes | no ²⁰ | no ²¹ | na |
+| Sort order evolution | yes | yes | no ²² | no ²³ | na |
 | Time travel | yes | yes | yes | yes | yes |
-| Metadata tables | yes | yes | no ²⁵ | yes | na |
+| Metadata tables | yes | yes | no ²⁴ | yes | na |
 | File pruning from min/max in the metadata | yes | yes | yes | yes | yes |
-| MAX from the metadata, no data file read | yes | no ²⁶ | yes | no ²⁷ | no ²⁸ |
-| Compaction | yes | yes | no ²⁹ | no-op ³⁰ | na |
-| Rewrite manifests | yes | no ³¹ | no ³² | no ³³ | na |
-| Create branch | yes | no ³⁴ | no ³⁵ | no ³⁶ | na |
-| Create tag | yes | no ³⁷ | no ³⁸ | no ³⁹ | na |
-| Drop table with purge | yes | yes | yes | no ⁴⁰ | na |
-| Create / drop namespace | yes | yes | yes | no ⁴¹ | na |
-| CREATE SCHEMA IF NOT EXISTS, existing schema | yes | yes | yes | no ⁴² | na |
+| MAX from the metadata, no data file read | yes | no ²⁵ | yes | no ²⁶ | no ²⁷ |
+| Compaction | yes | yes | no ²⁸ | no-op ²⁹ | na |
+| Rewrite manifests | yes | no ³⁰ | no ³¹ | no ³² | na |
+| Create branch | yes | no ³³ | no ³⁴ | no ³⁵ | na |
+| Create tag | yes | no ³⁶ | no ³⁷ | no ³⁸ | na |
+| Drop table with purge | yes | yes | yes | no ³⁹ | na |
+| Create / drop namespace | yes | yes | yes | no ⁴⁰ | na |
+| CREATE SCHEMA IF NOT EXISTS, existing schema | yes | yes | yes | no ⁴¹ | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | yes | yes | yes | yes | na |
 | Concurrent writer: UPDATE loses nothing | yes | yes | yes | yes | na |
@@ -54,45 +53,44 @@ Spark is the reference: it uses the Iceberg Java library. Polars, DuckDB, Sail a
 1. chDB, CREATE TABLE: CREATE TABLE: `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
 2. Spark, CREATE TABLE AS SELECT: the OneLake catalog does not support staged create, which Spark's CTAS uses.
 3. chDB, CREATE TABLE AS SELECT: CREATE TABLE ... AS SELECT: `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
-4. chDB, MERGE with one action: MERGE INTO: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)`
-5. chDB, MERGE with two actions (UPDATE + INSERT): MERGE INTO: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)`
-6. DuckDB, INSERT OVERWRITE, whole table: INSERT OVERWRITE, whole table: `Parser Error: syntax error at or near "OVERWRITE" LINE 1: INSERT OVERWRITE onelake."_bench_capability"."dk_38891149513_1_ove... ^^^^^^^^^`
-7. chDB, INSERT OVERWRITE, whole table: INSERT OVERWRITE TABLE: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38506561909_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, O…`
-8. Polars, INSERT OVERWRITE, whole table: sink_iceberg(mode='overwrite'): `BadRequestError: BadRequestError: BadRequestException: Malformed request`
-9. DuckDB, TRUNCATE: Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes.
-10. Sail, TRUNCATE: TRUNCATE TABLE: `IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input`
-11. chDB, TRUNCATE: TRUNCATE TABLE: `ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)`
-12. Polars, Partition transform: bucket: write a table partitioned by bucket(4, id): `works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform`
-13. Spark, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type "UUID". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^`
-14. Sail, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type`
-15. Sail, Add column: ALTER TABLE ADD COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
-16. Sail, Drop column: ALTER TABLE DROP COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
-17. Sail, Rename column: ALTER TABLE RENAME COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
-18. Sail, Type promotion (int → long): ALTER COLUMN c TYPE BIGINT (int -> long): `AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_promote`
-19. Sail, Partition evolution: ALTER TABLE ADD PARTITION FIELD (partition evolution): `IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('`
-20. chDB, Partition evolution: ALTER TABLE ADD PARTITION FIELD (partition evolution): `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)`
-21. Sail, Set table property: ALTER TABLE SET TBLPROPERTIES: `AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_props`
-22. chDB, Set table property: ALTER TABLE SET TBLPROPERTIES: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38254816796_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED P…`
-23. Sail, Sort order evolution: ALTER TABLE ... WRITE ORDERED BY (sort order): `IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
-24. chDB, Sort order evolution: ALTER TABLE MODIFY ORDER BY (sort order evolution): `ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)`
-25. Sail, Metadata tables: metadata tables (t.snapshots): `IllegalArgumentException: invalid argument: table reference: [Identifier("onelake"), Identifier("_bench_capability"), Identifier("sl_38253752194_1_inspect"), Identifier("snapshots")]`
-26. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_max/data/00000-0-8ad340ad…`
-27. chDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: a9be9bfa-501e-00be-744f-5aa356000000. (STD_EXCEPTION)`
-28. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
-29. Sail, Compaction: CALL system.rewrite_data_files (compaction): `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
-30. chDB, Compaction: OPTIMIZE TABLE (compaction): `returned success and data files went 2 -> 2`
-31. DuckDB, Rewrite manifests: iceberg_rewrite_manifests: `Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean "iceberg_rewrite_data_files"?`
-32. Sail, Rewrite manifests: CALL system.rewrite_manifests: `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
-33. chDB, Rewrite manifests: rewrite manifests (no statement): `ClickHouse has no statement to rewrite an Iceberg table's manifests`
-34. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_branch" CREATE BRANCH probe_branch ^^^^^^`
-35. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
-36. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
-37. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_tag" CREATE TAG probe_tag ^^^^^^`
-38. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
-39. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
-40. chDB, Drop table with purge: DROP TABLE: `ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body lengt…`
-41. chDB, Create / drop namespace: CREATE TABLE in a new namespace (no namespace statement): `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
-42. chDB, CREATE SCHEMA IF NOT EXISTS, existing schema: namespace IF NOT EXISTS (no namespace statement): `ClickHouse has no statement for a catalog namespace`
+4. chDB, MERGE with two actions (UPDATE + INSERT): MERGE INTO: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)`
+5. DuckDB, INSERT OVERWRITE, whole table: INSERT OVERWRITE, whole table: `Parser Error: syntax error at or near "OVERWRITE" LINE 1: INSERT OVERWRITE onelake."_bench_capability"."dk_38891149513_1_ove... ^^^^^^^^^`
+6. chDB, INSERT OVERWRITE, whole table: INSERT OVERWRITE TABLE: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38506561909_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, O…`
+7. Polars, INSERT OVERWRITE, whole table: sink_iceberg(mode='overwrite'): `BadRequestError: BadRequestError: BadRequestException: Malformed request`
+8. DuckDB, TRUNCATE: Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes.
+9. Sail, TRUNCATE: TRUNCATE TABLE: `IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input`
+10. chDB, TRUNCATE: TRUNCATE TABLE: `ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)`
+11. Polars, Partition transform: bucket: write a table partitioned by bucket(4, id): `works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform`
+12. Spark, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type "UUID". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^`
+13. Sail, Types: decimal, date, timestamp, timestamptz, uuid, binary: types: decimal, date, timestamp, timestamptz, uuid, binary: `works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type`
+14. Sail, Add column: ALTER TABLE ADD COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
+15. Sail, Drop column: ALTER TABLE DROP COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
+16. Sail, Rename column: ALTER TABLE RENAME COLUMN: `UnsupportedOperationException: unsupported ALTER TABLE operation`
+17. Sail, Type promotion (int → long): ALTER COLUMN c TYPE BIGINT (int -> long): `AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_promote`
+18. Sail, Partition evolution: ALTER TABLE ADD PARTITION FIELD (partition evolution): `IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('`
+19. chDB, Partition evolution: ALTER TABLE ADD PARTITION FIELD (partition evolution): `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)`
+20. Sail, Set table property: ALTER TABLE SET TBLPROPERTIES: `AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_props`
+21. chDB, Set table property: ALTER TABLE SET TBLPROPERTIES: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38254816796_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED P…`
+22. Sail, Sort order evolution: ALTER TABLE ... WRITE ORDERED BY (sort order): `IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
+23. chDB, Sort order evolution: ALTER TABLE MODIFY ORDER BY (sort order evolution): `ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)`
+24. Sail, Metadata tables: metadata tables (t.snapshots): `IllegalArgumentException: invalid argument: table reference: [Identifier("onelake"), Identifier("_bench_capability"), Identifier("sl_38253752194_1_inspect"), Identifier("snapshots")]`
+25. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_max/data/00000-0-8ad340ad…`
+26. chDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: a9be9bfa-501e-00be-744f-5aa356000000. (STD_EXCEPTION)`
+27. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
+28. Sail, Compaction: CALL system.rewrite_data_files (compaction): `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
+29. chDB, Compaction: OPTIMIZE TABLE (compaction): `returned success and data files went 2 -> 2`
+30. DuckDB, Rewrite manifests: iceberg_rewrite_manifests: `Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean "iceberg_rewrite_data_files"?`
+31. Sail, Rewrite manifests: CALL system.rewrite_manifests: `IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input`
+32. chDB, Rewrite manifests: rewrite manifests (no statement): `ClickHouse has no statement to rewrite an Iceberg table's manifests`
+33. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_branch" CREATE BRANCH probe_branch ^^^^^^`
+34. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
+35. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
+36. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_tag" CREATE TAG probe_tag ^^^^^^`
+37. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'`
+38. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
+39. chDB, Drop table with purge: DROP TABLE: `ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body lengt…`
+40. chDB, Create / drop namespace: CREATE TABLE in a new namespace (no namespace statement): `ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)`
+41. chDB, CREATE SCHEMA IF NOT EXISTS, existing schema: namespace IF NOT EXISTS (no namespace statement): `ClickHouse has no statement for a catalog namespace`
 
 ## DuckDB: isolation levels and transactions
 

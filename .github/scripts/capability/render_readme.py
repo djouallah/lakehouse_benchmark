@@ -53,13 +53,6 @@ ROWS = [
     ("INSERT ... SELECT", {e: ["insert_select"] for e in ("spark", "duckdb", "sail")}),
     ("DELETE", {e: ["delete_from"] for e in ("spark", "duckdb", "sail")}),
     ("UPDATE", {e: ["update"] for e in ("spark", "duckdb", "sail")}),
-    (
-        "MERGE with one action",
-        {
-            e: [f"merge_{a}_only" for a in ("update", "delete", "insert", "by_source")]
-            for e in ("spark", "duckdb", "sail")
-        },
-    ),
     # The upsert. Spark and Sail ask it of a merge-on-read table; chDB has no MERGE statement.
     (
         "MERGE with two actions (UPDATE + INSERT)",
@@ -164,8 +157,6 @@ CHDB = {
     "INSERT ... SELECT": ["insert_select"],
     "DELETE": ["delete_from", "alter_delete"],
     "UPDATE": ["alter_update"],
-    # chDB has no MERGE statement at all: its MERGE INTO probe is the one-action cell's answer.
-    "MERGE with one action": ["merge_into"],
     "TRUNCATE": ["truncate"],
     "Partitioned table": ["partitioned"],
     "Sort order evolution": ["sort_order_evolution"],
@@ -199,7 +190,6 @@ GROUPS = {
         "Concurrent writer: UPDATE loses nothing",
     ],
     "Advanced": [
-        "MERGE with one action",
         "MERGE with two actions (UPDATE + INSERT)",
     ],
     "Tables & types": [
