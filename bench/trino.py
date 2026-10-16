@@ -278,6 +278,9 @@ def attach(conn, cfg: Config, token: str) -> None:
             "iceberg.rest-catalog.security": "OAUTH2",
             "iceberg.rest-catalog.oauth2.token": token,
             "iceberg.rest-catalog.vended-credentials-enabled": "false",
+            # The catalog assigns a new table's location, so Trino's CREATE TABLE and CTAS are
+            # not staged: the catalog refuses the commit that finishes a staged create (484+).
+            "iceberg.rest-catalog.server-assigned-table-location-enabled": "true",
             "iceberg.rest-catalog.case-insensitive-name-matching": "true",
             "iceberg.rest-catalog.case-insensitive-name-matching.cache-ttl": (
                 f"{CATALOG_CACHE_SECONDS}s"

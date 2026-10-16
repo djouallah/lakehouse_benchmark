@@ -1,4 +1,4 @@
-"""Trino: the CSVs through a Hive table, the Iceberg table with one INSERT, in its container.
+"""Trino: the CSVs through a Hive table, the Iceberg table with one CTAS, in its container.
 
 The container, the catalog and the credentials are bench/trino.py, set up exactly as for the query
 benchmark. The statement is DuckDB's (engines/duckdb_iceberg.py) in Trino's dialect: the 53-column
@@ -13,19 +13,16 @@ matched Python's csv module row for row in candidate_engine.yml (138,240 DUNIT v
 sum). The folder can hold more files than the run reads, so the run's files are picked by name
 from the hidden `"$path"` column: one scan, streaming into one Iceberg sink.
 
-CREATE, THEN ONE INSERT. The catalog does not support staged creates, and Trino stages every
-CREATE TABLE and CTAS: the stage is accepted, the commit that finishes it is refused with a bare
-400 "Malformed request". So the empty table is created unstaged through the catalog --
-bench/etl/iceberg.py `recreate`, the create chDB and Polars already make -- and Trino fills it
-with one INSERT ... SELECT: one statement, one commit -- with Trino's extended statistics off,
-since the catalog also refuses a commit that carries them (setup). No partitioning, as for every
-engine.
+ONE CTAS. The table is dropped by Trino and made by one CREATE TABLE ... AS SELECT, one scan,
+one statement. The catalog assigns its location (bench/trino.py `attach`), so Trino does not
+stage the create -- the catalog refuses the commit that finishes a staged one. Trino's extended
+statistics are off (setup), since the catalog also refuses a commit that carries them. Trino
+writes column names in lower case. No partitioning, as for every engine.
 """
 
 from __future__ import annotations
 
 from bench import auth, scrub, trino
-from bench.etl import iceberg
 from bench.etl.config import TABLE, EtlConfig
 from bench.etl.schema import COLUMNS, FILTER, numeric_columns
 
@@ -35,24 +32,12 @@ FILES = "files"
 CSV_TABLE = f"{FILES}.etl.aemo"
 
 
-def arrow_schema():
-    """The table the transform produces, in its column order, for the unstaged create."""
-    import pyarrow as pa
-
-    return pa.schema(
-        [pa.field("UNIT", pa.string()), pa.field("DUID", pa.string())]
-        + [pa.field(c, pa.float64()) for c in numeric_columns()]
-        + [pa.field("SETTLEMENTDATE", pa.timestamp("us")), pa.field("year", pa.int64())]
-    )
-
-
 class TrinoIceberg:
     name = "trino_iceberg"
 
     def __init__(self, cfg: EtlConfig):
         self.cfg = cfg
         self._conn = None
-        self._catalog = None
         self._version = "unknown"
 
     @property
@@ -95,7 +80,6 @@ class TrinoIceberg:
             f"WITH (external_location = '{self.cfg.csv_abfss}', format = 'CSV', "
             "skip_header_line_count = 1)",
         )
-        self._catalog = auth.catalog(self.cfg)
         scrub.safe_print(f"  trino {self._version} attached; Files/csv as {CSV_TABLE}")
 
     def _select(self, files: list[str]) -> str:
@@ -107,16 +91,19 @@ class TrinoIceberg:
         # reader, which this transform follows, reads it as NULL.
         return (
             'SELECT "unit", "duid", '
-            + ", ".join(f"CAST(NULLIF(\"{c.lower()}\", '') AS double)" for c in numeric_columns())
-            + f", {settled}, year({settled})"
+            + ", ".join(
+                f'CAST(NULLIF("{c.lower()}", \'\') AS double) AS "{c.lower()}"'
+                for c in numeric_columns()
+            )
+            + f", {settled} AS settlementdate, year({settled}) AS year"
             f" FROM {CSV_TABLE} WHERE {where}"
             f" AND element_at(split(\"$path\", '/'), -1) IN ({names})"
         )
 
     def load(self, files: list[str]) -> None:
-        iceberg.recreate(self._catalog, self.cfg, TABLE[self.name], arrow_schema())
-        trino.sql(self._conn, f"INSERT INTO {self.qualified} {self._select(files)}")
-        scrub.safe_print(f"    {len(files)} files in one scan, one INSERT, one commit")
+        trino.sql(self._conn, f"DROP TABLE IF EXISTS {self.qualified}")
+        trino.sql(self._conn, f"CREATE TABLE {self.qualified} AS {self._select(files)}")
+        scrub.safe_print(f"    {len(files)} files in one scan, one CTAS")
 
     def row_count(self) -> int:
         return int(trino.sql(self._conn, f"SELECT count(*) FROM {self.qualified}")[0][0])
