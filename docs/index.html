@@ -588,8 +588,7 @@ function renderCapability() {
   };
   sec.innerHTML = `
     <div class="chips"${groups.length < 2 ? " hidden" : ""}>${groups.map(g => `<button aria-pressed="${g === group}">${esc(g)}</button>`).join("")}</div>
-    <p class="caption">What each engine can do against the OneLake Iceberg REST catalog, checked by reading the result back through the catalog.
-      Spark is the reference: it uses the Iceberg Java library. The other engines have their own Iceberg code. Gluten, Trino and StarRocks also use the Java library, so they are not shown.</p>
+    <p class="caption">What each engine can do on the OneLake Iceberg REST catalog. Spark stands for the Iceberg Java library (also used by Gluten, Trino and StarRocks).</p>
     <div class="legend">
       <span class="supported"><i class="m"></i>yes</span>
       <span class="no"><i class="m"></i>no</span>
