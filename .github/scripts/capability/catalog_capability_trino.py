@@ -19,6 +19,12 @@ the commit, and the catalog refuses that commit with a bare 400.
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says rather
 than what Trino cached. Accepted with no effect is a no-op, not a yes. Every error Trino raises
 is a `no` carrying its full message, so the log says whose limit it is.
+
+PYICEBERG READS TRINO'S DELETE FILES PLAINLY here. pyiceberg asks pyarrow for a position-delete
+file's `file_path` column as a dictionary, Trino writes that column DELTA_LENGTH_BYTE_ARRAY, and
+pyarrow cannot dictionary-decode that encoding: "Not yet implemented: DecodeArrow of
+DictAccumulator for DeltaLengthByteArrayDecoder". The file is valid Parquet, so the check reads
+it without the dictionary (`_read_deletes_plain`), and Trino is judged on what it wrote.
 """
 
 from __future__ import annotations
@@ -71,6 +77,34 @@ from bench.config import ICEBERG_ENDPOINT, Config
 
 CATALOG = "onelake"
 SEED = [(1, 10), (2, 20), (3, 30)]
+
+
+def _read_deletes_plain(io, data_file):
+    """pyiceberg's _read_deletes for a Parquet position-delete file, without asking for
+    `file_path` as a dictionary (module docstring)."""
+    import pyarrow.compute as pc
+    import pyarrow.parquet as pq
+    from pyiceberg.manifest import FileFormat
+
+    if data_file.file_format != FileFormat.PARQUET:
+        return _READ_DELETES(io, data_file)
+    with io.new_input(data_file.file_path).open() as handle:
+        table = pq.read_table(handle)
+    return {
+        path: table.filter(pc.equal(table["file_path"], path)).column("pos")
+        for path in pc.unique(table["file_path"]).to_pylist()
+    }
+
+
+def _patch_pyiceberg() -> None:
+    global _READ_DELETES
+    from pyiceberg.io import pyarrow as pyiceberg_arrow
+
+    _READ_DELETES = pyiceberg_arrow._read_deletes
+    pyiceberg_arrow._read_deletes = _read_deletes_plain
+
+
+_READ_DELETES = None
 
 
 def _one_line(text: object, limit: int = 700) -> str:
@@ -266,6 +300,8 @@ class TrinoCapability:
                 "iceberg.rest-catalog.case-insensitive-name-matching": "true",
                 "iceberg.rest-catalog.server-assigned-table-location-enabled": "true",
                 "iceberg.expire-snapshots.min-retention": "0s",
+                # extra_properties takes only the keys listed here.
+                "iceberg.allowed-extra-properties": "*",
                 **trino.storage_properties(),
             },
         )
@@ -501,11 +537,13 @@ class TrinoCapability:
     def time_travel(self) -> str:
         table = self._fresh("travel")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
-        first = self._snapshots(table)[0].snapshot_id
-        found = self.sql(f"SELECT count(*) FROM {self.t(table)} FOR VERSION AS OF {first}")
+        # The seed's snapshot, the one before the last INSERT: Trino's CREATE TABLE commits an
+        # empty snapshot of its own first.
+        seeded = self._snapshots(table)[-2].snapshot_id
+        found = self.sql(f"SELECT count(*) FROM {self.t(table)} FOR VERSION AS OF {seeded}")
         if found[0][0] != 3:
-            raise NoOp(f"FOR VERSION AS OF the first snapshot reads {found[0][0]} rows, not 3")
-        return "FOR VERSION AS OF the first snapshot reads 3 rows (the table has 4)"
+            raise NoOp(f"FOR VERSION AS OF the seed's snapshot reads {found[0][0]} rows, not 3")
+        return "FOR VERSION AS OF the seed's snapshot reads 3 rows (the table has 4)"
 
     def metadata_tables(self) -> str:
         table = self._fresh("inspect")
@@ -747,6 +785,7 @@ def main() -> int:
     if not any_wanted(PROBES):
         print(f"this run asks none of {', '.join(sorted(asked()))} of this client")
         return 0
+    _patch_pyiceberg()
     cfg = Config.from_env()
     probe = TrinoCapability(cfg)
     print(f"workspace {cfg.workspace_id}  lakehouse {cfg.lakehouse_id}  namespace {NAMESPACE}")
