@@ -848,6 +848,8 @@ function renderNext() {
 const STORIES = [
   { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
     lede: "Spark runs joins in the order the SQL lists them. Its cost-based optimizer is off by default, and Q72 lists inventory before the filters that make it small." },
+  { id: "q64", title: "Q64", good: "tpcds_q64_trino_iceberg_sf100", bad: "tpcds_q64_duckdb_iceberg_sf100",
+    lede: "DuckDB now reads each Iceberg table's row count, but not its column statistics (distinct counts, min and max). Without them it misjudges the joins: it pairs every customer with every demographics row on a ≠ test, which it guesses makes 249M rows; the real count is about 3 trillion. On its own file format, with full statistics, DuckDB runs Q64 in 12 GB (duckdb#21896)." },
 ];
 const plans = {};  // file -> plan, or null when it could not be read
 const pl = { story: STORIES[0].id };
