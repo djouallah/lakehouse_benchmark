@@ -465,7 +465,7 @@ const GROUPS = [
   { id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] },  // the commit is the catalog's job
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
   { id: "plans", title: "Query plans", subs: [PLANS] },
-  { id: "performance", title: "Performance", subs: [...SUITES] },
+  { id: "performance", title: "Benchmarks", subs: [...SUITES] },
   { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
   { id: "about", title: "About", subs: [ABOUT], bar: false },
@@ -777,7 +777,7 @@ function renderWorkload() {
   const head = ["Engine", "File name column", "dbt 1", "MERGE"];
   sec.innerHTML = `
     <p class="caption">Changing engines is a feature question. The new engine must run the workload you have
-      today; speed is a bonus. Spark-OSS has every feature but is the slowest on <a href="#performance">Performance</a>;
+      today; speed is a bonus. Spark-OSS has every feature but is the slowest on <a href="#performance">Benchmarks</a>;
       Gluten/Velox keeps the Spark features and runs native.</p>
     <p class="caption">The workload: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB load AEMO CSV files
       from OneLake Files into Iceberg tables every hour. To replace DuckDB, an engine needs all three columns; one red cell and it is not an option.</p>
@@ -924,7 +924,7 @@ async function renderPlans() {
     <div id="pl-why" hidden><h3>What went wrong</h3><ol class="steps" id="pl-steps"></ol></div>
     <p class="src">${[good, bad].map(p => `${name(p)} ${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))}, TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}: <a href="${esc(p.run_url || "#")}">capture run</a>`).join(" · ")}.
       Rows are what each step produced in that run; estimates are the engine's own, before it ran. Times are from these
-      runs, with each engine's plan instrumentation on; the benchmark's own times are on the Performance tab.</p>`;
+      runs, with each engine's plan instrumentation on; the benchmark's own times are on the Benchmarks tab.</p>`;
   bindStoryChips(sec);
   $("pl-play").onclick = () => startRace(good, bad);
   for (const [plan, side] of [[good, "good"], [bad, "bad"]]) drawTree(plan, side);

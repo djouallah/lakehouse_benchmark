@@ -285,7 +285,7 @@ def story_files() -> set[str]:
 def test_the_query_plans_tab_is_in_the_main_bar_before_performance():
     tab = '{ id: "plans", title: "Query plans", subs: [PLANS] }'
     assert tab in PAGE
-    performance = '{ id: "performance", title: "Performance", subs: [...SUITES] }'
+    performance = '{ id: "performance", title: "Benchmarks", subs: [...SUITES] }'
     assert PAGE.index(tab) < PAGE.index(performance)
     assert '<section class="pl" id="plans" hidden></section>' in PAGE
 
