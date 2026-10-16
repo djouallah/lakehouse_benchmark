@@ -52,7 +52,7 @@ from bench.config import (
     Config,
 )
 
-IMAGE = os.environ.get("TRINO_IMAGE", "trinodb/trino:483")
+IMAGE = os.environ.get("TRINO_IMAGE", "trinodb/trino:484")
 CONTAINER = "trino"
 CATALOG = "onelake"
 PORT = 8080
