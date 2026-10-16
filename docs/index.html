@@ -160,7 +160,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .tip code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; color: var(--ink); }
 .lane a { color: var(--accent); }
 .empty { color: var(--ink-2); padding: 24px 0; }
-/* Bad joins: the same query on two engines, each engine's executed plan side by side. */
+/* Query plans: the same query on two engines, each engine's executed plan side by side. */
 .pl .intro { color: var(--ink-2); margin: 12px 0; }
 .pl .intro b { color: var(--ink); }
 .pl .hero { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; margin: 16px 0 4px; }
@@ -324,7 +324,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
       on the object store, not on SQL (<a href="#issues">Issues</a>).</p>
     <p>Every engine gets the same 16 GB machine. When a query fails, the agent must get an error. An engine with
       no memory limit kills the machine, and there is no error to read.</p>
-    <p>The best query is the one that does the least work. A good optimizer beats brute force (<a href="#plans">Bad joins</a>).</p>
+    <p>The best query is the one that does the least work. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
     <p>No engine is the fastest on every test. What an engine supports decides; speed is a bonus
       (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
@@ -454,7 +454,7 @@ const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title:
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const WORKLOAD = { id: "workload", title: "Real workload" };
 const ENGINES = { id: "engines", title: "Engines" };
-const PLANS = { id: "plans", title: "Bad joins" };
+const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const NEXT = { id: "next", title: "Next" };
@@ -464,7 +464,7 @@ const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, WORKLOAD, DETAILS, ABOUT,
 const GROUPS = [
   { id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] },  // the commit is the catalog's job
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
-  { id: "plans", title: "Bad joins", subs: [PLANS] },
+  { id: "plans", title: "Query plans", subs: [PLANS] },
   { id: "performance", title: "Performance", subs: [...SUITES] },
   { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
@@ -841,7 +841,7 @@ function renderNext() {
     <div class="nx">${NEXT_ROWS.map(r => `<article><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
 }
 
-// THE BAD JOINS TAB: the same query on two engines, each engine's executed plan side by side, with the rows every
+// THE QUERY PLANS TAB: the same query on two engines, each engine's executed plan side by side, with the rows every
 // step made. data/plans/*.json come from .github/workflows/plans.yml through .github/scripts/plans_normalize.py,
 // in the shape bench/plans.py documents. Every number on the tab is read from those files; the words around them
 // are the only thing written here. tests/test_plans.py checks every file a story names exists.
@@ -1576,7 +1576,7 @@ function fromHash() {
   if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg support grid
   if (h === "dbt") h = WORKLOAD.id;  // the dbt support tab is now the Real workload tab's dbt 1 column
   if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
-  const story = h.match(/^plans-(\w+)$/);  // one Bad joins story: #plans-q64
+  const story = h.match(/^plans-(\w+)$/);  // one Query plans story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
   else if (GROUPS.some(g => g.id === h)) state.suite = GROUPS.find(g => g.id === h).subs[0].id;

@@ -1,6 +1,6 @@
 """Run a few queries on one engine and keep its executed plan, with the rows each operator made.
 
-For the results page's "Bad joins" tab (docs/index.html #plans): the same query on two engines,
+For the results page's "Query plans" tab (docs/index.html #plans): the same query on two engines,
 the two plans side by side. This script only CAPTURES -- it writes each engine's raw plan, as the
 engine reports it, to `<out>/<suite>_q<N>_<engine>_sf<SF>.json`. `plans_normalize.py` turns those
 into the one shape the page reads, so the parsing can be fixed without running a query again.
@@ -19,7 +19,7 @@ query runs once, cold, with the engine's own plan instrumentation on:
 PLAN_WARMUP=true runs each query once, untimed, before the captured run (see main).
 
 A query that fails is still written: the error, the estimates when the engine gave them, and the
-time it ran before failing. Bad joins are about exactly those.
+time it ran before failing. Bad plans are about exactly those.
 """
 
 from __future__ import annotations

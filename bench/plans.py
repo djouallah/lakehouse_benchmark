@@ -1,6 +1,6 @@
 """Turn an engine's raw plan (.github/scripts/capture_plan.py) into the one shape the page draws.
 
-The "Bad joins" tab (docs/index.html #plans) puts two engines' plans for the same query side by
+The "Query plans" tab (docs/index.html #plans) puts two engines' plans for the same query side by
 side. Each engine reports its plan its own way; this keeps only what the picture needs, in one
 shape for all of them:
 

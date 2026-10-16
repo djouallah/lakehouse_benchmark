@@ -1,4 +1,4 @@
-"""Raw plans (plans.yml's artifact) -> docs/data/plans/*.json, the files the Bad joins tab reads.
+"""Raw plans (plans.yml's artifact) -> docs/data/plans/*.json, the files the Query plans tab reads.
 
     python .github/scripts/plans_normalize.py <raw dir> [<out dir>]
 
