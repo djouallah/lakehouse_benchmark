@@ -282,8 +282,11 @@ def story_files() -> set[str]:
     return set(re.findall(r'"((?:tpch|tpcds)_q\d+_\w+?_sf\d+)"', block))
 
 
-def test_the_bad_joins_tab_is_under_performance():
-    assert '{ id: "performance", title: "Performance", subs: [...SUITES, PLANS] }' in PAGE
+def test_the_bad_joins_tab_is_in_the_main_bar_before_performance():
+    tab = '{ id: "plans", title: "Bad joins", subs: [PLANS] }'
+    assert tab in PAGE
+    performance = '{ id: "performance", title: "Performance", subs: [...SUITES] }'
+    assert PAGE.index(tab) < PAGE.index(performance)
     assert '<section class="pl" id="plans" hidden></section>' in PAGE
 
 
