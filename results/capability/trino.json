@@ -1,0 +1,289 @@
+{
+ "engine": "trino",
+ "version": "484 (trinodb/trino:484)",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "Trino starts and attaches the REST catalog",
+   "outcome": "supported",
+   "detail": "Trino 484 (trinodb/trino:484); _bench_capability listed, seen by Trino"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE (the catalog assigns the location)",
+   "outcome": "supported",
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_38909350278_1_base`"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "supported",
+   "detail": "CTAS: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Trino agrees"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "WITH (partitioning = ARRAY['p']), then INSERT",
+   "outcome": "supported",
+   "detail": "spec ['identity']; 3 rows over 2 partitions wrote 2 data file(s)"
+  },
+  {
+   "key": "sort_order",
+   "group": "create",
+   "question": "SET PROPERTIES sorted_by (sort order)",
+   "outcome": "supported",
+   "detail": "sort order set"
+  },
+  {
+   "key": "partition_bucket",
+   "group": "create",
+   "question": "partitioning bucket(id, 4), then INSERT",
+   "outcome": "supported",
+   "detail": "all of bucket"
+  },
+  {
+   "key": "partition_truncate",
+   "group": "create",
+   "question": "partitioning truncate(x, 2), then INSERT",
+   "outcome": "supported",
+   "detail": "all of truncate"
+  },
+  {
+   "key": "partition_temporal",
+   "group": "create",
+   "question": "partitioning year / month / day / hour, then INSERT",
+   "outcome": "supported",
+   "detail": "all of year, month, day, hour"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO",
+   "outcome": "supported",
+   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Trino agrees; 2 commit(s)"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; Trino agrees"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE FROM",
+   "outcome": "supported",
+   "detail": "DELETE: pyiceberg reads [(2, 20), (3, 30)]; Trino agrees; 1 position_deletes"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "supported",
+   "detail": "UPDATE: pyiceberg reads [(1, 999), (2, 20), (3, 30)]; Trino agrees"
+  },
+  {
+   "key": "merge_upsert",
+   "group": "write",
+   "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE + INSERT: pyiceberg reads [(1, 777), (2, 20), (3, 30), (9, 90)]; Trino agrees; 2 commit(s) after the seed; 1 position_deletes"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE TABLE",
+   "outcome": "supported",
+   "detail": "TRUNCATE: pyiceberg reads []; Trino agrees; metadata-only: delete snapshot, deleted-data-files 1, added-data-files None, added-delete-files None"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "CREATE OR REPLACE TABLE ... AS (whole-table overwrite)",
+   "outcome": "no",
+   "detail": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry."
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ALTER TABLE ADD COLUMN",
+   "outcome": "supported",
+   "detail": "schema ['id', 'v', 'w']"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "ALTER TABLE DROP COLUMN",
+   "outcome": "supported",
+   "detail": "schema now ['id']"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "ALTER TABLE RENAME COLUMN",
+   "outcome": "supported",
+   "detail": "renamed, data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Trino agrees"
+  },
+  {
+   "key": "type_promotion",
+   "group": "schema",
+   "question": "ALTER COLUMN c SET DATA TYPE BIGINT (int -> long)",
+   "outcome": "supported",
+   "detail": "c is long, and the row written as int reads 7"
+  },
+  {
+   "key": "partition_evolution",
+   "group": "schema",
+   "question": "SET PROPERTIES partitioning (partition evolution)",
+   "outcome": "supported",
+   "detail": "spec now ['bucket[4]']"
+  },
+  {
+   "key": "write_after_evolution",
+   "group": "schema",
+   "question": "INSERT, pyiceberg adds bucket(4, id), INSERT",
+   "outcome": "supported",
+   "detail": "data files on specs [0, 1]; all 8 rows read, by pyiceberg and the engine"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "SET PROPERTIES extra_properties",
+   "outcome": "supported",
+   "detail": "the property is on the table"
+  },
+  {
+   "key": "time_travel",
+   "group": "read",
+   "question": "time travel, FOR VERSION AS OF",
+   "outcome": "supported",
+   "detail": "FOR VERSION AS OF the seed's snapshot reads 3 rows (the table has 4)"
+  },
+  {
+   "key": "metadata_tables",
+   "group": "read",
+   "question": "metadata tables (\"t$snapshots\")",
+   "outcome": "supported",
+   "detail": "\"t$snapshots\" reads 2 snapshot(s)"
+  },
+  {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "SELECT v WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "max_from_metadata",
+   "group": "read",
+   "question": "max(id) with every data file deleted (min/max from metadata)",
+   "outcome": "no",
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: io.trino.spi.TrinoException: Error opening Iceberg split abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_38909350278_1_max/data/00000-0-541242ca-9a10-4087-9e97-ed88669829dc.parquet (offset=4, length=995): abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_38909350278_1_max/data/00000-0-541242ca-9a10-4087-9e97-ed88669829dc.parquet <- java.io.FileNotFoundException: abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_389\u2026"
+  },
+  {
+   "key": "create_branch",
+   "group": "refs",
+   "question": "CREATE BRANCH ... IN TABLE",
+   "outcome": "no",
+   "detail": "io.trino.spi.TrinoException: This connector does not support creating branches"
+  },
+  {
+   "key": "create_tag",
+   "group": "refs",
+   "question": "CREATE TAG ... IN TABLE",
+   "outcome": "no",
+   "detail": "io.trino.sql.parser.ParsingException: line 1:8: mismatched input 'TAG'. Expecting: 'BRANCH', 'CATALOG', 'FUNCTION', 'MATERIALIZED', 'OR', 'ROLE', 'SCHEMA', 'TABLE', 'VIEW' <- org.antlr.v4.runtime.NoViableAltException: None"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "EXECUTE expire_snapshots",
+   "outcome": "no",
+   "detail": "org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request"
+  },
+  {
+   "key": "rewrite_data_files",
+   "group": "maintenance",
+   "question": "EXECUTE optimize (compaction)",
+   "outcome": "supported",
+   "detail": "2 -> 1 data file(s), data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30), (4, 40)]; Trino agrees"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "EXECUTE optimize_manifests",
+   "outcome": "supported",
+   "detail": "a new snapshot rewrote the manifests"
+  },
+  {
+   "key": "namespace",
+   "group": "catalog",
+   "question": "CREATE SCHEMA, then DROP SCHEMA",
+   "outcome": "supported",
+   "detail": "`tr_38909350278_1_ns` created, listed, dropped"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
+  },
+  {
+   "key": "drop_purge",
+   "group": "catalog",
+   "question": "DROP TABLE, its files removed",
+   "outcome": "supported",
+   "detail": "gone from the catalog; 0 of 1 data file(s) still in storage"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERT INTO; B appends between Trino's read and commit",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETE id 1; B appends",
+   "outcome": "supported",
+   "detail": "retried: final [(2, 20), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATE v = v + 1 on id 2; B appends",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  }
+ ],
+ "run": "38909350278",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38909350278",
+ "date": "2026-10-16"
+}

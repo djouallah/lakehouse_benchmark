@@ -589,7 +589,7 @@ function renderCapability() {
   };
   sec.innerHTML = `
     <div class="chips"${groups.length < 2 ? " hidden" : ""}>${groups.map(g => `<button aria-pressed="${g === group}">${esc(g)}</button>`).join("")}</div>
-    <p class="caption">What each engine can do on the OneLake Iceberg REST catalog. Spark stands for the Iceberg Java library (also used by Gluten, Trino and StarRocks).</p>
+    <p class="caption">What each engine can do on the OneLake Iceberg REST catalog. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.</p>
     <div class="legend">
       <span class="supported"><i class="m"></i>yes</span>
       <span class="no"><i class="m"></i>no</span>

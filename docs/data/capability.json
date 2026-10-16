@@ -6,6 +6,12 @@
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38506561909",
    "date": "2026-10-14"
   },
+  "trino_iceberg": {
+   "version": "484 (trinodb/trino:484)",
+   "run": "38909350278",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38909350278",
+   "date": "2026-10-16"
+  },
   "duckdb_iceberg": {
    "version": "v2.0.0-alpha48520",
    "run": "38891149513",
@@ -47,6 +53,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -70,6 +79,9 @@
      "o": "no",
      "n": "the OneLake catalog does not support staged create, which Spark's CTAS uses."
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -90,6 +102,9 @@
    "label": "INSERT / append",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -113,6 +128,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -132,6 +150,9 @@
    "label": "DELETE",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -155,6 +176,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -174,6 +198,9 @@
    "label": "MERGE with two actions (UPDATE + INSERT)",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -198,6 +225,10 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit fai…"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38891149513_1_ove... ^^^^^^^^^"
@@ -220,6 +251,9 @@
    "label": "TRUNCATE",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -246,6 +280,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -266,6 +303,9 @@
    "label": "Create / drop namespace",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -290,6 +330,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -310,6 +353,9 @@
    "label": "Concurrent append: both kept",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -333,6 +379,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -352,6 +401,9 @@
    "label": "Concurrent writer: UPDATE loses nothing",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -375,6 +427,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -396,6 +451,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -415,6 +473,9 @@
    "label": "Partition transform: bucket",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -439,6 +500,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -458,6 +522,9 @@
    "label": "Partition transforms: year / month / day / hour",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -482,6 +549,9 @@
      "o": "no",
      "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` …"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -504,6 +574,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -523,6 +596,9 @@
    "label": "Add column",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -547,6 +623,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -567,6 +646,9 @@
    "label": "Rename column",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -591,6 +673,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -611,6 +696,9 @@
    "label": "Partition evolution",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -636,6 +724,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -655,6 +746,9 @@
    "label": "Set table property",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -680,6 +774,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -703,6 +800,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -723,6 +823,10 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: io.trino.spi.TrinoException: Error opening Iceberg split abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -748,6 +852,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -767,6 +874,9 @@
    "label": "Metadata tables",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -790,6 +900,10 @@
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "io.trino.spi.TrinoException: This connector does not support creating branches"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -815,6 +929,10 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "io.trino.sql.parser.ParsingException: line 1:8: mismatched input 'TAG'. Expecting: 'BRANCH', 'CATALOG', 'FUNCTION', 'MATERIALIZED', 'OR', 'ROLE', 'SCHEMA', 'TABLE', 'VIEW' <- org.antlr.v4.runtime.NoViableAltException: N…"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_tag\" CREATE TAG probe_tag ^^^^^^"
@@ -839,6 +957,9 @@
     "pyspark_iceberg": {
      "o": "supported"
     },
+    "trino_iceberg": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     },
@@ -860,6 +981,9 @@
    "label": "Rewrite manifests",
    "cells": {
     "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
