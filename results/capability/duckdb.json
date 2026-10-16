@@ -1,13 +1,13 @@
 {
  "engine": "duckdb",
- "version": "v2.0.0-alpha46057",
+ "version": "v2.0.0-alpha48520",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "DuckDB attaches the REST catalog",
    "outcome": "supported",
-   "detail": "DuckDB v2.0.0-alpha46057 (azure 35c55cf13f, httpfs 4efb6297a8, iceberg 5b9ff899a1); 24 namespace(s), _bench_capability listed"
+   "detail": "DuckDB v2.0.0-alpha48520 (azure 9abac98725, httpfs 0af641276b, iceberg 10eafd0b34); 24 namespace(s), _bench_capability listed"
   },
   {
    "key": "namespace_existing",
@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38506561909_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_38891149513_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -153,22 +153,22 @@
    "key": "merge_update_by_source",
    "group": "write",
    "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED BY SOURCE DELETE",
-   "outcome": "no",
-   "detail": "Not implemented Error: MERGE INTO with Iceberg only supports a single UPDATE/DELETE action currently"
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE + NOT MATCHED BY SOURCE DELETE: DuckDB reads [(1, 777)]; pyiceberg agrees; 1 snapshot(s) in the commit"
   },
   {
    "key": "merge_upsert",
    "group": "write",
    "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
-   "outcome": "no",
-   "detail": "TransactionContext Error: Failed to commit: Failed to commit Iceberg transaction: Request to 'https://onelake.table.fabric.microsoft.com/iceberg/v1' returned a non-200 status code (BadRequest_400). message: Malformed request type: BadRequestException reason: Bad Request"
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE + INSERT: DuckDB reads [(1, 777), (2, 20), (3, 30), (9, 90)]; pyiceberg agrees; 1 snapshot(s) in the commit"
   },
   {
    "key": "merge_three",
    "group": "write",
    "question": "MERGE, three actions: UPDATE + INSERT + BY SOURCE DELETE",
-   "outcome": "no",
-   "detail": "Not implemented Error: MERGE INTO with Iceberg only supports a single UPDATE/DELETE action currently"
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE + INSERT + NOT MATCHED BY SOURCE DELETE: DuckDB reads [(1, 777), (9, 90)]; pyiceberg agrees; 1 snapshot(s) in the commit"
   },
   {
    "key": "truncate",
@@ -176,6 +176,13 @@
    "question": "TRUNCATE",
    "outcome": "supported",
    "detail": "TRUNCATE: DuckDB reads []; pyiceberg agrees; NOT metadata-only: delete snapshot, deleted-data-files None, added-data-files None, added-delete-files 1"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "no",
+   "detail": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38891149513_1_ove... ^^^^^^^^^"
   },
   {
    "key": "add_column",
@@ -266,21 +273,21 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38499696276_1_max/data/00000-0-ad51d51e-b23d-4e06-abb3-b3b0b93d7551.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_max/data/00000-0-8ad340ad-cc9b-4aab-9801-f9a63c02d601.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
   },
   {
    "key": "create_branch",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE BRANCH",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38499696276_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
   },
   {
    "key": "create_tag",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE TAG",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38499696276_1_tag\" CREATE TAG probe_tag ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_tag\" CREATE TAG probe_tag ^^^^^^"
   },
   {
    "key": "expire_snapshots",
@@ -297,6 +304,13 @@
    "detail": "3 -> 1 data file(s), commit `replace`; data kept: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; pyiceberg agrees"
   },
   {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "iceberg_rewrite_manifests",
+   "outcome": "no",
+   "detail": "Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean \"iceberg_rewrite_data_files\"?"
+  },
+  {
    "key": "drop_table",
    "group": "catalog",
    "question": "DROP TABLE",
@@ -307,15 +321,15 @@
    "key": "credential_vending",
    "group": "catalog",
    "question": "ACCESS_DELEGATION_MODE 'vended_credentials', no storage secret",
-   "outcome": "supported",
-   "detail": "no storage secret, read 3 rows then INSERT: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; pyiceberg agrees"
+   "outcome": "no",
+   "detail": "IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_vended/metadata/snap-5409683102858694540-1d025221-e90e-443f-a771-323d594d7afa.avro' failed with code 'Unauthorized', Reason Phrase: 'Unauthorized', Message: ''"
   },
   {
    "key": "create_schema",
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`dk_38499696276_1_ns` created; pyiceberg lists it"
+   "detail": "`dk_38891149513_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "drop_schema",
@@ -323,23 +337,9 @@
    "question": "DROP SCHEMA (namespace)",
    "outcome": "supported",
    "detail": "the empty namespace is gone"
-  },
-  {
-   "key": "insert_overwrite",
-   "group": "write",
-   "question": "INSERT OVERWRITE, whole table",
-   "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38506561909_1_ove... ^^^^^^^^^"
-  },
-  {
-   "key": "rewrite_manifests",
-   "group": "maintenance",
-   "question": "iceberg_rewrite_manifests",
-   "outcome": "no",
-   "detail": "Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean \"iceberg_rewrite_data_files\"?"
   }
  ],
- "run": "38506561909",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38506561909",
- "date": "2026-10-14"
+ "run": "38891149513",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38891149513",
+ "date": "2026-10-16"
 }
