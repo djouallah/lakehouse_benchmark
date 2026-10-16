@@ -93,7 +93,8 @@ def test_the_iceberg_support_grid_opens_on_core():
 
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
-    assert cap["groups"][:2] == ["Core", "Advanced"]
+    assert cap["groups"][0] == "Core"
+    assert "Advanced" not in cap["groups"]
     assert [r["label"] for r in cap["rows"] if r["group"] == "Core"] == [
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
@@ -101,6 +102,7 @@ def test_the_iceberg_support_grid_opens_on_core():
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
+        "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
         "TRUNCATE",
         "Drop table with purge",
@@ -109,8 +111,4 @@ def test_the_iceberg_support_grid_opens_on_core():
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
-    ]
-    advanced = [r["label"] for r in cap["rows"] if r["group"] == "Advanced"]
-    assert advanced == [
-        "MERGE with two actions (UPDATE + INSERT)",
     ]

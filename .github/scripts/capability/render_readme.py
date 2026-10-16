@@ -180,6 +180,7 @@ GROUPS = {
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
+        "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
         "TRUNCATE",
         "Drop table with purge",
@@ -188,9 +189,6 @@ GROUPS = {
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
-    ],
-    "Advanced": [
-        "MERGE with two actions (UPDATE + INSERT)",
     ],
     "Tables & types": [
         "CREATE TABLE IF NOT EXISTS, existing table",

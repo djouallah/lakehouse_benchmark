@@ -33,7 +33,6 @@
  },
  "groups": [
   "Core",
-  "Advanced",
   "Tables & types",
   "Schema",
   "Reading from metadata",
@@ -164,6 +163,28 @@
     },
     "chdb_iceberg": {
      "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "na"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "MERGE with two actions (UPDATE + INSERT)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "polars_iceberg": {
      "o": "na"
@@ -341,28 +362,6 @@
     },
     "chdb_iceberg": {
      "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "na"
-    }
-   }
-  },
-  {
-   "group": "Advanced",
-   "label": "MERGE with two actions (UPDATE + INSERT)",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "polars_iceberg": {
      "o": "na"
