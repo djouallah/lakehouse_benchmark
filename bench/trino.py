@@ -64,6 +64,9 @@ CACHE_DIR = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "trino-cache"
 CACHE_IN_CONTAINER = "/trino-cache"
 CACHE_FREE_FRACTION = 0.5
 CACHE_MIN_GIB = 8
+# Since 484 the cache's directories and size belong to a node-level cache manager, in a file of
+# its own named by `cache-manager.config-files`; a catalog only says `fs.cache.enabled`.
+CACHE_MANAGER_IN_CONTAINER = "/etc/trino/cache-manager-alluxio.properties"
 
 CONFIG = "\n".join(
     [
@@ -78,6 +81,7 @@ CONFIG = "\n".join(
         "memory.heap-headroom-per-node=2GB",
         "spill-enabled=true",
         "spiller-spill-path=/tmp/trino-spill",
+        f"cache-manager.config-files={CACHE_MANAGER_IN_CONTAINER}",
     ]
 )
 
@@ -144,9 +148,13 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
         config.chmod(0o644)
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         CACHE_DIR.chmod(0o777)  # the container's user is not the runner's
+        cache_manager = ASSERTION_DIR.parent / "trino-cache-manager.properties"
+        cache_manager.write_text(cache_manager_config(), encoding="utf-8")
+        cache_manager.chmod(0o644)
         volumes = [
             f"{ASSERTION_DIR}:{Path(ASSERTION_IN_CONTAINER).parent}:ro",
             f"{config}:/etc/trino/config.properties:ro",
+            f"{cache_manager}:{CACHE_MANAGER_IN_CONTAINER}:ro",
             f"{CACHE_DIR}:{CACHE_IN_CONTAINER}",
             *[f"{host}:{inside}" for host, inside in (mounts or {}).items()],
         ]
@@ -223,17 +231,23 @@ def storage_properties() -> dict[str, str]:
     }
 
 
-def cache_properties() -> dict[str, str]:
-    """The filesystem cache, sized from the free disk now (see the module docstring)."""
+def cache_manager_config() -> str:
+    """The filesystem cache's manager, sized from the free disk now (see the module docstring)."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     free_gib = shutil.disk_usage(CACHE_DIR).free / 2**30
     size_gib = max(CACHE_MIN_GIB, int(free_gib * CACHE_FREE_FRACTION))
     scrub.safe_print(f"  trino file cache {size_gib}GB ({free_gib:.0f}GB free) at {CACHE_DIR}")
-    return {
-        "fs.cache.enabled": "true",
-        "fs.cache.directories": CACHE_IN_CONTAINER,
-        "fs.cache.max-sizes": f"{size_gib}GB",
-    }
+    lines = [
+        "cache-manager.name=alluxio",
+        f"fs.cache.directories={CACHE_IN_CONTAINER}",
+        f"fs.cache.max-sizes={size_gib}GB",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def cache_properties() -> dict[str, str]:
+    """A catalog's side of the filesystem cache: on. The manager holds where and how much."""
+    return {"fs.cache.enabled": "true"}
 
 
 def cache_usage() -> str:
