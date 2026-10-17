@@ -79,6 +79,22 @@ def update_actions(path: str, body: bytes) -> dict[tuple[str, str], list[str]]:
     }
 
 
+def commit_requirements(path: str, body: bytes) -> dict[tuple[str, str], list[dict]]:
+    """Each table a commit request names, with the requirements it asserts, as sent."""
+    targets = commit_target("POST", path, body)
+    if not targets:
+        return {}
+    try:
+        doc = json.loads(body or b"{}")
+    except ValueError:
+        return {}
+    changes = doc.get("table-changes") or [doc]
+    return {
+        key: list(change.get("requirements", []))
+        for key, change in zip(targets, changes, strict=False)
+    }
+
+
 class RaceProxy:
     """`arm(ns, table, inject)` makes the next commit to that table wait for `inject()` first."""
 
@@ -93,6 +109,8 @@ class RaceProxy:
         self.commits: dict[tuple[str, str], list[tuple[int, str]]] = {}
         # Every commit's update actions per table, in the order sent (update_actions).
         self.updates: dict[tuple[str, str], list[list[str]]] = {}
+        # Every commit's requirements per table, as sent (commit_requirements).
+        self.requirements: dict[tuple[str, str], list[list[dict]]] = {}
         self.injected: dict[tuple[str, str], str] = {}
         # Every request: (method, path without the query, status, the current-snapshot-id a
         # loadTable answered with), for tracing an engine.
@@ -200,6 +218,7 @@ class RaceProxy:
                 if self.command == "GET" and self.path.split("?")[0].endswith("/v1/config"):
                     out = proxy._rewrite_config(out)
                 actions = update_actions(self.path, body or b"") if targets else {}
+                asserted = commit_requirements(self.path, body or b"") if targets else {}
                 for key in targets:
                     first = " ".join(out[:300].decode("utf-8", "replace").split())
                     with proxy._lock:
@@ -207,6 +226,7 @@ class RaceProxy:
                             (status, "" if status < 300 else first)
                         )
                         proxy.updates.setdefault(key, []).append(actions.get(key, []))
+                        proxy.requirements.setdefault(key, []).append(asserted.get(key, []))
                 self.send_response(status)
                 for k, v in out_headers:
                     if k.lower() not in _HOP_BY_HOP:

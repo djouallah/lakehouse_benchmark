@@ -457,16 +457,38 @@ class TrinoCapability:
 
     def insert_overwrite(self) -> str:
         """Trino has no INSERT OVERWRITE: its whole-table overwrite is CREATE OR REPLACE TABLE ...
-        AS, one commit on the same table, history kept (as Polars is asked its sink mode)."""
+        AS, one commit on the same table, history kept (as Polars is asked its sink mode).
+        Sent through the race catalog, unarmed, so the proxy records the commit's requirements
+        and updates: a refusal then says what was asserted against what the table holds."""
         table = self._fresh("overwrite")
-        uuid = self.iceberg(table).metadata.table_uuid
+        tbl = self.iceberg(table)
+        meta = tbl.metadata
+        held = (
+            f"table holds uuid {meta.table_uuid}, current-schema-id {meta.current_schema_id}, "
+            f"last-column-id {meta.last_column_id}, default-spec-id {meta.default_spec_id}, "
+            f"last-partition-id {meta.last_partition_id}, "
+            f"default-sort-order-id {meta.default_sort_order_id}, "
+            f"main {meta.current_snapshot_id}"
+        )
         before = len(self._snapshots(table))
-        self.sql(f"CREATE OR REPLACE TABLE {self.t(table)} AS {_select([(7, 70), (8, 80)])}")
+        key = (self.ns, table)
+        try:
+            self.sql(
+                f"CREATE OR REPLACE TABLE {self.t(table, catalog='race')} AS "
+                f"{_select([(7, 70), (8, 80)])}"
+            )
+        except Refused as exc:
+            sent = self.proxy.requirements.get(key, [])
+            updates = self.proxy.updates.get(key, [])
+            statuses = self.proxy.statuses(*key)
+            raise Refused(
+                f"{exc}; commits {statuses}; requirements sent {sent}; updates {updates}; {held}"
+            ) from None
         tbl = self.iceberg(table)
         snapshots = self._snapshots(table)
         summary = snapshots[-1].summary
         operation = summary.operation.value if summary is not None else "?"
-        same = "same table" if tbl.metadata.table_uuid == uuid else "a NEW table (uuid changed)"
+        same = "same table" if tbl.metadata.table_uuid == meta.table_uuid else "a NEW table"
         result = self._expect(table, [(7, 70), (8, 80)], "CREATE OR REPLACE TABLE ... AS")
         return (
             f"{result}; {same}, {len(snapshots) - before} snapshot(s) added, "
