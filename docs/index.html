@@ -768,7 +768,7 @@ const WORKLOAD_ROWS = [
   { engine: "starrocks_iceberg", tier: "star", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },
     merge: { ok: false, note: "dbt-starrocks has no merge" } },
   { engine: "databend_iceberg", tier: "star", file: { ok: true, note: "<code>METADATA$FILENAME</code>" },
-    merge: { ok: null, note: "Not tried on Iceberg" } },
+    merge: { ok: false, note: "Iceberg tables take no MERGE" } },
   { engine: "polars_iceberg", tier: "star", file: { ok: true, note: "<code>include_file_paths</code>" },
     merge: { ok: false, note: "<code>sink_iceberg</code> appends or overwrites" } },
   { engine: "lakesail_iceberg", tier: "star", file: { ok: false, note: `<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>` },

@@ -154,6 +154,10 @@ class DatabendCapability:
     def t(self, table: str, ns: str | None = None, catalog: str = CATALOG) -> str:
         return f'{catalog}."{ns or self.ns}"."{table}"'
 
+    def t2(self, table: str) -> str:
+        """database.table in the current catalog (onelake): OPTIMIZE takes no catalog part."""
+        return f'"{self.ns}"."{table}"'
+
     def pyiceberg(self):
         if self._catalog is None:
             self._catalog = auth.catalog(self.cfg)
@@ -487,9 +491,7 @@ class DatabendCapability:
 
     def metadata_tables(self) -> str:
         table = self._fresh("inspect")
-        found = self.sql(
-            f"SELECT count(*) FROM iceberg_snapshot('{CATALOG}', '{self.ns}', '{table}')"
-        )
+        found = self.sql(f"SELECT count(*) FROM iceberg_snapshot('{self.ns}', '{table}')")
         return f"iceberg_snapshot() reads {found[0][0]} snapshot(s)"
 
     def _stats_table(self, what: str) -> str:
@@ -548,7 +550,7 @@ class DatabendCapability:
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(5, 50)])}")
         before = len(self._snapshots(table))
-        self.sql(f"OPTIMIZE TABLE {self.t(table)} PURGE")
+        self.sql(f"OPTIMIZE TABLE {self.t2(table)} PURGE")
         after = len(self._snapshots(table))
         if after >= before:
             raise NoOp(f"returned success and history went {before} -> {after}")
@@ -558,7 +560,7 @@ class DatabendCapability:
         table = self._fresh("compact")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
         before = len(list(self.iceberg(table).scan().plan_files()))
-        self.sql(f"OPTIMIZE TABLE {self.t(table)} COMPACT")
+        self.sql(f"OPTIMIZE TABLE {self.t2(table)} COMPACT")
         after = len(list(self.iceberg(table).scan().plan_files()))
         if after >= before:
             raise NoOp(f"returned success and data files went {before} -> {after}")
@@ -568,7 +570,7 @@ class DatabendCapability:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
         before = len(self._snapshots(table))
-        self.sql(f"OPTIMIZE TABLE {self.t(table)} COMPACT SEGMENT")
+        self.sql(f"OPTIMIZE TABLE {self.t2(table)} COMPACT SEGMENT")
         if len(self._snapshots(table)) == before:
             raise NoOp("returned success and no new snapshot was committed")
         return "a new snapshot rewrote the manifests"
@@ -620,9 +622,15 @@ class DatabendCapability:
         self.created.append(table)
         self.iceberg(table).append(rows(SEED))
         raced = self.t(table, catalog="race")
-        return race_probe(
-            key, self.pyiceberg(), self.proxy, table, lambda: self.sql(statement.format(t=raced))
-        )
+        write = lambda: self.sql(statement.format(t=raced))  # noqa: E731
+        try:
+            return race_probe(key, self.pyiceberg(), self.proxy, table, write)
+        except Exception as exc:  # noqa: BLE001 - re-raised unless it is Databend's own no
+            # No commit was tried because the statement itself is refused on Iceberg tables:
+            # that is the engine's `no`, not a probe that could not ask.
+            if "commits [none]" in str(exc) and "does not support" in str(exc):
+                raise Refused(str(exc)) from None
+            raise
 
     def race_append(self) -> str:
         return self._race("race_append", "INSERT INTO {t} " + _select([(5, 50)]))
