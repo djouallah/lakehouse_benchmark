@@ -340,10 +340,14 @@ def _starrocks(cfg: Config, paths: dict[str, Path]):
 
 
 def _databend(cfg: Config, paths: dict[str, Path]):
-    """The benchmark's container with the parquet mounted, one view per table over the file.
+    """The benchmark's container with the parquet mounted, one table per file, copied in.
 
-    Views over `fs://` locations, as StarRocks' are over FILES(): the same bytes every other
-    engine reads, as they are. bench/databend.py lets `fs://` through for a mounted start.
+    TABLES, NOT VIEWS over the `fs://` locations as for StarRocks: with views, a query that read
+    two of the files had one file's schema applied to the other ("TableSchemaMismatch ... Schema
+    inferred from 'smoke/web_sales.parquet'", 14 TPC-DS queries, run 39021775503), and Q85 ran
+    past the job's 20 minutes with no statistics to order its joins. A copy holds the same rows;
+    phase 1 checks the dialect, not the speed. bench/databend.py lets `fs://` through for a
+    mounted start.
     """
     from bench import databend
     from bench.tpch.engines.databend_iceberg import DatabendIceberg
@@ -358,7 +362,7 @@ def _databend(cfg: Config, paths: dict[str, Path]):
         cur.execute(f"USE {cfg.schema}")
         for table, path in paths.items():
             cur.execute(
-                f"CREATE OR REPLACE VIEW {table} AS SELECT * FROM "
+                f"CREATE OR REPLACE TABLE {table} AS SELECT * FROM "
                 f"'fs:///smoke/{Path(path).name}' (FILE_FORMAT => 'parquet')"
             )
     return engine
