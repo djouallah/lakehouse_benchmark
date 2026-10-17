@@ -189,6 +189,9 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
                 *(["-e", "STORAGE_ALLOW_INSECURE=true"] if mounts else []),
                 "-p",
                 f"127.0.0.1:{PORT}:3307",
+                # The host as the container sees it: the capability probe's race proxy runs there.
+                "--add-host",
+                "host.docker.internal:host-gateway",
                 IMAGE,
             ],
             check=True,
@@ -257,8 +260,18 @@ def sas(cfg: Config, write: bool = False) -> tuple[str, float]:
     return onelake_sas(cfg.workspace_id, cfg.lakehouse_id, write=write)
 
 
-def attach(conn, cfg: Config, token: str, sas_token: str) -> None:
-    """(Re)create the OneLake catalog on `token` and `sas_token` and make it the current catalog."""
+def attach(
+    conn,
+    cfg: Config,
+    token: str,
+    sas_token: str,
+    name: str = CATALOG,
+    address: str = ICEBERG_ENDPOINT,
+    use: bool = True,
+) -> None:
+    """(Re)create the catalog `name` on `token` and `sas_token` and, with `use`, make it current.
+
+    `name` and `address` are for the capability probe's second catalog, on its race proxy."""
     props = {
         "token": token,
         "filesystem": cfg.workspace_id,
@@ -267,12 +280,13 @@ def attach(conn, cfg: Config, token: str, sas_token: str) -> None:
     }
     body = " ".join(f"\"{k}\"='{v}'" for k, v in props.items())
     with conn.cursor() as cur:
-        cur.execute(f"DROP CATALOG IF EXISTS {CATALOG}")
+        cur.execute(f"DROP CATALOG IF EXISTS {name}")
         cur.execute(
-            f"CREATE CATALOG {CATALOG} TYPE=ICEBERG CONNECTION=(TYPE='rest' "
-            f"ADDRESS='{ICEBERG_ENDPOINT}' WAREHOUSE='{cfg.warehouse}' {body})"
+            f"CREATE CATALOG {name} TYPE=ICEBERG CONNECTION=(TYPE='rest' "
+            f"ADDRESS='{address}' WAREHOUSE='{cfg.warehouse}' {body})"
         )
-        cur.execute(f"USE CATALOG {CATALOG}")
+        if use:
+            cur.execute(f"USE CATALOG {name}")
 
 
 def needs_refresh(expires: float) -> bool:

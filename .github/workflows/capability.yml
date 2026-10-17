@@ -20,16 +20,17 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,trino,polars,duckdb,sail,chdb,duckdb_isolation
-          - spark,trino,polars,duckdb,sail,chdb
+          - spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation
+          - spark,trino,polars,duckdb,sail,chdb,databend
           - spark
           - trino
           - polars
           - duckdb
           - sail
           - chdb
+          - databend
           - duckdb_isolation
-        default: spark,trino,polars,duckdb,sail,chdb,duckdb_isolation
+        default: spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -59,7 +60,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,duckdb_isolation' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -73,6 +74,7 @@ jobs:
       || matrix.client == 'polars' && 'Polars'
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'chdb' && 'chDB'
+      || matrix.client == 'databend' && 'Databend'
       || matrix.client == 'duckdb_isolation' && 'DuckDB isolation and transactions'
       || matrix.client }}
     runs-on: ubuntu-latest
@@ -80,6 +82,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: read  # the Databend image (bench/databend.py)
     strategy:
       # One client's failure must not delete the others' answers.
       fail-fast: false
@@ -114,7 +117,7 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars|trino)=' || true
+          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars|trino|pymysql)=' || true
 
       - uses: actions/setup-java@v5
         if: matrix.client == 'spark'
@@ -132,6 +135,17 @@ jobs:
             ~/.ivy2.5.2
             ~/.m2/repository
           key: ivy-spark41-iceberg112-azure-v1
+
+      # Databend is a container from this repo's GHCR (bench/databend.py says why).
+      - uses: docker/login-action@v3
+        if: matrix.client == 'databend'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Pull the Databend image
+        if: matrix.client == 'databend'
+        run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why.
       - name: DuckDB nightly CLI
