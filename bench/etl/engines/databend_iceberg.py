@@ -4,7 +4,9 @@ The container, the catalog and the credentials are bench/databend.py, set up as 
 benchmark, except that the SAS also carries create and write: Databend writes the data files and
 manifests over Azdls with it. The statement is DuckDB's (engines/duckdb_iceberg.py) in Databend's
 dialect: the 53-column DUNIT layout, short rows NULL-padded, the three-column filter, every measure
-cast to DOUBLE, SETTLEMENTDATE parsed, `year` derived, the source file's name kept.
+cast to DOUBLE, SETTLEMENTDATE parsed, `year` derived, the source file's name kept. The name is
+`metadata$filename` in lower case: bench/databend.py makes unquoted names case-sensitive, and
+`METADATA$FILENAME` is then an unknown column (run 39024820940).
 
 THE CSVS, as candidate_engine.yml proved them (138,240 DUNIT v3 rows, the same sum as Python's csv
 module, run 39015860524):
@@ -101,7 +103,7 @@ class DatabendIceberg:
         return (
             f"SELECT {POSITION['UNIT']}, {POSITION['DUID']}, "
             + ", ".join(f"TRY_CAST({POSITION[c]} AS DOUBLE)" for c in numeric_columns())
-            + f", {settled}, METADATA$FILENAME, CAST(to_year({settled}) AS INT)"
+            + f", {settled}, metadata$filename, CAST(to_year({settled}) AS INT)"
             f" FROM {source} WHERE {where}"
         )
 

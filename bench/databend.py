@@ -27,10 +27,16 @@ HOW IT READS ONELAKE (candidate_engine.py, Databend):
 * IDENTIFIERS: unquoted identifiers fold to lower case by default and OneLake's namespace is
   CH0010, so `unquoted_ident_case_sensitive` is set GLOBAL at start-up.
 
-MEMORY AND SPILL ARE DATABEND'S DEFAULTS, and they already spill: `query_out_of_memory_behavior`
-is `spilling`, and joins, aggregations, sorts and windows spill past 60% of the query's memory.
-`max_threads` defaults to the core count, 4 here, what every other engine is told. `start()` logs
-them, so a result records what it ran with.
+SPILL IS DATABEND'S DEFAULT: `query_out_of_memory_behavior` is `spilling`, and joins,
+aggregations, sorts and windows spill past 60% of the query's memory. `max_threads` defaults to the
+core count, 4 here, what every other engine is told. `start()` logs them, so a result records what
+it ran with.
+
+BUT THE MEMORY CEILING IS OURS. Databend does not read the cgroup: it sized itself from the
+runner's RAM ("Memory: limit: unlimited", max_memory_usage 13.4 GB) inside a 15 GB container, and
+TPC-H SF=100 Q4 lost the server mid-query (run 39025777931) instead of spilling. SERVER_MEMORY
+caps the process at 12 GiB -- `max_server_memory_usage`, enforced only with
+`max_memory_limit_enabled` -- and the per-query defaults follow from it (half each, spill at 60%).
 """
 
 from __future__ import annotations
@@ -51,6 +57,8 @@ PORT = 3307
 USER = "databend"
 # The container's memory ceiling, of the runner's 15.6 GB; the cgroup StarRocks and Trino get.
 CONTAINER_MEMORY = "15g"
+# Databend's own process ceiling, under the container's, with room for databend-meta (docstring).
+SERVER_MEMORY = 12 * 1024**3
 # What start() reads back and logs: the settings that decide memory, spill and parallelism.
 LOGGED_SETTINGS = (
     "max_threads",
@@ -134,6 +142,10 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
                 CONTAINER_MEMORY,
                 "--memory-swap",
                 CONTAINER_MEMORY,
+                "-e",
+                f"QUERY_MAX_SERVER_MEMORY_USAGE={SERVER_MEMORY}",
+                "-e",
+                "QUERY_MAX_MEMORY_LIMIT_ENABLED=true",
                 "-e",
                 f"QUERY_DEFAULT_USER={USER}",
                 "-e",

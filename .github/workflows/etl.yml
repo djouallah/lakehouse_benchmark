@@ -235,7 +235,9 @@ jobs:
       - name: Databend server log
         if: always() && matrix.engine == 'databend_iceberg'
         run: |
-          docker logs databend 2>&1 | tail -n 300 \
+          { docker logs databend 2>&1 | tail -n 300
+            # stderr is off in Databend's image; its own logs say why a query or the server died.
+            docker exec databend sh -c 'tail -n 100 $(ls -t /var/log/databend/databend-query* 2>/dev/null | head -2)' 2>&1; } \
             | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g'
 
       - uses: actions/upload-artifact@v6
