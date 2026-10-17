@@ -2,7 +2,7 @@
 
 TPC-H-like, scale factor 100, 22 queries, on 4 vCPU / 15.6 GB (linux-6.17.0-1022-azure, Python 3.12.15).
 
-Last run: `2026-10-17T10:41:10Z` · commit `87e51c1` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39025777931)
+Last run: `2026-10-17T10:58:43Z` · commit `898d589` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39026875432)
 
 ## Latest run
 
@@ -17,7 +17,7 @@ Each engine's most recent run at this scale; the newest run may not include ever
 | LakeSail | `0.7.2` | 2,662.7s | 1.6s | — |
 | Spark-OSS | `4.1.3 + iceberg Apache Iceberg 1.11.0 (commit 6976e020b894f6a6777704df2b8c4458cb291ae9)` | — | 17.6s | Q21 |
 | Trino | `483 (trinodb/trino:483)` | — | 12.2s | Q18 |
-| Databend | `8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)` | — | 35.8s | Q4 |
+| Databend | `8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)` | — | 16.0s | Q4 |
 
 One cold pass, the first after attaching the catalog. Attach is timed separately and excluded from the total.
 
@@ -25,7 +25,7 @@ One cold pass, the first after attaching the catalog. Attach is timed separately
 
 | Engine | Pass | Query | Error |
 |---|---|---|---|
-| Databend | cold | Q4 | `OperationalError: (2013, 'Lost connection to MySQL server during query')` |
+| Databend | cold | Q4 | `OperationalError: (1105, 'MemoryExceedsLimit. Code: 2411, Text = memory usage 12.0 GiB(12885534644) exceeds limit 12.0 GiB(12884901888).')` |
 | Trino | cold | Q18 | `TrinoQueryError: TrinoQueryError(type=INSUFFICIENT_RESOURCES, name=EXCEEDED_LOCAL_MEMORY_LIMIT, message="Query exceeded per-node memory limit of 9GB [Allocated: 6.76GB, Delta: 3.40GB, Top Consumers: {HashBuilderOperator=6.76GB, MergeSortedPages=2.94MB, MergingHashAggregationBuilder=1.69MB}]", query_` |
 | Spark-OSS | cold | Q21 | `Py4JJavaError: An error occurred while calling o103.collectToPython. : org.apache.spark.SparkException: [STAGE_MATERIALIZATION_MULTIPLE_FAILURES] Multiple failures (2) in stage materialization:    1. SparkException: Not enough memory to build and broadcast the table to all worker nodes. As a workaro` |
 
@@ -35,9 +35,9 @@ Seconds, cold pass. `—` means the query failed or did not run; see Failures ab
 
 | Query | DuckDB | Polars | StarRocks | Gluten/Velox | LakeSail | Spark-OSS | Trino | Databend |
 |---|---|---|---|---|---|---|---|---|
-| Q1 | 30.22 | 27.01 | 78.26 | 46.84 | 33.79 | 253.18 | 55.44 | 60.68 |
-| Q2 | 7.28 | 12.21 | 104.91 | 24.51 | 46.11 | 62.04 | 26.93 | 36.44 |
-| Q3 | 26.50 | 17.48 | 26.61 | 31.72 | 81.76 | 129.08 | 76.76 | 33.16 |
+| Q1 | 30.22 | 27.01 | 78.26 | 46.84 | 33.79 | 253.18 | 55.44 | 58.46 |
+| Q2 | 7.28 | 12.21 | 104.91 | 24.51 | 46.11 | 62.04 | 26.93 | 15.06 |
+| Q3 | 26.50 | 17.48 | 26.61 | 31.72 | 81.76 | 129.08 | 76.76 | 34.61 |
 | Q4 | 10.25 | 8.63 | 16.38 | 33.03 | 28.05 | 93.04 | 35.30 | — |
 | Q5 | 12.98 | 15.06 | 27.07 | 66.92 | 285.64 | 212.59 | 67.24 | — |
 | Q6 | 2.77 | 6.86 | 4.80 | 9.18 | 20.29 | 39.68 | 26.52 | — |
@@ -60,6 +60,6 @@ Seconds, cold pass. `—` means the query failed or did not run; see Failures ab
 
 ## History
 
-1,569 timed statements across 51 runs.
+1,574 timed statements across 52 runs.
 Raw data: one immutable JSON per run under [`results/`](../results/), flattened to [`data/tpch_results.csv`](data/tpch_results.csv).
 
