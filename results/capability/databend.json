@@ -1,0 +1,289 @@
+{
+ "engine": "databend",
+ "version": "8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "Databend starts and attaches the REST catalog",
+   "outcome": "supported",
+   "detail": "Databend 8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714); _bench_capability listed, seen by Databend; race catalog attached"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE ENGINE = ICEBERG (the catalog assigns the location)",
+   "outcome": "supported",
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_39032752740_1_base`"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'TokioError. Code: 1068, Text = Cannot join handle from context\\'s runtime, cause: task 648 panicked with message \"internal error: table_id_seq must have been set. CTAS(replace) of table\".')"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "PARTITION BY (p), then INSERT",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"Internal. Code: 1001, Text = Failed to commit transaction: DataInvalid => Found duplicate 'field.id' 0. Field ids must be unique.\\n.\")"
+  },
+  {
+   "key": "sort_order",
+   "group": "create",
+   "question": "ALTER TABLE CLUSTER BY (sort order)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Internal. Code: 1001, Text = [FUSE-TABLE] Expected FUSE engine table, but got iceberg.')"
+  },
+  {
+   "key": "partition_bucket",
+   "group": "create",
+   "question": "PARTITION BY (bucket(4, id)), then INSERT",
+   "outcome": "no",
+   "detail": "works: none; refused: bucket: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `bucket(4, id)`.')"
+  },
+  {
+   "key": "partition_truncate",
+   "group": "create",
+   "question": "PARTITION BY (truncate(2, x)), then INSERT",
+   "outcome": "no",
+   "detail": "works: none; refused: truncate: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `truncate(2, x)`.')"
+  },
+  {
+   "key": "partition_temporal",
+   "group": "create",
+   "question": "PARTITION BY year / month / day / hour, then INSERT",
+   "outcome": "no",
+   "detail": "works: none; refused: year: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `year(x)`.'); month: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `month(x)`.'); day: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `day(x)`.'); hour: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `hour(x)`.')"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
+   "outcome": "no",
+   "detail": "works: ['date', 'timestamp', 'binary']; refused: decimal: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_decimal failed: DataInvalid => Unsupported Arrow data type: Decimal64(10, 2)\\n.'); timestamptz: OperationalError: (1105, \"BadArguments. Code: 1006, Text = fail to auto cast column '2026-01-02 03:04:05.123456 +00:00' (TimestampTz) to column x (Decimal(38, 0) NULL)\\nunable to cast type `TimestampTz` to type `Decimal(38, 0)`, during run expr: `CAST('2026-01-02 03:04:05.123456 +00:00' AS Decimal(38, 0) NULL)`.\"); uuid: OperationalError: (1105, 'SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:85\\n |\\n1 | CREATE TABLE onelake.\"_bench_capability\".\"db_39032752740_1_type_uuid\" (id BIGINT, x UUID) ENGINE = ICEBERG \\n | ------ - ^^^^ unexpected `UUID`, expecting `UINT8`, `UINT16`, `UINT32`, `UINT64`, `SIGNED`, `UNSIGNED`, `INT`, `INT8`, `DATE`, `INT16`, `INT32`, `INT64`, `TUPLE`, `BIGINT`, `BITMAP`, `BINARY`, `STRING`, `TINYINT`, `INTEGER`, `NUMERIC`, `VARIANT`, `SMALLINT`, `INTERVAL`, `TINYBLOB`, `NULLABLE`, `TIMESTAMP`, `VARBINARY`, `MEDIUMBLOB`, `TIMESTAMP_TZ`, `DOUBLE`, `DECIMAL`, `DATETIME`, `BOOLEAN`, `BOOL`, `FLOAT32`, `FLOAT`, `REAL`, `FLOAT64`, `ARRAY`, `MAP`, `LONGBLOB`, `BLOB`, `VARCHAR`, `CHA\u2026"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "no",
+   "detail": "works: none; refused: struct: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_struct failed: DataInvalid => Field id not found in metadata\\n.'); list: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_list failed: DataInvalid => Field id not found in metadata\\n.'); map: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_map failed: DataInvalid => Field id not found in metadata\\n.')"
+  },
+  {
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO",
+   "outcome": "supported",
+   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Databend agrees; 1 commit(s)"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; Databend agrees"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE FROM",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_delete, engine type iceberg, does not support DELETE.')"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_update, engine type iceberg, does not support UPDATE.')"
+  },
+  {
+   "key": "merge_upsert",
+   "group": "write",
+   "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_39032752740_1_merge does not support MERGE.')"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE TABLE",
+   "outcome": "no-op",
+   "detail": "TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE (whole-table overwrite)",
+   "outcome": "no-op",
+   "detail": "INSERT OVERWRITE returned success; expected [(7, 70), (8, 80)], pyiceberg reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], Databend reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]"
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ALTER TABLE ADD COLUMN",
+   "outcome": "no-op",
+   "detail": "returned success and the schema is ['id', 'v']"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "ALTER TABLE DROP COLUMN",
+   "outcome": "no-op",
+   "detail": "returned success and the schema is still ['id', 'v']"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "ALTER TABLE RENAME COLUMN",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_39032752740_1_renamecol engine is iceberg that doesn't support rename column name.\")"
+  },
+  {
+   "key": "type_promotion",
+   "group": "schema",
+   "question": "ALTER TABLE MODIFY COLUMN c BIGINT (int -> long)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Internal. Code: 1001, Text = [FUSE-TABLE] Expected FUSE engine table, but got iceberg.')"
+  },
+  {
+   "key": "partition_evolution",
+   "group": "schema",
+   "question": "ALTER TABLE PARTITION BY (partition evolution)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'UnsupportedEngineParams. Code: 2703, Text = ALTER TABLE PARTITION BY is not supported for engine ICEBERG.')"
+  },
+  {
+   "key": "write_after_evolution",
+   "group": "schema",
+   "question": "INSERT, pyiceberg adds bucket(4, id), INSERT",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'UnwindError. Code: 1104, Text = internal error: entered unreachable code.')"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "ALTER TABLE SET OPTIONS",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'TableOptionInvalid. Code: 1301, Text = table option probed_at is invalid for alter table statement.')"
+  },
+  {
+   "key": "time_travel",
+   "group": "read",
+   "question": "time travel, AT (SNAPSHOT => ...)",
+   "outcome": "no-op",
+   "detail": "AT (SNAPSHOT => the seed's) reads 4 rows, not 3"
+  },
+  {
+   "key": "metadata_tables",
+   "group": "read",
+   "question": "metadata tables (iceberg_snapshot)",
+   "outcome": "supported",
+   "detail": "iceberg_snapshot() reads 1 snapshot(s)"
+  },
+  {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "SELECT v WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "max_from_metadata",
+   "group": "read",
+   "question": "max(id) with every data file deleted (min/max from metadata)",
+   "outcome": "no",
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: OperationalError: (1105, 'StorageNotFound. Code: 3001, Text = NotFound (permanent) at read, context: { uri: https://onelake.dfs.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/db_39032752740_1_max/data/00000-0-cc6ac3d2-178a-43af-bb37-cd513ea0647c.parquet?st=2026-10-17T12%3A26%3A04Z&se=2026-10-17T13%3A26%3A04Z&sp=rcwdl&sv=2026-10-06&sr=d&sdd=1&skoid=wINHAPb%2Ba0m8gVyXH0FH5w-fyKMEE2TiE2WpOJZIfrkOA&sktid=4a86d5bb-4173-45ee-bfd5-a3b56ee2d3d5&skt=2026-10-17T12%3A26%3A04Z&ske=2026-10-17T13%3A26%3A04Z&sks=b&skv=2022-11-02, response: Parts { status: 404, version: HTTP/1.1, headers: {\"content-length\": \"163\", \"content-type\": \"app\u2026"
+  },
+  {
+   "key": "create_branch",
+   "group": "refs",
+   "question": "ALTER TABLE CREATE BRANCH",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Legacy experimental table refs were removed: ALTER TABLE ... CREATE/DROP BRANCH. The remaining syntax is reserved for a future redesign and is intentionally rejected during binding..')"
+  },
+  {
+   "key": "create_tag",
+   "group": "refs",
+   "question": "ALTER TABLE CREATE TAG",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table ref is an experimental feature, `set enable_experimental_table_ref=1` to use this feature.')"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "OPTIMIZE TABLE PURGE (expire snapshots)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"LicenseKeyInvalid. Code: 1402, Text = [LicenseManager] Feature 'vacuum' requires Databend Enterprise Edition license. No license key found for tenant: default. Learn more at https://docs.databend.com/guides/products/dee/.\")"
+  },
+  {
+   "key": "rewrite_data_files",
+   "group": "maintenance",
+   "question": "OPTIMIZE TABLE COMPACT (compaction)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_39032752740_1_compact'. Table engine: 'iceberg'..\")"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "OPTIMIZE TABLE COMPACT SEGMENT (rewrite manifests)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_39032752740_1_manifests', which is using the 'iceberg' engine..\")"
+  },
+  {
+   "key": "namespace",
+   "group": "catalog",
+   "question": "CREATE DATABASE, then DROP DATABASE",
+   "outcome": "supported",
+   "detail": "`db_39032752740_1_ns` created, listed, dropped"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE DATABASE IF NOT EXISTS, existing namespace",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
+  },
+  {
+   "key": "drop_purge",
+   "group": "catalog",
+   "question": "DROP TABLE, its files removed",
+   "outcome": "supported",
+   "detail": "gone from the catalog; 0 of 3 data file(s) still in storage"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERT INTO; B appends between Databend's read and commit",
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETE id 1; B appends",
+   "outcome": "no",
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_delete, engine type iceberg, does not support DELETE.')"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATE v = v + 1 on id 2; B appends",
+   "outcome": "no",
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_update, engine type iceberg, does not support UPDATE.')"
+  }
+ ],
+ "run": "39032752740",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39032752740",
+ "date": "2026-10-17"
+}
