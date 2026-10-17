@@ -53,7 +53,8 @@ ENGINES = (
     "polars_iceberg",
     # Databend: added 2026-10-17 after a build of main passed candidate_engine.yml (22/22 TPC-H,
     # OneLake reads and writes; run 39015860524). The image is that build until a nightly carries
-    # the decimal fix (bench/databend.py).
+    # the decimal fix (bench/databend.py). It stops at Q5: a UNION ALL over two tables applies one
+    # table's schema to the other's file (databendlabs/databend#20732).
     "databend_iceberg",
 )
 
