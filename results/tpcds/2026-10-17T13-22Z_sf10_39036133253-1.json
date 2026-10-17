@@ -1,0 +1,124 @@
+{
+  "run_id": "39036133253-1",
+  "run_started_at": "2026-10-17T13:22:57Z",
+  "sf": 10,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39036133253",
+  "git_sha": "64cef2b",
+  "test": "tpcds",
+  "runner": "linux-6.17.0-1022-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "databend_iceberg": {
+      "version": "8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 40.8296,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 70.943,
+          "rows": 33,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": 310.23,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 23,
+          "dur": 36.5659,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 4,
+          "dur": 34.9103,
+          "rows": 0,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 14,
+          "dur": 29.0214,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 19,
+          "dur": 34.1835,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 67,
+          "dur": 6.4319,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 9,
+          "dur": 10.9987,
+          "rows": 1,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 95,
+          "dur": 13.119,
+          "rows": 1,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 78,
+          "dur": 23.9161,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 5,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "OperationalError: (1105, 'TableSchemaMismatch. Code: 1303, Text = Field ss_net_profit (file ID 23) does not exist in the Parquet file.')"
+        }
+      ],
+      "host": {
+        "runner": "linux-6.17.0-1022-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
