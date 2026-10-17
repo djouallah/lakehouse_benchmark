@@ -41,16 +41,22 @@ caps the process at 12 GiB -- `max_server_memory_usage`, enforced only with
 THE DATA CACHE, every engine's where it has one (bench/trino.py). Databend's is the column data
 cache: the parquet reader its Iceberg scan uses keeps each byte range it reads from OneLake on
 local disk, and a later scan of the same range reads it there (storages/parquet row_group.rs
-`cached_range_read`; only stage reads skip it). Off by default (`data_cache_storage = none`); on
-here, sized like Trino's -- half the free disk at start -- inside the container, which writes to
-the runner's disk. `cache_metrics` reads it back at close as proof it engaged. The first Databend
-runs (TPC-H SF=10 and SF=100, TPC-DS SF=10, ETL, 2026-10-17) went without it.
+`cached_range_read`; only stage reads skip it). Off by default (`data_cache_storage = none`).
+
+IN MEMORY, BECAUSE THE DISK TIER IS AN ENTERPRISE FEATURE. The cache is a hybrid, memory in
+front of disk, and without a licence key every query drops the disk tier (interpreter.rs
+`set_allows_disk_cache`, from `check_license`); the bench uses only the Apache-2.0 core. A disk
+cache sized like Trino's therefore cached nothing: the memory tier was its default 0 bytes (run
+39029806839). So the cache is the memory tier, as DuckDB's is: DATA_CACHE_MEMORY of the 12 GiB the
+server may use, a third, leaving the rest to queries. `data_cache_storage` must still say `disk`
+-- that is the only branch that builds the hybrid -- and the disk part stays a nominal 1 GiB that
+the missing licence switches off. `cache_metrics` reads it back at close as proof it engaged. The
+first Databend runs (TPC-H SF=10 and SF=100, TPC-DS SF=10, ETL, 2026-10-17) went without it.
 """
 
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import threading
 import time
@@ -68,10 +74,10 @@ USER = "databend"
 CONTAINER_MEMORY = "15g"
 # Databend's own process ceiling, under the container's, with room for databend-meta (docstring).
 SERVER_MEMORY = 12 * 1024**3
-# The data cache (module docstring): its place in the container and its share of free disk.
+# The data cache (module docstring): its memory tier, and the nominal disk tier no licence enables.
+DATA_CACHE_MEMORY = 4 * 1024**3
 CACHE_IN_CONTAINER = "/var/lib/databend/cache"
-CACHE_FREE_FRACTION = 0.5
-CACHE_MIN_GIB = 8
+CACHE_DISK_NOMINAL = 1024**3
 # What start() reads back and logs: the settings that decide memory, spill and parallelism.
 LOGGED_SETTINGS = (
     "max_threads",
@@ -140,9 +146,7 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
     _keep_assertion_fresh()
     if not _running():
         subprocess.run(["docker", "rm", "-f", CONTAINER], capture_output=True, check=False)
-        free_gib = shutil.disk_usage("/").free / 2**30
-        cache_gib = max(CACHE_MIN_GIB, int(free_gib * CACHE_FREE_FRACTION))
-        scrub.safe_print(f"  databend data cache {cache_gib}GB on disk ({free_gib:.0f}GB free)")
+        scrub.safe_print(f"  databend data cache {DATA_CACHE_MEMORY // 2**30}GB in memory")
         volumes = {ASSERTION_DIR: str(Path(ASSERTION_IN_CONTAINER).parent), **(mounts or {})}
         subprocess.run(
             [
@@ -165,9 +169,11 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
                 "-e",
                 "CACHE_DATA_CACHE_STORAGE=disk",
                 "-e",
+                f"CACHE_DATA_CACHE_IN_MEMORY_BYTES={DATA_CACHE_MEMORY}",
+                "-e",
                 f"CACHE_DISK_PATH={CACHE_IN_CONTAINER}",
                 "-e",
-                f"CACHE_DISK_MAX_BYTES={cache_gib * 2**30}",
+                f"CACHE_DISK_MAX_BYTES={CACHE_DISK_NOMINAL}",
                 "-e",
                 f"QUERY_DEFAULT_USER={USER}",
                 "-e",
@@ -236,7 +242,8 @@ def settings(conn) -> str:
 def cache_metrics(conn) -> str:
     """What the column data cache holds, from system.caches: read at close as proof it engaged."""
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM system.caches WHERE name LIKE '%column_data%'")
+        # Qualified: the session's current catalog is the Iceberg one.
+        cur.execute("SELECT * FROM default.system.caches WHERE name LIKE '%column_data%'")
         names = [d[0] for d in cur.description]
         return "; ".join(
             " ".join(f"{n}={v}" for n, v in zip(names, row, strict=True)) for row in cur.fetchall()
