@@ -54,4 +54,8 @@ def get_engine(name: str, cfg: EtlConfig):
         from bench.etl.engines.pandas_iceberg import PandasIceberg
 
         return PandasIceberg(cfg)
+    if name == "databend_iceberg":
+        from bench.etl.engines.databend_iceberg import DatabendIceberg
+
+        return DatabendIceberg(cfg)
     raise ValueError(f"unknown engine {name!r}; expected one of {list(ETL_ENGINES)}")
