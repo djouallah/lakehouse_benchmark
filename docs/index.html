@@ -708,10 +708,10 @@ function renderEngines() {
 
 // THE DBT 1 COLUMN of the Real workload tab: how well dbt 1 (dbt Core) works with each engine on Iceberg
 // tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
-// level. DuckDB, LakeSail and Polars were tried in fabric-medallion-dbt-community; the others come from
+// level. DuckDB, LakeSail and Polars were tried in fabric-dbt-examples; the others come from
 // their adapter docs. Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in
 // LABEL has a row (tests/test_results_page.py).
-const DBT_MEDALLION = "https://github.com/djouallah/fabric-medallion-dbt-community";
+const DBT_MEDALLION = "https://github.com/djouallah/fabric-dbt-examples";
 const DBT_ROWS = [
   { engine: "pyspark_iceberg", level: "excellent", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
     note: "<code>file_format='iceberg'</code>; table and incremental models, with merge." },
@@ -793,7 +793,7 @@ function renderWorkload() {
         ${mark(dbtOk, dbt.adapter ? `<a href="${dbt.url}">${esc(dbt.adapter)}</a>` : "no adapter")}
         ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
       </tr>`; }).join("")}</tbody>`).join("")}</table></div>
-    <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: tried in <a href="${DBT_MEDALLION}">fabric-medallion-dbt-community</a> for DuckDB, LakeSail and Polars, the adapter docs for the others.
+    <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: tried in <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for DuckDB, LakeSail and Polars, the adapter docs for the others.
       MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
 }
 
