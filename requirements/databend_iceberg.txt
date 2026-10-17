@@ -1,0 +1,7 @@
+# Databend runs in its own container (bench/databend.py pins the image); Python only drives it over
+# the MySQL protocol, so this file is the client and the credential. azure-storage-file-datalake
+# signs the user delegation SAS its Iceberg reads take.
+azure-identity>=1.19
+azure-storage-file-datalake>=12.17
+psutil>=6
+pymysql>=1.1

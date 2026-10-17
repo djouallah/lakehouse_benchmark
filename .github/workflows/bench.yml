@@ -27,7 +27,7 @@ on:
       engines:
         description: Comma-separated engines to run.
         type: string
-        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg
+        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg
       publish:
         description: Commit results and charts. Off leaves the artifacts and touches nothing.
         type: boolean
@@ -72,6 +72,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: read  # the Databend image (bench/databend.py)
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
       started: ${{ steps.plan.outputs.started }}
@@ -88,7 +89,7 @@ jobs:
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
         # once here so every artifact in the run shares one timestamp.
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
@@ -119,6 +120,7 @@ jobs:
       || matrix.engine == 'pyspark_gluten_iceberg' && '🚀 Gluten/Velox'
       || matrix.engine == 'starrocks_iceberg' && '⭐ StarRocks'
       || matrix.engine == 'trino_iceberg' && '🐰 Trino'
+      || matrix.engine == 'databend_iceberg' && '🦀 Databend'
       || matrix.engine }}
     runs-on: ubuntu-latest
     # 355, JUST UNDER GITHUB'S 360 CEILING, raised from 50 for SF=30, 60 and 100. The 50 was
@@ -131,6 +133,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: read  # the Databend image (bench/databend.py)
     strategy:
       # MANDATORY. A LakeSail OOM must not delete DuckDB's results.
       fail-fast: false
@@ -224,6 +227,18 @@ jobs:
         if: matrix.engine == 'trino_iceberg'
         run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
 
+      # Databend too, from this repo's GHCR: our build of main until a nightly carries the decimal
+      # fix (bench/databend.py says why). Pulled outside the timer.
+      - uses: docker/login-action@v3
+        if: matrix.engine == 'databend_iceberg'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Pull the Databend image
+        if: matrix.engine == 'databend_iceberg'
+        run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
+
       - name: Run 22 queries, one cold pass
         # `shell: bash` is NOT cosmetic here. The default Linux shell is `bash -e {0}` with NO
         # pipefail, so the exit status of `... | tee` is tee's -- always 0. That silently defeated
@@ -247,6 +262,13 @@ jobs:
         run: |
           docker logs trino 2>&1 | tail -n 300 \
             | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
+
+      # Databend's catalog DDL carries the bearer and the SAS.
+      - name: Databend server log
+        if: always() && matrix.engine == 'databend_iceberg'
+        run: |
+          docker logs databend 2>&1 | tail -n 300 \
+            | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g'
 
       - uses: actions/upload-artifact@v6
         if: always()

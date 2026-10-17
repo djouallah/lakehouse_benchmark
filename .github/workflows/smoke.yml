@@ -29,7 +29,7 @@ on:
       engines:
         description: Comma-separated engines to smoke.
         type: string
-        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg
+        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg
       catalog:
         description: Also run phase 2 against OneLake. Off runs the local SQL phase only.
         type: boolean
@@ -80,7 +80,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "engines: $ENGINES"
@@ -119,6 +119,7 @@ jobs:
     # NO id-token, NO secrets. That is the point of this job.
     permissions:
       contents: read
+      packages: read  # the Databend image (bench/databend.py)
     strategy:
       # One engine's dialect gap must not hide another's.
       fail-fast: false
@@ -175,6 +176,18 @@ jobs:
         if: matrix.engine == 'trino_iceberg'
         run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
 
+      # Databend too, from this repo's GHCR: our build of main until a nightly carries the decimal
+      # fix (bench/databend.py says why). Pulled outside the timer.
+      - uses: docker/login-action@v3
+        if: matrix.engine == 'databend_iceberg'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Pull the Databend image
+        if: matrix.engine == 'databend_iceberg'
+        run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
+
       - name: Run the suite's queries against local parquet
         run: python .github/scripts/smoke_sql.py "${{ matrix.engine }}"
 
@@ -192,6 +205,13 @@ jobs:
         run: |
           docker logs trino 2>&1 | tail -n 300 \
             | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
+
+      # Databend's catalog DDL carries the bearer and the SAS.
+      - name: Databend server log
+        if: always() && matrix.engine == 'databend_iceberg'
+        run: |
+          docker logs databend 2>&1 | tail -n 300 \
+            | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g'
 
       - uses: actions/upload-artifact@v6
         if: always()
@@ -230,6 +250,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: read  # the Databend image (bench/databend.py)
     strategy:
       fail-fast: false
       matrix:
@@ -293,6 +314,14 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
+
+      # The Databend image is in this repo's GHCR (bench/databend.py); start() pulls it.
+      - uses: docker/login-action@v3
+        if: matrix.engine == 'databend_iceberg'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Attach OneLake and read
         run: python .github/scripts/smoke_catalog.py

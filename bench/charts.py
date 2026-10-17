@@ -30,6 +30,13 @@ the 15 normal-vision floor against every slot in BOTH modes any more; rust comes
 15.2 normal (Gluten/Velox) / 9.3 CVD (chDB), contrast WARN 2.68:1. The light pairs under 15 are
 again what the per-bar value labels are for.
 
+Slot 11, periwinkle, is Databend, by the same scan against all ten (validate_palette.js per
+pair). One hue in both modes, a light and a dark step. Light #99a7f9: worst pair 18.6 normal / 15.9
+CVD (DuckDB), contrast WARN 2.21:1. Dark #4f58b1: worst pair 12.8 normal (Trino) / 7.9 CVD
+(StarRocks), contrast WARN 2.79:1. No dark step of any hue in the band clears 15 against all ten;
+brick reached 14.3, but a hue that changes between modes is a different engine to the eye. Value
+labels again carry the relief.
+
 The palette is validated, not eyeballed (dataviz `scripts/validate_palette.js`), and re-validated
 whenever a slot is added -- every subset that can actually render has to pass, not just the full
 set. Light passes every gate with a contrast WARN on aqua and yellow, which obligates the relief
@@ -63,6 +70,7 @@ LIGHT = {
     "starrocks_iceberg": "#980067",  # slot 8 plum
     "trino_iceberg": "#3c0fd9",  # slot 9 indigo
     "pandas_iceberg": "#932601",  # slot 10 rust
+    "databend_iceberg": "#99a7f9",  # slot 11 periwinkle
 }
 DARK = {
     "duckdb_iceberg": "#3987e5",
@@ -75,6 +83,7 @@ DARK = {
     "starrocks_iceberg": "#a0268b",
     "trino_iceberg": "#5c43ff",
     "pandas_iceberg": "#8d4e10",
+    "databend_iceberg": "#4f58b1",
 }
 
 THEMES = {
@@ -119,6 +128,7 @@ LABEL = {
     "starrocks_iceberg": "StarRocks",
     "trino_iceberg": "Trino",
     "pandas_iceberg": "Pandas",
+    "databend_iceberg": "Databend",
 }
 
 

@@ -339,6 +339,31 @@ def _starrocks(cfg: Config, paths: dict[str, Path]):
     return engine
 
 
+def _databend(cfg: Config, paths: dict[str, Path]):
+    """The benchmark's container with the parquet mounted, one view per table over the file.
+
+    Views over `fs://` locations, as StarRocks' are over FILES(): the same bytes every other
+    engine reads, as they are. bench/databend.py lets `fs://` through for a mounted start.
+    """
+    from bench import databend
+    from bench.tpch.engines.databend_iceberg import DatabendIceberg
+
+    data = Path(next(iter(paths.values()))).resolve().parent
+    databend.start(mounts={data: "/smoke"})
+    engine = DatabendIceberg(cfg)
+    engine._conn = databend.connect()
+    engine._version = databend.version(engine._conn)
+    with engine._conn.cursor() as cur:
+        cur.execute(f"CREATE DATABASE IF NOT EXISTS {cfg.schema}")
+        cur.execute(f"USE {cfg.schema}")
+        for table, path in paths.items():
+            cur.execute(
+                f"CREATE OR REPLACE VIEW {table} AS SELECT * FROM "
+                f"'fs:///smoke/{Path(path).name}' (FILE_FORMAT => 'parquet')"
+            )
+    return engine
+
+
 def _trino_type(arrow_type) -> str:
     import pyarrow as pa
 
@@ -417,6 +442,7 @@ ADAPTERS = {
     "pyspark_gluten_iceberg": _pyspark_gluten,
     "starrocks_iceberg": _starrocks,
     "trino_iceberg": _trino,
+    "databend_iceberg": _databend,
 }
 
 

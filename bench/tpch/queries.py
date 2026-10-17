@@ -65,6 +65,8 @@ IDENT_STYLE = {
     "starrocks_iceberg": "dotted",
     # catalog.schema.table; the connection's default catalog and schema resolve the rest.
     "trino_iceberg": "dotted",
+    # catalog.database.table, and `USE CATALOG onelake` makes `CH0010.lineitem` resolve.
+    "databend_iceberg": "dotted",
 }
 
 

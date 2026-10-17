@@ -3,9 +3,9 @@ name: databend build
 # The Databend engine's binary, until a nightly image carries the Iceberg decimal fix (databend#20594,
 # closes #20588; v1.2.952-nightly does not). Builds databend-query from databendlabs/databend at `ref`
 # with Databend's own release profile (thin LTO, codegen-units 1: the binary the bench times must be the
-# one they ship, not a quick build) and keeps it as this run's artifact. The bench jobs download it by
-# run id (bench/databend.py BUILD_RUN) and copy it into the stock nightly image. Once a nightly has the
-# fix, bench/databend.py points at that image and this file goes.
+# one they ship, not a quick build) and keeps it as this run's artifact; databend_image.yml copies it
+# into the stock nightly image in this repo's GHCR, where bench/databend.py pulls it. Once a nightly has
+# the fix, bench/databend.py points at that image and both files go.
 #
 # DATABEND_RELEASE_VERSION: the build refuses to guess a version without git tags, and the query must
 # handshake with the base image's databend-meta.

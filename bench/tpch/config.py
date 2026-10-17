@@ -32,6 +32,8 @@ ENGINES = (
     "starrocks_iceberg",
     # A server too: the official image, driven over Trino's HTTP protocol (bench/trino.py).
     "trino_iceberg",
+    # A server too, Rust end to end: the all-in-one image over MySQL (bench/databend.py).
+    "databend_iceberg",
 )
 
 TABLES = ("lineitem", "orders", "partsupp", "part", "customer", "nation", "region", "supplier")

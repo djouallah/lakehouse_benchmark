@@ -51,4 +51,8 @@ def get_engine(name: str, cfg: Config):
         from bench.tpch.engines.trino_iceberg import TrinoIceberg
 
         return TrinoIceberg(cfg)
+    if name == "databend_iceberg":
+        from bench.tpch.engines.databend_iceberg import DatabendIceberg
+
+        return DatabendIceberg(cfg)
     raise ValueError(f"unknown engine {name!r}; expected one of {list(ENGINES)}")

@@ -14,7 +14,7 @@
   --duckdb_iceberg: #2a78d6; --chdb_iceberg: #eb6834; --polars_iceberg: #1baf7a;
   --lakesail_iceberg: #eda100; --daft_iceberg: #8a5cd1; --pyspark_iceberg: #d6468f;
   --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
-  --pandas_iceberg: #932601;
+  --pandas_iceberg: #932601; --databend_iceberg: #99a7f9;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -23,7 +23,7 @@
     --duckdb_iceberg: #3987e5; --chdb_iceberg: #d95926; --polars_iceberg: #199e70;
     --lakesail_iceberg: #c98500; --daft_iceberg: #9b6ee0; --pyspark_iceberg: #e05a9c;
     --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
-    --pandas_iceberg: #8d4e10;
+    --pandas_iceberg: #8d4e10; --databend_iceberg: #4f58b1;
   }
 }
 * { box-sizing: border-box; }
@@ -344,12 +344,12 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
       <li><b>Daft</b>: ETL only; 16/22 TPC-H queries on 0.7.25, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open), split into <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> (open) decimal precision, Q1 and Q9; <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a> (open) <code>CASE</code> with a decimal and a literal, Q8 and Q14; cross join (fix: <a href="https://github.com/Eventual-Inc/Daft/pull/7573">PR #7573</a>, open); <code>SUBSTRING</code> (fixed on main, <a href="https://github.com/Eventual-Inc/Daft/pull/7577">PR #7577</a>); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged, not yet released). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
       <li><b>Pandas</b>: ETL only; no SQL. Filed: <a href="https://github.com/pandas-dev/pandas/issues/71034">#71034</a> (open, marked as an Arrow limitation) and Arrow <a href="https://github.com/apache/arrow/issues/53290">#53290</a> (open) <code>read_csv(engine="pyarrow")</code> takes the column count from the first row, so the bench uses the one-thread C parser and reads 4 files at once on a thread pool. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#pandas-in-the-etl-only">Details</a></li>
       <li><b>chDB</b>: not in TPC-DS; 6 of 99 queries fail on ClickHouse issues: Q36 and Q66, an alias with the column's name (<a href="https://github.com/ClickHouse/ClickHouse/issues/9715">#9715</a>, open); Q47 and Q57, column names with three or more tables in FROM (<a href="https://github.com/ClickHouse/ClickHouse/issues/34697">#34697</a>, open); Q75, <code>SUM</code> over mixed Decimal and Float (<a href="https://github.com/ClickHouse/ClickHouse/issues/106707">#106707</a>); Q18, <code>CAST(NULL AS decimal)</code> is an error, not NULL. DROP TABLE on Iceberg fails: it sends <code>purgeRequested=False</code> (<a href="https://github.com/ClickHouse/ClickHouse/issues/125410">#125410</a>, fixed in ClickHouse master by <a href="https://github.com/ClickHouse/ClickHouse/pull/125469">PR #125469</a>; chdb-core is still on 26.9.2). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
+      <li><b>Databend</b>: added 2026-10-17. It runs a build of main (Databend's release profile, in the v1.2.952-nightly image) until a nightly carries the decimal fix. Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (fixed by <a href="https://github.com/databendlabs/databend/pull/20594">PR #20594</a>, not yet in a nightly) decimals failed, TPC-H 5/22. Azure reads (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) are in the nightlies, not in a stable release. Iceberg reads take a SAS: the workload identity does not reach its Azure reader.</li>
     </ul>
     <h3>Tried, not added</h3>
     <ul>
       <li><b>Apache Doris</b>: reads and writes OneLake Iceberg on 4.1.4.1 (TPC-H 22/22), but can't read the raw CSV files in the lakehouse: its file functions take no <code>abfss://</code> path. Filed: <a href="https://github.com/apache/doris/issues/68877">#68877</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#apache-doris-iceberg-yes-raw-abfss-files-no">Details</a></li>
       <li><b>Firebolt Core</b>: reads data only from <code>s3://</code>, <code>gs://</code> or <code>file://</code>; rejects OneLake's <code>abfss://</code> paths. Filed: <a href="https://github.com/firebolt-db/firebolt-core/issues/90">#90</a> (open).</li>
-      <li><b>Databend</b>: a build of main passes all three: TPC-H 22/22, the raw CSV files, the Iceberg write (<a href="https://github.com/djouallah/lakehouse_benchmark/actions/runs/39015860524">run</a>). Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (fixed by <a href="https://github.com/databendlabs/databend/pull/20594">PR #20594</a>) decimals failed, TPC-H 5/22; the fix is not yet in a nightly image. Azure reads (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) are in the nightlies, not in a stable release.</li>
       <li><b>DataFusion Comet</b>: its native Iceberg scan has no <code>abfss://</code>, so OneLake scans fall back to the JVM. Filed: <a href="https://github.com/apache/datafusion-comet/issues/6058">#6058</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-comet-rejected-on-abfss">Details</a></li>
       <li><b>DataFusion</b>: its Python package has no Iceberg support: no catalog, no scan, no write (<a href="https://github.com/apache/datafusion-python/issues/1097">#1097</a>). The Iceberg table provider, <a href="https://github.com/apache/datafusion-iceberg">apache/datafusion-iceberg</a>, reads and writes, but it is Rust only and has no release yet. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#datafusion-no-iceberg-in-python">Details</a></li>
       <li><b>pg_lake</b>: (tested on 3.5.3) runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
@@ -366,7 +366,7 @@ const LABEL = {         // bench/charts.py LABEL
   duckdb_iceberg: "DuckDB", chdb_iceberg: "chDB", polars_iceberg: "Polars",
   lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",
   pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
-  pandas_iceberg: "Pandas",
+  pandas_iceberg: "Pandas", databend_iceberg: "Databend",
 };
 const SPARK = "pyspark_iceberg", GLUTEN = "pyspark_gluten_iceberg";
 const SUITES = [
@@ -658,6 +658,10 @@ const ENGINE_ROWS = [
     governed: "Linux Foundation", licence: "Apache 2.0", lang: "C++, Java",
     use: "Distributed SQL, real-time and lakehouse",
     scheduling: "Morsel-driven, push pipelines", execution: "Columnar", install: "Container", runs: "Client-server" },
+  { engine: "databend_iceberg", url: "https://github.com/databendlabs/databend", started: "Datafuse Labs, 2020",
+    governed: "Databend Labs", licence: "Apache 2.0; Elastic 2.0 for enterprise features", lang: "Rust",
+    use: "Cloud data warehouse over object storage",
+    scheduling: "Processor pipelines on a thread pool", execution: "Columnar", install: "Container", runs: "Client-server" },
   { engine: "duckdb_iceberg", url: "https://github.com/duckdb/duckdb", started: "CWI Amsterdam, 2019",
     governed: "DuckDB Foundation", licence: "MIT", lang: "C++",
     use: "In-process SQL, one machine; also the OLAP engine inside OLTP databases",
@@ -727,6 +731,8 @@ const DBT_ROWS = [
     note: "No merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
   { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
     note: `An adapter exists, but it failed when tried, so it is not used. dbt-sail installs full PySpark with its jars, and it conflicts with <code>pyspark-client</code>: you ship Spark to avoid Spark. Sail also cannot name the source file (<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>). <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
+  { engine: "databend_iceberg", level: "partial", adapter: "dbt-databend", url: "https://github.com/databendcloud/dbt-databend",
+    note: "An adapter exists, with incremental models, but it targets Databend's own tables and has not changed since May 2024. Not tried on an Iceberg catalog." },
   { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
     note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
   { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
@@ -761,6 +767,8 @@ const WORKLOAD_ROWS = [
     merge: { ok: true, note: "" } },
   { engine: "starrocks_iceberg", tier: "star", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },
     merge: { ok: false, note: "dbt-starrocks has no merge" } },
+  { engine: "databend_iceberg", tier: "star", file: { ok: true, note: "<code>METADATA$FILENAME</code>" },
+    merge: { ok: null, note: "Not tried on Iceberg" } },
   { engine: "polars_iceberg", tier: "star", file: { ok: true, note: "<code>include_file_paths</code>" },
     merge: { ok: false, note: "<code>sink_iceberg</code> appends or overwrites" } },
   { engine: "lakesail_iceberg", tier: "star", file: { ok: false, note: `<a href="https://github.com/lakehq/sail/issues/1210">sail#1210</a>` },

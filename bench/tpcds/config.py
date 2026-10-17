@@ -51,6 +51,10 @@ ENGINES = (
     # pola-rs/polars#29768; then Q4 on main, #29822). The main build pinned in
     # requirements/polars_iceberg.txt answers 99/99 at SF=10 in 256 s cold (run 37943815509).
     "polars_iceberg",
+    # Databend: added 2026-10-17 after a build of main passed candidate_engine.yml (22/22 TPC-H,
+    # OneLake reads and writes; run 39015860524). The image is that build until a nightly carries
+    # the decimal fix (bench/databend.py).
+    "databend_iceberg",
 )
 
 # The 24 tables of the spec (dsdgen also emits `dbgen_version`, which is not one), LARGEST FIRST
