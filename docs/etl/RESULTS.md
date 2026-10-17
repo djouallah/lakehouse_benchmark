@@ -2,7 +2,7 @@
 
 1000 AEMO daily CSV files read from OneLake, filtered, cast and written as one Iceberg table per engine, on 4 vCPU / 15.6 GB (linux-6.17.0-1022-azure, Python 3.12.15).
 
-Last run: `2026-10-16T14:06:29Z` · commit `1d506c5` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38912978349)
+Last run: `2026-10-17T11:24:00Z` · commit `681a9f9` · [Actions run](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39028513908)
 
 ## Per engine
 
@@ -14,6 +14,7 @@ Last run: `2026-10-16T14:06:29Z` · commit `1d506c5` · [Actions run](https://gi
 | Gluten/Velox | `4.1.1 + iceberg Apache Iceberg 1.11.0 (commit 6976e020b894f6a6777704df2b8c4458cb291ae9)` | 728.8s | 57.0s | 1 | 149,146,763 | — |
 | Trino | `484 (trinodb/trino:484)` | 738.9s | 17.0s | 2 | 149,146,763 | — |
 | Daft | `0.7.25` | 757.9s | 1.6s | 3 | 149,146,763 | — |
+| Databend | `8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)` | 810.3s | 9.2s | 1 | 149,146,763 | — |
 | StarRocks | `4.1.4-4a9848e (starrocks/allin1-ubuntu:4.1-latest)` | 845.7s | 20.8s | 1 | 149,146,763 | — |
 | chDB | `4.4.0` | 878.1s | 1.7s | 3 | 149,146,763 | — |
 | Spark-OSS | `4.1.3 + iceberg Apache Iceberg 1.11.0 (commit 6976e020b894f6a6777704df2b8c4458cb291ae9)` | 982.2s | 15.4s | 3 | 149,146,763 | — |
@@ -25,6 +26,6 @@ Gluten/Velox: Velox does not read the CSVs. Open-source Gluten has no CSV reader
 
 ## History
 
-104 timed rows across 19 runs.
+106 timed rows across 20 runs.
 Raw data: one immutable JSON per run under [`results/etl/`](../../results/etl/), flattened to [`data/etl_results.csv`](../data/etl_results.csv).
 
