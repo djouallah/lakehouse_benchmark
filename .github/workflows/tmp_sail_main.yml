@@ -1,0 +1,81 @@
+name: temporary sail main wheel
+
+# UNTIL THE NEXT PYSAIL RELEASE. lakehq/sail main has Iceberg writes 0.7.2 lacks: DELETE writes
+# position deletes (#2699), UPDATE on v2 tables (#2783), a full overwrite no longer drops a concurrent
+# append (#2770), procedures and metadata tables (#2504), catalog-aware DDL (#2682). Builds the pysail
+# wheel the way their release.yml does (maturin in the manylinux container, protoc installed inside),
+# but without LTO and with parallel codegen: the hosted runner has 4 cores, not their 8. Attaches it to
+# a prerelease of this repo so requirements/*sail*.txt can install it. Deleted then.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: lakehq/sail commit (full SHA) or branch to build.
+        type: string
+        default: main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: lakehq/sail
+          ref: ${{ inputs.ref }}
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install protoc
+        id: protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ github.token }}
+      # A local version, so the wheel never passes for the PyPI release it is not.
+      - name: Local version suffix
+        env:
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          python -c 'import os, re, pathlib; p = pathlib.Path("pyproject.toml"); p.write_text(re.sub(r"""(?m)^version\s*=\s*"([^"]+)""", lambda m: "version = \"" + m.group(1) + "+main" + os.environ["SHA"][:10], p.read_text(), count=1))'
+          grep -m1 '^version' pyproject.toml
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        env:
+          CARGO_INCREMENTAL: 0
+          CARGO_PROFILE_RELEASE_LTO: "off"
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 16
+        with:
+          command: build
+          target: x86_64
+          args: --release --out dist --interpreter python3.11
+          rustup-components: rustfmt
+          manylinux: auto
+          docker-options: -e CARGO_INCREMENTAL -e CARGO_PROFILE_RELEASE_LTO -e CARGO_PROFILE_RELEASE_CODEGEN_UNITS
+          before-script-linux: |
+            protoc_version="${{ steps.protoc.outputs.version }}"
+            yum install -y wget unzip pkgconfig
+            wget -q -O /tmp/protoc.zip "https://github.com/protocolbuffers/protobuf/releases/download/v${protoc_version#v}/protoc-${protoc_version#v}-linux-x86_64.zip"
+            unzip /tmp/protoc.zip -d /usr/local 'bin/*' 'include/*'
+            protoc --version
+      - name: Import check
+        run: |
+          pip install dist/*.whl
+          python -c 'import pysail; print(pysail.__version__)'
+          ls -la dist
+      - name: Attach to a prerelease of this repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          tag="sail-main-${SHA:0:10}"
+          gh release create "$tag" dist/*.whl --repo "${{ github.repository }}" --prerelease \
+            --title "$tag (temporary)" --notes "Sail main at lakehq/sail@$SHA, built for a trial run."
