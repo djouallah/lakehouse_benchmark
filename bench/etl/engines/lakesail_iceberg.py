@@ -60,9 +60,12 @@ class LakesailIceberg:
         scrub.safe_print(f"    {self.cfg.schema}.{self.table} written in one append")
 
     def row_count(self) -> int:
-        return self._spark.sql(f"SELECT count(*) FROM {self.cfg.schema}.{self.table}").collect()[0][
-            0
-        ]
+        # count(filename) shows input_file_name() filled every row; outside the timed load.
+        rows, named, sample = self._spark.sql(
+            f"SELECT count(*), count(filename), min(filename) FROM {self.cfg.schema}.{self.table}"
+        ).collect()[0]
+        scrub.safe_print(f"    filename set on {named} of {rows} rows, e.g. {sample}")
+        return rows
 
     def close(self) -> None:
         self._inner.close()
