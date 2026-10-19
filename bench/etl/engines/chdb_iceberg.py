@@ -21,7 +21,8 @@ ClickHouse master sync, chdb-core#289) chDB could neither create an Iceberg tabl
 ("MergeTree storages require data path") nor drop one (purgeRequested=False, ClickHouse#125410),
 so it streamed Arrow into pyiceberg, which created the table and committed. Run 39179243597 of
 the Iceberg support grid has CREATE TABLE, CTAS and DROP TABLE all working; that workaround is
-gone. `_file` is cast to String, since it is LowCardinality.
+gone. `_file` is CAST to String: it is LowCardinality(String), which the Iceberg writer
+refuses ("Unsupported type for iceberg", run 39180855172), and toString() keeps that type.
 """
 
 from __future__ import annotations
@@ -119,7 +120,7 @@ class ChdbIceberg:
         toFloat64OrNull(c6) AS RUNNO,
         c7 AS DUID,
         {casts},
-        toString(_file) AS filename,
+        CAST(_file AS String) AS filename,
         toInt32(toYear(SETTLEMENTDATE)) AS year
     FROM raw
     """
