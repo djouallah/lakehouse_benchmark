@@ -18,17 +18,17 @@
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
    "date": "2026-10-17"
   },
-  "lakesail_iceberg": {
-   "version": "0.7.2",
-   "run": "38991566476",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
-   "date": "2026-10-17"
-  },
   "chdb_iceberg": {
    "version": "4.4.0",
    "run": "39179243597",
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39179243597",
    "date": "2026-10-19"
+  },
+  "lakesail_iceberg": {
+   "version": "0.7.2",
+   "run": "38991566476",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
+   "date": "2026-10-17"
   },
   "databend_iceberg": {
    "version": "8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)",
@@ -65,10 +65,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -93,10 +93,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -121,10 +121,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -148,10 +148,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -175,10 +175,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -203,10 +203,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -231,12 +231,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -262,12 +262,12 @@
      "o": "no",
      "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38991566476_1_ove... ^^^^^^^^^"
     },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -292,13 +292,13 @@
      "o": "no",
      "n": "Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes."
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -322,10 +322,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -349,12 +349,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "created through CREATE TABLE; ClickHouse has no statement to drop one"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -377,12 +377,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ClickHouse has no statement for a catalog namespace"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -405,10 +405,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -432,10 +432,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -460,10 +460,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -488,10 +488,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -515,10 +515,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -543,10 +543,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -572,10 +572,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -600,10 +600,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -629,12 +629,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
     "lakesail_iceberg": {
      "o": "no",
      "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -658,10 +658,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -686,12 +686,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
     "lakesail_iceberg": {
      "o": "no",
      "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -715,12 +715,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
     "lakesail_iceberg": {
      "o": "no",
      "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -744,12 +744,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
     "lakesail_iceberg": {
      "o": "no",
      "n": "UnsupportedOperationException: unsupported ALTER TABLE operation"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -773,12 +773,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
     "lakesail_iceberg": {
      "o": "no",
      "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_promote"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -802,13 +802,13 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('"
     },
     "databend_iceberg": {
      "o": "no",
@@ -832,10 +832,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -860,13 +860,13 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_props"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_props"
     },
     "databend_iceberg": {
      "o": "no",
@@ -890,13 +890,13 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
     },
     "databend_iceberg": {
      "o": "no",
@@ -920,10 +920,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -949,12 +949,12 @@
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-…"
     },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5…"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -979,10 +979,10 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "chdb_iceberg": {
      "o": "supported"
     },
-    "chdb_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
     "databend_iceberg": {
@@ -1007,12 +1007,12 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
     "lakesail_iceberg": {
      "o": "no",
      "n": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38253752194_1_inspect\"), Identifier(\"snapshots\")]"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -1037,13 +1037,13 @@
      "o": "no",
      "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, …"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1069,13 +1069,13 @@
      "o": "no",
      "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_tag\" CREATE TAG probe_tag ^^^^^^"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1099,13 +1099,13 @@
     "duckdb_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1130,13 +1130,13 @@
      "o": "no",
      "n": "Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean \"iceberg_rewrite_data_files\"?"
     },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
-    },
     "chdb_iceberg": {
      "o": "no",
      "n": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
     },
     "databend_iceberg": {
      "o": "no",

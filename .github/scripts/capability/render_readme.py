@@ -20,9 +20,9 @@ from pathlib import Path
 # The column order, most usable first. Spark is the reference: the Iceberg Java library the others
 # are read against; Trino is built on the same library, with its own SQL and planning. Polars is
 # last because it has no SQL writes (no DELETE, UPDATE, DROP).
-ENGINES = ("spark", "trino", "duckdb", "sail", "chdb", "databend", "polars")
+ENGINES = ("spark", "trino", "duckdb", "chdb", "sail", "databend", "polars")
 # The ones with SQL, for the rows Polars has no operation for.
-SQL = ("spark", "trino", "duckdb", "sail", "chdb", "databend")
+SQL = ("spark", "trino", "duckdb", "chdb", "sail", "databend")
 # The SQL engines asked the DDL and row-level probes that chDB has no statement for.
 FULL_SQL = ("spark", "trino", "duckdb", "sail", "databend")
 TITLE = {
