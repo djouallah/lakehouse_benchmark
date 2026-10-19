@@ -764,4 +764,7 @@ every leg. Polars sums lower because ties-to-even sends about half the ties down
 sends them all up. Neither DuckDB nor Polars rounds the double's exact value correctly in every
 case: both multiply first. A model that wants the same last digit on every engine should not go
 through DOUBLE: it should cast the source text to `DECIMAL(18,5)`, which holds AEMO's values
-exactly, or round explicitly before the cast.
+exactly, or round explicitly before the cast. Filed, both reproduced on the current releases
+(Polars 2.0.0, DuckDB 1.5.6): [polars#30074](https://github.com/pola-rs/polars/issues/30074)
+and [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503). DuckDB's is related to
+#16563, which is closed as completed.
