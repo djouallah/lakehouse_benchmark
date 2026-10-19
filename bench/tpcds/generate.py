@@ -196,8 +196,9 @@ def generate(cfg: TpcdsConfig, force: bool = False) -> dict:
     _mark_complete(catalog, cfg)
     elapsed = time.perf_counter() - overall
     _log(
-        f"total {elapsed:.1f}s wall | gen {totals['gen_s']:.1f}s | upload {totals['upload_s']:.1f}s "
-        f"| {totals['bytes'] / 2**30:.2f} GiB, {totals['rows']:,} rows"
+        f"total {elapsed:.1f}s wall | gen {totals['gen_s']:.1f}s | "
+        f"upload {totals['upload_s']:.1f}s | {totals['bytes'] / 2**30:.2f} GiB, "
+        f"{totals['rows']:,} rows"
     )
     return {
         "sf": cfg.sf,
