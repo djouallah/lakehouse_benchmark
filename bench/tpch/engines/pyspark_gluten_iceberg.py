@@ -1,7 +1,8 @@
 """Spark exactly as pyspark_iceberg, with Gluten + Velox executing the plan natively.
 
-NO RELEASED PACKAGE, BUT A NIGHTLY ONE. Gluten's releases stop at Spark 3.5; Apache's nightly
-builds carry a Velox bundle for Spark 4.1 (since 1.7.0-SNAPSHOT, 2026-06). Compiling Velox in
+THE NIGHTLY, NOT A RELEASE. Gluten 1.7.0 (2026-08-26) ships a Spark 4.1 bundle, but the nightly
+1.8.0-SNAPSHOT is ahead of it, and Apache's nightly builds have carried a Velox bundle for Spark
+4.1 since 1.7.0-SNAPSHOT (2026-06). Compiling Velox in
 CI was the alternative -- hours cold, tens of GB of disk -- and is deliberately not done: if the
 nightly cannot read OneLake, Gluten is out.
 
