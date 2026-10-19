@@ -342,7 +342,12 @@ def _trino_type(arrow_type) -> str:
         return "date"
     if pa.types.is_floating(arrow_type):
         return "double"
-    if pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
+    # tpcgen-cli 4 writes its strings as Arrow Utf8View; parquet stores all three the same way.
+    if (
+        pa.types.is_string(arrow_type)
+        or pa.types.is_large_string(arrow_type)
+        or pa.types.is_string_view(arrow_type)
+    ):
         return "varchar"
     raise ValueError(f"no Trino type for {arrow_type}")
 
