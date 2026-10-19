@@ -316,9 +316,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .nx p { margin: 0; }
 .nx a { color: var(--accent); }
 /* Lakehouse overview: three eras on a rail, then the open lakehouse as a stack with a live story. */
-.eras { list-style: none; margin: 14px 0 18px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
+.eras { list-style: none; margin: 10px 0 12px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
 .eras::before { content: ""; position: absolute; left: 24px; right: 24px; top: 9px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--grid), var(--accent)); }
-.eras li { position: relative; padding: 14px 16px 16px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.eras li { position: relative; padding: 10px 14px 12px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; transition: transform .2s, box-shadow .2s, border-color .2s; }
 .eras li::before { content: ""; position: absolute; top: -26px; left: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--grid); border: 3px solid var(--surface); }
 .eras li.now { border-color: color-mix(in srgb, var(--accent) 55%, var(--grid)); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 12%, var(--raised)), var(--raised) 65%); }
 .eras li.now::before { background: var(--accent); animation: ovping 1.6s ease-out infinite; --c: var(--accent); }
@@ -327,7 +327,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .eras .now .when { color: var(--accent); }
 .eras h3 { margin: 4px 0 6px; font-size: 17px; color: var(--ink); letter-spacing: -.01em; }
 .eras p { margin: 0; }
-.ov { --hot: var(--accent); max-width: 980px; margin: 18px auto 8px; display: grid; }
+.ov { --hot: var(--accent); max-width: 980px; margin: 12px auto 4px; display: grid; }
 .ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
 .ov-spark { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; font-size: 18px; background: linear-gradient(135deg, var(--accent), var(--hot)); box-shadow: 0 4px 14px color-mix(in srgb, var(--hot) 40%, transparent); }
 .ov-whot { display: grid; }
@@ -335,13 +335,13 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .ov-whot span { font-size: 13px; color: var(--ink-2); }
 .ov-job { font-size: 13px; color: var(--ink-2); padding: 4px 12px; border-radius: 999px; background: var(--track); white-space: nowrap; }
 .ov-job b { transition: color .3s; }
-.ov-wire { position: relative; height: 48px; display: flex; justify-content: center; }
+.ov-wire { position: relative; height: 34px; display: flex; justify-content: center; }
 .ov-wire::before { content: ""; width: 3px; height: calc(100% - 7px); background: repeating-linear-gradient(to bottom, var(--hot) 0 6px, transparent 6px 12px); background-size: 3px 12px; animation: ovflow .6s linear infinite; }
 .ov-wire::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-bottom: 0; border-top-color: var(--hot); }
 .ov-wire span { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 @keyframes ovflow { to { background-position: 0 12px; } }
-.ov-band { border: 1px solid var(--grid); border-radius: 18px; padding: 16px 18px 18px; background: linear-gradient(180deg, var(--raised), color-mix(in srgb, var(--track) 55%, var(--raised))); box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 10px 28px rgb(0 0 0 / .05); }
-.ov-band header { display: flex; justify-content: flex-start; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ov-band { border: 1px solid var(--grid); border-radius: 18px; padding: 12px 16px 14px; background: linear-gradient(180deg, var(--raised), color-mix(in srgb, var(--track) 55%, var(--raised))); box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 10px 28px rgb(0 0 0 / .05); }
+.ov-band header { display: flex; justify-content: flex-start; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .ov-band em { font: 700 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; color: var(--accent); letter-spacing: .06em; }
 .ov-band header b { font-size: 18px; letter-spacing: -.01em; }
 .ov-band header span { color: var(--ink-2); font-size: 14px; }
@@ -915,39 +915,30 @@ const dbtOk = engine => {
 // those are on the Issues tab. Each card is checked against its upstream project before it goes here.
 const NEXT_ROWS = [
   { title: "Server-side planning",
-    text: `The catalog reads the manifests and gives the engine the list of files to read. The engine gets thinner:
-      no metadata work, only reading and computing. It is in the Iceberg REST spec, and the Java client has it since
-      Iceberg 1.11. The Rust, C++ and Go clients are working on it.` },
+    text: `The catalog reads the manifests and hands the engine its list of files. In the REST spec and the Java
+      client since Iceberg 1.11; Rust, C++ and Go are on the way.` },
   { title: "Control flow in SQL",
-    text: `<code>IF</code> and <code>WHILE</code> inside SQL. A host language like Python can do it today, but then
-      the optimizer sees one statement at a time and nothing around it. Nothing beats one SQL file.` },
+    text: `<code>IF</code> and <code>WHILE</code> inside SQL, so the optimizer sees the whole job, not one statement
+      at a time from Python.` },
   { title: "One-file commits (Iceberg v4)",
-    text: `Today every commit writes a new metadata.json, a new manifest list and at least one manifest, even for one
-      small file. The Iceberg v4 proposal keeps small changes in one file near the root and tidies up later. Delta 5.0
-      may use the same metadata. It is still a proposal.` },
+    text: `Today a one-file commit writes three metadata files. The v4 proposal keeps small changes in one file near
+      the root; Delta 5.0 may share it.` },
   { title: "A sandbox for user code",
-    text: `SQL is safe to share: the engine decides what each user can read. A Python function inside a query is
-      different: it runs inside the engine, with the engine's rights, and by default nothing stops it from reading
-      other users' data. Mixing SQL and code made engines powerful, but it broke the isolation between users. The
-      fix is to run each user's code in a sandbox, like gVisor or WebAssembly, with no access to files or the
-      network. One more reason to keep the work in SQL.` },
+    text: `A Python function in a query runs with the engine's rights and can read other users' data. Run it in a
+      sandbox (gVisor, WebAssembly), or keep the work in SQL.` },
   { title: "Row-level commits",
-    text: `When two jobs change existing data, the check today is per file: if they touched the same file, the second
-      commit fails, even if they changed different rows. Iceberg v3 gives every row an id (row lineage), so the check
-      can be per row. See <a href="#concurrency">Concurrency</a>.` },
+    text: `Two jobs that touch the same file conflict today, even on different rows. Iceberg v3 row lineage lets the
+      check be per row (<a href="#concurrency">Concurrency</a>).` },
   { title: "Dynamic vertical scaling",
-    text: `The machine gets more CPU and memory while the job runs, with no restart, and gives them back after.
-      Containers can already be resized while they run. Most engines size their memory once, at start, so the
-      engine must also see the new memory and use it.` },
+    text: `More CPU and memory while the job runs, with no restart. Containers can do it; most engines size their
+      memory once, at start.` },
   { title: "Friendly DataFusion",
-    text: `One Rust query engine, and many products built on it: Sail and Comet among them. Iceberg support now has
-      its own Apache project, <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
+    text: `One Rust engine under many products, Sail and Comet among them. Iceberg now has its own Apache project,
+      <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
   { title: "Spark Connect for everything",
-    text: `Spark becomes an API. The client speaks Spark Connect, and the engine behind it can change: Spark with a
-      native accelerator (<a href="https://github.com/apache/gluten">Gluten/Velox</a>,
-      <a href="https://github.com/apache/datafusion-comet">Comet</a>), or a full rewrite with no JVM
-      (<a href="https://github.com/lakehq/sail">Sail</a>). Several servers now speak the protocol, so a Spark proposal
-      lets a server say what it supports: <a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>.` },
+    text: `Spark becomes an API, and the engine behind it can change: <a href="https://github.com/apache/gluten">Gluten/Velox</a>,
+      <a href="https://github.com/apache/datafusion-comet">Comet</a>, or <a href="https://github.com/lakehq/sail">Sail</a>
+      with no JVM (<a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>).` },
 ];
 
 function renderNext() {
@@ -963,11 +954,11 @@ function renderNext() {
 // from all of them. Hovering an engine holds the story on it; reduced motion shows the picture still.
 const ERAS = [
   { when: "1990s →", title: "The warehouse",
-    text: "Storage and compute in one product, the data in its own format. The engine owns the data; changing engine means a migration." },
-  { when: "2010s →", title: "The Java lakehouse",
-    text: "The files move to object storage, in open formats like Parquet. The table formats and their catalogs were born on the JVM, so writing a table needed the Java library, and the engines were big JVM clusters." },
+    text: "Storage and compute in one product. The engine owns the data; changing engine is a migration." },
+  { when: "2010s →", title: "The big-cluster lakehouse",
+    text: "Open files in object storage, but writing a table needed a Java cluster (Spark, Trino) or a commercial cloud warehouse." },
   { when: "Now", title: "The open lakehouse", now: true,
-    text: "The catalog is a REST API, and table libraries exist in Rust, C++, Python and Go. A small engine inside a Python process writes the same tables as a cluster. The state lives in the catalog, not in any engine." },
+    text: "A REST catalog, and table libraries in Rust, C++ and Python: a library in a Python process writes the same tables as a cluster." },
 ];
 const OV_GROUPS = [
   { title: "A library in Python", has: runs => runs === "In-process" },
@@ -992,18 +983,15 @@ function renderOverview() {
     <ol class="eras">${ERAS.map(r => `
       <li class="${r.now ? "now" : ""}" tabindex="0"><span class="when">${r.when}</span><h3>${r.title}</h3><p>${r.text}</p></li>`).join("")}
     </ol>
-    <p class="intro">A lakehouse splits a database in three: the <b>files</b> in an object store, the <b>state</b> in a
-      catalog, and the <b>compute</b> in any engine. Iceberg is the contract between them. Any engine that speaks it, big
-      or small, open source or commercial, reads and writes the same tables, and none of them owns the data.</p>
-    <p class="intro">That is the opening for AI. An agent picks the engine that fits today's job and changes it tomorrow,
-      because nothing it needs lives inside the engine.</p>
+    <p class="intro"><b>Files</b> in an object store, the <b>state</b> in a catalog, <b>compute</b> in any engine, and none
+      of them owns the data. For AI that is the opening: an agent picks today's engine and changes it tomorrow.</p>
     <div class="ov" id="ov" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog, and reads and writes the files in the object store.">
       <div class="ov-who"><span class="ov-spark" aria-hidden="true">✦</span>
         <div class="ov-whot"><b>AI agents · people · scheduled jobs</b><span>write SQL and pick the engine for the job</span></div>
         <span class="ov-job">today's job → <b id="ov-job"></b></span></div>
       <div class="ov-wire"><span>SQL</span></div>
       <section class="ov-band">
-        <header><em>01</em><b>Compute</b><span>Engines are stateless: they start, do the work, and stop.</span></header>
+        <header><em>01</em><b>Compute</b><span>Stateless: start, work, stop.</span></header>
         <div class="ov-groups">${groups.map(g => `
           <div><h4>${g.title}</h4><div class="ov-pills">${g.engines.map(pill).join("")}</div></div>`).join("")}
           <div><h4>Commercial engines</h4><div class="ov-pills"><span class="ov-pill ghost">the same catalog, the same tables</span></div></div>
@@ -1011,20 +999,16 @@ function renderOverview() {
       </section>
       <div class="ov-wire"><span>commit</span></div>
       <section class="ov-band state" id="ov-state">
-        <header><em>02</em><b>Iceberg REST catalog</b><span>The state: which tables exist, which snapshot is current. Every commit goes through it.</span></header>
+        <header><em>02</em><b>Iceberg REST catalog</b><span>The state: which tables exist, which snapshot is current.</span></header>
         <div class="ov-meta"><span class="tag">here: OneLake</span><span class="tag" id="ov-snap"></span><span class="ok">commit ✓</span></div>
       </section>
       <div class="ov-wire"><span>points to the current metadata</span></div>
       <section class="ov-band">
-        <header><em>03</em><b>Object store</b><span>Parquet data files and Iceberg metadata, in open formats: yours, not the engine's.</span></header>
+        <header><em>03</em><b>Object store</b><span>Parquet and Iceberg metadata, open formats: yours, not the engine's.</span></header>
         <div class="ov-files" id="ov-files"></div>
       </section>
     </div>
-    <p class="intro">The rest of this page tests the premise: how a commit works (<a href="#concurrency">Concurrency</a>,
-      <a href="#anatomy">Anatomy</a>), how an engine does less work (<a href="#pruning">File pruning</a>,
-      <a href="#plans">Query plans</a>), what each engine supports (<a href="#iceberg">Iceberg support</a>), how fast it is
-      (<a href="#performance">Benchmarks</a>), what breaks (<a href="#reports">Bug reports</a>), all of it on one page
-      (<a href="#scorecard">Scorecard</a>), and what comes next (<a href="#future">Future</a>).</p>`;
+`;
   for (const b of $(OVERVIEW.id).querySelectorAll(".ov-pill[data-e]")) {
     const e = b.dataset.e, row = ENGINE_ROWS.find(r => r.engine === e);
     b.onmouseenter = b.onfocus = () => {
@@ -1153,8 +1137,7 @@ function renderScorecard() {
     return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
   };
   sec.innerHTML = `
-    <p class="caption">Every tab on one page. Each column is a question; click a column for the details, and a cell
-      that is not a yes for the reason.</p>
+    <p class="caption">Every tab on one page. Click a column for the details, a cell for the reason.</p>
     <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
     <p class="verdict">${verdict}</p>
     <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span></div>
@@ -1164,16 +1147,10 @@ function renderScorecard() {
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
         ${cells[r.engine].map((c, i) => mark(c, r.engine, SC_COLS[i])).join("")}
       </tr>`).join("")}</tbody>`).join("")}</table></div>
-    <p class="note">Iceberg core: the Core group of the <a href="#iceberg">Iceberg support</a> grid, the minimum an engine needs
-      to own a table. Gluten/Velox is a plugin inside Spark, so its Iceberg operations are Spark-OSS's. Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, as on <a href="#performance">Benchmarks</a>, and how much
-      slower than the fastest.</p>
-    <p class="note">My workload is one dbt project, <a href="${WORKLOAD_REPO}">analytics-as-code</a>. It is arbitrary: it is
-      the features I need. Yours needs others, so score the engines on yours, and you may reach a different conclusion.</p>
-    <p class="note">The project loads AEMO CSV files from OneLake Files into Iceberg tables every hour, today with DuckDB.
-      To replace it, an engine needs three things: a column with each row's source file name (what its
-      <a href="#etl">Light ETL</a> reads), a dbt 1 adapter (tried in <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for
-      DuckDB, LakeSail and Polars, the adapter docs for the others), and MERGE (the <a href="#iceberg">Iceberg support</a>
-      probe where there is one). One no and it is not an option for me. Hover a cell for the three.</p>`;
+    <p class="note">Iceberg core: the Core group of <a href="#iceberg">Iceberg support</a> (Gluten/Velox is Spark-OSS's,
+      a plugin inside it). Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, and how much slower than the fastest.</p>
+    <p class="note">My workload is one dbt project, <a href="${WORKLOAD_REPO}">analytics-as-code</a>: it needs the source file
+      name, a dbt adapter and MERGE (hover a cell). It is arbitrary; yours needs other things and may reach a different conclusion.</p>`;
   for (const td of sec.querySelectorAll("td[data-tip]")) {
     const e = td.dataset.tip;
     td.onmouseenter = () => {
@@ -1211,8 +1188,7 @@ function renderReports() {
     [prs.length, "pull requests from the bench"],
   ];
   sec.innerHTML = `
-    <p class="intro">The best way to help an engine is a bug report its maintainers can reproduce. It does not need to
-      come with a fix: the people who know the code write the fix, often within days.</p>
+    <p class="intro">The best help for an engine is a bug report it can reproduce. No PR needed: the maintainers fix it, often within days.</p>
     <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
     <div class="legend"><span class="fixed"><i></i>fixed</span><span class="open"><i></i>open</span><span class="closed"><i></i>closed, not fixed</span>
       <span>one dot per report, oldest first</span></div>
@@ -1225,16 +1201,15 @@ function renderReports() {
       </div>`).join("")}</div>
     <h3>What makes a report land</h3>
     <ol class="land">
-      <li><b>One script, a clean machine.</b> <code>pip install</code> the release, make or download the data in the script, run the query.</li>
-      <li><b>The smallest case that still fails.</b> One query on one table, not the whole benchmark.</li>
-      <li><b>Expected and actual.</b> The error text, or the rows that are wrong next to the rows that are right.</li>
-      <li><b>The version, and main.</b> Say whether the main branch still fails; the bench builds Polars, LakeSail and Databend from main to check.</li>
-      <li><b>One bug per issue.</b> Daft <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> was split into
-        <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> and <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a>, so each can be fixed and closed on its own.</li>
+      <li><b>One script, a clean machine:</b> <code>pip install</code>, make the data, run the query.</li>
+      <li><b>The smallest case:</b> one query, one table.</li>
+      <li><b>Expected and actual:</b> the error, or the wrong rows.</li>
+      <li><b>The version, and main:</b> say whether main still fails.</li>
+      <li><b>One bug per issue:</b> Daft <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> became
+        <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> and <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a>.</li>
     </ol>
-    <p class="src">From the GitHub API on ${esc(rep.updated.slice(0, 10))}: every issue and pull request on the
-      <a href="#issues">Issues</a> tab that the bench opened. Fixed is what GitHub says, closed as completed, released or not.
-      ${others} more issues there were opened by others and are not counted.</p>`;
+    <p class="src">GitHub API, ${esc(rep.updated.slice(0, 10))}: the issues and PRs on the <a href="#issues">Issues</a> tab the
+      bench opened; fixed means closed as completed. ${others} issues opened by others are not counted.</p>`;
   const byId = Object.fromEntries(reports.map(i => [i.id, i]));
   for (const dot of sec.querySelectorAll(".dot")) {
     const i = byId[dot.dataset.id];
@@ -1260,7 +1235,7 @@ const STORIES = [
   { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
     lede: "Spark runs joins in the order the SQL lists them. Its cost-based optimizer is off by default, and Q72 lists inventory before the filters that make it small." },
   { id: "q64", title: "Q64", good: "tpcds_q64_trino_iceberg_sf100", bad: "tpcds_q64_duckdb_iceberg_sf100",
-    lede: "DuckDB now reads each Iceberg table's row count, but not its column statistics (distinct counts, min and max). Without them it misjudges the joins: it pairs every customer with every demographics row on a ≠ test, which it guesses makes 249M rows; the real count is about 3 trillion. On its own file format, with full statistics, DuckDB runs Q64 in 12 GB (duckdb#21896)." },
+    lede: "DuckDB reads Iceberg row counts but not column statistics, so it guesses a ≠ join makes 249M rows; it makes about 3 trillion. On its own format, with full statistics, it runs Q64 in 12 GB (duckdb#21896)." },
 ];
 const plans = {};  // file -> plan, or null when it could not be read
 const pl = { story: STORIES[0].id };
@@ -1304,10 +1279,8 @@ async function renderPlans() {
   stopRace();
   const name = p => LABEL[p.engine] ?? p.engine;
   const chips = STORIES.length < 2 ? "" : STORIES.map(x => `<button aria-pressed="${x.id === s.id}" data-story="${x.id}">${x.title}</button>`).join("");
-  const intro = `<p class="intro">An engine does not run your SQL as written. Its <b>optimizer</b> picks the order of the joins,
-    and it picks with <b>statistics</b>: how many rows each table has, how many distinct values, how much a filter keeps.
-    A good order keeps every step small. A bad one builds a huge middle result, then spills to disk or runs out of memory.
-    Below: same query, same data, same 16 GB machine. Only the plan is different.</p>`;
+  const intro = `<p class="intro">The <b>optimizer</b> picks the join order from <b>statistics</b>. A good order keeps every
+    step small; a bad one spills or runs out of memory. Same query, data and 16 GB machine; only the plan differs.</p>`;
   if (!good || !bad || !good.root || !bad.root) {
     sec.innerHTML = `<div class="chips">${chips}</div>${intro}<div class="empty">This story's plans are not captured yet.</div>`;
     bindStoryChips(sec); return;
@@ -1334,8 +1307,7 @@ async function renderPlans() {
     </div>
     <div id="pl-why" hidden><h3>What went wrong</h3><ol class="steps" id="pl-steps"></ol></div>
     <p class="src">${[good, bad].map(p => `${name(p)} ${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))}, TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}: <a href="${esc(p.run_url || "#")}">capture run</a>`).join(" · ")}.
-      Rows are what each step produced in that run; estimates are the engine's own, before it ran. Times are from these
-      runs, with each engine's plan instrumentation on; the benchmark's own times are on the Benchmarks tab.</p>`;
+      Rows are real, estimates the engine's own; times include plan instrumentation.</p>`;
   bindStoryChips(sec);
   $("pl-play").onclick = () => startRace(good, bad);
   for (const [plan, side] of [[good, "good"], [bad, "bad"]]) drawTree(plan, side);
@@ -1973,14 +1945,14 @@ const prune = { t: 0, timer: null };
 const PR_MONTHS = ["Jan", "Feb", "Mar"], PR_DAYS = ["1–10", "11–20", "21–31"], PR_GROUPS = ["11–13", "14–15", "16–18", "19–20"];
 const PR_READ = [36, 36, 12, 4, 1, 1, 12, 1];  // row groups the engine still has to read at each step
 const pruningSay = t => [
-  "The query asks for one day, 14 March. The table holds three months: 9 data files of 4 row groups each.",
-  "With no pruning, the engine opens all 9 files and reads all 36 row groups, then keeps one day of rows.",
-  "The manifest list stores the partition range of each manifest. January and February cannot hold 14 March: two manifests and their 6 files are skipped, never opened.",
-  "The March manifest stores the min and max of every column, for each file. Only the file with days 11 to 20 can hold the 14th: two more files skipped.",
-  "Inside that file, the Parquet footer stores the min and max of each row group. The engine reads 1 row group of 4.",
-  "1 row group of 36. The metadata did the work before a single row was read.",
-  "The same table, written in random order. The partitions still skip January and February, but every March file holds days 1 to 31: each range covers the 14th, so nothing else is skipped, and 12 row groups are read. Sort the data on the columns you filter on.",
-  `The same statistics decide the join order (<a href="#plans">Query plans</a>). And with server-side planning, the catalog does this pruning for the engine (<a href="#future">Future</a>).`,
+  "One day, 14 March, from a quarter: 9 files of 4 row groups.",
+  "No pruning: open all 9 files, read all 36 row groups, keep one day.",
+  "The manifest list has each manifest's partition range: January and February are skipped, unopened.",
+  "The March manifest has min and max per file: only days 11–20 can hold the 14th.",
+  "The Parquet footer has min and max per row group: read 1 of 4.",
+  "1 row group of 36, before a single row was read.",
+  "Written in random order, every March file spans days 1–31: nothing else is skipped, 12 row groups. Sort on what you filter.",
+  `The same statistics pick the join order (<a href="#plans">Query plans</a>); server-side planning moves this into the catalog (<a href="#future">Future</a>).`,
 ][t];
 const PR_ROWS = ["Query", "Manifest list", "Manifest files", "Data files", "Row groups"];
 
@@ -2023,8 +1995,7 @@ function pruningSvg(wide, t) {
 function renderPruning() {
   stopPruning();
   $(PRUNING.id).innerHTML = `
-    <p class="intro">The fastest data to read is the data you never open. Every layer of an Iceberg table stores the range of
-      the values under it, so a filter can skip whole branches of the tree before a single row is read.</p>
+    <p class="intro">The fastest data is the data you never open: every layer stores the range of values under it.</p>
     <div class="ctl"><button class="play" id="pr-play"></button>
       <button class="ghost" id="pr-back">‹ Back</button><button class="ghost" id="pr-step">Next ›</button>
       <span class="hint">or the arrow keys</span></div>
