@@ -28,6 +28,8 @@ REPORTER = "djouallah"  # the bench's own reports; issues by others that it link
 # Closed as completed on GitHub, but nothing was fixed: the Issues tab says why.
 NOT_FIXED = {
     "duckdb/duckdb-iceberg#1006": "closed: DuckDB always writes positional deletes",
+    "ClickHouse/ClickHouse#126628": "closed: expected behavior, cast_keep_nullable = 1 is the opt-in",
+    "ClickHouse/ClickHouse#126633": "closed: kept in ClickHouse Cloud only",
 }
 LINK = re.compile(r'href="https://github\.com/([\w.-]+/[\w.-]+)/(issues|pull)/(\d+)"')
 
