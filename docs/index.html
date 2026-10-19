@@ -910,6 +910,8 @@ const DBT_ROWS = [
 // for the others, and for Polars, whose grid cell is na (no DML: dbt-polars merges through pyiceberg) (tests/test_results_page.py keeps the two in step); the file name column is what
 // each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
 const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
+// The "can run my workload" tile opens the dbt example's dashboard: each engine running the project, graded.
+const DBT_EXAMPLE = "https://djouallah.github.io/fabric-dbt-examples/";
 // Three groups by age and purpose: veteran (Spark, Trino, and Gluten/Velox which runs Spark's plan), new star
 // (started 2019-2024, general purpose), niche (built for one job). Names only, no judgement in the header.
 const WORKLOAD_TIERS = [
@@ -1189,7 +1191,7 @@ function renderScorecard() {
     [engines.length, "engines, one 16 GB machine"],
     [yes("tpch"), "finish TPC-H at SF 100"],
     [yes("tpcds"), "finish TPC-DS at SF 100"],
-    [yes("workload"), "can run my workload", WORKLOAD_REPO],
+    [yes("workload"), "can run my workload", DBT_EXAMPLE],
     ...(reports ? [[reports, "bug reports filed upstream"]] : []),
   ];
   const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
