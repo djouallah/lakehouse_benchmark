@@ -26,9 +26,9 @@
   },
   "chdb_iceberg": {
    "version": "4.4.0",
-   "run": "38991566476",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
-   "date": "2026-10-17"
+   "run": "39179243597",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39179243597",
+   "date": "2026-10-19"
   },
   "databend_iceberg": {
    "version": "8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)",
@@ -69,8 +69,7 @@
      "o": "supported"
     },
     "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -98,8 +97,7 @@
      "o": "supported"
     },
     "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -238,7 +236,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -269,7 +267,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38991566476_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -328,8 +326,7 @@
      "o": "supported"
     },
     "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_d…"
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -357,7 +354,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+     "n": "created through CREATE TABLE; ClickHouse has no statement to drop one"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -869,7 +866,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38254816796_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     },
     "databend_iceberg": {
      "o": "no",
@@ -957,7 +954,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: a9be9bfa-501e-00be-744f-5…"
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1107,8 +1104,8 @@
      "n": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
     },
     "chdb_iceberg": {
-     "o": "no-op",
-     "n": "returned success and data files went 2 -> 2"
+     "o": "no",
+     "n": "ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)"
     },
     "databend_iceberg": {
      "o": "no",

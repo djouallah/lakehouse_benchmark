@@ -7,35 +7,42 @@
    "group": "session",
    "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
    "outcome": "supported",
-   "detail": "chdb 4.4.0; 416 catalog table(s) listed"
+   "detail": "chdb 4.4.0; 419 catalog table(s) listed"
   },
   {
    "key": "create_table",
    "group": "create",
    "question": "CREATE TABLE",
-   "outcome": "no",
-   "detail": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+   "outcome": "supported",
+   "detail": "fields [(1, 'id', 'long'), (2, 'v', 'long')], format-version 2"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
   },
   {
    "key": "ctas",
    "group": "create",
    "question": "CREATE TABLE ... AS SELECT",
-   "outcome": "no",
-   "detail": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+   "outcome": "supported",
+   "detail": "CTAS: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees"
   },
   {
    "key": "partitioned",
    "group": "create",
    "question": "PARTITION BY p, then INSERT",
    "outcome": "supported",
-   "detail": "spec ['identity']; 3 rows over 2 partition(s), 2 file(s); table made by pyiceberg"
+   "detail": "spec ['identity']; 3 rows over 2 partition(s), 2 file(s)"
   },
   {
    "key": "sorted_at_create",
    "group": "create",
    "question": "ORDER BY at create (sort order)",
-   "outcome": "skipped",
-   "detail": "no table could be created"
+   "outcome": "supported",
+   "detail": "sort order [\n  1 ASC NULLS FIRST\n]"
   },
   {
    "key": "partition_bucket",
@@ -77,28 +84,28 @@
    "group": "write",
    "question": "INSERT INTO ... VALUES",
    "outcome": "supported",
-   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees; table made by pyiceberg; 1 commit(s)"
+   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees; 1 commit(s)"
   },
   {
    "key": "insert_select",
    "group": "write",
    "question": "INSERT INTO ... SELECT",
    "outcome": "supported",
-   "detail": "INSERT INTO ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; chDB agrees; table made by pyiceberg"
+   "detail": "INSERT INTO ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; chDB agrees"
   },
   {
    "key": "delete_from",
    "group": "write",
    "question": "DELETE FROM",
    "outcome": "supported",
-   "detail": "DELETE FROM: pyiceberg reads [(2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+   "detail": "DELETE FROM: pyiceberg reads [(2, 20), (3, 30)]; chDB agrees"
   },
   {
    "key": "alter_delete",
    "group": "write",
    "question": "ALTER TABLE ... DELETE WHERE",
    "outcome": "supported",
-   "detail": "ALTER TABLE ... DELETE: pyiceberg reads [(2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+   "detail": "ALTER TABLE ... DELETE: pyiceberg reads [(2, 20), (3, 30)]; chDB agrees"
   },
   {
    "key": "update",
@@ -112,14 +119,14 @@
    "group": "write",
    "question": "ALTER TABLE ... UPDATE",
    "outcome": "supported",
-   "detail": "ALTER TABLE ... UPDATE: pyiceberg reads [(1, 999), (2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+   "detail": "ALTER TABLE ... UPDATE: pyiceberg reads [(1, 999), (2, 20), (3, 30)]; chDB agrees"
   },
   {
    "key": "merge_into",
    "group": "write",
    "question": "MERGE INTO",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_38254816796_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
   },
   {
    "key": "truncate",
@@ -127,6 +134,13 @@
    "question": "TRUNCATE TABLE",
    "outcome": "no",
    "detail": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE TABLE",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, ORDER BY, LIMIT, OFFSET, FETCH, SETTINGS, end of query. (SYNTAX_ERROR)"
   },
   {
    "key": "add_column",
@@ -147,7 +161,7 @@
    "group": "schema",
    "question": "ALTER TABLE RENAME COLUMN",
    "outcome": "supported",
-   "detail": "renamed, data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees; table made by pyiceberg"
+   "detail": "renamed, data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; chDB agrees"
   },
   {
    "key": "type_promotion",
@@ -175,7 +189,7 @@
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '38254816796_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET\u2026"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET\u2026"
   },
   {
    "key": "sort_order_evolution",
@@ -210,7 +224,7 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: a9be9bfa-501e-00be-744f-5aa356000000. (STD_EXCEPTION)"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5f6564000000. (STD_EXCEPTION)"
   },
   {
    "key": "create_branch",
@@ -230,22 +244,36 @@
    "key": "expire_snapshots",
    "group": "maintenance",
    "question": "ALTER TABLE ... EXECUTE expire_snapshots",
-   "outcome": "no",
-   "detail": "ChdbError: Code: 48. DB::Exception: expire_snapshots is not supported for Iceberg tables backed by a transactional catalog. (NOT_IMPLEMENTED)"
+   "outcome": "no-op",
+   "detail": "returned success and history went 3 -> 3"
   },
   {
    "key": "compaction",
    "group": "maintenance",
    "question": "OPTIMIZE TABLE (compaction)",
-   "outcome": "no-op",
-   "detail": "returned success and data files went 2 -> 2"
+   "outcome": "no",
+   "detail": "ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "rewrite manifests (no statement)",
+   "outcome": "no",
+   "detail": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
   },
   {
    "key": "namespace",
    "group": "catalog",
    "question": "CREATE TABLE in a new namespace (no namespace statement)",
    "outcome": "no",
-   "detail": "ChdbError: Code: 79. DB::Exception: MergeTree storages require data path. (INCORRECT_FILE_NAME)"
+   "detail": "created through CREATE TABLE; ClickHouse has no statement to drop one"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "namespace IF NOT EXISTS (no namespace statement)",
+   "outcome": "no",
+   "detail": "ClickHouse has no statement for a catalog namespace"
   },
   {
    "key": "rename_table",
@@ -258,8 +286,8 @@
    "key": "drop_table",
    "group": "catalog",
    "question": "DROP TABLE",
-   "outcome": "no",
-   "detail": "ChdbError: Code: 736. DB::Exception: Failed to drop table DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/namespaces/_bench_capability/tables/ch_38254816796_1_drop?purgeRequested=False. HTTP status code: 405 'Method Not Allowed', body length: 0 bytes, body: ''. (DATALAKE_DATABASE_ERROR)"
+   "outcome": "supported",
+   "detail": "gone from the catalog; 0 of 1 data file(s) still in storage"
   },
   {
    "key": "race_append",
@@ -281,37 +309,9 @@
    "question": "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
-  },
-  {
-   "key": "create_if_not_exists",
-   "group": "create",
-   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
-   "outcome": "supported",
-   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
-  },
-  {
-   "key": "insert_overwrite",
-   "group": "write",
-   "question": "INSERT OVERWRITE TABLE",
-   "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_38991566476_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, ORDER BY, LIMIT, OFFSET, FETCH, SETTINGS, end of query. (SYNTAX_ERROR)"
-  },
-  {
-   "key": "rewrite_manifests",
-   "group": "maintenance",
-   "question": "rewrite manifests (no statement)",
-   "outcome": "no",
-   "detail": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
-  },
-  {
-   "key": "namespace_existing",
-   "group": "catalog",
-   "question": "namespace IF NOT EXISTS (no namespace statement)",
-   "outcome": "no",
-   "detail": "ClickHouse has no statement for a catalog namespace"
   }
  ],
- "run": "38991566476",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
- "date": "2026-10-17"
+ "run": "39179243597",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39179243597",
+ "date": "2026-10-19"
 }
