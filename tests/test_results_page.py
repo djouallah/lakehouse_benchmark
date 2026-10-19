@@ -29,6 +29,8 @@ def test_every_engine_has_an_engines_row():
         for field in ('install: "', 'runs: "', 'scheduling: "'):
             assert field in row, (engine, field)
         assert 'execution: "Columnar"' in row or 'execution: "Row"' in row, engine
+        # The overview's cluster facts split the engines on this field.
+        assert 'machines: "Cluster"' in row or 'machines: "One"' in row, engine
 
 
 def test_every_engine_has_a_dbt_row():
