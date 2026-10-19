@@ -238,8 +238,10 @@ Largest scale each engine completes, cold, every statement answered:
   35726316639). Generation now writes parquet with DuckDB and registers it with pyiceberg
   `add_files`, the same path as TPC-H.
 - **dsdgen output differs between DuckDB 1.5.5 and the 2.0 nightly**: same row counts, different
-  values. The generator must be the DuckDB engine's own build, or engines on different builds
-  compare different data. The workflows pass the generator's nightly run id to the DuckDB job.
+  values. While DuckDB generated TPC-DS, the generator had to be the DuckDB engine's own build.
+  Since 2026-10-20 both suites come from tpcgen-cli 4.0.0 (output matches the C `dsdgen`; pinned
+  in requirements/catalog.txt and smoke.txt), so no engine is also the generator. 4.0.0 also
+  writes Iceberg field ids itself, which ended the pyarrow rewrite TPC-H paid for Polars.
 - **The engine is the nightly CLI, not the PyPI dev wheel** (2026-10-06). The wheel only moves to
   a new core when duckdb-python merges a submodule bump, a manual PR: `2.0.0.dev2610011535` was on
   `alpha43763` while the nightly was at `alpha44578`. But the newest nightly CLI usually cannot load

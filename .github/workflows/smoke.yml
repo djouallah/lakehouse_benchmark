@@ -4,12 +4,11 @@ name: smoke
 #
 #   sql (matrix)  ->  compare  ->  catalog (matrix)
 #
-# `plan` also GENERATES the suite's SF=1 parquet, once, and every `sql` job reads it from
-# the cache. That is not a shortcut: `compare` only means something if every engine read
-# IDENTICAL bytes, and the first TPC-DS run had each engine job generate its own copy --
-# the DuckDB jobs on the 2.0 nightly wheel, the others on stable 1.5 -- and dsdgen's output
-# differs between those builds (same row counts, different values). 18 of 99 queries
-# "disagreed" on data, not on SQL. One generation, one cache key, one dataset.
+# `plan` also GENERATES the suite's SF=1 parquet, once, with tpcgen-cli, and every `sql` job
+# reads it from the cache. That is not a shortcut: `compare` only means something if every
+# engine read IDENTICAL bytes, and the first TPC-DS run (then DuckDB's dsdgen) had each engine
+# job generate its own copy on different DuckDB builds -- 18 of 99 queries "disagreed" on data,
+# not on SQL. One generation, one cache key, one dataset.
 #
 # `sql` runs the suite's queries -- TPC-H's 22 or TPC-DS's 99 -- against that LOCAL parquet. No secrets, no Fabric, no id-token --
 # it answers "does this engine speak the dialect" in about a minute. `compare` then checks that
@@ -35,7 +34,7 @@ on:
         type: boolean
         default: true
       suite:
-        description: Which query suite. tpch generates SF=1 with tpchgen-cli; tpcds with DuckDB's dsdgen.
+        description: Which query suite. Both generate SF=1 with tpcgen-cli.
         type: choice
         options: ["tpch", "tpcds"]
         default: "tpch"
@@ -90,24 +89,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      # THE GENERATOR IS THE WRITER'S BUILD. TPC-H: tpchgen-cli, deterministic at any version.
-      # TPC-DS: DuckDB's dsdgen from the DuckDB ENGINE's nightly CLI -- the same line tpcds.yml's
-      # prepare job generates with -- because dsdgen's output is not the same across DuckDB
-      # builds (see the header). Resolved once here, for every suite: its run id pins the DuckDB
-      # sql and catalog jobs to this same build.
+      # The DuckDB nightly, resolved once here: its run id pins the DuckDB sql and catalog jobs
+      # to one build.
       - id: duckdb
         uses: ./.github/actions/duckdb-nightly
-      - if: (inputs.suite || 'tpch') == 'tpcds'
-        run: pip install -r requirements/duckdb_iceberg.txt
-      - if: (inputs.suite || 'tpch') != 'tpcds'
-        run: pip install -r requirements/smoke.txt
+      # THE GENERATOR IS THE WRITER'S BUILD: tpcgen-cli, pinned in requirements/smoke.txt to
+      # the version requirements/catalog.txt writes the OneLake datasets with.
+      - run: pip install -r requirements/smoke.txt
 
       # SF=1 is deterministic for one generator, so one generation serves every run and every
-      # engine. One cache per suite: tpch-local/ from tpchgen-cli, tpcds-local/ from dsdgen.
+      # engine. One cache per suite. The version in the key is the generator's: bump it with
+      # the tpcgen-cli pin (v3 = tpcgen-cli 4.0.0).
       - uses: actions/cache@v4
         with:
           path: ${{ inputs.suite || 'tpch' }}-local
-          key: ${{ inputs.suite || 'tpch' }}-local-sf1-v2
+          key: ${{ inputs.suite || 'tpch' }}-local-sf1-v3
 
       - name: Generate the suite's SF=1 parquet (skipped on a cache hit)
         run: python .github/scripts/smoke_sql.py --generate
@@ -151,7 +147,7 @@ jobs:
       # The ENGINE's file only. No generator here: the data comes from the cache `plan` filled.
       - run: pip install -r "requirements/${{ matrix.engine }}.txt"
 
-      # The nightly CLI `plan` generated with, so the DuckDB jobs read with the generator's build.
+      # The nightly CLI `plan` resolved, so the sql and catalog jobs run one DuckDB build.
       - name: Install the DuckDB nightly CLI
         if: matrix.engine == 'duckdb_iceberg'
         uses: ./.github/actions/duckdb-nightly
@@ -162,7 +158,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ inputs.suite || 'tpch' }}-local
-          key: ${{ inputs.suite || 'tpch' }}-local-sf1-v2
+          key: ${{ inputs.suite || 'tpch' }}-local-sf1-v3
           fail-on-cache-miss: true
 
       # StarRocks is a container, not a wheel (bench/starrocks.py). Pull it here, OUTSIDE the
@@ -303,7 +299,7 @@ jobs:
 
       - run: pip install -r "requirements/${{ matrix.engine }}.txt"
 
-      # The nightly CLI `plan` generated with, so the DuckDB jobs read with the generator's build.
+      # The nightly CLI `plan` resolved, so the sql and catalog jobs run one DuckDB build.
       - name: Install the DuckDB nightly CLI
         if: matrix.engine == 'duckdb_iceberg'
         uses: ./.github/actions/duckdb-nightly

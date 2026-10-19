@@ -75,7 +75,7 @@ MAX_PARTS = 192
 
 
 def parts_for(table: str, sf: int) -> int:
-    """How many parts tpchgen-cli should split `table` into at scale factor `sf`."""
+    """How many parts tpcgen-cli should split `table` into at scale factor `sf`."""
     want = math.ceil(sf * PARQUET_MB_PER_SF[table] / TARGET_PART_MB)
     return max(PART_FLOOR.get(table, 1), min(want, MAX_PARTS))
 

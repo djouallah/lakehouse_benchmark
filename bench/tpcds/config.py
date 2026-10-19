@@ -14,9 +14,11 @@ answer TPC-DS at all. Which two, and on what evidence, is written there.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from bench.config import SQL_DIR, Config
+from bench.tpch.config import MAX_PARTS, TARGET_PART_MB
 
 # THE ENGINES THAT FINISH. Two of TPC-H's are left out, on measurement, not taste -- run
 # 35732997698 (SF=10) and 35732283791 (SF=1) are the evidence:
@@ -58,7 +60,7 @@ ENGINES = (
     "databend_iceberg",
 )
 
-# The 24 tables of the spec (dsdgen also emits `dbgen_version`, which is not one), LARGEST FIRST
+# The 24 tables of the spec (tpcgen-cli also emits `dbgen_version`, which is not one), LARGEST FIRST
 # so that a generator or a writer that is going to fail on size fails in the first minutes, not
 # the last. `web_site` is last on purpose: it carries the generation-complete marker (see
 # bench/tpch/generate.py), and the marker must be the last thing written.
@@ -88,6 +90,28 @@ TABLES = (
     "income_band",
     "web_site",
 )
+
+# Approximate parquet MiB per scale factor unit of the tables big enough to split, from the SF=10
+# DuckDB-generated dataset. Used only to choose a part count, like bench/tpch/config.py's: being
+# off moves a file from 200 MB to 260 MB and changes nothing. inventory grows slower than SF
+# (items x warehouses x weeks), so it is over-split at SF=100; harmless. Every other table is one
+# file, and tpcgen-cli never splits a table under 1M rows anyway.
+TABLE_MB_PER_SF = {
+    "store_sales": 120,
+    "catalog_sales": 90,
+    "web_sales": 45,
+    "inventory": 34,
+    "store_returns": 12,
+    "catalog_returns": 9,
+    "web_returns": 4,
+}
+
+
+def parts_for(table: str, sf: int) -> int:
+    """How many files tpcgen-cli should split `table` into at scale factor `sf`."""
+    want = math.ceil(sf * TABLE_MB_PER_SF.get(table, 0) / TARGET_PART_MB)
+    return max(1, min(want, MAX_PARTS))
+
 
 # Approximate parquet MiB per scale factor unit, for chDB's cache sizing only. TPC-DS at SF=10 is
 # ~3 GB as parquet -- a little over TPC-H at the same SF -- and the clamp in chdb_cache_gib

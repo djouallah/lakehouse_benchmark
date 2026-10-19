@@ -8,11 +8,9 @@ name: tpcds bench
 #   prepare  ->  bench (matrix, one engine at a time)  ->  publish
 #
 # `prepare` is the SINGLE WRITER of the TPC-DS Iceberg tables, for the reason bench.yml gives.
-# It differs from the TPC-H one only in the generator: DuckDB's dsdgen fills a local database on
-# the runner and DuckDB's parquet writer COPYs each table out in ~200 MB files, already stamped
-# with the Iceberg field ids. From there it is the TPC-H landing exactly: upload the files as-is
-# to Tables/<ns>/<table>/, one pyiceberg add_files per table (bench/tpcds/generate.py says why
-# DuckDB's own Iceberg writer was tried and dropped, and why tpcgen was not the answer).
+# Same generator as TPC-H, tpcgen-cli (`tpcds parquet`), one table at a time in ~200 MB parts
+# that already carry the Iceberg field ids. Then the TPC-H landing exactly: upload the files
+# as-is to Tables/<ns>/<table>/, one pyiceberg add_files per table (bench/tpcds/generate.py).
 #
 # `publish` is the SINGLE WRITER of results, under results/tpcds/ and docs/tpcds/ -- separate
 # trees so the two query suites' histories never mix. It needs NO Azure credentials at all.
@@ -65,7 +63,7 @@ env:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    # dsdgen at SF=10 plus ~3 GB of parquet out to OneLake takes well under this; SF=100 is ten
+    # Generating SF=10 plus ~3 GB of parquet out to OneLake takes well under this; SF=100 is ten
     # times the data through one runner. The cap is a hang guard, sized for the largest scale.
     timeout-minutes: 360
     permissions:
@@ -75,7 +73,6 @@ jobs:
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
       started: ${{ steps.plan.outputs.started }}
-      duckdb-run-id: ${{ steps.duckdb.outputs.run-id }}
     steps:
       # BIG SCALES NEED THE DISK THE RUNNER HIDES. `/` is one 145 GB volume with ~87 GB free;
       # deleting the preinstalled toolchains nobody here uses brings that to ~105 GB. /mnt is a
@@ -94,16 +91,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: |
-            requirements/catalog.txt
-            requirements/duckdb_iceberg.txt
-      # catalog.txt is the TPC-H landing environment (pyiceberg, the ADLS client, the credential).
-      - run: pip install -r requirements/catalog.txt -r requirements/duckdb_iceberg.txt
-      # The DuckDB that runs dsdgen is the nightly CLI, and its run id goes to the DuckDB bench
-      # job: dsdgen's output differs between DuckDB builds, so the generator has to be the build
-      # the DuckDB bench job reads with, even if a newer nightly lands mid-run.
-      - id: duckdb
-        uses: ./.github/actions/duckdb-nightly
+          cache-dependency-path: requirements/catalog.txt
+      # catalog.txt is the landing environment (pyiceberg, the ADLS client, the credential) and
+      # the pinned tpcgen-cli.
+      - run: pip install -r requirements/catalog.txt
 
       - id: plan
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
@@ -122,7 +113,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      - name: Generate TPC-DS with dsdgen, land it into OneLake (idempotent)
+      - name: Generate TPC-DS with tpcgen-cli, land it into OneLake (idempotent)
         run: python .github/scripts/prepare.py
 
   bench:
@@ -196,12 +187,11 @@ jobs:
           pip install -r "requirements/${BENCH_ENGINE}.txt"
           pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pysail|pyiceberg|pyarrow)=' || true
 
-      # The nightly CLI prepare generated with (see prepare).
+      # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
+      # .github/scripts/duckdb_nightly.py which nightly.
       - name: Install the DuckDB nightly CLI
         if: matrix.engine == 'duckdb_iceberg'
         uses: ./.github/actions/duckdb-nightly
-        with:
-          run-id: ${{ needs.prepare.outputs.duckdb-run-id }}
 
       - uses: actions/setup-java@v5
         if: startsWith(matrix.engine, 'pyspark')

@@ -29,13 +29,12 @@ measures, and a second code path inside them is a second thing that can drift.
 `execute()`, though, IS the real one -- Polars' streaming collect, chDB's JSONCompact, DuckDB's
 fetchall. That is where an engine's row counting lives, so the smoke test has to use it.
 
-TWO LOCAL GENERATORS, one per suite, each the same tool the suite's prepare job runs: tpchgen-cli
-for TPC-H, DuckDB's dsdgen for TPC-DS. GENERATED ONCE, by smoke.yml's plan job (`--generate`),
-and read from the cache by every engine job. Not a shortcut: dsdgen's output differs between
-DuckDB builds (the 2.0 nightly the DuckDB engines run and stable 1.5 give the same row counts
-and different values), and the first TPC-DS run let each engine job generate its own copy --
-so `compare` reported 18 disagreements that were about data, not SQL. The engine jobs fail on
-a cache miss rather than generate, so every engine reads identical bytes or nothing.
+ONE LOCAL GENERATOR, the tool the suites' prepare jobs run: tpcgen-cli (`tpch` or `tpcds`), the
+build pinned in requirements/smoke.txt. GENERATED ONCE, by smoke.yml's plan job (`--generate`),
+and read from the cache by every engine job. Not a shortcut: when TPC-DS came from DuckDB's
+dsdgen, whose values differ between DuckDB builds, the first run let each engine job generate
+its own copy -- so `compare` reported 18 disagreements that were about data, not SQL. The engine
+jobs fail on a cache miss rather than generate, so every engine reads identical bytes or nothing.
 """
 
 from __future__ import annotations
@@ -80,84 +79,46 @@ def local_config(suite: type[Config], engine: str) -> Config:
 
 
 def generate(dest: Path, suite: type[Config]) -> dict[str, Path]:
-    """One parquet per table, with the suite's own generator. Skips what is already there."""
-    dest.mkdir(parents=True, exist_ok=True)
-    if suite.TEST == "tpcds":
-        return _dsdgen(dest, suite.TABLES)
-    return _tpchgen(dest, suite.TABLES)
+    """One parquet per table, with tpcgen-cli -- the generator the suite's prepare job runs, at
+    SF=1. Skips what is already there.
 
-
-def _tpchgen(dest: Path, tables: tuple[str, ...]) -> dict[str, Path]:
-    """TPC-H via the tpchgen-cli already in requirements/catalog.txt."""
-    paths = {}
-    for table in tables:
-        # EXACT filename, never a glob. `part*.parquet` also matches `partsupp.parquet`, so a
-        # glob silently registered partsupp's data as `part` and eight queries died with
-        # "Referenced column p_partkey not found" -- which reads like a dialect gap and is not
-        # one. The smoke test caught it on its own first run.
-        target = dest / f"{table}.parquet"
-        if target.exists():
-            paths[table] = target
-            continue
-        if shutil.which("tpchgen-cli") is None:
-            raise RuntimeError("tpchgen-cli not on PATH; install requirements/smoke.txt")
-        started = time.perf_counter()
-        subprocess.run(
-            [
-                "tpchgen-cli",
-                "-s",
-                str(SMOKE_SF),
-                "--tables",
-                table,
-                "--output-dir",
-                str(dest),
-                "--format",
-                "parquet",
-            ],
-            check=True,
-            capture_output=True,
-        )
-        if not target.exists():
-            raise RuntimeError(
-                f"tpchgen-cli produced no {target.name}; found {[p.name for p in dest.iterdir()]}"
-            )
-        paths[table] = target
-        print(
-            f"  generated {table:<9} {target.stat().st_size / 1e6:6.1f} MB "
-            f"in {time.perf_counter() - started:.1f}s",
-            flush=True,
-        )
-    return paths
-
-
-def _dsdgen(dest: Path, tables: tuple[str, ...]) -> dict[str, Path]:
-    """TPC-DS via DuckDB's dsdgen -- the generator tpcds.yml's prepare job runs, at SF=1.
-
-    dsdgen builds every table at once, so one call fills an in-memory database and each table is
-    then COPYed out to its own parquet, under the exact filename the adapters register.
-
-    The existence check comes BEFORE DuckDB is started, on purpose: the engine jobs call this
-    with a full cache and no DuckDB installed (only the plan job has the generator), and the
-    first version imported first -- four of six TPC-DS smoke jobs died on ModuleNotFoundError
-    with every file already on disk.
+    The existence check comes BEFORE the generator is looked for, on purpose: the engine jobs call
+    this with a full cache and no generator installed (only the plan job has it). The first
+    TPC-DS version did it the other way round, and four of six smoke jobs died with every file
+    already on disk.
     """
-    paths = {table: dest / f"{table}.parquet" for table in tables}
+    dest.mkdir(parents=True, exist_ok=True)
+    # EXACT filenames, never a glob. `part*.parquet` also matches `partsupp.parquet`, so a glob
+    # silently registered partsupp's data as `part` and eight queries died with "Referenced
+    # column p_partkey not found" -- which reads like a dialect gap and is not one.
+    paths = {table: dest / f"{table}.parquet" for table in suite.TABLES}
     missing = [table for table, path in paths.items() if not path.exists()]
     if not missing:
         return paths
-
-    from bench.duckdb_cli import DuckDBCli
-    from bench.tpcds.generate import load_tpcds_extension
-
+    if shutil.which("tpcgen-cli") is None:
+        raise RuntimeError("tpcgen-cli not on PATH; install requirements/smoke.txt")
     started = time.perf_counter()
-    con = DuckDBCli()
-    load_tpcds_extension(con)
-    con.sql(f"CALL dsdgen(sf = {SMOKE_SF})")
-    print(f"  dsdgen SF={SMOKE_SF} in {time.perf_counter() - started:.1f}s", flush=True)
+    subprocess.run(
+        [
+            "tpcgen-cli",
+            suite.TEST,
+            "parquet",
+            "-s",
+            str(SMOKE_SF),
+            "--tables",
+            ",".join(missing),
+            "--output-dir",
+            str(dest),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    print(f"  tpcgen-cli {suite.TEST} SF={SMOKE_SF} in {time.perf_counter() - started:.1f}s")
     for table in missing:
-        con.sql(f"COPY {table} TO '{paths[table].as_posix()}' (FORMAT parquet)")
+        if not paths[table].exists():
+            found = sorted(p.name for p in dest.iterdir())
+            raise RuntimeError(f"tpcgen-cli produced no {table}.parquet; found {found}")
         print(f"  generated {table:<22} {paths[table].stat().st_size / 1e6:6.1f} MB", flush=True)
-    con.close()
     return paths
 
 

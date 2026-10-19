@@ -2,4 +2,6 @@ azure-identity>=1.19
 azure-storage-file-datalake>=12.17
 pyiceberg[pyarrow,adlfs]>=0.12.0
 pyarrow>=17
-tpchgen-cli>=3.0.0
+# Both generators (`tpcgen-cli tpch`, `tpcgen-cli tpcds`). PINNED: a dataset is only comparable
+# with the build that wrote it, and smoke.txt must generate with the same one.
+tpcgen-cli==4.0.0

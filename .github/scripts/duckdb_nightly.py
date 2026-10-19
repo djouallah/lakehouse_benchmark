@@ -45,8 +45,9 @@ BRANCH = "v2.0-cyanoptera"
 ARTIFACT = "duckdb-cli-linux-amd64.tar.gz"
 PLATFORM = "linux_amd64"
 # What the DuckDB jobs load: the catalog (iceberg, which reads manifests with avro), storage
-# (azure, httpfs for the REST calls) and the TPC-DS generator.
-EXTENSIONS = ("iceberg", "avro", "azure", "httpfs", "tpcds")
+# (azure, httpfs for the REST calls). Not tpcds: TPC-DS data comes from tpcgen-cli since
+# 2026-10-20 (bench/tpcds/generate.py), and a nightly is no longer held back waiting for it.
+EXTENSIONS = ("iceberg", "avro", "azure", "httpfs")
 # Where each one sits among a nightly's run artifacts when it was never deployed: DuckDB's
 # .github/config/{cloud,core}.cmake builds, and the Linux release build's own extensions.
 EXTENSION_ARTIFACTS = {
@@ -54,7 +55,6 @@ EXTENSION_ARTIFACTS = {
     "azure": "cloud-extensions-linux_amd64",
     "avro": "core-extensions-linux_amd64",
     "httpfs": "release-core-extensions-linux-amd64",
-    "tpcds": "release-core-extensions-linux-amd64",
 }
 # Set (in $GITHUB_ENV) to the local repository when the extensions came from artifacts.
 REPO_ENV = "DUCKDB_EXTENSION_REPO"

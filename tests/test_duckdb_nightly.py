@@ -122,7 +122,7 @@ def test_a_missing_extension_in_its_artifact_fails(tmp_path):
     blobs = {
         "cloud-extensions-linux_amd64": _extension_zip(["azure"]),
         "core-extensions-linux_amd64": _extension_zip(["avro"]),
-        "release-core-extensions-linux-amd64": _extension_zip(["httpfs", "tpcds"]),
+        "release-core-extensions-linux-amd64": _extension_zip(["httpfs"]),
     }
     with pytest.raises(RuntimeError, match="iceberg"):
         nightly.extract_extensions(blobs, 48043, tmp_path)

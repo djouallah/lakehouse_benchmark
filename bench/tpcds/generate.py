@@ -1,54 +1,36 @@
-"""Generate TPC-DS at scale factor N into OneLake as Iceberg: DuckDB's dsdgen, then TPC-H's landing.
+"""Generate TPC-DS at scale factor N into OneLake as Iceberg: tpcgen-cli, then TPC-H's landing.
 
-WHY DUCKDB AND NOT tpcgen. The tpcgen-rs project (the tpchgen-cli that bench/tpch/generate.py
-runs) added TPC-DS in its v3.0.0, but as of 2026-09-22 the binary that carries it, `tpcgen-cli`,
-is not on PyPI, the crates.io build is 0.1.0-alpha.1 without `--parts` for TPC-DS, and multi-part
-TPC-DS output has an open correctness issue. DuckDB's `tpcds` extension is a pip install away,
-deterministic, and `CALL dsdgen(sf = 10)` is the whole generator.
+THE GENERATOR IS tpcgen-cli 4.0.0 (`tpcgen-cli tpcds parquet`), the same binary that writes TPC-H
+(bench/tpch/generate.py), pinned in requirements/catalog.txt. Its output matches the C `dsdgen`.
+Until 2026-10-20 this was DuckDB's `CALL dsdgen()`: tpcgen's TPC-DS was not on PyPI yet, and
+DuckDB had to be the DuckDB engine's own nightly because dsdgen's values differ between DuckDB
+builds (LEARNING.md). tpcgen removes both problems: one pinned build generates every scale, here
+and in smoke.yml, and no engine is also the generator.
 
-WHY THE WRITE PATH IS TPC-H'S AND NOT DUCKDB'S. The first version had DuckDB's own Iceberg
-writer CTAS every table into OneLake through the ETL's write-capable ATTACH. It worked at SF=1
-(24 tables, 173 s) and stalled at SF=10: store_sales went through, then `inventory` -- 133 M
-rows, ~340 MB, the highest row count of any table -- sat for 45 minutes with no output (run
-35726316639; store_sales, 1.2 GB, had taken 30 s). And what it does write is its own shape: one
-file per table at SF=1, three ~400 MB files for store_sales at SF=10, nothing a reader can be
-told. So the writer is gone. dsdgen fills a local DuckDB database, DuckDB's PARQUET
-writer COPYs each table out in ~200 MB files, the files upload to Tables/<ns>/<table>/ as-is,
-and pyiceberg registers them with one add_files per table -- the TPC-H path, proven at SF=10
-with all six engines reading the result.
+THE LANDING IS TPC-H'S. Per table, tpcgen-cli writes every part in parallel (--parts N) to local
+scratch, the files upload to Tables/<ns>/<table>/ as written, and pyiceberg registers them with
+one add_files. No re-encode: the files are zstd with ~128 MB row groups (PARQUET_FLAGS) and carry
+Iceberg field ids, 1-based by position, which are exactly the ids pyiceberg gives the table it
+creates -- add_files checks them, so a mismatch is a loud failure. (DuckDB's own Iceberg writer
+was tried first and dropped: it hung on `inventory` at SF=10, run 35726316639.)
 
-NO FIELD-ID REWRITE. TPC-H pays a pyarrow decode/encode of every file to stamp the Iceberg field
-ids Polars needs. DuckDB's parquet writer stamps them itself given `FIELD_IDS {col: id, ...}`
-(checked on 1.5.5 and the 2.0 nightly: none by default, 'auto' counts from 0 which pyiceberg
-does not, an explicit map lands exactly). So the Iceberg table is created FIRST, from a 0-row
-sample, and its ids are handed to COPY. add_files validates the ids against the table schema:
-a mismatch is a loud failure, never a silently mis-registered file.
-
-THE GENERATOR IS THE DUCKDB ENGINE'S BUILD, and that is load-bearing. dsdgen's output is not the
-same across DuckDB builds: measured 2026-09-22, stable 1.5.5 and the 2.0 nightly the DuckDB
-engine runs give identical row counts and DIFFERENT values (prices, dates, text), so 18 of the 99
-queries return different row counts on the two datasets. tpcds.yml's prepare job installs the
-nightly CLI with the duckdb-nightly action and hands its run id to the DuckDB engine job, and
-smoke.yml does the same for its SF=1 copy -- one generator per dataset, never two.
-
-RUNNER BUDGET. dsdgen(sf=10) is ~3-4 GB of DuckDB storage on a 14 GB disk / 16 GB RAM runner.
-The database is FILE-BACKED so generation spills instead of dying, memory_limit sits below the
-runner's RAM, and the parquet for ONE table at a time sits beside it (store_sales, the largest,
-~1.2 GB) and is deleted as it uploads. SF=30 and SF=100 need more: tpcds.yml
-frees the preinstalled toolchains and moves this scratch to /mnt (TPCDS_SCRATCH) for them.
+RUNNER BUDGET. Only one table is on local disk at a time, and each file is deleted as it uploads.
+store_sales, the largest, is ~12 GB at SF=100: tpcds.yml frees the preinstalled toolchains and
+moves this scratch to /mnt (TPCDS_SCRATCH) for SF>=30.
 
 IDEMPOTENT the way the TPC-H generate is, through the same two functions: the completion marker
 is the same table property, written on this suite's MARKER_TABLE (`web_site`, last in TABLES).
 Per table, one that already has data files is skipped so a crashed run resumes rather than
 restarts, and an empty husk -- created by a run that died before its files were registered --
 just gets its files. `force` (tpcds.yml's `regenerate` input) purges every existing table first
-and writes the namespace from scratch; that is how the DuckDB-written DS0010 was replaced.
+and writes the namespace from scratch.
 """
 
 from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -56,13 +38,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from bench import auth, onelake, scrub
-from bench.tpcds.config import TpcdsConfig
-from bench.tpch.config import TARGET_PART_MB
-from bench.tpch.generate import _ensure_table, _mark_complete, is_complete
-
-# Below the runner's 16 GB: the ADLS client, the Python process and the OS need the rest.
-MEMORY_LIMIT = "10GB"
-THREADS = 4
+from bench.tpcds.config import TpcdsConfig, parts_for
+from bench.tpch.generate import PARQUET_FLAGS, _ensure_table, _mark_complete, is_complete
 
 
 def _log(message: str) -> None:
@@ -70,30 +47,23 @@ def _log(message: str) -> None:
 
 
 def _scratch() -> Path:
-    """Where the local database, DuckDB's spill files and the parquet-in-flight live: the
-    runner's temp, gone with it -- or TPCDS_SCRATCH, which tpcds.yml points at /mnt for SF>=30."""
+    """Where the parquet-in-flight lives: the runner's temp, gone with it -- or TPCDS_SCRATCH,
+    which tpcds.yml points at /mnt for SF>=30."""
     root = Path(
         os.environ.get("TPCDS_SCRATCH")
         or Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())) / "tpcds"
     )
-    (root / "tmp").mkdir(parents=True, exist_ok=True)
+    root.mkdir(parents=True, exist_ok=True)
     return root
 
 
-def load_tpcds_extension(con) -> None:
-    """INSTALL and LOAD `tpcds`, falling back to the nightly repository.
-
-    The DuckDB jobs run a nightly CLI (bench/duckdb_cli.py), and a dev build's extensions may be
-    served from `core_nightly` rather than the default repository. Trying the
-    default first keeps a stable build on the release extension. Shared with
-    .github/scripts/smoke_sql.py, which generates SF=1 locally.
-    """
-    try:
-        con.sql("INSTALL tpcds")
-    except Exception as exc:  # noqa: BLE001 - the fallback is the point
-        _log(f"  INSTALL tpcds failed ({scrub.scrub_exc(exc, 160)}); trying core_nightly")
-        con.sql("INSTALL tpcds FROM core_nightly")
-    con.sql("LOAD tpcds")
+def tpcgen_command(sf: int, table: str, parts: int, out_dir: Path) -> list[str]:
+    """The tpcgen-cli call for one table. Pure, so tests/test_tpcds_generate.py can pin it."""
+    command = ["tpcgen-cli", "tpcds", "parquet", *PARQUET_FLAGS, "-s", str(sf)]
+    command += ["--tables", table, "--output-dir", str(out_dir)]
+    if parts > 1:
+        command += ["--parts", str(parts)]
+    return command
 
 
 def plan_table(exists: bool, has_files: bool, force: bool) -> str:
@@ -107,11 +77,6 @@ def plan_table(exists: bool, has_files: bool, force: bool) -> str:
     if exists and has_files:
         return "skip"
     return "write"
-
-
-def field_ids_clause(ids: dict[str, int]) -> str:
-    """The `FIELD_IDS {col: id, ...}` struct literal DuckDB's parquet writer takes."""
-    return "{" + ", ".join(f"{name}: {field_id}" for name, field_id in ids.items()) + "}"
 
 
 def _has_data(catalog, identifier: str) -> bool:
@@ -137,31 +102,24 @@ def _upload(fs, local: Path, remote: str, concurrency: int) -> int:
     return nbytes
 
 
-def build_table(con, catalog, fs, cfg: TpcdsConfig, table: str, tmp: Path, pool) -> dict:
-    """COPY one table out of the local database in ~200 MB parquet files, upload them, register
-    them. The Iceberg table is created first so COPY can stamp its field ids."""
+def build_table(catalog, fs, cfg: TpcdsConfig, table: str, tmp: Path, pool) -> dict:
+    """Generate one table with tpcgen-cli, upload its files as written, register them."""
+    import pyarrow.parquet as pq
+
     started = time.perf_counter()
+    parts = parts_for(table, cfg.sf)
     out_dir = tmp / table
     out_dir.mkdir(parents=True, exist_ok=True)
-    rows = int(con.sql(f"SELECT count(*) FROM main.{table}").fetchone()[0])
-    _log(f"--- {table} ({rows:,} rows) ---")
+    _log(f"--- {table} ({parts} parts) ---")
 
-    # A 0-row file carries the schema; the Iceberg table comes from it, and its ids go to COPY.
-    sample = out_dir / "sample.parquet"
-    con.sql(f"COPY (SELECT * FROM main.{table} LIMIT 0) TO '{sample.as_posix()}' (FORMAT parquet)")
-    tbl = _ensure_table(catalog, cfg, table, sample)
-    sample.unlink()
-    ids = {field.name: field.field_id for field in tbl.schema().fields}
-
-    copy_started = time.perf_counter()
-    con.sql(
-        f"COPY main.{table} TO '{out_dir.as_posix()}' "
-        f"(FORMAT parquet, FILE_SIZE_BYTES '{TARGET_PART_MB}MB', FIELD_IDS {field_ids_clause(ids)})"
-    )
-    files = sorted(out_dir.glob("*.parquet"))
+    subprocess.run(tpcgen_command(cfg.sf, table, parts, out_dir), check=True)
+    files = sorted(out_dir.rglob("*.parquet"))
     if not files:
-        raise RuntimeError(f"{table}: COPY produced no parquet under {out_dir}")
-    copy_s = time.perf_counter() - copy_started
+        raise RuntimeError(f"{table}: tpcgen-cli produced no parquet under {out_dir}")
+    gen_s = time.perf_counter() - started
+    rows = sum(pq.read_metadata(path).num_rows for path in files)
+
+    tbl = _ensure_table(catalog, cfg, table, files[0])
 
     upload_started = time.perf_counter()
     registered, futures = [], []
@@ -175,21 +133,22 @@ def build_table(con, catalog, fs, cfg: TpcdsConfig, table: str, tmp: Path, pool)
 
     register_started = time.perf_counter()
     # One add_files for the whole table: each call is an Iceberg commit, and one commit per
-    # file would be `len(files)` round-trips and snapshots for no benefit.
+    # file would be `len(files)` round-trips and snapshots for no benefit. It also checks the
+    # files' field ids against the table schema.
     tbl.add_files(registered, check_duplicate_files=False)
     register_s = time.perf_counter() - register_started
     shutil.rmtree(out_dir, ignore_errors=True)
 
     wall = time.perf_counter() - started
     _log(
-        f"  {len(files)} files, {rows:,} rows, {nbytes / 2**30:.2f} GiB | copy {copy_s:.1f}s, "
+        f"  {len(files)} files, {rows:,} rows, {nbytes / 2**30:.2f} GiB | gen {gen_s:.1f}s, "
         f"upload {upload_s:.1f}s, add_files {register_s:.1f}s, wall {wall:.1f}s"
     )
     return {
         "files": len(files),
         "rows": rows,
         "bytes": nbytes,
-        "copy_s": round(copy_s, 1),
+        "gen_s": round(gen_s, 1),
         "upload_s": round(upload_s, 1),
         "register_s": round(register_s, 1),
         "wall_s": round(wall, 1),
@@ -198,33 +157,22 @@ def build_table(con, catalog, fs, cfg: TpcdsConfig, table: str, tmp: Path, pool)
 
 def generate(cfg: TpcdsConfig, force: bool = False) -> dict:
     """Generate every TPC-DS table for `cfg.sf` into OneLake. Idempotent; `force` regenerates."""
-    from bench.duckdb_cli import DuckDBCli
-
     os.environ.setdefault("PYICEBERG_MAX_WORKERS", str(cfg.pyiceberg_workers))
     catalog = auth.catalog(cfg)
     if not force and is_complete(catalog, cfg):
         _log(f"{cfg.schema} already generated at SF={cfg.sf} - skipping")
         return {"sf": cfg.sf, "skipped": True, "namespace": cfg.schema, "tables": {}}
 
+    if shutil.which("tpcgen-cli") is None:
+        raise RuntimeError("tpcgen-cli not on PATH; install requirements/catalog.txt")
+
     scratch = _scratch()
-    con = DuckDBCli(str(scratch / f"sf{cfg.sf}.duckdb"))
-    con.sql(
-        f"SET memory_limit = '{MEMORY_LIMIT}'; SET threads = {THREADS}; "
-        f"SET temp_directory = '{(scratch / 'tmp').as_posix()}'"
-    )
-    load_tpcds_extension(con)
-
-    _log(f"Generating TPC-DS SF={cfg.sf} with dsdgen under {scratch}")
+    _log(f"Generating TPC-DS SF={cfg.sf} with tpcgen-cli under {scratch}")
     overall = time.perf_counter()
-    started = time.perf_counter()
-    con.sql(f"CALL dsdgen(sf = {cfg.sf})")
-    gen_s = time.perf_counter() - started
-    _log(f"  dsdgen {gen_s:.1f}s")
-
     catalog.create_namespace_if_not_exists(cfg.schema)
     fs = onelake.file_system(cfg)
     results: dict[str, dict] = {}
-    totals = {"gen_s": gen_s, "copy_s": 0.0, "upload_s": 0.0, "bytes": 0, "rows": 0}
+    totals = {"gen_s": 0.0, "upload_s": 0.0, "bytes": 0, "rows": 0}
     with (
         tempfile.TemporaryDirectory(dir=scratch) as tmp,
         ThreadPoolExecutor(cfg.upload_threads) as pool,
@@ -240,18 +188,16 @@ def generate(cfg: TpcdsConfig, force: bool = False) -> dict:
             if action == "purge":
                 _log(f"--- {table}: exists, regenerating")
                 _purge(catalog, identifier)
-            stats = build_table(con, catalog, fs, cfg, table, Path(tmp), pool)
+            stats = build_table(catalog, fs, cfg, table, Path(tmp), pool)
             results[table] = stats
-            for key in ("copy_s", "upload_s", "bytes", "rows"):
+            for key in totals:
                 totals[key] += stats[key]
 
-    con.close()
     _mark_complete(catalog, cfg)
     elapsed = time.perf_counter() - overall
     _log(
-        f"total {elapsed:.1f}s wall | dsdgen {totals['gen_s']:.1f}s | copy {totals['copy_s']:.1f}s "
-        f"| upload {totals['upload_s']:.1f}s | {totals['bytes'] / 2**30:.2f} GiB, "
-        f"{totals['rows']:,} rows"
+        f"total {elapsed:.1f}s wall | gen {totals['gen_s']:.1f}s | upload {totals['upload_s']:.1f}s "
+        f"| {totals['bytes'] / 2**30:.2f} GiB, {totals['rows']:,} rows"
     )
     return {
         "sf": cfg.sf,

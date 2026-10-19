@@ -6,9 +6,8 @@ jobs can both decide the table is missing, both create it, and both register the
 is a corrupt table, not a slow one. The fix is structural -- generation happens here, in a job
 with no matrix, and the bench jobs are read-only.
 
-WHICH SUITE is BENCH_SUITE's call (bench/suite.py). TPC-H generates with tpchgen-cli, TPC-DS with
-DuckDB's dsdgen; both land the parquet the same way, through pyiceberg. Same marker, same
-idempotency, two generators. TPCDS_REGENERATE=true (tpcds.yml's `regenerate` input) makes the
+WHICH SUITE is BENCH_SUITE's call (bench/suite.py). Both generate with tpcgen-cli (`tpch` or
+`tpcds`) and land the parquet the same way, through pyiceberg. Same marker, same idempotency. TPCDS_REGENERATE=true (tpcds.yml's `regenerate` input) makes the
 TPC-DS one purge the namespace and write it again.
 """
 
