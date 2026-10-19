@@ -36,8 +36,15 @@ def test_every_engine_has_a_dbt_row():
         assert f'engine: "{engine}"' in rows("DBT_ROWS"), engine
 
 
-def test_concurrency_and_anatomy_are_the_catalogs_top_tab():
-    assert '{ id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] }' in PAGE
+def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
+    """The premise first: any engine, one catalog; then how a commit works."""
+    assert (
+        rows("GROUPS")
+        .split("\n")[1]
+        .strip()
+        .startswith('{ id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY] },')
+    )
+    assert "const state = { suite: OVERVIEW.id," in PAGE
 
 
 def test_every_engine_has_a_workload_row():
@@ -45,16 +52,17 @@ def test_every_engine_has_a_workload_row():
         assert f'engine: "{engine}"' in rows("WORKLOAD_ROWS"), engine
 
 
-def test_the_real_workload_is_a_top_tab():
-    assert '{ id: "workload", title: "Real workload", subs: [WORKLOAD] }' in PAGE
+def test_the_real_workload_is_the_scorecards_last_column_not_a_tab():
+    assert 'id: "workload"' not in rows("GROUPS")
+    assert '{ id: "workload", title: "Real workload", href: WORKLOAD_REPO,' in PAGE
 
 
-def test_next_is_the_last_top_tab():
-    assert rows("GROUPS").rstrip().endswith('{ id: "next", title: "Next", subs: [NEXT] },')
+def test_future_is_the_last_top_tab():
+    assert rows("GROUPS").rstrip().endswith('{ id: "future", title: "Future", subs: [NEXT] },')
 
 
 def test_the_workload_merge_cells_match_the_iceberg_support_tab():
-    """The Real workload tab's MERGE column never disagrees with the probe that measured it."""
+    """The Scorecard's real workload MERGE check never disagrees with the probe that measured it."""
     import json
     import re
 
@@ -114,17 +122,11 @@ def test_the_iceberg_support_grid_opens_on_core():
     ]
 
 
-def test_the_scorecard_is_the_first_tab_and_the_landing_page():
-    assert rows("GROUPS").split("\n")[1].strip() == (
-        '{ id: "summary", title: "Scorecard", subs: [SCORECARD] },'
-    )
-    assert "const state = { suite: SCORECARD.id," in PAGE
-
-
 def test_file_pruning_and_query_plans_share_the_less_work_tab():
     assert '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }' in PAGE
 
 
-def test_bug_reports_come_just_before_next():
-    bar = [line for line in rows("GROUPS").split("\n") if "bar: false" not in line]
-    assert bar[-2].strip() == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'
+def test_bug_reports_then_the_scorecard_come_just_before_future():
+    bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
+    assert bar[-3] == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'
+    assert bar[-2] == '{ id: "summary", title: "Scorecard", subs: [SCORECARD] },'

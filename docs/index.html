@@ -309,7 +309,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .rp a { color: var(--accent); }
 .rp .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .arch .lb.sm { font-size: 10px; }
-.pl .pick a { color: var(--accent); }
+.pl .pick a, .pl .intro a { color: var(--accent); }
+.arch .ov-fig { cursor: default; }
 .nx { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 4px; }
 .nx article { padding: 14px 16px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: var(--ink-2); font-size: 14px; }
 .nx h3 { font-size: 16px; color: var(--ink); margin: 0 0 6px; }
@@ -345,19 +346,19 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+  <section class="pl arch" id="overview" hidden></section>
   <section class="cap rows sc" id="scorecard" hidden></section>
   <section class="pl arch" id="concurrency" hidden></section>
   <section class="pl arch" id="anatomy" hidden></section>
   <section class="pl arch" id="pruning" hidden></section>
   <section class="rp" id="reports" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
-  <section class="cap rows" id="workload" hidden></section>
-  <section class="nx-page" id="next" hidden></section>
+  <section class="nx-page" id="future" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
     <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
     <p>So the state lives in the catalog, not in the engine. The engine starts, does the work, and stops
-      (<a href="#concurrency">Catalogs</a>).</p>
+      (<a href="#overview">Lakehouse</a>).</p>
     <p>The work is done in SQL. An agent writes the same SQL for every engine; a new syntax for every engine is not progress.</p>
     <p>The first test is simple: read the files, write the tables. Most engines that were tried failed here,
       on the object store, not on SQL (<a href="#issues">Issues</a>).</p>
@@ -366,7 +367,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <p>The best query is the one that does the least work: skip the files the query cannot need
       (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
     <p>No engine is the fastest on every test. What an engine supports decides; speed is a bonus
-      (<a href="#workload">Real workload</a>).</p>
+      (<a href="#scorecard">Scorecard</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
       That is the best help a user can give. It does not need a pull request: the people who know the code write
@@ -494,34 +495,34 @@ const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
-const WORKLOAD = { id: "workload", title: "Real workload" };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
-const NEXT = { id: "next", title: "Next" };
+const NEXT = { id: "future", title: "Future" };
+const OVERVIEW = { id: "overview", title: "Overview" };
 const SCORECARD = { id: "scorecard", title: "Scorecard" };
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [SCORECARD, ARCH, ANATOMY, PRUNING, NEXT, PLANS, CAPABILITY, WORKLOAD, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
-// The top tabs and their pill sub-tabs, in the order of the story: the verdict, how a lake table works,
-// how an engine does less work, what it supports, and only then how fast it is; then how engines get better.
+const PAGES = [OVERVIEW, SCORECARD, ARCH, ANATOMY, PRUNING, NEXT, PLANS, CAPABILITY, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+// The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
+// a lake table works, how an engine does less work, what it supports, and only then how fast it is; then how
+// engines get better, everything on one page, and what comes next.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "summary", title: "Scorecard", subs: [SCORECARD] },
-  { id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] },  // the commit is the catalog's job
+  { id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY] },  // the state is in the catalog
   { id: "work", title: "Less work", subs: [PRUNING, PLANS] },  // skip files, then a good join order
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
-  { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "performance", title: "Benchmarks", subs: [...SUITES] },
   { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
   { id: "about", title: "About", subs: [ABOUT], bar: false },
   { id: "bugs", title: "Bug reports", subs: [REPORTS] },
-  { id: "next", title: "Next", subs: [NEXT] },
+  { id: "summary", title: "Scorecard", subs: [SCORECARD] },
+  { id: "future", title: "Future", subs: [NEXT] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: SCORECARD.id, sf: {}, group: null, last: {} };
+const state = { suite: OVERVIEW.id, sf: {}, group: null, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -560,6 +561,7 @@ function render() {
   if (page !== ARCH) stopArch();
   if (page !== ANATOMY) stopAnatomy();
   if (page !== PRUNING) stopPruning();
+  if (page === OVERVIEW) { renderOverview(); return; }
   if (page === SCORECARD) { renderScorecard(); return; }
   if (page === ARCH) { renderArch(); return; }
   if (page === ANATOMY) { renderAnatomy(); return; }
@@ -567,7 +569,6 @@ function render() {
   if (page === REPORTS) { renderReports(); return; }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
-  if (page === WORKLOAD) { renderWorkload(); return; }
   if (page === NEXT) { renderNext(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
@@ -762,7 +763,7 @@ function renderEngines() {
       batches from the one below it. Execution: Columnar works on batches of column values; Row works one row at a time.</p>`;
 }
 
-// THE DBT 1 COLUMN of the Real workload tab: how well dbt 1 (dbt Core) works with each engine on Iceberg
+// THE DBT 1 PART of the Scorecard's Real workload column: how well dbt 1 (dbt Core) works with each engine on Iceberg
 // tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
 // level. DuckDB, LakeSail and Polars were tried in fabric-dbt-examples; the others come from
 // their adapter docs. Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in
@@ -792,7 +793,7 @@ const DBT_ROWS = [
 ];
 
 
-// THE REAL WORKLOAD TAB: can the engine replace DuckDB in one real dbt project, analytics-as-code?
+// THE SCORECARD'S REAL WORKLOAD COLUMN: can the engine replace DuckDB in one real dbt project, analytics-as-code?
 // Three requirements, all measured elsewhere on this page (reading CSV from Files and writing Iceberg
 // are not columns: every engine in the bench does both, README conditions 2 and 3); the dbt
 // column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt note
@@ -831,38 +832,13 @@ const WORKLOAD_ROWS = [
     merge: { ok: false, note: "<code>write_iceberg</code> appends or overwrites" } },
 ];
 
-// The dbt 1 column as Yes (true), Partial (null) or No (false).
+// The dbt 1 part as Yes (true), Partial (null) or No (false).
 const dbtOk = engine => {
   const level = DBT_ROWS.find(d => d.engine === engine).level;
   return ["excellent", "good"].includes(level) ? true : level === "partial" ? null : false;
 };
 
-function renderWorkload() {
-  const sec = $(WORKLOAD.id);
-  const mark = (ok, text) => `<td class="lv ${ok === true ? "excellent" : ok === false ? "none" : "partial"}"><i class="m"></i>${text}</td>`;
-  const head = ["Engine", "File name column", "dbt 1", "MERGE"];
-  sec.innerHTML = `
-    <p class="caption">Changing engines is a feature question. The new engine must run the workload you have
-      today; speed is a bonus. Spark-OSS has every feature but is the slowest on <a href="#performance">Benchmarks</a>;
-      Gluten/Velox keeps the Spark features and runs native.</p>
-    <p class="caption">The workload: <a href="${WORKLOAD_REPO}">analytics-as-code</a>. dbt and DuckDB load AEMO CSV files
-      from OneLake Files into Iceberg tables every hour. To replace DuckDB, an engine needs all three columns; one red cell and it is not an option.</p>
-    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span></div>
-    <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
-    <tbody><tr class="tier"><th colspan="${head.length}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => {
-      const dbt = DBT_ROWS.find(d => d.engine === r.engine);
-      return `
-      <tr style="--c: var(--${r.engine}, var(--ink-3))">
-        <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
-        ${mark(r.file.ok, r.file.note)}
-        ${mark(dbtOk(r.engine), dbt.adapter ? `<a href="${dbt.url}">${esc(dbt.adapter)}</a>` : "no adapter")}
-        ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
-      </tr>`; }).join("")}</tbody>`).join("")}</table></div>
-    <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: tried in <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for DuckDB, LakeSail and Polars, the adapter docs for the others.
-      MERGE: the <a href="#iceberg">Iceberg support</a> tab where it probes the engine, the dbt adapter otherwise.</p>`;
-}
-
-// THE NEXT TAB: what is coming for single-node engines that I am excited about, most important first. Things on the way, not bugs:
+// THE FUTURE TAB: what is coming for single-node engines that I am excited about, most important first. Things on the way, not bugs:
 // those are on the Issues tab. Each card is checked against its upstream project before it goes here.
 const NEXT_ROWS = [
   { title: "Server-side planning",
@@ -906,10 +882,83 @@ function renderNext() {
     <div class="nx">${NEXT_ROWS.map(r => `<article><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
 }
 
-// THE SCORECARD TAB: the verdict first. One row per engine, one column per question another tab answers,
-// and every cell is read from that tab's own data: the Core group of the Iceberg support grid, each
-// benchmark at its headline scale (the same mean as its bar chart), and the three Real workload columns.
-// A cell that is not a yes links to where the reason is written.
+// THE LAKEHOUSE TAB'S OVERVIEW: the premise the rest of the page tests. Files in an object store, the state in an
+// Iceberg catalog, and any engine on top: start, work, stop. The engines are this bench's, grouped by how each
+// runs (ENGINE_ROWS runs, the Engines tab), plus the commercial engines that speak the same catalog, unnamed.
+const OV_GROUPS = [
+  { title: "A library in Python", has: runs => runs === "In-process" },
+  { title: "Spark on a local JVM", has: runs => runs.includes("JVM") },
+  { title: "A server", has: runs => runs.startsWith("Client-server") },
+];
+
+function overviewSvg(wide) {
+  // Wide: the four engine groups side by side. Narrow: two by two.
+  const W = wide ? 780 : 360, gw = wide ? 180 : 170, gh = 168, gap = 20;
+  const cols = wide ? 4 : 2, top = 104, rowsOf = wide ? 1 : 2;
+  const eb = top + rowsOf * gh + (rowsOf - 1) * gap;  // bottom of the engines
+  const cat = { x: wide ? 110 : 34, y: eb + 70, w: wide ? 560 : 292, h: wide ? 74 : 92 };
+  const sto = { x: 0, y: cat.y + cat.h + 64, w: W, h: 60 };
+  const at = i => ({ x: (i % cols) * (gw + gap), y: top + Math.floor(i / cols) * (gh + gap), w: gw, h: gh });
+  const groups = OV_GROUPS.map(g => ({ ...g, engines: ENGINE_ROWS.filter(r => g.has(r.runs)).map(r => r.engine) }));
+  let svg = arBox({ x: W / 2 - (wide ? 200 : 170), y: 0, w: wide ? 400 : 340, h: 56 }, "", "AI agents, people, scheduled jobs",
+      "write SQL, and pick the engine for the job")
+    + arLine(W / 2, 60, W / 2, top - 20, "")
+    + `<text class="lb" x="${W / 2 + 8}" y="${top - 30}">SQL</text>`
+    + `<text class="lb" x="0" y="${top - 8}">Engines are stateless: they start, do the work, and stop</text>`;
+  groups.forEach((g, i) => {
+    const b = at(i);
+    svg += arBox(b, "", g.title, "") + g.engines.map((e, k) => `
+      <rect x="${b.x + 14}" y="${b.y + 46 + k * 23}" width="10" height="10" rx="3" style="fill: var(--${e})"/>
+      <text class="s ink" x="${b.x + 30}" y="${b.y + 55 + k * 23}">${esc(LABEL[e] ?? e)}</text>`).join("");
+  });
+  const c = at(3);
+  svg += arBox(c, "p", "Commercial engines", "the same catalog,")
+    + `<text class="s" x="${c.x + 14}" y="${c.y + 60}">the same tables</text>`;
+  // Every engine commits to the catalog, and reads and writes the files itself.
+  [0, 1, 2, 3].forEach(i => {
+    const b = at(i), x = b.x + b.w / 2, y = b.y + b.h;
+    const tx = Math.max(cat.x + 30, Math.min(cat.x + cat.w - 30, x));
+    if (wide || i >= 2) svg += arLine(x, y + 4, tx, cat.y - 4, "");
+  });
+  svg += `<text class="lb" x="${W / 2 + 8}" y="${eb + 40}">commit</text>`;
+  svg += arBox(cat, "cat", "Iceberg REST catalog: the state", wide
+      ? "which tables exist, which snapshot is current; every commit goes through it" : "which tables exist, which snapshot")
+    + `<text class="s" x="${cat.x + 14}" y="${cat.y + 62}">${wide ? "here: OneLake" : "is current; every commit"}</text>`
+    + (wide ? "" : `<text class="s" x="${cat.x + 14}" y="${cat.y + 80}">goes through it · here: OneLake</text>`);
+  svg += arLine(W / 2, cat.y + cat.h + 4, W / 2, sto.y - 4, "")
+    + `<text class="lb" x="${W / 2 + 8}" y="${cat.y + cat.h + 36}">${wide ? "points to the current metadata" : "current metadata"}</text>`;
+  // The files: the engines read and write them directly, past the catalog, on both sides.
+  for (const x of [wide ? 50 : 14, wide ? W - 50 : W - 14]) svg += arLine(x, eb + 4, x, sto.y - 4, "");
+  svg += `<text class="lb" x="${wide ? 58 : 20}" y="${sto.y - 12}">files</text>`;
+  svg += arBox(sto, "", "Object store", wide ? "Parquet data files and Iceberg metadata, in open formats: yours, not the engine's"
+    : "Parquet and Iceberg metadata, open formats");
+  return { W, H: sto.y + sto.h + 4, svg };
+}
+
+function renderOverview() {
+  $(OVERVIEW.id).innerHTML = `
+    <p class="intro">A lakehouse splits a database in three: the <b>files</b> in an object store, the <b>state</b> in a
+      catalog, and the <b>compute</b> in any engine. Iceberg is the contract between them. Any engine that speaks it, big
+      or small, open source or commercial, reads and writes the same tables, and none of them owns the data.</p>
+    <p class="intro">That is the opening for AI. An agent picks the engine that fits today's job and changes it tomorrow,
+      because nothing it needs lives inside the engine.</p>
+    <div class="ar-fig an-fig ov-fig" id="ov-fig"></div>
+    <p class="intro">The rest of this page tests the premise: how a commit works (<a href="#concurrency">Concurrency</a>,
+      <a href="#anatomy">Anatomy</a>), how an engine does less work (<a href="#pruning">File pruning</a>,
+      <a href="#plans">Query plans</a>), what each engine supports (<a href="#iceberg">Iceberg support</a>), how fast it is
+      (<a href="#performance">Benchmarks</a>), what breaks (<a href="#reports">Bug reports</a>), all of it on one page
+      (<a href="#scorecard">Scorecard</a>), and what comes next (<a href="#future">Future</a>).</p>`;
+  drawOverview();
+}
+function drawOverview() {
+  const pic = overviewSvg(WIDE.matches);
+  $("ov-fig").innerHTML = `<svg viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog and reads and writes the files in the object store.">${pic.svg}</svg>`;
+}
+
+// THE SCORECARD TAB: every tab on one page, just before Future. One row per engine, one column per question,
+// and every cell is read from its own data: the Core group of the Iceberg support grid, each benchmark at its
+// headline scale (the same mean as its bar chart), and the real workload (WORKLOAD_ROWS and DBT_ROWS, the
+// three checks in a tooltip). A cell that is not a yes links to where the reason is written.
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
 
@@ -936,10 +985,17 @@ function workloadCell(e) {
   if (some.length) return { ok: null, text: `partial ${some.join(", ")}` };
   return { ok: true, text: "ready" };
 }
+function workloadTip(e) {
+  const w = WORKLOAD_ROWS.find(r => r.engine === e), dbt = DBT_ROWS.find(d => d.engine === e);
+  const word = ok => ok === true ? "yes" : ok === false ? "no" : "partial";
+  return `<div class="k">File name column</div><div>${w.file.note || word(w.file.ok)}</div>
+    <div class="k">dbt 1</div><div>${dbt.adapter ? `${esc(dbt.adapter)}, ${word(dbtOk(e))}` : "no adapter"}</div>
+    <div class="k">MERGE</div><div>${w.merge.note ? `${w.merge.note}, ${word(w.merge.ok)}` : word(w.merge.ok)}</div>`;
+}
 const SC_COLS = [
-  { title: "Iceberg core", tab: CAPABILITY.id, cell: coreCell },
-  ...SUITES.map(s => ({ title: `${s.title}, ${s.scale(s.headline)}`, tab: s.id, cell: e => benchCell(s, e) })),
-  { title: "Real workload", tab: WORKLOAD.id, cell: workloadCell },
+  { id: "core", title: "Iceberg core", href: `#${CAPABILITY.id}`, cell: coreCell },
+  ...SUITES.map(s => ({ id: s.id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${s.id}`, cell: e => benchCell(s, e) })),
+  { id: "workload", title: "Real workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true },
 ];
 
 function renderScorecard() {
@@ -947,13 +1003,13 @@ function renderScorecard() {
   if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
   const engines = WORKLOAD_ROWS.map(r => r.engine);
   const cells = Object.fromEntries(engines.map(e => [e, SC_COLS.map(c => c.cell(e))]));
-  const yes = tab => engines.filter(e => cells[e][SC_COLS.findIndex(c => c.tab === tab)].ok === true).length;
+  const yes = id => engines.filter(e => cells[e][SC_COLS.findIndex(c => c.id === id)].ok === true).length;
   const reports = data.reports?.items.filter(i => i.author === data.reports.reporter && i.kind === "issue").length;
   const tiles = [
     [engines.length, "engines, one 16 GB machine"],
     [yes("tpch"), "finish TPC-H at SF 100"],
     [yes("tpcds"), "finish TPC-DS at SF 100"],
-    [yes(WORKLOAD.id), "can run the real workload"],
+    [yes("workload"), "can run the real workload"],
     ...(reports ? [[reports, "bug reports filed upstream"]] : []),
   ];
   const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
@@ -963,16 +1019,16 @@ function renderScorecard() {
   const mark = (c, e, col) => {
     const cls = c.ok === true ? "excellent" : c.ok === false ? "none" : c.ok === null ? "partial" : "na";
     const li = document.getElementById(slug(LABEL[e] ?? e));
-    const href = c.ok === true ? "" : li?.closest("#issues") ? `#${li.id}` : `#${col.tab}`;
-    return `<td class="lv ${cls}"><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
+    const href = c.ok === true ? "" : li?.closest("#issues") ? `#${li.id}` : col.href.startsWith("#") ? col.href : "";
+    return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
   };
   sec.innerHTML = `
-    <p class="caption">The verdict first. Each column is a question another tab answers; click a column for the
-      details, and a cell that is not a yes for the reason.</p>
+    <p class="caption">Every tab on one page. Each column is a question; click a column for the details, and a cell
+      that is not a yes for the reason.</p>
     <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
     <p class="verdict">${verdict}</p>
     <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span></div>
-    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="#${c.tab}">${esc(c.title)}</a></th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
+    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="${c.href}">${esc(c.title)}</a></th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
     <tbody><tr class="tier"><th colspan="${SC_COLS.length + 1}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
@@ -980,7 +1036,25 @@ function renderScorecard() {
       </tr>`).join("")}</tbody>`).join("")}</table></div>
     <p class="note">Iceberg core: the Core group of the <a href="#iceberg">Iceberg support</a> grid, the minimum an engine needs
       to own a table. Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, as on <a href="#performance">Benchmarks</a>, and how much
-      slower than the fastest. Real workload: the three columns of the <a href="#workload">Real workload</a> tab.</p>`;
+      slower than the fastest.</p>
+    <p class="note">Real workload: can the engine replace DuckDB in <a href="${WORKLOAD_REPO}">analytics-as-code</a>, where dbt
+      loads AEMO CSV files from OneLake Files into Iceberg tables every hour? It needs three things: a column with each
+      row's source file name (what its <a href="#etl">Light ETL</a> reads), a dbt 1 adapter (tried in
+      <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for DuckDB, LakeSail and Polars, the adapter docs for the others),
+      and MERGE (the <a href="#iceberg">Iceberg support</a> probe where there is one). One no and it is not an option.
+      Hover a cell for the three.</p>`;
+  for (const td of sec.querySelectorAll("td[data-tip]")) {
+    const e = td.dataset.tip;
+    td.onmouseenter = () => {
+      tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
+      tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>${workloadTip(e)}`;
+      const r = td.getBoundingClientRect();
+      moveTip(r.left + r.width / 2, r.top);
+      tip.classList.add("on");
+    };
+    td.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+    td.onmouseleave = hideTip;
+  }
 }
 
 // THE BUG REPORTS TAB: docs/data/reports.json, written by .github/scripts/reports_publish.py (reports.yml, daily)
@@ -1642,6 +1716,7 @@ WIDE.addEventListener("change", () => {
   if (state.suite === ARCH.id) drawArch();
   if (state.suite === ANATOMY.id) drawAnatomy();
   if (state.suite === PRUNING.id) drawPruning();
+  if (state.suite === OVERVIEW.id) drawOverview();
 });
 
 // THE ANATOMY TAB: what one table is made of, the standard tree from the catalog down to the Parquet
@@ -1775,7 +1850,7 @@ const pruningSay = t => [
   "Inside that file, the Parquet footer stores the min and max of each row group. The engine reads 1 row group of 4.",
   "1 row group of 36. The metadata did the work before a single row was read.",
   "The same table, written in random order. The partitions still skip January and February, but every March file holds days 1 to 31: each range covers the 14th, so nothing else is skipped, and 12 row groups are read. Sort the data on the columns you filter on.",
-  `The same statistics decide the join order (<a href="#plans">Query plans</a>). And with server-side planning, the catalog does this pruning for the engine (<a href="#next">Next</a>).`,
+  `The same statistics decide the join order (<a href="#plans">Query plans</a>). And with server-side planning, the catalog does this pruning for the engine (<a href="#future">Future</a>).`,
 ][t];
 const PR_ROWS = ["Query", "Manifest list", "Manifest files", "Data files", "Row groups"];
 
@@ -1874,8 +1949,8 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #scorecard, #catalogs, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features, #workload,
-// #performance, #etl, #tpch, #tpcds, #iceberg, #reports, #next, #issues, #about, #engines,
+// Deep links: #lakehouse, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
+// #performance, #etl, #tpch, #tpcds, #iceberg, #reports, #scorecard, #future, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -1883,7 +1958,9 @@ function fromHash() {
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
   if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg support grid
-  if (h === "dbt") h = WORKLOAD.id;  // the dbt support tab is now the Real workload tab's dbt 1 column
+  if (h === "dbt" || h === "workload") h = SCORECARD.id;  // the dbt and Real workload tabs are the Scorecard's last column
+  if (h === "next") h = NEXT.id;  // the Future tab's old name
+  if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
   if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
   const story = h.match(/^plans-(\w+)$/);  // one Query plans story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
