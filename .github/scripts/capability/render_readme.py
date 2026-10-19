@@ -18,9 +18,9 @@ import sys
 from pathlib import Path
 
 # The column order, most usable first. Spark is the reference: the Iceberg Java library the others
-# are read against; Trino is built on the same library, with its own SQL and planning. Polars is
-# last because it has no SQL writes (no DELETE, UPDATE, DROP).
-ENGINES = ("spark", "trino", "duckdb", "chdb", "sail", "databend", "polars")
+# are read against; Trino is built on the same library, with its own SQL and planning. Polars and
+# Daft are last because they have no SQL writes (no DELETE, UPDATE, DROP).
+ENGINES = ("spark", "trino", "duckdb", "chdb", "sail", "databend", "polars", "daft")
 # The ones with SQL, for the rows Polars has no operation for.
 SQL = ("spark", "trino", "duckdb", "chdb", "sail", "databend")
 # The SQL engines asked the DDL and row-level probes that chDB has no statement for.
@@ -33,6 +33,7 @@ TITLE = {
     "sail": "Sail",
     "chdb": "chDB",
     "databend": "Databend",
+    "daft": "Daft",
 }
 LANGUAGE = {
     "spark": "Java",
@@ -42,6 +43,7 @@ LANGUAGE = {
     "sail": "Rust",
     "chdb": "C++",
     "databend": "Rust",
+    "daft": "Rust",
 }
 IMPLEMENTATION = {
     "spark": "the Iceberg Java library, the reference",
@@ -51,19 +53,25 @@ IMPLEMENTATION = {
     "sail": "own, on DataFusion",
     "chdb": "ClickHouse's own",
     "databend": "iceberg-rust (its fork), Databend's own SQL",
+    "daft": "own parquet reader and writer, pyiceberg for the catalog and commit",
 }
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
-    # Polars' CREATE TABLE is sink_iceberg creating the table it writes: a CTAS too.
+    # Polars' CREATE TABLE is sink_iceberg creating the table it writes: a CTAS too. Daft's is
+    # Catalog.create_table(name, frame), which appends the frame it is given.
     (
         "CREATE TABLE",
         {
             "polars": ["sink_create"],
+            "daft": ["sink_create"],
             **{e: ["create_table"] for e in FULL_SQL},
         },
     ),
-    ("CREATE TABLE AS SELECT", {"polars": ["sink_create"], **{e: ["ctas"] for e in SQL}}),
+    (
+        "CREATE TABLE AS SELECT",
+        {"polars": ["sink_create"], "daft": ["sink_create"], **{e: ["ctas"] for e in SQL}},
+    ),
     ("CREATE TABLE IF NOT EXISTS, existing table", {e: ["create_if_not_exists"] for e in SQL}),
     (
         "INSERT / append",
@@ -72,6 +80,7 @@ ROWS = [
             "trino": ["insert_into"],
             "databend": ["insert_into"],
             "polars": ["sink_append"],
+            "daft": ["sink_append"],
             "duckdb": ["insert_values"],
             "sail": ["insert_into"],
         },
@@ -101,6 +110,7 @@ ROWS = [
             "sail": ["insert_overwrite"],
             "chdb": ["insert_overwrite"],
             "polars": ["sink_overwrite"],
+            "daft": ["sink_overwrite"],
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in FULL_SQL}),
@@ -111,6 +121,7 @@ ROWS = [
             "trino": ["partitioned"],
             "databend": ["partitioned"],
             "polars": ["partitioned"],
+            "daft": ["partitioned"],
             "duckdb": ["create_partitioned"],
             "sail": ["partitioned"],
         },
@@ -132,7 +143,8 @@ ROWS = [
     ),
     ("Drop column", {e: ["drop_column"] for e in SQL}),
     ("Rename column", {e: ["rename_column"] for e in SQL}),
-    ("Type promotion (int → long)", {e: ["type_promotion"] for e in ENGINES}),
+    # Daft has no schema operation: a write is coerced to the table's schema, never widens it.
+    ("Type promotion (int → long)", {e: ["type_promotion"] for e in ENGINES if e != "daft"}),
     ("Partition evolution", {e: ["partition_evolution"] for e in SQL}),
     (
         "Write after partition evolution",
@@ -279,6 +291,7 @@ SITE_KEY = {
     "duckdb": "duckdb_iceberg",
     "sail": "lakesail_iceberg",
     "chdb": "chdb_iceberg",
+    "daft": "daft_iceberg",
 }
 
 # Worst first: the cell shows the worst outcome among the row's probes.
@@ -480,7 +493,7 @@ def render(data: dict) -> str:
         "# Iceberg support: what each engine can do against the OneLake Iceberg REST catalog",
         "",
         "Spark is the reference: it uses the Iceberg Java library, as Trino does under its own "
-        "SQL. Polars, DuckDB, Sail, chDB and Databend have their own Iceberg code, no JVM.",
+        "SQL. Polars, DuckDB, Sail, chDB, Databend and Daft have their own Iceberg code, no JVM.",
         "",
         "`yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no "
         "such operation · `—` not probed · `?` the probe could not ask",

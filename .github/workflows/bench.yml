@@ -27,7 +27,7 @@ on:
       engines:
         description: Comma-separated engines to run.
         type: string
-        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg
+        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg,daft_iceberg
       publish:
         description: Commit results and charts. Off leaves the artifacts and touches nothing.
         type: boolean
@@ -89,7 +89,7 @@ jobs:
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
         # once here so every artifact in the run shares one timestamp.
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg,daft_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
@@ -185,7 +185,7 @@ jobs:
         run: |
           pip install -r "requirements/${BENCH_ENGINE}.txt"
           if [ -n "$OVERRIDE" ]; then pip install --force-reinstall --no-deps "$OVERRIDE"; fi
-          pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pysail|pyiceberg|pyarrow)=' || true
+          pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|daft|pysail|pyiceberg|pyarrow)=' || true
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
       # .github/scripts/duckdb_nightly.py which nightly.

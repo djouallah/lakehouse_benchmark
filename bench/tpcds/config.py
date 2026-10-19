@@ -8,8 +8,8 @@
 * `from_env` reads TPCDS_SF, so tpcds.yml and bench.yml can be dispatched at different scales.
 
 The engine list is NOT TPC-H's. Identifiers and colours are shared with it -- an engine looks the
-same in every picture -- but `ENGINES` below is a subset, because two of TPC-H's cannot
-answer TPC-DS at all. Which two, and on what evidence, is written there.
+same in every picture -- but `ENGINES` below is a subset, because one of TPC-H's cannot
+answer TPC-DS at all. Which one, and on what evidence, is written there.
 """
 
 from __future__ import annotations
@@ -18,15 +18,13 @@ from dataclasses import dataclass
 
 from bench.config import SQL_DIR, Config
 
-# THE ENGINES THAT FINISH. Two of TPC-H's are left out, on measurement, not taste -- run
+# THE ENGINES THAT RUN. One of TPC-H's is left out, on measurement, not taste -- run
 # 35732997698 (SF=10) and 35732283791 (SF=1) are the evidence:
 #
 #   chdb_iceberg      chdb-core 26.9.0 ABORTED IN GLIBC on its first query (`pthread_mutex_lock.c:94
 #                     assertion failed`, exit 134). The chdb-core main build no longer crashes but
 #                     fails 6 of 99 on known ClickHouse issues (LEARNING.md#chdb), and a run is
 #                     all or nothing. TPC-H is unaffected -- chDB still runs there.
-#   daft_iceberg      never ran here: TPC-H already excludes it from the query benchmark
-#                     (Eventual-Inc/Daft#7532).
 #
 # Spark-OSS is slow -- bench/tpch/engines/pyspark_iceberg.py's `refresh` exists because of it --
 # but it answers all 99, so it stays.
@@ -56,6 +54,10 @@ ENGINES = (
     # the decimal fix (bench/databend.py). It stops at Q5: a UNION ALL over two tables applies one
     # table's schema to the other's file (databendlabs/databend#20732).
     "databend_iceberg",
+    # Daft: added 2026-10-19 so its status is on the page, expecting a failed run. 0.7.26 cannot
+    # read OneLake's abfss:// paths (Eventual-Inc/Daft#7533, merged, unreleased) and stops at
+    # decimal precision 38 on TPC-H (#7601, #7602); LEARNING.md has the detail.
+    "daft_iceberg",
 )
 
 # The 24 tables of the spec (dsdgen also emits `dbgen_version`, which is not one), LARGEST FIRST

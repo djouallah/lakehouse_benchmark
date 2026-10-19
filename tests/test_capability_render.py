@@ -183,6 +183,7 @@ def test_the_columns_go_from_most_to_least_usable():
         "sail",
         "databend",
         "polars",
+        "daft",
     )
 
 

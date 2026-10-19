@@ -487,8 +487,11 @@ Largest scale each engine completes, cold, every statement answered:
   and Q19 most, and they came out the worst of four runs (5.9 s, 6.3 s, 7.2 s). Over object
   storage the row-filter pass costs extra range requests.
 
-## Daft: in the ETL, not in the query suites
+## Daft
 
+- **In the query suites from 2026-10-19, to show its status.** It is in the TPC-H and TPC-DS
+  rosters and is expected to fail until a release has the OneLake path fix and the decimal fixes
+  below. A failed run is published as a failure, with no time.
 - **It runs 16 of 22 TPC-H queries** at 0.7.25
   ([Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532)):
 

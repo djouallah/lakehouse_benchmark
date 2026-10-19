@@ -78,12 +78,12 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 
 | Workflow | Inputs (default) |
 |---|---|
-| `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (8, no daft), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
-| `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (7, no chdb or daft), `regenerate` (false), `publish` |
+| `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (10, includes daft), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
+| `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (9, no chdb), `regenerate` (false), `publish` |
 | `etl.yml` | `files` 10/100/1000 (100), `engines` (10, includes daft and pandas), `publish` |
 | `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
-| `capability.yml` (iceberg support) | `clients` polars/duckdb/sail/chdb/duckdb_isolation (all), `keep` (false) |
+| `capability.yml` (iceberg support) | `clients` spark/trino/polars/duckdb/sail/chdb/databend/daft/duckdb_isolation (all), `keep` (false) |
 | `auth_smoke.yml` | none |
 | `tmp_polars_main.yml` | `ref` (main). Temporary: builds the Polars main wheel `requirements/polars_iceberg.txt` pins, until a release has the fixes |
 
@@ -182,10 +182,10 @@ before `bench.yml`.
 
 | Engine | Why | Revisit when |
 |---|---|---|
-| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It rejects backticks (hence `IDENT_STYLE = "quoted"`). It is in the ETL but not in `bench.yml`. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), split into [#7601](https://github.com/Eventual-Inc/Daft/issues/7601) (decimals) and [#7602](https://github.com/Eventual-Inc/Daft/issues/7602) (`CASE`) |
 | DataFusion Comet | Its native Iceberg scan declines `abfss://` (`builtin_storage_schemes` in `native/core/src/execution/operators/iceberg_common.rs`, which `CometScanRule.scala` loads since PR #6065), so OneLake scans run on the JVM anyway. It would also bypass `WorkloadIdentityTokenProvider`. | `abfss` appears in the native read list ([#6058](https://github.com/apache/datafusion-comet/issues/6058)) |
 
-TPC-DS runs seven engines, all but chDB and Daft. Why those two are out is in the comment above
+TPC-DS runs nine engines, all but chDB. Daft is in both query suites so its status shows on the page,
+though it is expected to fail ([LEARNING.md](LEARNING.md#daft)). Why chDB is out is in the comment above
 `ENGINES` in [`bench/tpcds/config.py`](bench/tpcds/config.py). What broke each engine, at
 what scale, and how it was fixed, is in [LEARNING.md](LEARNING.md), with one section per engine.
 
