@@ -89,6 +89,16 @@ PACKAGES = (
 
 ASSERTION_REFRESH_S = 240
 
+# GLUTEN'S BUDGET, 12GB, SPLIT FOR A JVM ENGINE. Stock Spark used to run on an 11GB heap and
+# nothing else, so with spark.memory.fraction's 0.6 it had ~6.4GB to execute in while Gluten had
+# 3GB of heap plus 9GB off-heap. And in local mode the broadcast hash table is built in the same
+# heap the running tasks' sorts and aggregations fill: TPC-H SF=100 Q21 died twice on "Not enough
+# memory to build and broadcast", with two small broadcasts failing at once (runs 36016179553,
+# 36151085980). Off-heap moves the Tungsten execution memory out of that heap. Spark keeps more on
+# heap than Gluten does -- Parquet column vectors, broadcast tables -- so the split is even, not 3+9.
+HEAP = "6g"
+OFF_HEAP = "6g"
+
 
 def _catalog_conf(name: str, warehouse: str) -> dict[str, str]:
     """Every `spark.sql.catalog.<name>.*` key, as a dict rather than a builder chain.
@@ -324,7 +334,8 @@ class PysparkIceberg:
         hadoop = self._spark.sparkContext._jvm.org.apache.hadoop.util.VersionInfo.getVersion()
         scrub.safe_print(
             f"  pyspark {self.version} on hadoop {hadoop}, catalog {CATALOG} "
-            f"(local[4], {os.environ.get('SPARK_DRIVER_MEMORY', 'default')} driver heap)"
+            f"(local[4], {os.environ.get('SPARK_DRIVER_MEMORY', 'default')} driver heap, "
+            f"{self._spark.conf.get('spark.memory.offHeap.size', '0')} off-heap)"
         )
 
     def _storage_conf(self, abfs: dict[str, str], account: str) -> dict[str, str]:
@@ -339,8 +350,16 @@ class PysparkIceberg:
         return conf
 
     def _extra_config(self) -> dict[str, str]:
-        """Session keys a variant adds on top of everything above. Stock Spark adds none."""
-        return {}
+        """Session keys a variant adds on top of everything above. Stock Spark adds its memory.
+
+        Sets the heap too, which only works because it runs before the JVM starts: spark-submit
+        reads SPARK_DRIVER_MEMORY when pyspark launches the gateway.
+        """
+        os.environ["SPARK_DRIVER_MEMORY"] = HEAP
+        return {
+            "spark.memory.offHeap.enabled": "true",
+            "spark.memory.offHeap.size": OFF_HEAP,
+        }
 
     def refresh(self) -> None:
         """Restart on fresh credentials once the session's have under 15 minutes left."""
