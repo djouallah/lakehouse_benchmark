@@ -481,8 +481,8 @@ Largest scale each engine completes, cold, every statement answered:
   (`runtime.temporary_files.compression`). With them, SF=60 Q72 did not fail on the 64 GB cap; it
   ran past the 900 s limit instead (run 38115933551). The bench went back to the 0.7.2 release
   and does not run Sail main builds.
-- **Its ETL table has no `filename` column.** The DataFrame transform it shares with Spark
-  (`_spark_df.py`) leaves it out because Sail can't provide it.
+- **Its ETL table has a `filename` column on main.** `input_file_name()` (lakehq/sail#2571, after
+  0.7.2) filled all 13,876,896 rows from 100 CSVs (ETL run 39236853021); the ETL runs the main build.
 - **Late materialization made it slower.** `SAIL_PARQUET__PUSHDOWN_FILTERS` should help Q6, Q12
   and Q19 most, and they came out the worst of four runs (5.9 s, 6.3 s, 7.2 s). Over object
   storage the row-filter pass costs extra range requests.
