@@ -380,7 +380,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
     <h3>In the bench</h3>
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes).</li>
-      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; SQL writes to Iceberg: <a href="https://github.com/pola-rs/polars/issues/29892">#29892</a> CREATE TABLE, <a href="https://github.com/pola-rs/polars/issues/29893">#29893</a> INSERT, <a href="https://github.com/pola-rs/polars/issues/29894">#29894</a> DELETE, <a href="https://github.com/pola-rs/polars/issues/29895">#29895</a> UPDATE, <a href="https://github.com/pola-rs/polars/issues/29896">#29896</a> DROP TABLE (all open); <code>sink_iceberg</code>: <a href="https://github.com/pola-rs/polars/issues/29845">#29845</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/29908">PR #29908</a>, not yet released) create the table it writes, <a href="https://github.com/pola-rs/polars/issues/29968">#29968</a> (open) create a missing namespace, <a href="https://github.com/pola-rs/polars/issues/29844">#29844</a> (open) the <code>bucket</code> transform, <a href="https://github.com/pola-rs/polars/issues/29842">#29842</a> (open) overwrite by filter, <a href="https://github.com/pola-rs/polars/issues/29843">#29843</a> (open) delete rows by predicate;<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">dbt-polars#29</a> a dbt source cannot name a <code>.CSV</code> file (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/30">PR #30</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
+      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; SQL writes to Iceberg: <a href="https://github.com/pola-rs/polars/issues/29892">#29892</a> CREATE TABLE, <a href="https://github.com/pola-rs/polars/issues/29893">#29893</a> INSERT, <a href="https://github.com/pola-rs/polars/issues/29894">#29894</a> DELETE, <a href="https://github.com/pola-rs/polars/issues/29895">#29895</a> UPDATE, <a href="https://github.com/pola-rs/polars/issues/29896">#29896</a> DROP TABLE (all open); <code>sink_iceberg</code>: <a href="https://github.com/pola-rs/polars/issues/29845">#29845</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/29908">PR #29908</a>, not yet released) create the table it writes, <a href="https://github.com/pola-rs/polars/issues/29968">#29968</a> (open) create a missing namespace, <a href="https://github.com/pola-rs/polars/issues/29844">#29844</a> (open) the <code>bucket</code> transform, <a href="https://github.com/pola-rs/polars/issues/29842">#29842</a> (open) overwrite by filter, <a href="https://github.com/pola-rs/polars/issues/29843">#29843</a> (open) delete rows by predicate;<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">dbt-polars#29</a> a dbt source cannot name a <code>.CSV</code> file (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/30">PR #30</a>); <a href="https://github.com/pola-rs/polars/issues/30029">#30029</a> (open) an unordered <code>UNION ALL</code> of N CSV scans holds every input at once, 7x the memory of <code>pl.concat</code>, so the dbt project stalls at 50 files. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
       <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
       <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
@@ -763,7 +763,7 @@ function renderEngines() {
       batches from the one below it. Execution: Columnar works on batches of column values; Row works one row at a time.</p>`;
 }
 
-// THE DBT 1 PART of the Scorecard's Real workload column: how well dbt 1 (dbt Core) works with each engine on Iceberg
+// THE DBT 1 PART of the Scorecard's My workload column: how well dbt 1 (dbt Core) works with each engine on Iceberg
 // tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
 // level. DuckDB, LakeSail and Polars were tried in fabric-dbt-examples; the others come from
 // their adapter docs. Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in
@@ -779,7 +779,7 @@ const DBT_ROWS = [
   { engine: "duckdb_iceberg", level: "good", adapter: "dbt-duckdb", url: "https://github.com/duckdb/dbt-duckdb",
     note: `Works with the Iceberg catalog through <code>attach</code>. It needs two small macro overrides: <code>DESCRIBE</code> must hide Iceberg's <code>__</code> column, and <code>DROP</code> must not use <code>CASCADE</code>. <a href="${DBT_MEDALLION}/blob/main/docs/engine-nuances.md">Details</a>` },
   { engine: "polars_iceberg", level: "partial", adapter: "dbt-polars", url: "https://github.com/datamindedbe/incubator-dbt-polars",
-    note: `Builds the full gold layer on the Iceberg catalog with dbt-polars 0.4.0 from PyPI, on a Polars main build for its SQL fixes. No SQL hooks, and it rejects <code>merge_clauses</code>, so an insert-only model is an append that leaves out the keys already stored. <a href="${DBT_MEDALLION}#engines">Details</a>` },
+    note: `Built the full gold layer on the Iceberg catalog on 2026-10-16, with dbt-polars 0.4.0 from PyPI on a Polars main build for its SQL fixes. The project now stalls at 50 CSV files: <code>dbt build</code> times out on an unordered <code>UNION ALL</code> that holds every file in memory (<a href="https://github.com/pola-rs/polars/issues/30029">polars#30029</a>, open). No SQL hooks, and it rejects <code>merge_clauses</code>, so an insert-only model is an append that leaves out the keys already stored. <a href="${DBT_MEDALLION}#engines">Details</a>` },
   { engine: "starrocks_iceberg", level: "partial", adapter: "dbt-starrocks", url: "https://docs.starrocks.io/docs/integrations/dbt/",
     note: "No merge. Open: <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/124\">#124</a> a drop leaves the data files, <a href=\"https://github.com/StarRocks/dbt-starrocks/issues/125\">#125</a> the next statement can read the old data." },
   { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
@@ -793,7 +793,7 @@ const DBT_ROWS = [
 ];
 
 
-// THE SCORECARD'S REAL WORKLOAD COLUMN: can the engine replace DuckDB in one real dbt project, analytics-as-code?
+// THE SCORECARD'S MY WORKLOAD COLUMN: can the engine replace DuckDB in my dbt project, analytics-as-code?
 // Three requirements, all measured elsewhere on this page (reading CSV from Files and writing Iceberg
 // are not columns: every engine in the bench does both, README conditions 2 and 3); the dbt
 // column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt note
@@ -1000,7 +1000,7 @@ function workloadTip(e) {
 const SC_COLS = [
   { id: "core", title: "Iceberg core", href: `#${CAPABILITY.id}`, cell: coreCell },
   ...SUITES.map(s => ({ id: s.id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${s.id}`, cell: e => benchCell(s, e) })),
-  { id: "workload", title: "Real workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true },
+  { id: "workload", title: "My workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true },
 ];
 
 function renderScorecard() {
@@ -1014,7 +1014,7 @@ function renderScorecard() {
     [engines.length, "engines, one 16 GB machine"],
     [yes("tpch"), "finish TPC-H at SF 100"],
     [yes("tpcds"), "finish TPC-DS at SF 100"],
-    [yes("workload"), "can run the real workload"],
+    [yes("workload"), "can run my workload"],
     ...(reports ? [[reports, "bug reports filed upstream"]] : []),
   ];
   const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
@@ -1042,12 +1042,13 @@ function renderScorecard() {
     <p class="note">Iceberg core: the Core group of the <a href="#iceberg">Iceberg support</a> grid, the minimum an engine needs
       to own a table. Gluten/Velox is a plugin inside Spark, so its Iceberg operations are Spark-OSS's. Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, as on <a href="#performance">Benchmarks</a>, and how much
       slower than the fastest.</p>
-    <p class="note">Real workload: can the engine replace DuckDB in <a href="${WORKLOAD_REPO}">analytics-as-code</a>, where dbt
-      loads AEMO CSV files from OneLake Files into Iceberg tables every hour? It needs three things: a column with each
-      row's source file name (what its <a href="#etl">Light ETL</a> reads), a dbt 1 adapter (tried in
-      <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for DuckDB, LakeSail and Polars, the adapter docs for the others),
-      and MERGE (the <a href="#iceberg">Iceberg support</a> probe where there is one). One no and it is not an option.
-      Hover a cell for the three.</p>`;
+    <p class="note">My workload is one dbt project, <a href="${WORKLOAD_REPO}">analytics-as-code</a>. It is arbitrary: it is
+      the features I need. Yours needs others, so score the engines on yours, and you may reach a different conclusion.</p>
+    <p class="note">The project loads AEMO CSV files from OneLake Files into Iceberg tables every hour, today with DuckDB.
+      To replace it, an engine needs three things: a column with each row's source file name (what its
+      <a href="#etl">Light ETL</a> reads), a dbt 1 adapter (tried in <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for
+      DuckDB, LakeSail and Polars, the adapter docs for the others), and MERGE (the <a href="#iceberg">Iceberg support</a>
+      probe where there is one). One no and it is not an option for me. Hover a cell for the three.</p>`;
   for (const td of sec.querySelectorAll("td[data-tip]")) {
     const e = td.dataset.tip;
     td.onmouseenter = () => {

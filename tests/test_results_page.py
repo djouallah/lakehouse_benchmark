@@ -54,7 +54,7 @@ def test_every_engine_has_a_workload_row():
 
 def test_the_real_workload_is_the_scorecards_last_column_not_a_tab():
     assert 'id: "workload"' not in rows("GROUPS")
-    assert '{ id: "workload", title: "Real workload", href: WORKLOAD_REPO,' in PAGE
+    assert '{ id: "workload", title: "My workload", href: WORKLOAD_REPO,' in PAGE
 
 
 def test_future_is_the_last_top_tab():
