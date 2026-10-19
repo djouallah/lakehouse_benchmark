@@ -188,12 +188,13 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl .eng { font-weight: 800; display: flex; align-items: center; gap: 6px; }
 .pl .eng i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .pl .clock { font-weight: 800; font-size: 26px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.pl .meta { font-size: 12px; color: var(--ink-3); overflow-wrap: anywhere; }
+.pl .meta { font-size: 14px; color: var(--ink-2); overflow-wrap: anywhere; }
+.pl .meta b { color: var(--ink); }
 .pl .badges { min-height: 24px; margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
 .pl .badge { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
 .pl .badge.bad { background: color-mix(in srgb, var(--no) 16%, transparent); color: var(--no); }
 .pl .badge.ok { background: color-mix(in srgb, var(--yes) 16%, transparent); color: var(--yes); }
-.pl .tree { margin-top: 4px; height: clamp(220px, calc(100vh - 600px), 560px); }
+.pl .tree { margin-top: 4px; height: clamp(220px, calc(100vh - 540px), 620px); }
 .pl .tree svg { width: 100%; height: 100%; }
 .pl .meta { display: block; text-decoration: none; }
 .pl svg { display: block; margin: 0 auto; }
@@ -1344,7 +1345,7 @@ async function renderPlans() {
     <ol class="steps" id="pl-why" hidden></ol>`;
   bindStoryChips(sec);
   for (const [p, side] of [[good, "good"], [bad, "bad"]]) {
-    noteTip(sec.querySelector(`#pl-${side} .meta`), esc(name(p)), `<div>TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}.
+    noteTip(sec.querySelector(`#pl-${side} .meta`), esc(name(p)), `<div>${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))}</div><div>TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}.
       Rows are real, estimates the engine's own; times include plan instrumentation.</div><div class="k">Click for the capture run.</div>`);
   }
   $("pl-play").onclick = () => startRace(good, bad);
@@ -1362,10 +1363,15 @@ function bindStoryChips(sec) {
   }
 }
 
+// The largest intermediate result: the most rows any step after a scan makes (the engine's guess if it died first).
+function peakStep(p) {
+  const n = allNodes(p.root).filter(n => n.kind !== "scan").sort((a, b) => flow(b) - flow(a))[0];
+  return n ? ` · largest intermediate result <b>${n.rows == null ? "~" : ""}${nfmt(flow(n))}</b> rows` : "";
+}
 function card(p, side) {
   return `<div class="card" id="pl-${side}" style="--c: var(--${p.engine})">
     <div class="head"><div class="eng"><i></i>${LABEL[p.engine] ?? p.engine}</div><div class="clock" id="pl-${side}-clock">${secs(p.seconds)}</div></div>
-    <a class="meta" href="${esc(p.run_url || "#")}">${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))} · SF ${p.sf}${p.peak_memory_bytes ? ` · peak memory ${gib(p.peak_memory_bytes)}` : ""}</a>
+    <a class="meta" href="${esc(p.run_url || "#")}">SF ${p.sf}${p.peak_memory_bytes ? ` · peak memory <b>${gib(p.peak_memory_bytes)}</b>` : ""}${peakStep(p)}</a>
     <div class="badges" id="pl-${side}-badges"></div>
     <div class="tree" id="pl-${side}-tree"></div></div>`;
 }
@@ -1374,7 +1380,7 @@ function card(p, side) {
 // it and the others branch off below. A left-deep chain of joins (Q72 on Spark) is a straight line, not a staircase.
 // The tree is scaled to fit its box, so a deep plan never makes the page scroll.
 function drawTree(plan, side) {
-  const X = 68, Y = 48, PAD = 30;
+  const Y = 48, PAD = 30, box = $(`pl-${side}-tree`);
   const size = n => n._n ??= 1 + n.children.reduce((a, c) => a + size(c), 0);
   const height = n => n._h ??= 1 + Math.max(0, ...n.children.map(height));
   const right = [];  // per depth, the first free column
@@ -1389,9 +1395,13 @@ function drawTree(plan, side) {
     });
   })(plan.root, 0, 0);
   const leaf = Math.max(...right);
-  const W = (depth + 1) * X + PAD + 40, H = Math.max(leaf, 2) * Y + PAD;
-  const px = n => PAD + 20 + (depth - n._d) * X, py = n => PAD + n._x * Y;
-  const radius = n => n.kind === "scan" ? 7 : Math.min(24, Math.max(8, 4 + 2.4 * Math.log10(flow(n) + 1)));
+  const H = Math.max(leaf, 2) * Y + PAD + 12;
+  // Level spacing that gives the tree its box's shape, so a long, flat plan (Q72 on Spark) fills the box
+  // instead of shrinking to its width; 40 to 68 px, and big circles get no wider than the spacing allows.
+  const fit = (H * box.clientWidth / Math.max(box.clientHeight, 1) - PAD - 40) / (depth + 1);
+  const X = Math.round(Math.min(68, Math.max(40, fit || 68))), W = (depth + 1) * X + PAD + 40;
+  const px = n => PAD + 20 + (depth - n._d) * X, py = n => PAD + 12 + n._x * Y;  // 12: room for the counts over the top row
+  const radius = n => n.kind === "scan" ? 7 : Math.min(24, X / 2 - 4, Math.max(8, 4 + 2.4 * Math.log10(flow(n) + 1)));
   const width = n => Math.min(16, 1 + 1.5 * Math.log10(flow(n) + 1));
   const glyph = { join: "⋈", agg: "Σ", sort: "↓", scan: "", other: "" };
   let edges = "", nodes = "";
@@ -1403,14 +1413,14 @@ function drawTree(plan, side) {
       edges += `<path class="edge${c.rows == null && c.est != null ? " guess" : ""}" data-from="${side}-${allNodes(plan.root).indexOf(c)}" d="M${cx},${cy} C${mx},${cy} ${mx},${y} ${x},${y}" stroke-width="${width(c).toFixed(1)}"/>`;
     }
     const r = radius(n), cls = ["nd", n.cross ? "cross" : "", n.rows == null && n.est != null ? "guess" : ""].join(" ");
-    const label = n.kind === "scan" ? `<text x="${x}" y="${y + r + 12}" text-anchor="middle">${esc(n.label.length > 10 ? n.label.slice(0, 9) + "…" : n.label)}</text>` : "";
+    const drop = X < 60 && n._d % 2 ? 11 : 0;  // tight spacing: every other scan's name one line lower
+    const label = n.kind === "scan" ? `<text x="${x}" y="${y + r + 12 + drop}" text-anchor="middle">${esc(n.label.length > 10 ? n.label.slice(0, 9) + "…" : n.label)}</text>` : "";
     nodes += `<g class="${cls}" data-id="${n._id}" tabindex="0"><circle cx="${x}" cy="${y}" r="${r}"/>
       <text class="g" x="${x}" y="${y}">${n.cross ? "×" : r >= 11 ? glyph[n.kind] : ""}</text>
       <text class="n" x="${x}" y="${y - r - 4}" text-anchor="middle">${n.rows == null ? (n.est != null ? `~${nfmt(n.est)}` : "") : nfmt(n.rows)}</text>${label}</g>`;
   });
-  const box = $(`pl-${side}-tree`);
-  // Never larger than drawn; shrunk to fit the box (CSS sets its height) in both directions.
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="max-width:${W}px">${edges}${nodes}</svg>`;
+  // Scaled to fit the box (CSS sets its height) in both directions, up to 1.5 times as drawn.
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="max-width:${Math.round(W * 1.5)}px">${edges}${nodes}</svg>`;
   const svg = box.querySelector("svg");
   const byId = Object.fromEntries(allNodes(plan.root).map(n => [n._id, n]));
   for (const g of svg.querySelectorAll(".nd")) {
