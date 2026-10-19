@@ -310,12 +310,84 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .rp .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
-.arch .ov-fig { cursor: default; }
 .nx { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 4px; }
 .nx article { padding: 14px 16px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: var(--ink-2); font-size: 14px; }
 .nx h3 { font-size: 16px; color: var(--ink); margin: 0 0 6px; }
 .nx p { margin: 0; }
 .nx a { color: var(--accent); }
+/* Lakehouse overview: three eras on a rail, then the open lakehouse as a stack with a live story. */
+.eras { list-style: none; margin: 14px 0 18px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
+.eras::before { content: ""; position: absolute; left: 24px; right: 24px; top: 9px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--grid), var(--accent)); }
+.eras li { position: relative; padding: 14px 16px 16px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.eras li::before { content: ""; position: absolute; top: -26px; left: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--grid); border: 3px solid var(--surface); }
+.eras li.now { border-color: color-mix(in srgb, var(--accent) 55%, var(--grid)); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 12%, var(--raised)), var(--raised) 65%); }
+.eras li.now::before { background: var(--accent); animation: ovping 1.6s ease-out infinite; --c: var(--accent); }
+.eras li:hover, .eras li:focus-visible { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 12px 28px rgb(0 0 0 / .10); outline: none; }
+.eras .when { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.eras .now .when { color: var(--accent); }
+.eras h3 { margin: 4px 0 6px; font-size: 17px; color: var(--ink); letter-spacing: -.01em; }
+.eras p { margin: 0; }
+.ov { --hot: var(--accent); max-width: 980px; margin: 18px auto 8px; display: grid; }
+.ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
+.ov-spark { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; font-size: 18px; background: linear-gradient(135deg, var(--accent), var(--hot)); box-shadow: 0 4px 14px color-mix(in srgb, var(--hot) 40%, transparent); }
+.ov-whot { display: grid; }
+.ov-whot b { font-size: 15px; }
+.ov-whot span { font-size: 13px; color: var(--ink-2); }
+.ov-job { font-size: 13px; color: var(--ink-2); padding: 4px 12px; border-radius: 999px; background: var(--track); white-space: nowrap; }
+.ov-job b { transition: color .3s; }
+.ov-wire { position: relative; height: 48px; display: flex; justify-content: center; }
+.ov-wire::before { content: ""; width: 3px; height: calc(100% - 7px); background: repeating-linear-gradient(to bottom, var(--hot) 0 6px, transparent 6px 12px); background-size: 3px 12px; animation: ovflow .6s linear infinite; }
+.ov-wire::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-bottom: 0; border-top-color: var(--hot); }
+.ov-wire span { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+@keyframes ovflow { to { background-position: 0 12px; } }
+.ov-band { border: 1px solid var(--grid); border-radius: 18px; padding: 16px 18px 18px; background: linear-gradient(180deg, var(--raised), color-mix(in srgb, var(--track) 55%, var(--raised))); box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 10px 28px rgb(0 0 0 / .05); }
+.ov-band header { display: flex; justify-content: flex-start; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ov-band em { font: 700 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; color: var(--accent); letter-spacing: .06em; }
+.ov-band header b { font-size: 18px; letter-spacing: -.01em; }
+.ov-band header span { color: var(--ink-2); font-size: 14px; }
+.ov-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 18px; }
+.ov-groups h4 { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.ov-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.ov-pill { font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); display: inline-flex; align-items: center; gap: 8px; padding: 6px 13px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 40%, var(--grid)); background: color-mix(in srgb, var(--c) 9%, var(--raised)); cursor: default; transition: transform .2s, box-shadow .2s, border-color .2s, background-color .2s; }
+.ov-pill i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.ov-pill:hover, .ov-pill:focus-visible, .ov-pill.on { transform: translateY(-2px); border-color: var(--c); box-shadow: 0 6px 18px color-mix(in srgb, var(--c) 35%, transparent); outline: none; }
+.ov-pill.on { background: color-mix(in srgb, var(--c) 20%, var(--raised)); outline: 2px solid var(--c); outline-offset: 2px; }
+.ov-pill.on i { animation: ovping 1.2s ease-out infinite; }
+@keyframes ovping { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 55%, transparent); } to { box-shadow: 0 0 0 9px transparent; } }
+.ov-pill.ghost { --c: var(--ink-3); border-style: dashed; background: transparent; color: var(--ink-2); font-weight: 500; }
+.ov-pill.ghost:hover { transform: none; box-shadow: none; }
+.ov-band.state { border: 1.5px solid color-mix(in srgb, var(--accent) 60%, var(--grid)); background: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--accent) 14%, var(--raised)), var(--raised) 60%); }
+.ov-band.state.flash { animation: ovflash 1s ease; }
+@keyframes ovflash { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hot) 55%, transparent); } to { box-shadow: 0 0 0 16px transparent; } }
+.ov-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ov-meta .tag { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--track); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ov-meta .ok { font-size: 13px; font-weight: 700; color: var(--yes); opacity: 0; }
+.ov-band.state.flash .ok { animation: ovok 1.8s ease forwards; }
+@keyframes ovok { 15%, 75% { opacity: 1; } to { opacity: 0; } }
+.ov-files { display: flex; flex-wrap: wrap; gap: 7px; min-height: 28px; }
+.ov-files i { width: 20px; height: 26px; border-radius: 3px; background: var(--c); opacity: .9; clip-path: polygon(0 0, 66% 0, 100% 26%, 100% 100%, 0 100%); }
+.ov-files i.new { animation: ovdrop .55s cubic-bezier(.2, .8, .2, 1); }
+@keyframes ovdrop { from { transform: translateY(-16px) scale(.6); opacity: 0; } }
+/* Future: each card responds, and carries its rank, most important first. */
+.nx { counter-reset: nx; }
+.nx article { position: relative; overflow: hidden; counter-increment: nx; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.nx article::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, var(--yes))); transform: scaleX(0); transform-origin: left; transition: transform .35s ease; }
+.nx article::after { content: counter(nx, decimal-leading-zero); position: absolute; top: 10px; right: 14px; font-size: 28px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); opacity: .08; transition: opacity .2s, color .2s; }
+.nx article:hover, .nx article:focus-visible { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 14px 30px rgb(0 0 0 / .12); outline: none; }
+.nx article:hover::before, .nx article:focus-visible::before { transform: scaleX(1); }
+.nx article:hover::after, .nx article:focus-visible::after { opacity: .25; color: var(--accent); }
+.nx article h3 { padding-right: 40px; transition: color .2s; }
+.nx article:hover h3, .nx article:focus-visible h3 { color: var(--accent); }
+@media (max-width: 720px) {
+  .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 28px; }
+  .eras::before { left: 9px; right: auto; top: 6px; bottom: 6px; width: 2px; height: auto; background: linear-gradient(180deg, var(--grid), var(--accent)); }
+  .eras li::before { top: 16px; left: -26px; }
+  .ov-wire span { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ov-wire::before, .ov-pill.on i, .eras li.now::before, .ov-band.state.flash, .ov-band.state.flash .ok, .ov-files i.new { animation: none; }
+  .ov-pill, .eras li, .nx article { transition: none; transform: none !important; }
+}
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
@@ -561,6 +633,7 @@ function render() {
   if (page !== ARCH) stopArch();
   if (page !== ANATOMY) stopAnatomy();
   if (page !== PRUNING) stopPruning();
+  if (page !== OVERVIEW) stopOverview();
   if (page === OVERVIEW) { renderOverview(); return; }
   if (page === SCORECARD) { renderScorecard(); return; }
   if (page === ARCH) { renderArch(); return; }
@@ -879,81 +952,133 @@ const NEXT_ROWS = [
 
 function renderNext() {
   $(NEXT.id).innerHTML = `
-    <div class="nx">${NEXT_ROWS.map(r => `<article><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
+    <div class="nx">${NEXT_ROWS.map(r => `<article tabindex="0"><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
 }
 
-// THE LAKEHOUSE TAB'S OVERVIEW: the premise the rest of the page tests. Files in an object store, the state in an
-// Iceberg catalog, and any engine on top: start, work, stop. The engines are this bench's, grouped by how each
-// runs (ENGINE_ROWS runs, the Engines tab), plus the commercial engines that speak the same catalog, unnamed.
+// THE LAKEHOUSE TAB'S OVERVIEW: how we got here, then the premise the rest of the page tests. Three eras on a rail,
+// then the open lakehouse as a stack: who asks, the engines (stateless), the catalog (the state), the object store.
+// The engines are this bench's, grouped by how each runs (ENGINE_ROWS runs, the Engines tab), Pandas left out (no
+// SQL: the Light ETL only), plus the commercial engines that speak the same catalog, unnamed. A live story shows the
+// premise: the job moves from engine to engine, each one commits to the same catalog, and the table's files come
+// from all of them. Hovering an engine holds the story on it; reduced motion shows the picture still.
+const ERAS = [
+  { when: "1990s →", title: "The warehouse",
+    text: "Storage and compute in one product, the data in its own format. The engine owns the data; changing engine means a migration." },
+  { when: "2010s →", title: "The Java lakehouse",
+    text: "The files move to object storage, in open formats like Parquet. The table formats and their catalogs were born on the JVM, so writing a table needed the Java library, and the engines were big JVM clusters." },
+  { when: "Now", title: "The open lakehouse", now: true,
+    text: "The catalog is a REST API, and table libraries exist in Rust, C++, Python and Go. A small engine inside a Python process writes the same tables as a cluster. The state lives in the catalog, not in any engine." },
+];
 const OV_GROUPS = [
   { title: "A library in Python", has: runs => runs === "In-process" },
   { title: "Spark on a local JVM", has: runs => runs.includes("JVM") },
   { title: "A server", has: runs => runs.startsWith("Client-server") },
 ];
-
-function overviewSvg(wide) {
-  // Wide: the four engine groups side by side. Narrow: two by two.
-  const W = wide ? 780 : 360, gw = wide ? 180 : 170, gh = 168, gap = 20;
-  const cols = wide ? 4 : 2, top = 104, rowsOf = wide ? 1 : 2;
-  const eb = top + rowsOf * gh + (rowsOf - 1) * gap;  // bottom of the engines
-  const cat = { x: wide ? 110 : 34, y: eb + 70, w: wide ? 560 : 292, h: wide ? 74 : 92 };
-  const sto = { x: 0, y: cat.y + cat.h + 64, w: W, h: 60 };
-  const at = i => ({ x: (i % cols) * (gw + gap), y: top + Math.floor(i / cols) * (gh + gap), w: gw, h: gh });
-  const groups = OV_GROUPS.map(g => ({ ...g, engines: ENGINE_ROWS.filter(r => g.has(r.runs)).map(r => r.engine) }));
-  let svg = arBox({ x: W / 2 - (wide ? 200 : 170), y: 0, w: wide ? 400 : 340, h: 56 }, "", "AI agents, people, scheduled jobs",
-      "write SQL, and pick the engine for the job")
-    + arLine(W / 2, 60, W / 2, top - 20, "")
-    + `<text class="lb" x="${W / 2 + 8}" y="${top - 30}">SQL</text>`
-    + `<text class="lb" x="0" y="${top - 8}">Engines are stateless: they start, do the work, and stop</text>`;
-  groups.forEach((g, i) => {
-    const b = at(i);
-    svg += arBox(b, "", g.title, "") + g.engines.map((e, k) => `
-      <rect x="${b.x + 14}" y="${b.y + 46 + k * 23}" width="10" height="10" rx="3" style="fill: var(--${e})"/>
-      <text class="s ink" x="${b.x + 30}" y="${b.y + 55 + k * 23}">${esc(LABEL[e] ?? e)}</text>`).join("");
-  });
-  const c = at(3);
-  svg += arBox(c, "p", "Commercial engines", "the same catalog,")
-    + `<text class="s" x="${c.x + 14}" y="${c.y + 60}">the same tables</text>`;
-  // Every engine commits to the catalog, and reads and writes the files itself.
-  [0, 1, 2, 3].forEach(i => {
-    const b = at(i), x = b.x + b.w / 2, y = b.y + b.h;
-    const tx = Math.max(cat.x + 30, Math.min(cat.x + cat.w - 30, x));
-    if (wide || i >= 2) svg += arLine(x, y + 4, tx, cat.y - 4, "");
-  });
-  svg += `<text class="lb" x="${W / 2 + 8}" y="${eb + 40}">commit</text>`;
-  svg += arBox(cat, "cat", "Iceberg REST catalog: the state", wide
-      ? "which tables exist, which snapshot is current; every commit goes through it" : "which tables exist, which snapshot")
-    + `<text class="s" x="${cat.x + 14}" y="${cat.y + 62}">${wide ? "here: OneLake" : "is current; every commit"}</text>`
-    + (wide ? "" : `<text class="s" x="${cat.x + 14}" y="${cat.y + 80}">goes through it · here: OneLake</text>`);
-  svg += arLine(W / 2, cat.y + cat.h + 4, W / 2, sto.y - 4, "")
-    + `<text class="lb" x="${W / 2 + 8}" y="${cat.y + cat.h + 36}">${wide ? "points to the current metadata" : "current metadata"}</text>`;
-  // The files: the engines read and write them directly, past the catalog, on both sides.
-  for (const x of [wide ? 50 : 14, wide ? W - 50 : W - 14]) svg += arLine(x, eb + 4, x, sto.y - 4, "");
-  svg += `<text class="lb" x="${wide ? 58 : 20}" y="${sto.y - 12}">files</text>`;
-  svg += arBox(sto, "", "Object store", wide ? "Parquet data files and Iceberg metadata, in open formats: yours, not the engine's"
-    : "Parquet and Iceberg metadata, open formats");
-  return { W, H: sto.y + sto.h + 4, svg };
-}
+const OV_SKIP = ["pandas_iceberg"];  // no SQL: the Light ETL only
+const OV_STORY = ["duckdb_iceberg", "trino_iceberg", "polars_iceberg", "pyspark_iceberg", "chdb_iceberg",
+  "starrocks_iceberg", "lakesail_iceberg", "pyspark_gluten_iceberg", "daft_iceberg", "databend_iceberg"];
+const OV_FILES = 18;  // file glyphs the object store keeps on screen
+const ov = { i: 0, snap: 0, files: [], timer: null, commit: null, held: false };
+const ovStill = matchMedia("(prefers-reduced-motion: reduce)");
 
 function renderOverview() {
+  stopOverview();
+  const groups = OV_GROUPS.map(g => ({ ...g,
+    engines: ENGINE_ROWS.filter(r => g.has(r.runs) && !OV_SKIP.includes(r.engine)).map(r => r.engine) }));
+  const pill = e => `<button class="ov-pill" data-e="${e}" style="--c: var(--${e})"><i></i>${esc(LABEL[e] ?? e)}</button>`;
+  // The table so far: one commit, and one file, from every engine in the story.
+  ov.i = 0; ov.files = [...OV_STORY]; ov.snap = OV_STORY.length; ov.held = false;
   $(OVERVIEW.id).innerHTML = `
+    <ol class="eras">${ERAS.map(r => `
+      <li class="${r.now ? "now" : ""}" tabindex="0"><span class="when">${r.when}</span><h3>${r.title}</h3><p>${r.text}</p></li>`).join("")}
+    </ol>
     <p class="intro">A lakehouse splits a database in three: the <b>files</b> in an object store, the <b>state</b> in a
       catalog, and the <b>compute</b> in any engine. Iceberg is the contract between them. Any engine that speaks it, big
       or small, open source or commercial, reads and writes the same tables, and none of them owns the data.</p>
     <p class="intro">That is the opening for AI. An agent picks the engine that fits today's job and changes it tomorrow,
       because nothing it needs lives inside the engine.</p>
-    <div class="ar-fig an-fig ov-fig" id="ov-fig"></div>
+    <div class="ov" id="ov" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog, and reads and writes the files in the object store.">
+      <div class="ov-who"><span class="ov-spark" aria-hidden="true">✦</span>
+        <div class="ov-whot"><b>AI agents · people · scheduled jobs</b><span>write SQL and pick the engine for the job</span></div>
+        <span class="ov-job">today's job → <b id="ov-job"></b></span></div>
+      <div class="ov-wire"><span>SQL</span></div>
+      <section class="ov-band">
+        <header><em>01</em><b>Compute</b><span>Engines are stateless: they start, do the work, and stop.</span></header>
+        <div class="ov-groups">${groups.map(g => `
+          <div><h4>${g.title}</h4><div class="ov-pills">${g.engines.map(pill).join("")}</div></div>`).join("")}
+          <div><h4>Commercial engines</h4><div class="ov-pills"><span class="ov-pill ghost">the same catalog, the same tables</span></div></div>
+        </div>
+      </section>
+      <div class="ov-wire"><span>commit</span></div>
+      <section class="ov-band state" id="ov-state">
+        <header><em>02</em><b>Iceberg REST catalog</b><span>The state: which tables exist, which snapshot is current. Every commit goes through it.</span></header>
+        <div class="ov-meta"><span class="tag">here: OneLake</span><span class="tag" id="ov-snap"></span><span class="ok">commit ✓</span></div>
+      </section>
+      <div class="ov-wire"><span>points to the current metadata</span></div>
+      <section class="ov-band">
+        <header><em>03</em><b>Object store</b><span>Parquet data files and Iceberg metadata, in open formats: yours, not the engine's.</span></header>
+        <div class="ov-files" id="ov-files"></div>
+      </section>
+    </div>
     <p class="intro">The rest of this page tests the premise: how a commit works (<a href="#concurrency">Concurrency</a>,
       <a href="#anatomy">Anatomy</a>), how an engine does less work (<a href="#pruning">File pruning</a>,
       <a href="#plans">Query plans</a>), what each engine supports (<a href="#iceberg">Iceberg support</a>), how fast it is
       (<a href="#performance">Benchmarks</a>), what breaks (<a href="#reports">Bug reports</a>), all of it on one page
       (<a href="#scorecard">Scorecard</a>), and what comes next (<a href="#future">Future</a>).</p>`;
-  drawOverview();
+  for (const b of $(OVERVIEW.id).querySelectorAll(".ov-pill[data-e]")) {
+    const e = b.dataset.e, row = ENGINE_ROWS.find(r => r.engine === e);
+    b.onmouseenter = b.onfocus = () => {
+      ov.held = true; stopOverview(); ovShow(e);
+      tip.style.setProperty("--c", `var(--${e})`);
+      tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div><div>${row.use}</div>
+        <div class="k">${row.runs} · ${row.started}</div>`;
+      const r = b.getBoundingClientRect();
+      moveTip(r.left + r.width / 2, r.top);
+      tip.classList.add("on");
+    };
+    b.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+    b.onmouseleave = b.onblur = () => { hideTip(); ov.held = false; playOverview(); };
+  }
+  ovShow(OV_STORY[0]);
+  drawFiles(false);
+  playOverview();
 }
-function drawOverview() {
-  const pic = overviewSvg(WIDE.matches);
-  $("ov-fig").innerHTML = `<svg viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog and reads and writes the files in the object store.">${pic.svg}</svg>`;
+// The engine that has the job: its pill lit, the wires in its colour.
+function ovShow(e) {
+  const fig = $("ov");
+  if (!fig) return;
+  fig.style.setProperty("--hot", `var(--${e})`);
+  for (const b of fig.querySelectorAll(".ov-pill[data-e]")) b.classList.toggle("on", b.dataset.e === e);
+  $("ov-job").textContent = LABEL[e] ?? e;
+  $("ov-job").style.color = `var(--${e})`;
+  $("ov-snap").textContent = `snapshot ${ov.snap}`;
 }
+function drawFiles(fresh) {
+  $("ov-files").innerHTML = ov.files.map((e, k) =>
+    `<i class="${fresh && k === ov.files.length - 1 ? "new" : ""}" style="--c: var(--${e})" title="written by ${esc(LABEL[e] ?? e)}"></i>`).join("");
+}
+// One step of the story: the next engine gets the job, then commits: a new snapshot and a new file.
+function ovStep() {
+  ov.i = (ov.i + 1) % OV_STORY.length;
+  const e = OV_STORY[ov.i];
+  ovShow(e);
+  ov.commit = setTimeout(() => {
+    if (!$("ov")) return;
+    ov.snap++;
+    ov.files = [...ov.files, e].slice(-OV_FILES);
+    $("ov-snap").textContent = `snapshot ${ov.snap}`;
+    drawFiles(true);
+    const st = $("ov-state");
+    st.classList.remove("flash");
+    void st.offsetWidth;  // restart the flash
+    st.classList.add("flash");
+  }, 900);
+}
+function playOverview() {
+  if (ov.timer || ov.held || ovStill.matches || state.suite !== OVERVIEW.id) return;
+  ov.timer = setInterval(ovStep, 2400);
+}
+function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.timer = null; }
 
 // THE SCORECARD TAB: every tab on one page, just before Future. One row per engine, one column per question,
 // and every cell is read from its own data: the Core group of the Iceberg support grid, each benchmark at its
@@ -1722,7 +1847,6 @@ WIDE.addEventListener("change", () => {
   if (state.suite === ARCH.id) drawArch();
   if (state.suite === ANATOMY.id) drawAnatomy();
   if (state.suite === PRUNING.id) drawPruning();
-  if (state.suite === OVERVIEW.id) drawOverview();
 });
 
 // THE ANATOMY TAB: what one table is made of, the standard tree from the catalog down to the Parquet
