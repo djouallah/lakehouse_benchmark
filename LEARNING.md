@@ -722,3 +722,44 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
   for every engine (e2e0dda).
 - **ETL:** a Hive external table over `Files/csv`, then one `INSERT ... SELECT` into the Iceberg
   table, one commit (c8bb84b). 1000 files in 892 s.
+
+## The dbt workload test (not on the page yet)
+
+`workload.yml` runs the fabric-dbt-examples project (`workload/`, source commit in
+`workload/SOURCE`) on three Iceberg legs: dbt-duckdb, dbt-polars, and dbt-spark on Gluten/Velox.
+Every build is incremental, merges included; the `reset` input only drops the legs' tables once,
+so they share one history. First all-green run:
+[39339429096](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39339429096)
+(2026-10-20). All three legs built 8/8 models and passed 42/42 tests, and `fct_summary` has
+3,082,967 rows on every leg. Parity passed against gluten.
+
+- **OneLake has no staged create.** dbt-spark builds tables with `create or replace table ... as`,
+  which Spark sends as `SparkCatalog.stageCreateOrReplace`. OneLake answers `400 Malformed
+  request`. `workload/macros/gluten_create_table_as.sql` does `CREATE TABLE (cols) USING iceberg`
+  plus `INSERT` instead.
+- **`parquet.\`<path>\`` fails when the Iceberg REST catalog is Spark's default.** Spark first
+  asks the catalog for a table named after the path. OneLake answers with 400 instead of "no such
+  table", so Spark never falls back to reading the file. The gluten leg reads the archive log
+  through a `USING parquet` temp view instead.
+- **dbt-polars tests need `azure/login`.** They read through pyiceberg's ADLS FileIO with no
+  credential, which falls back to azure-identity's default chain.
+
+### Why the decimals differ in the last place
+
+`fct_summary` casts a DOUBLE to `DECIMAL(18,4)`. AEMO publishes SCADA and prices with up to five
+decimals, so about 2.7% of rows are a tie at the fourth decimal, like `96.07385` or `0.08545`.
+Each engine breaks that tie its own way. Read row by row (decimals job of run 39339429096, 3.08M
+rows):
+
+| leg | how it rounds the tie | rows off Spark |
+|---|---|---|
+| Spark (gluten) | HALF_UP on the double's shortest text (`BigDecimal(Double.toString)`), so `96.07385` becomes `96.0739` and `-38.11185` becomes `-38.1119`: every tie goes away from zero | baseline |
+| DuckDB | `x * 10^4` as a double, then half away from zero. Where that multiply lands just below .5, it rounds down: `96.07385` becomes `96.0738`, while `0.08545` becomes `0.0855` | 6,716 mw (5,936 low) |
+| Polars | `(x * 10^4).round_ties_even()` (`crates/polars-compute/src/decimal.rs`, which says "TODO: correctly rounded result. This rounds multiple times"). The ties go to even, so about half go down. Even a double just ABOVE the tie rounds down: `71.47265000000000157` becomes `71.4726`, and `203.99725000000000819` becomes `203.9972` | 85,090 mw (78,286 low) |
+
+Every differing row is off by exactly 0.0001. No leg truncates, and the logic is the same on
+every leg. Polars sums lower because ties-to-even sends about half the ties down, where Spark
+sends them all up. Neither DuckDB nor Polars rounds the double's exact value correctly in every
+case: both multiply first. A model that wants the same last digit on every engine should not go
+through DOUBLE: it should cast the source text to `DECIMAL(18,5)`, which holds AEMO's values
+exactly, or round explicitly before the cast.
