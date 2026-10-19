@@ -1,0 +1,68 @@
+{
+  "run_id": "39180544879-1",
+  "run_started_at": "2026-10-19T00:24:14Z",
+  "sf": 100,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39180544879",
+  "git_sha": "64b452f",
+  "test": "tpch",
+  "runner": "linux-6.17.0-1022-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "chdb_iceberg": {
+      "version": "4.4.0",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 2.5096,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 1,
+          "dur": 36.2038,
+          "rows": 4,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 2,
+          "dur": 35.9589,
+          "rows": 10,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 3,
+          "dur": 93.6516,
+          "rows": 10,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 4,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "ChdbError: Code: 241. DB::Exception: Iceberg iterator is failed with exception: Code: 241. DB::Exception: Query memory limit exceeded: would use 11.26 GiB (attempt to allocate chunk of 2.05 GiB), maximum: 11.18 GiB. (MEMORY_LIMIT_EXCEEDED), Stack trace (when copying this message, always include the lines below):\n\n0. ? @ 0x000000001fd11f73\n1. ? @ 0x000000000f30442c\n2. ? @ 0x0000000009316de0\n3. ? @ 0x0000000009316806\n4. ? @ 0x000000000f3be88c\n5. ? @ 0x000000000f3bc92f\n6. ? @ 0x000000000f3bc00f\n7. ? @ 0x000000000f2dada1\n8. ? @ 0x000000000f2d85e0\n9. ? @ 0x0000000019909caf\n10. ? @ 0x0000000019c0ae43\n11. ? @ 0x0000000019a22f5b\n12. ? @ 0x0000000019a23b0e\n13. ? @ 0x0000000016b15c5d\n14. ? @ 0x0000000016b15513\n15. ? @ 0x00000000165ec2c1\n16. ? @ 0x000000001a572129\n17. ? @ 0x000000001a5727e2\n18. ? @ 0x000000001a573f7b\n19. ? @ 0x000000001a577aa2\n20. ? @ 0x000000001a5777c4\n21. ? @ 0x000000001a5774b9\n22. ? @ 0x000000001aa7e1b8\n23. ? @ 0x000000001aa7e367\n24. ? @ 0x000000001aa7dffa\n25. ? @ 0x000000001a55e392\n26. ? @ 0x0000000013dcc0f5\n27. ? @ 0x0000000013dc5cae\n28. ? @ 0x0000000013dc2a39\n29. ? @ 0x0000000013dc6164\n30. ? @ 0x0000000013d8c262\n31. ? @ 0x000000000faaeaca\n (version 26.10.1.1): While executing ReadFromObjectStorage. (MEMORY_LIMIT_EXCEEDED)"
+        }
+      ],
+      "host": {
+        "runner": "linux-6.17.0-1022-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}

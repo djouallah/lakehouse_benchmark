@@ -2217,3 +2217,42 @@ run_id,run_started_at,run_url,git_sha,sf,test,runner,cpu,mem_gb,python,engine,en
 39035648399-1,2026-10-17T13:13:51Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39035648399,83d4cb3,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,databend_iceberg,8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714),ok,cold,query,2,22.4378,10,ok,
 39035648399-1,2026-10-17T13:13:51Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39035648399,83d4cb3,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,databend_iceberg,8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714),ok,cold,query,3,50.4267,10,ok,
 39035648399-1,2026-10-17T13:13:51Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39035648399,83d4cb3,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,databend_iceberg,8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714),ok,cold,query,4,,,error,"OperationalError: (1105, 'MemoryExceedsLimit. Code: 2411, Text = memory usage 14.9 GiB(16035691302) exceeds limit 12.0 GiB(12884901888).')"
+39180544879-1,2026-10-19T00:24:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39180544879,64b452f,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,chdb_iceberg,4.4.0,ok,cold,setup,0,2.5096,,ok,
+39180544879-1,2026-10-19T00:24:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39180544879,64b452f,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,chdb_iceberg,4.4.0,ok,cold,query,1,36.2038,4,ok,
+39180544879-1,2026-10-19T00:24:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39180544879,64b452f,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,chdb_iceberg,4.4.0,ok,cold,query,2,35.9589,10,ok,
+39180544879-1,2026-10-19T00:24:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39180544879,64b452f,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,chdb_iceberg,4.4.0,ok,cold,query,3,93.6516,10,ok,
+39180544879-1,2026-10-19T00:24:14Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39180544879,64b452f,100,tpch,linux-6.17.0-1022-azure,4,15.6,3.12.15,chdb_iceberg,4.4.0,ok,cold,query,4,,,error,"ChdbError: Code: 241. DB::Exception: Iceberg iterator is failed with exception: Code: 241. DB::Exception: Query memory limit exceeded: would use 11.26 GiB (attempt to allocate chunk of 2.05 GiB), maximum: 11.18 GiB. (MEMORY_LIMIT_EXCEEDED), Stack trace (when copying this message, always include the lines below):
+
+0. ? @ 0x000000001fd11f73
+1. ? @ 0x000000000f30442c
+2. ? @ 0x0000000009316de0
+3. ? @ 0x0000000009316806
+4. ? @ 0x000000000f3be88c
+5. ? @ 0x000000000f3bc92f
+6. ? @ 0x000000000f3bc00f
+7. ? @ 0x000000000f2dada1
+8. ? @ 0x000000000f2d85e0
+9. ? @ 0x0000000019909caf
+10. ? @ 0x0000000019c0ae43
+11. ? @ 0x0000000019a22f5b
+12. ? @ 0x0000000019a23b0e
+13. ? @ 0x0000000016b15c5d
+14. ? @ 0x0000000016b15513
+15. ? @ 0x00000000165ec2c1
+16. ? @ 0x000000001a572129
+17. ? @ 0x000000001a5727e2
+18. ? @ 0x000000001a573f7b
+19. ? @ 0x000000001a577aa2
+20. ? @ 0x000000001a5777c4
+21. ? @ 0x000000001a5774b9
+22. ? @ 0x000000001aa7e1b8
+23. ? @ 0x000000001aa7e367
+24. ? @ 0x000000001aa7dffa
+25. ? @ 0x000000001a55e392
+26. ? @ 0x0000000013dcc0f5
+27. ? @ 0x0000000013dc5cae
+28. ? @ 0x0000000013dc2a39
+29. ? @ 0x0000000013dc6164
+30. ? @ 0x0000000013d8c262
+31. ? @ 0x000000000faaeaca
+ (version 26.10.1.1): While executing ReadFromObjectStorage. (MEMORY_LIMIT_EXCEEDED)"
