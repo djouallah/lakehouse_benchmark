@@ -962,12 +962,17 @@ function drawOverview() {
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
 
+// Gluten is a plugin inside Spark: the catalog and every Iceberg operation go through Spark's Iceberg Java
+// library, so its Iceberg support is Spark-OSS's reading.
+const SAME_ICEBERG = { pyspark_gluten_iceberg: SPARK };
 function coreCell(e) {
   const cap = data.capability;
   if (!cap) return { ok: "na", text: "not loaded" };
-  if (!cap.engines[e]) return { ok: "na", text: "not probed" };
-  const core = cap.rows.filter(r => r.group === "Core"), yes = core.filter(r => r.cells[e].o === "supported").length;
-  return { ok: yes === core.length ? true : yes ? null : false, text: `${yes} of ${core.length}` };
+  const src = cap.engines[e] ? e : SAME_ICEBERG[e];
+  if (!src || !cap.engines[src]) return { ok: "na", text: "not probed" };
+  const core = cap.rows.filter(r => r.group === "Core"), yes = core.filter(r => r.cells[src].o === "supported").length;
+  return { ok: yes === core.length ? true : yes ? null : false,
+           text: `${yes} of ${core.length}${src === e ? "" : `, as ${LABEL[src]}`}` };
 }
 function benchCell(suite, e) {
   const items = data[suite.id]?.[suite.headline];
@@ -1019,7 +1024,7 @@ function renderScorecard() {
   const mark = (c, e, col) => {
     const cls = c.ok === true ? "excellent" : c.ok === false ? "none" : c.ok === null ? "partial" : "na";
     const li = document.getElementById(slug(LABEL[e] ?? e));
-    const href = c.ok === true ? "" : li?.closest("#issues") ? `#${li.id}` : col.href.startsWith("#") ? col.href : "";
+    const href = c.ok === true ? "" : col.id !== "core" && li?.closest("#issues") ? `#${li.id}` : col.href.startsWith("#") ? col.href : "";
     return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
   };
   sec.innerHTML = `
@@ -1035,7 +1040,7 @@ function renderScorecard() {
         ${cells[r.engine].map((c, i) => mark(c, r.engine, SC_COLS[i])).join("")}
       </tr>`).join("")}</tbody>`).join("")}</table></div>
     <p class="note">Iceberg core: the Core group of the <a href="#iceberg">Iceberg support</a> grid, the minimum an engine needs
-      to own a table. Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, as on <a href="#performance">Benchmarks</a>, and how much
+      to own a table. Gluten/Velox is a plugin inside Spark, so its Iceberg operations are Spark-OSS's. Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, as on <a href="#performance">Benchmarks</a>, and how much
       slower than the fastest.</p>
     <p class="note">Real workload: can the engine replace DuckDB in <a href="${WORKLOAD_REPO}">analytics-as-code</a>, where dbt
       loads AEMO CSV files from OneLake Files into Iceberg tables every hour? It needs three things: a column with each
