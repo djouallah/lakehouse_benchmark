@@ -1,0 +1,44 @@
+{
+  "run_id": "39234479651-1",
+  "run_started_at": "2026-10-19T10:10:04Z",
+  "sf": 30,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39234479651",
+  "git_sha": "fbcdc71",
+  "test": "tpcds",
+  "runner": "linux-6.17.0-1022-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "daft_iceberg": {
+      "version": "0.7.26",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 97.4089,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "InvalidSQLException: Daft error: DaftError::External Unable to create logical plan node.\nDue to: DaftError::TypeError Cannot infer supertypes for multiply on types: Decimal[precision: 20, scale: 0], Decimal[precision: 38, scale: 2] result precision: 58 exceed bounds of [1, 38]"
+        }
+      ],
+      "host": {
+        "runner": "linux-6.17.0-1022-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
