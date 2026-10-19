@@ -83,7 +83,10 @@ def main() -> int:
     q(conn, "CREATE TABLE demo.ctas2 AS SELECT 1::BIGINT AS id, 10::BIGINT AS v")
 
     case("2. PARTITION BY (identity), then INSERT")
-    q(conn, "CREATE TABLE demo.part (id BIGINT, v BIGINT, p VARCHAR) ENGINE = ICEBERG PARTITION BY (p)")
+    q(
+        conn,
+        "CREATE TABLE demo.part (id BIGINT, v BIGINT, p VARCHAR) ENGINE = ICEBERG PARTITION BY (p)",
+    )
     print("  " + py("part"))
     q(conn, "INSERT INTO demo.part VALUES (1, 10, 'a'), (2, 20, 'a'), (3, 30, 'b')")
     print("  " + py("part"))

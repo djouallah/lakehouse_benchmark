@@ -1,9 +1,8 @@
-"""chDB: read the CSVs over plain HTTPS, stream the Arrow result into pyiceberg.
+"""chDB: read the CSVs over plain HTTPS, write the Iceberg table with one CTAS, both in ClickHouse.
 
 Port of the notebook's `chdb_clean_csv`, which read `file('/lakehouse/default/Files/csv/{a,b}')`
-off the Fabric mount and gave the Arrow stream to `write_deltalake`. Same shape here -- chDB
-does the read and the transform, a Python writer commits the table, and the data goes through
-as a stream of record batches -- with two substitutions:
+off the Fabric mount and gave the Arrow stream to `write_deltalake`. Here chDB does all of it: the
+read, the transform and the Iceberg write, through the catalog.
 
 THE READ IS `url()`, NOT `file()`. There is no mount on a runner, and chDB's Azure table
 functions (`azureBlobStorage`, `icebergAzure`) take a connection string, an account key or a
@@ -14,12 +13,15 @@ and the `_file` virtual column the notebook's `file()` call used. So the stateme
 notebook's with the source swapped. It carries the token in its text: never printed, and
 `scrub` masks it if an exception quotes it.
 
-THE WRITER IS pyiceberg, fed the `pa.RecordBatchReader` that `send_query(..., "Arrow")`
-streams out of ClickHouse (see bench/etl/iceberg.py). Two spellings changed for the Arrow
-boundary: `parseDateTime64BestEffort(c5, 6)` instead of `parseDateTimeBestEffort(c5)`, because
-ClickHouse exports a second-precision `DateTime` to Arrow as `UINT32` and only `DateTime64`
-becomes a timestamp; and `toInt32(toYear(...))`, because `toYear` is `UInt16`.
-`output_format_arrow_string_as_string` likewise, or every text column lands as binary.
+THE WRITE IS ClickHouse's own Iceberg writer: the OneLake catalog attached as a `DataLakeCatalog`
+database (bench/capability/engines/chdb_iceberg.py's attach, plus the TPC-H engine's spill and
+memory config), the previous run's table dropped through it, and one `CREATE TABLE ... AS
+SELECT`: one scan, one statement, one commit. Until chdb-core 26.10 (the nightly after the
+ClickHouse master sync, chdb-core#289) chDB could neither create an Iceberg table on OneLake
+("MergeTree storages require data path") nor drop one (purgeRequested=False, ClickHouse#125410),
+so it streamed Arrow into pyiceberg, which created the table and committed. Run 39179243597 of
+the Iceberg support grid has CREATE TABLE, CTAS and DROP TABLE all working; that workaround is
+gone. `_file` is cast to String, since it is LowCardinality.
 """
 
 from __future__ import annotations
@@ -28,10 +30,12 @@ import os
 import pathlib
 
 from bench import auth, scrub
-from bench.etl import iceberg
+from bench.config import ICEBERG_ENDPOINT
 from bench.etl.config import TABLE, EtlConfig
 from bench.etl.schema import COLUMNS
 from bench.tpch.engines.chdb_iceberg import ChdbIceberg as _TpchChdb
+
+DB = "onelake"
 
 SETTINGS = (
     # The notebook's three: infer every column as String, skip the `C` header line, accept the
@@ -39,10 +43,10 @@ SETTINGS = (
     "SET input_format_csv_use_best_effort_in_schema_inference = 0",
     "SET input_format_csv_skip_first_lines = 1",
     "SET input_format_csv_allow_variable_number_of_columns = 1",
-    # Arrow output that pyiceberg can take: utf8 rather than binary, and no dictionary arrays
-    # for the LowCardinality `_file` column.
-    "SET output_format_arrow_string_as_string = 1",
-    "SET output_format_arrow_low_cardinality_as_dictionary = 0",
+    # The DataLakeCatalog database engine and the Iceberg writer are behind their own gates; both
+    # must be session SETs, live when CREATE DATABASE and the CTAS run.
+    "SET allow_database_iceberg = 1",
+    "SET allow_experimental_insert_into_iceberg = 1",
     "SET max_threads = 4",
     "SET max_memory_usage = 10000000000",
 )
@@ -54,9 +58,7 @@ class ChdbIceberg:
     def __init__(self, cfg: EtlConfig):
         self.cfg = cfg
         self._session = None
-        self._catalog = None
         self._token = ""
-        self._tbl = None
 
     @property
     def version(self) -> str:
@@ -64,19 +66,33 @@ class ChdbIceberg:
 
         return chdb.__version__
 
+    @property
+    def qualified(self) -> str:
+        """The catalog's `ns.table` is one table name inside the attached database."""
+        return f"{DB}.`{self.cfg.schema}.{TABLE[self.name]}`"
+
     def setup(self) -> None:
         from chdb import session
 
         scratch = pathlib.Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "chdb-etl"
         # The TPC-H engine's server config: spill path and the memory ceiling. Its OneLake cache
-        # is configured too and simply never used -- nothing here reads through the catalog.
+        # is configured too and simply never used: the CSVs are read once.
         cfg_path = _TpchChdb(self.cfg)._write_config(scratch)
         self._session = session.Session(f"{scratch}/etl?config-file={cfg_path}")
         for statement in SETTINGS:
             self._session.query(statement)
         self._token = auth.onelake_token()
-        self._catalog = auth.catalog(self.cfg)
-        scrub.safe_print(f"  chdb {self.version} ready, pyiceberg catalog loaded")
+        # NOT logged, at any verbosity: this statement contains the bearer token.
+        self._session.query(
+            f"""
+            CREATE DATABASE {DB}
+            ENGINE = DataLakeCatalog('{ICEBERG_ENDPOINT}')
+            SETTINGS catalog_type = 'onelake',
+                     warehouse = '{self.cfg.warehouse}',
+                     onelake_bearer_token = '{self._token}'
+            """
+        )
+        scrub.safe_print(f"  chdb {self.version} attached to the OneLake catalog")
 
     def _sql(self, names: list[str]) -> str:
         pattern = "{" + ",".join(names) + "}"
@@ -103,23 +119,19 @@ class ChdbIceberg:
         toFloat64OrNull(c6) AS RUNNO,
         c7 AS DUID,
         {casts},
-        _file AS filename,
+        toString(_file) AS filename,
         toInt32(toYear(SETTLEMENTDATE)) AS year
     FROM raw
     """
 
     def load(self, files: list[str]) -> None:
-        reader = self._session.send_query(self._sql(files), "Arrow").record_batch()
-        first, reader = iceberg.first_batch(reader)
-        self._tbl = iceberg.recreate(self._catalog, self.cfg, TABLE[self.name], first.schema)
-        rows = iceberg.append_stream(self._tbl, reader)
-        scrub.safe_print(f"    {rows:,} rows streamed in one append")
+        self._session.query(f"DROP TABLE IF EXISTS {self.qualified}")
+        self._session.query(f"CREATE TABLE {self.qualified} AS {self._sql(files)}")
+        scrub.safe_print(f"    {len(files)} files in one scan, one CTAS, one commit")
 
     def row_count(self) -> int:
-        return iceberg.total_records(self._tbl)
-
-    def layout(self) -> str | None:
-        return iceberg.layout(self._tbl)
+        result = self._session.query(f"SELECT count() FROM {self.qualified}", "CSV")
+        return int(str(result).strip())
 
     def close(self) -> None:
         if self._session is not None:
