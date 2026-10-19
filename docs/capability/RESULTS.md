@@ -4,11 +4,11 @@ Spark is the reference: it uses the Iceberg Java library, as Trino does under it
 
 `yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no such operation · `—` not probed · `?` the probe could not ask
 
-| Operation | Spark | Trino | DuckDB | chDB | Sail | Databend | Polars |
+| Operation | Spark | Trino | Sail | DuckDB | chDB | Databend | Polars |
 |---|---|---|---|---|---|---|---|
-| Version | 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01) | 484 (trinodb/trino:484) | v2.0.0-alpha48730 | 4.4.0 | 0.7.2+main151a417d5d | 8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714) | 2.0.0 |
-| Language | Java | Java | C++ | C++ | Rust | Rust | Rust |
-| Iceberg implementation | the Iceberg Java library, the reference | the Iceberg Java library, Trino's own SQL | own | ClickHouse's own | own, on DataFusion | iceberg-rust (its fork), Databend's own SQL | own parquet reader and writer, pyiceberg for the catalog and commit |
+| Version | 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01) | 484 (trinodb/trino:484) | 0.7.2+main151a417d5d | v2.0.0-alpha48730 | 4.4.0 | 8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714) | 2.0.0 |
+| Language | Java | Java | Rust | C++ | C++ | Rust | Rust |
+| Iceberg implementation | the Iceberg Java library, the reference | the Iceberg Java library, Trino's own SQL | own, on DataFusion | own | ClickHouse's own | iceberg-rust (its fork), Databend's own SQL | own parquet reader and writer, pyiceberg for the catalog and commit |
 | CREATE TABLE | yes | yes | yes | yes | yes | yes | yes |
 | CREATE TABLE AS SELECT | no ¹ | yes | yes | yes | yes | no ² | yes |
 | CREATE TABLE IF NOT EXISTS, existing table | yes | yes | yes | yes | yes | yes | na |
@@ -16,34 +16,34 @@ Spark is the reference: it uses the Iceberg Java library, as Trino does under it
 | INSERT ... SELECT | yes | yes | yes | yes | yes | yes | na |
 | DELETE | yes | yes | yes | yes | yes | no ³ | na |
 | UPDATE | yes | yes | yes | yes | yes | no ⁴ | na |
-| MERGE with two actions (UPDATE + INSERT) | yes | yes | yes | no ⁵ | yes | no ⁶ | na |
-| INSERT OVERWRITE, whole table | yes | no ⁷ | no ⁸ | no ⁹ | yes | no-op ¹⁰ | yes |
+| MERGE with two actions (UPDATE + INSERT) | yes | yes | yes | yes | no ⁵ | no ⁶ | na |
+| INSERT OVERWRITE, whole table | yes | no ⁷ | yes | no ⁸ | no ⁹ | no-op ¹⁰ | yes |
 | TRUNCATE | yes | yes | no ¹¹ | no ¹² | no ¹³ | no-op ¹⁴ | na |
 | Partitioned table | yes | yes | yes | yes | yes | no ¹⁵ | yes |
 | Partition transform: bucket | yes | yes | yes | yes | yes | no ¹⁶ | no ¹⁷ |
 | Partition transform: truncate | yes | yes | yes | yes | yes | no ¹⁸ | yes |
 | Partition transforms: year / month / day / hour | yes | yes | yes | yes | yes | no ¹⁹ | yes |
-| Types: decimal, date, timestamp, timestamptz, uuid, binary | no ²⁰ | yes | yes | yes | no ²¹ | no ²² | yes |
+| Types: decimal, date, timestamp, timestamptz, uuid, binary | no ²⁰ | yes | no ²¹ | yes | yes | no ²² | yes |
 | Nested types: struct, list, map | yes | yes | yes | yes | yes | no ²³ | yes |
 | Add column | yes | yes | yes | yes | yes | no-op ²⁴ | yes |
 | Drop column | yes | yes | yes | yes | yes | no-op ²⁵ | na |
 | Rename column | yes | yes | yes | yes | yes | no ²⁶ | na |
 | Type promotion (int → long) | yes | yes | yes | yes | yes | no ²⁷ | yes |
-| Partition evolution | yes | yes | yes | no ²⁸ | yes | no ²⁹ | na |
+| Partition evolution | yes | yes | yes | yes | no ²⁸ | no ²⁹ | na |
 | Write after partition evolution | yes | yes | yes | yes | yes | no ³⁰ | yes |
-| Set table property | yes | yes | yes | no ³¹ | yes | no ³² | na |
-| Sort order evolution | yes | yes | yes | no ³³ | yes | no ³⁴ | na |
+| Set table property | yes | yes | yes | yes | no ³¹ | no ³² | na |
+| Sort order evolution | yes | yes | yes | yes | no ³³ | no ³⁴ | na |
 | Time travel | yes | yes | yes | yes | yes | no-op ³⁵ | yes |
 | Metadata tables | yes | yes | yes | yes | yes | yes | na |
 | File pruning from min/max in the metadata | yes | yes | yes | yes | yes | yes | yes |
-| MAX from the metadata, no data file read | yes | no ³⁶ | no ³⁷ | no ³⁸ | yes | no ³⁹ | no ⁴⁰ |
-| Compaction | yes | yes | yes | no ⁴¹ | yes | no ⁴² | na |
+| MAX from the metadata, no data file read | yes | no ³⁶ | yes | no ³⁷ | no ³⁸ | no ³⁹ | no ⁴⁰ |
+| Compaction | yes | yes | yes | yes | no ⁴¹ | no ⁴² | na |
 | Rewrite manifests | yes | yes | no ⁴³ | no ⁴⁴ | no ⁴⁵ | no ⁴⁶ | na |
 | Create branch | yes | no ⁴⁷ | no ⁴⁸ | no ⁴⁹ | no ⁵⁰ | no ⁵¹ | na |
 | Create tag | yes | no ⁵² | no ⁵³ | no ⁵⁴ | no ⁵⁵ | no ⁵⁶ | na |
 | Drop table with purge | yes | yes | yes | yes | yes | yes | na |
-| Create / drop namespace | yes | yes | yes | no ⁵⁷ | yes | yes | na |
-| CREATE SCHEMA IF NOT EXISTS, existing schema | yes | yes | yes | no ⁵⁸ | yes | yes | na |
+| Create / drop namespace | yes | yes | yes | yes | no ⁵⁷ | yes | na |
+| CREATE SCHEMA IF NOT EXISTS, existing schema | yes | yes | yes | yes | no ⁵⁸ | yes | na |
 | Concurrent append: both kept | yes | yes | yes | yes | yes | yes | yes |
 | Concurrent writer: DELETE loses nothing | yes | yes | yes | yes | yes | no ⁵⁹ | na |
 | Concurrent writer: UPDATE loses nothing | yes | yes | yes | yes | yes | no ⁶⁰ | na |
@@ -60,9 +60,9 @@ Spark is the reference: it uses the Iceberg Java library, as Trino does under it
 8. DuckDB, INSERT OVERWRITE, whole table: INSERT OVERWRITE, whole table: `Parser Error: syntax error at or near "OVERWRITE" LINE 1: INSERT OVERWRITE onelake."_bench_capability"."dk_38991566476_1_ove... ^^^^^^^^^`
 9. chDB, INSERT OVERWRITE, whole table: INSERT OVERWRITE TABLE: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, O…`
 10. Databend, INSERT OVERWRITE, whole table: INSERT OVERWRITE (whole-table overwrite): `INSERT OVERWRITE returned success; expected [(7, 70), (8, 80)], pyiceberg reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], Databend reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]`
-11. DuckDB, TRUNCATE: Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes.
-12. chDB, TRUNCATE: TRUNCATE TABLE: `ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)`
-13. Sail, TRUNCATE: TRUNCATE TABLE: `IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input`
+11. Sail, TRUNCATE: TRUNCATE TABLE: `IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input`
+12. DuckDB, TRUNCATE: Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes.
+13. chDB, TRUNCATE: TRUNCATE TABLE: `ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)`
 14. Databend, TRUNCATE: TRUNCATE TABLE: `TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]`
 15. Databend, Partitioned table: PARTITION BY (p), then INSERT: `OperationalError: (1105, "Internal. Code: 1001, Text = Failed to commit transaction: DataInvalid => Found duplicate 'field.id' 0. Field ids must be unique.\n.")`
 16. Databend, Partition transform: bucket: PARTITION BY (bucket(4, id)), then INSERT: `works: none; refused: bucket: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `bucket(4, id)`.')`
@@ -92,19 +92,19 @@ Spark is the reference: it uses the Iceberg Java library, as Trino does under it
 40. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
 41. chDB, Compaction: OPTIMIZE TABLE (compaction): `ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)`
 42. Databend, Compaction: OPTIMIZE TABLE COMPACT (compaction): `OperationalError: (1105, "Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_39032752740_1_compact'. Table engine: 'iceberg'..")`
-43. DuckDB, Rewrite manifests: iceberg_rewrite_manifests: `Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean "iceberg_rewrite_data_files"?`
-44. chDB, Rewrite manifests: rewrite manifests (no statement): `ClickHouse has no statement to rewrite an Iceberg table's manifests`
-45. Sail, Rewrite manifests: CALL system.rewrite_manifests: `UnsupportedOperationException: Iceberg system procedure 'rewrite_manifests' is recognized but not implemented`
+43. Sail, Rewrite manifests: CALL system.rewrite_manifests: `UnsupportedOperationException: Iceberg system procedure 'rewrite_manifests' is recognized but not implemented`
+44. DuckDB, Rewrite manifests: iceberg_rewrite_manifests: `Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean "iceberg_rewrite_data_files"?`
+45. chDB, Rewrite manifests: rewrite manifests (no statement): `ClickHouse has no statement to rewrite an Iceberg table's manifests`
 46. Databend, Rewrite manifests: OPTIMIZE TABLE COMPACT SEGMENT (rewrite manifests): `OperationalError: (1105, "Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_39032752740_1_manifests', which is using the 'iceberg' engine..")`
 47. Trino, Create branch: CREATE BRANCH ... IN TABLE: `io.trino.spi.TrinoException: This connector does not support creating branches`
-48. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_branch" CREATE BRANCH probe_branch ^^^^^^`
-49. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
-50. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'`
+48. Sail, Create branch: ALTER TABLE ... CREATE BRANCH: `IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'`
+49. DuckDB, Create branch: ALTER TABLE ... CREATE BRANCH: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_branch" CREATE BRANCH probe_branch ^^^^^^`
+50. chDB, Create branch: ALTER TABLE ... CREATE BRANCH: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETAC…`
 51. Databend, Create branch: ALTER TABLE CREATE BRANCH: `OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Legacy experimental table refs were removed: ALTER TABLE ... CREATE/DROP BRANCH. The remaining syntax is reserved for a future redesign and is intentionally rejected during binding..')`
 52. Trino, Create tag: CREATE TAG ... IN TABLE: `io.trino.sql.parser.ParsingException: line 1:8: mismatched input 'TAG'. Expecting: 'BRANCH', 'CATALOG', 'FUNCTION', 'MATERIALIZED', 'OR', 'ROLE', 'SCHEMA', 'TABLE', 'VIEW' <- org.antlr.v4.runtime.NoViableAltException: None`
-53. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_tag" CREATE TAG probe_tag ^^^^^^`
-54. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
-55. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'`
+53. Sail, Create tag: ALTER TABLE ... CREATE TAG: `IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'`
+54. DuckDB, Create tag: ALTER TABLE ... CREATE TAG: `Parser Error: syntax error at or near "CREATE" LINE 1: ... TABLE onelake."_bench_capability"."dk_38891149513_1_tag" CREATE TAG probe_tag ^^^^^^`
+55. chDB, Create tag: ALTER TABLE ... CREATE TAG: `ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PA…`
 56. Databend, Create tag: ALTER TABLE CREATE TAG: `OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table ref is an experimental feature, `set enable_experimental_table_ref=1` to use this feature.')`
 57. chDB, Create / drop namespace: CREATE TABLE in a new namespace (no namespace statement): `created through CREATE TABLE; ClickHouse has no statement to drop one`
 58. chDB, CREATE SCHEMA IF NOT EXISTS, existing schema: namespace IF NOT EXISTS (no namespace statement): `ClickHouse has no statement for a catalog namespace`
@@ -165,9 +165,9 @@ The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`
 
 - spark: 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01), [run 38991566476](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476), 2026-10-17
 - trino: 484 (trinodb/trino:484), [run 38991566476](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476), 2026-10-17
+- sail: 0.7.2+main151a417d5d, [run 39231915117](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39231915117), 2026-10-19
 - duckdb: v2.0.0-alpha48730, [run 38991566476](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476), 2026-10-17
 - chdb: 4.4.0, [run 39179243597](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39179243597), 2026-10-19
-- sail: 0.7.2+main151a417d5d, [run 39231915117](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39231915117), 2026-10-19
 - databend: 8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714), [run 39032752740](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39032752740), 2026-10-17
 - polars: 2.0.0, [run 38991566476](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476), 2026-10-17
 - duckdb_isolation: v2.0.0-alpha48520, [run 38892463084](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38892463084), 2026-10-16
