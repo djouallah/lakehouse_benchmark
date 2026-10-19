@@ -36,7 +36,10 @@ def summary(legs: dict[str, dict], grade: dict) -> str:
         "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
-        nodes = leg.get("retry_nodes") or leg.get("nodes") or []
+        # A retry re-runs only what failed, so its results override the build's, node by node.
+        merged = {n["node"]: n for n in leg.get("nodes") or []}
+        merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
+        nodes = list(merged.values())
         models = [n for n in nodes if n["node"].startswith("model.")]
         tests = [n for n in nodes if n["node"].startswith("test.")]
         fp = leg.get("fingerprint") or {}
