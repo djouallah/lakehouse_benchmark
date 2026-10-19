@@ -961,9 +961,9 @@ const ERAS = [
     text: "A REST catalog, and table libraries in Rust, C++ and Python: a library in a Python process writes the same tables as a cluster." },
 ];
 const OV_GROUPS = [
-  { title: "A library in Python", has: runs => runs === "In-process" },
-  { title: "Spark on a local JVM", has: runs => runs.includes("JVM") },
-  { title: "A server", has: runs => runs.startsWith("Client-server") },
+  // LakeSail is a library too: pysail starts its Spark Connect server inside the Python process.
+  { title: "A library in Python", has: r => r.runs === "In-process" || r.engine === "lakesail_iceberg" },
+  { title: "A server", has: r => r.runs !== "In-process" && r.engine !== "lakesail_iceberg" },  // Spark on its JVM too
 ];
 const OV_SKIP = ["pandas_iceberg"];  // no SQL: the Light ETL only
 const OV_STORY = ["duckdb_iceberg", "trino_iceberg", "polars_iceberg", "pyspark_iceberg", "chdb_iceberg",
@@ -975,7 +975,7 @@ const ovStill = matchMedia("(prefers-reduced-motion: reduce)");
 function renderOverview() {
   stopOverview();
   const groups = OV_GROUPS.map(g => ({ ...g,
-    engines: ENGINE_ROWS.filter(r => g.has(r.runs) && !OV_SKIP.includes(r.engine)).map(r => r.engine) }));
+    engines: ENGINE_ROWS.filter(r => g.has(r) && !OV_SKIP.includes(r.engine)).map(r => r.engine) }));
   const pill = e => `<button class="ov-pill" data-e="${e}" style="--c: var(--${e})"><i></i>${esc(LABEL[e] ?? e)}</button>`;
   // The table so far: one commit, and one file, from every engine in the story.
   ov.i = 0; ov.files = [...OV_STORY]; ov.snap = OV_STORY.length; ov.held = false;
