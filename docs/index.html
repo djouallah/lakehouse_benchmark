@@ -1281,7 +1281,7 @@ function renderReports() {
 // are the only thing written here. tests/test_plans.py checks every file a story names exists.
 const STORIES = [
   { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
-    lede: "Spark runs joins in the order the SQL lists them. Its cost-based optimizer is off by default, and Q72 lists inventory before the filters that make it small." },
+    lede: "Spark runs joins in the order the SQL lists them. Q72 lists inventory before the filters that make it small. Turning on its cost-based optimizer, off by default, made Q72 slower." },
   { id: "q64", title: "Q64", good: "tpcds_q64_trino_iceberg_sf100", bad: "tpcds_q64_duckdb_iceberg_sf100",
     lede: "DuckDB reads Iceberg row counts but not column statistics, so it guesses a ≠ join makes 249M rows; it makes about 3 trillion. On its own format, with full statistics, it runs Q64 in 12 GB (duckdb#21896)." },
 ];
