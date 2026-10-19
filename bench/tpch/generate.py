@@ -291,5 +291,6 @@ def generate(cfg: TpchConfig, force: bool = False) -> dict:
         **totals,
     }
 
+
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(0 if generate(TpchConfig.from_env()) else 1)
