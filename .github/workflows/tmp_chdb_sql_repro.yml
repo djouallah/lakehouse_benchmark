@@ -1,0 +1,22 @@
+name: tmp chdb sql repro
+
+# TEMPORARY. .github/scripts/tmp_chdb_sql_repro.py: chDB's TPC-DS SQL failures, minimal, on the
+# chdb-core nightly the bench pins. Delete once filed.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements/chdb_iceberg.txt
+      - run: python .github/scripts/tmp_chdb_sql_repro.py
