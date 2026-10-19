@@ -33,8 +33,8 @@ body {
   font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-main { max-width: 1440px; margin: 0 auto; padding: 20px 16px 24px; }
-h1 { font-size: clamp(24px, 5vw, 32px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
+main { max-width: 1440px; margin: 0 auto; padding: 14px 16px 16px; }
+h1 { font-size: clamp(24px, 5vw, 32px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 12px; }
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .top { display: flex; align-items: center; gap: 20px; flex: none; }
 .top-link { color: var(--ink-2); font-weight: 600; text-decoration: none; margin-top: 6px; }
@@ -42,7 +42,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .gh { color: var(--ink-2); flex: none; margin-top: 6px; transition: color .15s, transform .15s; }
 .gh:hover, .gh:focus-visible { color: var(--ink); transform: scale(1.1); }
 .sub { font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--ink-2); white-space: nowrap; margin-left: 8px; }
-.lede { color: var(--ink-2); margin: 0 0 16px; }
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--track); flex-wrap: wrap; }
 .tabs button, .chips button {
   font: inherit; border: 0; cursor: pointer; color: var(--ink-2); background: transparent;
@@ -86,6 +85,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 }
 .tip.on { opacity: 1; }
 .tip.wide { max-width: 340px; }
+.has-note { cursor: help; text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; }
 .tip .t { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .tip .k { color: var(--ink-2); }
@@ -98,6 +98,11 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .details a.perm { color: var(--ink); text-decoration: none; }
 .details a.perm:hover { text-decoration: underline; }
 .details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
+#issues ul { columns: 2; column-gap: 40px; }
+#issues li { break-inside: avoid; margin: 0 0 8px; }
+#issues ul { margin: 0; }
+@media (max-width: 900px) { #issues ul { columns: 1; } }
+#issues h3:first-child { margin-top: 12px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
 .details a { color: var(--accent); }
 /* Capability: operations down, engines across, one mark per cell. */
@@ -150,6 +155,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Engines and dbt: plain tables, one row per engine. */
 .rows table { min-width: 0; }
 #engines table { min-width: 900px; }
+#engines { margin-top: 12px; }
+#engines td { padding-top: 6px; padding-bottom: 6px; }
 .rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
@@ -164,16 +171,10 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Query plans: the same query on two engines, each engine's executed plan side by side. */
 .pl .intro { color: var(--ink-2); margin: 12px 0; }
 .pl .intro b { color: var(--ink); }
-.pl .hero { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; margin: 16px 0 4px; }
-.pl .hero .t { font-size: 13px; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
-.pl .hero .t i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
-.pl .hero .r { text-align: right; } .pl .hero .r .t { justify-content: flex-end; }
-.pl .big { font-size: clamp(30px, 7vw, 46px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
-.pl .big.fail { color: var(--no); }
-.pl .vs { color: var(--ink-3); font-weight: 700; padding-bottom: 8px; }
 .pl .verdict { font-size: 15px; margin: 4px 0 12px; }
 .pl .verdict b { color: var(--no); }
 .pl .ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.pl .ctl .chips { margin: 0 8px 0 0; }
 .pl .play { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 20px; background: var(--ink); color: var(--surface); cursor: pointer; }
 .pl .play:focus-visible, .pl .ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pl .ghost { font: inherit; font-size: 13px; border: 1px solid var(--grid); background: transparent; color: var(--ink-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
@@ -186,13 +187,15 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .pl .eng { font-weight: 800; display: flex; align-items: center; gap: 6px; }
 .pl .eng i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
-.pl .clock { font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.pl .clock { font-weight: 800; font-size: 26px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .pl .meta { font-size: 12px; color: var(--ink-3); overflow-wrap: anywhere; }
 .pl .badges { min-height: 24px; margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
 .pl .badge { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
 .pl .badge.bad { background: color-mix(in srgb, var(--no) 16%, transparent); color: var(--no); }
 .pl .badge.ok { background: color-mix(in srgb, var(--yes) 16%, transparent); color: var(--yes); }
-.pl .tree { overflow-x: auto; margin-top: 4px; }
+.pl .tree { margin-top: 4px; height: clamp(220px, calc(100vh - 600px), 560px); }
+.pl .tree svg { width: 100%; height: 100%; }
+.pl .meta { display: block; text-decoration: none; }
 .pl svg { display: block; margin: 0 auto; }
 .pl .edge { fill: none; stroke: var(--c); stroke-opacity: .3; stroke-linecap: round; transition: stroke-opacity .2s; }
 .pl .edge.guess { stroke-dasharray: 3 5; }
@@ -222,8 +225,12 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .pl .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .pl .legend svg { margin: 0; }
 .pl h3 { font-size: 15px; margin: 20px 0 6px; }
-.pl ol.steps { margin: 0; padding-left: 22px; }
-.pl ol.steps li { margin: 4px 0; padding: 6px 10px; border-radius: 8px; cursor: pointer; color: var(--ink-2); }
+.pl ol.steps { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; counter-reset: st; }
+.pl ol.steps li { margin: 0; padding: 4px 12px; border: 1px solid var(--grid); border-radius: 999px; cursor: pointer; color: var(--ink-2); font-size: 13px; counter-increment: st; }
+.pl ol.steps li::before { content: counter(st) ". "; font-weight: 700; color: var(--ink); }
+.pl ol.steps li.lbl { border: 0; padding: 0 4px 0 0; cursor: default; font-weight: 700; color: var(--ink); counter-increment: none; }
+.pl ol.steps li.lbl::before { content: none; }
+.pl ol.steps li.lbl:hover { background: none; }
 .pl ol.steps li:hover, .pl ol.steps li.on { background: var(--track); color: var(--ink); }
 .pl ol.steps li b { color: var(--ink); }
 .pl .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
@@ -277,24 +284,32 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch svg.fadein { animation: arfade .8s ease; }
 @keyframes arfade { from { opacity: 0; } }
 /* Scorecard and Bug reports: a row of big numbers, each one a headline a slide can quote. */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 4px 0 14px; }
-.tiles div { padding: 12px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); }
-.tiles b { display: block; font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 12px 0 10px; }
+.tiles > * { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: inherit; text-decoration: none; }
+main .tiles > a { color: inherit; }
+.tiles a:hover, .tiles a:focus-visible { border-color: var(--accent); outline: none; }
+.tiles b { flex: none; font-size: clamp(24px, 3vw, 30px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tiles span { color: var(--ink-2); font-size: 13px; }
-.sc > .caption:first-child { margin-top: 12px; }
-.sc .verdict { font-size: 15px; margin: 0 0 12px; }
+.sc .verdict { font-size: 14px; margin: 0 0 8px; }
+.sc .legend { margin-bottom: 6px; }
+.sc .legend .hint { margin-left: auto; color: var(--ink-3); }
+.sc td { padding-top: 5px; padding-bottom: 5px; }
+.sc tr.tier th { padding: 8px 0 2px; }
+.sc thead th { padding-bottom: 4px; }
 .sc thead th a { color: inherit; text-decoration: none; }
 .sc thead th a:hover { color: var(--ink); text-decoration: underline; }
+.sc thead th a.has-note { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; }
 .sc td.lv a { color: var(--ink-2); }
 /* Bug reports: one dot per report, per engine. */
-.rp .intro { font-size: 18px; color: var(--ink); max-width: 760px; margin: 12px 0 16px; }
+.rp .intro { font-size: 15px; color: var(--ink); margin: 12px 0 0; }
+
 .rp .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink-2); margin: 0 0 8px; }
 .rp .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .rp .legend i, .rp .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
 .rp .fixed i, .rp .dot.fixed { background: var(--yes); }
 .rp .open i, .rp .dot.open { border: 2px solid var(--ink-3); }
 .rp .closed i, .rp .dot.closed { background: var(--grid); }
-.rp .ln2 { display: grid; grid-template-columns: 140px 1fr auto; gap: 12px; align-items: center; padding: 7px 0; border-top: 1px solid var(--track); }
+.rp .ln2 { display: grid; grid-template-columns: 140px 1fr auto; gap: 12px; align-items: center; padding: 4px 0; border-top: 1px solid var(--track); }
 .rp .nm { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rp .nm a { color: inherit; text-decoration: none; }
 .rp .nm a:hover { text-decoration: underline; }
@@ -303,12 +318,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .rp .dot { width: 16px; height: 16px; transition: transform .15s; }
 .rp .dot:hover, .rp .dot:focus-visible { transform: scale(1.3); }
 .rp .ct { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.rp h3 { font-size: 15px; margin: 22px 0 6px; }
-.rp ol.land { margin: 0; padding-left: 22px; color: var(--ink-2); }
-.rp ol.land li { margin: 5px 0; }
-.rp ol.land b { color: var(--ink); }
+.rp .land { margin: 10px 0 0; font-size: 14px; color: var(--ink-2); }
+.rp .land b { color: var(--ink); }
 .rp a { color: var(--accent); }
-.rp .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
 .nx { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 4px; }
@@ -317,9 +329,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .nx p { margin: 0; }
 .nx a { color: var(--accent); }
 /* Lakehouse overview: three eras on a rail, then the open lakehouse as a stack with a live story. */
-.eras { list-style: none; margin: 10px 0 12px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
+.eras { list-style: none; margin: 6px 0 10px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
 .eras::before { content: ""; position: absolute; left: 24px; right: 24px; top: 9px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--grid), var(--accent)); }
-.eras li { position: relative; padding: 10px 14px 12px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.eras li { position: relative; padding: 8px 14px 10px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; transition: transform .2s, box-shadow .2s, border-color .2s; }
 .eras li::before { content: ""; position: absolute; top: -26px; left: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--grid); border: 3px solid var(--surface); }
 .eras li.now { border-color: color-mix(in srgb, var(--accent) 55%, var(--grid)); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 12%, var(--raised)), var(--raised) 65%); }
 .eras li.now::before { background: var(--accent); animation: ovping 1.6s ease-out infinite; --c: var(--accent); }
@@ -336,7 +348,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .ov-whot span { font-size: 13px; color: var(--ink-2); }
 .ov-job { font-size: 13px; color: var(--ink-2); padding: 4px 12px; border-radius: 999px; background: var(--track); white-space: nowrap; }
 .ov-job b { transition: color .3s; }
-.ov-wire { position: relative; height: 34px; display: flex; justify-content: center; }
+.ov-wire { position: relative; height: 28px; display: flex; justify-content: center; }
 .ov-wire::before { content: ""; width: 3px; height: calc(100% - 7px); background: repeating-linear-gradient(to bottom, var(--hot) 0 6px, transparent 6px 12px); background-size: 3px 12px; animation: ovflow .6s linear infinite; }
 .ov-wire::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-bottom: 0; border-top-color: var(--hot); }
 .ov-wire span { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
@@ -396,7 +408,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
-  .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
   .rp .ln2 { grid-template-columns: 96px 1fr; } .rp .ct { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -416,7 +427,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 <body>
 <main>
   <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><nav class="top"><a class="top-link" id="engines-link" href="#engines">Engines</a><a class="top-link" id="about-link" href="#about">About</a><a class="top-link" id="issues-link" href="#issues">Issues</a><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></header>
-  <p class="lede">An engine is two things: what it supports, and speed is a bonus.</p>
 
   <div class="tabs" role="tablist" id="tabs"></div>
   <div class="chips" id="subtabs"></div>
@@ -820,11 +830,20 @@ const ENGINE_ROWS = [
     scheduling: "Eager, one operation at a time", execution: "Columnar", install: "pip install pandas", runs: "In-process" },
 ];
 
+// What a column's words mean, on hover of its header.
+const ENGINE_NOTES = {
+  "Engine": "<div>From each project's own repo and site.</div>",
+  "Runs as": "<div>In-process: a library inside the Python process.</div><div>Client-server: a separate server that Python sends SQL to.</div>",
+  "Scheduling": `<div>How work is split and handed to threads.</div><div class="k">Morsel-driven</div><div>Small chunks of data pushed
+    through pipelines; any free thread takes the next chunk.</div><div class="k">Volcano</div><div>Each operator pulls rows or
+    batches from the one below it.</div>`,
+  "Execution": "<div>Columnar works on batches of column values; Row works one row at a time.</div>",
+};
 function renderEngines() {
   const table = rows => {
     const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", "Install", "Runs as", "Scheduling", "Execution"];
     return `
-    <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `
+    <div class="wrap"><table><thead><tr>${head.map(h => `<th${ENGINE_NOTES[h] ? ` data-note="${h}" tabindex="0"` : ""}>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
@@ -833,13 +852,8 @@ function renderEngines() {
         <td class="n">${r.scheduling}</td><td class="n">${r.execution}</td>
       </tr>`).join("")}</tbody></table></div>`;
   };
-  $("engines").innerHTML = `
-    <p class="caption">The engines in the bench. From each project's own repo and site.</p>
-    ${table(ENGINE_ROWS)}
-    <p class="note">Runs as: In-process is a library inside the Python process; Client-server is a separate server that Python sends SQL to.
-      Scheduling: how work is split and handed to threads. Morsel-driven: small chunks of data
-      pushed through pipelines, any free thread takes the next chunk. Volcano: each operator pulls rows or
-      batches from the one below it. Execution: Columnar works on batches of column values; Row works one row at a time.</p>`;
+  $("engines").innerHTML = table(ENGINE_ROWS);
+  for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
 // THE DBT 1 PART of the Scorecard's My workload column: how well dbt 1 (dbt Core) works with each engine on Iceberg
@@ -1136,10 +1150,15 @@ function workloadTip(e) {
     <div class="k">dbt 1</div><div>${dbt.adapter ? `${esc(dbt.adapter)}, ${word(dbtOk(e))}` : "no adapter"}</div>
     <div class="k">MERGE</div><div>${w.merge.note ? `${w.merge.note}, ${word(w.merge.ok)}` : word(w.merge.ok)}</div>`;
 }
+const WORKLOAD_NOTE = `<div>One dbt project, analytics-as-code: it needs the source file name, a dbt adapter and MERGE.
+  Hover a cell in the last column for each engine's checks.</div>
+  <div class="k">It is arbitrary; yours needs other things and may reach a different conclusion.</div>`;
 const SC_COLS = [
-  { id: "core", title: "Iceberg core", href: `#${CAPABILITY.id}`, cell: coreCell },
-  ...SUITES.map(s => ({ id: s.id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${s.id}`, cell: e => benchCell(s, e) })),
-  { id: "workload", title: "My workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true },
+  { id: "core", title: "Iceberg core", href: `#${CAPABILITY.id}`, cell: coreCell,
+    note: "<div>The Core group of the Iceberg support tab. Gluten/Velox is a plugin inside Spark, so its reading is Spark-OSS's.</div>" },
+  ...SUITES.map(s => ({ id: s.id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${s.id}`, cell: e => benchCell(s, e),
+    note: `<div>The mean of the last ${RECENT_RUNS} complete runs, and how much slower than the fastest.</div>` })),
+  { id: "workload", title: "My workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true, note: WORKLOAD_NOTE },
 ];
 
 function renderScorecard() {
@@ -1153,7 +1172,7 @@ function renderScorecard() {
     [engines.length, "engines, one 16 GB machine"],
     [yes("tpch"), "finish TPC-H at SF 100"],
     [yes("tpcds"), "finish TPC-DS at SF 100"],
-    [yes("workload"), "can run my workload"],
+    [yes("workload"), "can run my workload", WORKLOAD_REPO],
     ...(reports ? [[reports, "bug reports filed upstream"]] : []),
   ];
   const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
@@ -1167,20 +1186,22 @@ function renderScorecard() {
     return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
   };
   sec.innerHTML = `
-    <p class="caption">Every tab on one page. Click a column for the details, a cell for the reason.</p>
-    <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+    <div class="tiles">${tiles.map(([n, t, href]) => href ? `<a href="${href}" id="sc-workload"><b>${n}</b><span>${t}</span></a>`
+      : `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
     <p class="verdict">${verdict}</p>
-    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span></div>
-    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="${c.href}">${esc(c.title)}</a></th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
+    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span>
+      <span class="hint">Click a column for the details, a cell for the reason.</span></div>
+    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="${c.href}" data-note="${c.id}">${esc(c.title)}</a></th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
     <tbody><tr class="tier"><th colspan="${SC_COLS.length + 1}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
         ${cells[r.engine].map((c, i) => mark(c, r.engine, SC_COLS[i])).join("")}
-      </tr>`).join("")}</tbody>`).join("")}</table></div>
-    <p class="note">Iceberg core: the Core group of <a href="#iceberg">Iceberg support</a> (Gluten/Velox is Spark-OSS's,
-      a plugin inside it). Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, and how much slower than the fastest.</p>
-    <p class="note">My workload is one dbt project, <a href="${WORKLOAD_REPO}">analytics-as-code</a>: it needs the source file
-      name, a dbt adapter and MERGE (hover a cell). It is arbitrary; yours needs other things and may reach a different conclusion.</p>`;
+      </tr>`).join("")}</tbody>`).join("")}</table></div>`;
+  noteTip($("sc-workload"), "My workload", WORKLOAD_NOTE);
+  for (const a of sec.querySelectorAll("th a[data-note]")) {
+    const col = SC_COLS.find(c => c.id === a.dataset.note);
+    noteTip(a, esc(col.title), col.note);
+  }
   for (const td of sec.querySelectorAll("td[data-tip]")) {
     const e = td.dataset.tip;
     td.onmouseenter = () => {
@@ -1212,14 +1233,15 @@ function renderReports() {
   const groups = [...new Set(reports.map(i => i.engine))].map(name => ({ name, items: reports.filter(i => i.engine === name) }))
     .sort((a, b) => b.items.length - a.items.length);  // stable: the Issues tab's order on a tie
   const tiles = [
-    [reports.length, "bug reports filed upstream"],
+    [reports.length, "bug reports filed upstream", "#issues"],
     [fixed.length, "fixed"],
     [fixed.length ? `${median(fixed.map(i => daysBetween(i.opened, i.closed)))} days` : "–", "median, from report to fix"],
     [prs.length, "pull requests from the bench"],
   ];
   sec.innerHTML = `
     <p class="intro">The best help for an engine is a bug report it can reproduce. No PR needed: the maintainers fix it, often within days.</p>
-    <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+    <div class="tiles">${tiles.map(([n, t, href]) => href ? `<a href="${href}" id="rp-count"><b>${n}</b><span>${t}</span></a>`
+      : `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
     <div class="legend"><span class="fixed"><i></i>fixed</span><span class="open"><i></i>open</span><span class="closed"><i></i>closed, not fixed</span>
       <span>one dot per report, oldest first</span></div>
     <div class="strip">${groups.map(g => `
@@ -1229,17 +1251,12 @@ function renderReports() {
           aria-label="${esc(i.id)}: ${esc(i.title)}, ${i.state}"></a>`).join("")}</div>
         <div class="ct">${g.items.filter(i => i.state === "fixed").length} of ${g.items.length} fixed</div>
       </div>`).join("")}</div>
-    <h3>What makes a report land</h3>
-    <ol class="land">
-      <li><b>One script, a clean machine:</b> <code>pip install</code>, make the data, run the query.</li>
-      <li><b>The smallest case:</b> one query, one table.</li>
-      <li><b>Expected and actual:</b> the error, or the wrong rows.</li>
-      <li><b>The version, and main:</b> say whether main still fails.</li>
-      <li><b>One bug per issue:</b> Daft <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> became
-        <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> and <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a>.</li>
-    </ol>
-    <p class="src">GitHub API, ${esc(rep.updated.slice(0, 10))}: the issues and PRs on the <a href="#issues">Issues</a> tab the
-      bench opened; fixed means closed as completed. ${others} issues opened by others are not counted.</p>`;
+    <p class="land"><b>What makes a report land:</b> one script on a clean machine · the smallest case · expected and actual
+      · the version, and main · one bug per issue (Daft <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> became
+      <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> and <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a>).</p>`;
+  noteTip($("rp-count"), "Where the numbers come from", `<div>GitHub API, ${esc(rep.updated.slice(0, 10))}: the issues and PRs
+    on the Issues tab the bench opened; fixed means closed as completed.</div>
+    <div class="k">${others} issues opened by others are not counted. Click for the Issues tab.</div>`);
   const byId = Object.fromEntries(reports.map(i => [i.id, i]));
   for (const dot of sec.querySelectorAll(".dot")) {
     const i = byId[dot.dataset.id];
@@ -1319,26 +1336,17 @@ async function renderPlans() {
   const verdict = bad.status === "error"
     ? `${name(bad)} <b>${bigBad}</b> after ${secs(bad.seconds)}${bad.spill_bytes ? `, with ${gib(bad.spill_bytes)} spilled to disk` : ""}. ${name(good)} answers in ${secs(good.seconds)}.`
     : `${name(bad)} is <b>${ratio(bad.seconds / good.seconds)} slower</b> on this query${bad.spill_bytes ? `, and spills ${gib(bad.spill_bytes)} to disk` : ""}.`;
-  sec.innerHTML = `<div class="chips">${chips}</div>${intro}
-    <div class="hero">
-      <div style="--c: var(--${good.engine})"><div class="t"><i></i>${name(good)}</div><div class="big">${secs(good.seconds)}</div></div>
-      <div class="vs">vs</div>
-      <div class="r" style="--c: var(--${bad.engine})"><div class="t"><i></i>${name(bad)}</div><div class="big ${bad.status === "error" ? "fail" : ""}">${bigBad}</div></div>
-    </div>
+  sec.innerHTML = `<div class="ctl"><div class="chips">${chips}</div><button class="play" id="pl-play">▶ Race</button>
+      <span class="hint">Hover a step for its numbers. Click one to find the same step in the other plan.</span></div>${intro}
     <p class="verdict">${verdict} ${esc(s.lede)}</p>
-    <div class="ctl"><button class="play" id="pl-play">▶ Race</button>
-      <span class="hint">Hover a step for its numbers. Click one to find the same step in the other plan.</span></div>
     <div class="duo">${card(good, "good")}${card(bad, "bad")}</div>
-    <div class="pick" id="pl-pick">The lines carry rows: the thicker, the more rows.</div>
-    <div class="legend">
-      <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="var(--ink-3)" stroke-width="2"/></svg>few rows</span>
-      <span><svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="var(--ink-3)" stroke-width="10"/></svg>many rows</span>
-      <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--no)" stroke-width="2.5" stroke-dasharray="3 2"/></svg>no join key: every row meets every row</span>
-    </div>
-    <div id="pl-why" hidden><h3>What went wrong</h3><ol class="steps" id="pl-steps"></ol></div>
-    <p class="src">${[good, bad].map(p => `${name(p)} ${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))}, TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}: <a href="${esc(p.run_url || "#")}">capture run</a>`).join(" · ")}.
-      Rows are real, estimates the engine's own; times include plan instrumentation.</p>`;
+    <div class="pick" id="pl-pick">${PICK_HINT}</div>
+    <ol class="steps" id="pl-why" hidden></ol>`;
   bindStoryChips(sec);
+  for (const [p, side] of [[good, "good"], [bad, "bad"]]) {
+    noteTip(sec.querySelector(`#pl-${side} .meta`), esc(name(p)), `<div>TPC-DS SF ${p.sf}${p.warmup ? ", after one warm-up run" : ", cold"}.
+      Rows are real, estimates the engine's own; times include plan instrumentation.</div><div class="k">Click for the capture run.</div>`);
+  }
   $("pl-play").onclick = () => startRace(good, bad);
   for (const [plan, side] of [[good, "good"], [bad, "bad"]]) drawTree(plan, side);
   writeSteps(good, bad);
@@ -1357,15 +1365,16 @@ function bindStoryChips(sec) {
 function card(p, side) {
   return `<div class="card" id="pl-${side}" style="--c: var(--${p.engine})">
     <div class="head"><div class="eng"><i></i>${LABEL[p.engine] ?? p.engine}</div><div class="clock" id="pl-${side}-clock">${secs(p.seconds)}</div></div>
-    <div class="meta">${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))} · SF ${p.sf}${p.peak_memory_bytes ? ` · peak memory ${gib(p.peak_memory_bytes)}` : ""}</div>
+    <a class="meta" href="${esc(p.run_url || "#")}">${esc((p.version || "").replace(/\s*\(commit [^)]*\)/, ""))} · SF ${p.sf}${p.peak_memory_bytes ? ` · peak memory ${gib(p.peak_memory_bytes)}` : ""}</a>
     <div class="badges" id="pl-${side}-badges"></div>
     <div class="tree" id="pl-${side}-tree"></div></div>`;
 }
 
-// Spine layout, root on top, data flowing up: a node's biggest input sits straight under it and the others
-// branch off to the right. A left-deep chain of joins (Q72 on Spark) is a straight line, not a staircase.
+// Spine layout, sideways: the root on the right, data flowing right. A node's biggest input sits straight left of
+// it and the others branch off below. A left-deep chain of joins (Q72 on Spark) is a straight line, not a staircase.
+// The tree is scaled to fit its box, so a deep plan never makes the page scroll.
 function drawTree(plan, side) {
-  const X = 78, Y = 54, PAD = 30;
+  const X = 68, Y = 48, PAD = 30;
   const size = n => n._n ??= 1 + n.children.reduce((a, c) => a + size(c), 0);
   const height = n => n._h ??= 1 + Math.max(0, ...n.children.map(height));
   const right = [];  // per depth, the first free column
@@ -1380,8 +1389,8 @@ function drawTree(plan, side) {
     });
   })(plan.root, 0, 0);
   const leaf = Math.max(...right);
-  const W = Math.max(leaf, 2) * X + PAD + 40, H = (depth + 1) * Y + PAD + 10;
-  const px = n => PAD / 2 + n._x * X + X / 2, py = n => PAD + n._d * Y;
+  const W = (depth + 1) * X + PAD + 40, H = Math.max(leaf, 2) * Y + PAD;
+  const px = n => PAD + 20 + (depth - n._d) * X, py = n => PAD + n._x * Y;
   const radius = n => n.kind === "scan" ? 7 : Math.min(24, Math.max(8, 4 + 2.4 * Math.log10(flow(n) + 1)));
   const width = n => Math.min(16, 1 + 1.5 * Math.log10(flow(n) + 1));
   const glyph = { join: "⋈", agg: "Σ", sort: "↓", scan: "", other: "" };
@@ -1390,18 +1399,18 @@ function drawTree(plan, side) {
     n._id = `${side}-${i}`;
     const x = px(n), y = py(n);
     for (const c of n.children) {
-      const cx = px(c), cy = py(c), my = (cy + y) / 2;
-      edges += `<path class="edge${c.rows == null && c.est != null ? " guess" : ""}" data-from="${side}-${allNodes(plan.root).indexOf(c)}" d="M${cx},${cy} C${cx},${my} ${x},${my} ${x},${y}" stroke-width="${width(c).toFixed(1)}"/>`;
+      const cx = px(c), cy = py(c), mx = (cx + x) / 2;
+      edges += `<path class="edge${c.rows == null && c.est != null ? " guess" : ""}" data-from="${side}-${allNodes(plan.root).indexOf(c)}" d="M${cx},${cy} C${mx},${cy} ${mx},${y} ${x},${y}" stroke-width="${width(c).toFixed(1)}"/>`;
     }
     const r = radius(n), cls = ["nd", n.cross ? "cross" : "", n.rows == null && n.est != null ? "guess" : ""].join(" ");
-    const label = n.kind === "scan" ? `<text x="${x}" y="${y + r + 12}" text-anchor="middle">${esc(n.label.length > 13 ? n.label.slice(0, 12) + "…" : n.label)}</text>` : "";
+    const label = n.kind === "scan" ? `<text x="${x}" y="${y + r + 12}" text-anchor="middle">${esc(n.label.length > 10 ? n.label.slice(0, 9) + "…" : n.label)}</text>` : "";
     nodes += `<g class="${cls}" data-id="${n._id}" tabindex="0"><circle cx="${x}" cy="${y}" r="${r}"/>
       <text class="g" x="${x}" y="${y}">${n.cross ? "×" : r >= 11 ? glyph[n.kind] : ""}</text>
-      <text class="n" x="${x + r + 4}" y="${y - r + 2}">${n.rows == null ? (n.est != null ? `~${nfmt(n.est)}` : "") : nfmt(n.rows)}</text>${label}</g>`;
+      <text class="n" x="${x}" y="${y - r - 4}" text-anchor="middle">${n.rows == null ? (n.est != null ? `~${nfmt(n.est)}` : "") : nfmt(n.rows)}</text>${label}</g>`;
   });
   const box = $(`pl-${side}-tree`);
-  // Never larger than drawn; shrunk to fit the card, down to 60%, past which a wide tree (Q64) scrolls.
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;min-width:${Math.round(W * 0.6)}px">${edges}${nodes}</svg>`;
+  // Never larger than drawn; shrunk to fit the box (CSS sets its height) in both directions.
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="max-width:${W}px">${edges}${nodes}</svg>`;
   const svg = box.querySelector("svg");
   const byId = Object.fromEntries(allNodes(plan.root).map(n => [n._id, n]));
   for (const g of svg.querySelectorAll(".nd")) {
@@ -1449,10 +1458,14 @@ function pick(plan, n) {
   $("pl-clear").onclick = clearPick;
 }
 
+// The pick box when nothing is picked: what the lines and rings mean.
+const PICK_HINT = `The lines carry rows: the thicker, the more rows.
+  <svg width="14" height="14" style="display: inline-block; margin: 0 2px 0 8px; vertical-align: -2px"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--no)" stroke-width="2.5" stroke-dasharray="3 2"/></svg>
+  no join key: every row meets every row.`;
 function clearPick() {
   for (const svg of $(PLANS.id).querySelectorAll("svg")) { svg.classList.remove("sel"); svg.querySelectorAll(".hl").forEach(g => g.classList.remove("hl")); }
-  for (const li of $(PLANS.id).querySelectorAll("#pl-steps li")) li.classList.remove("on");
-  $("pl-pick").innerHTML = "The lines carry rows: the thicker, the more rows.";
+  for (const li of $(PLANS.id).querySelectorAll("#pl-why li")) li.classList.remove("on");
+  $("pl-pick").innerHTML = PICK_HINT;
 }
 
 // The steps write themselves from the two plans, so a new capture keeps them true.
@@ -1484,15 +1497,20 @@ function writeSteps(good, bad) {
     ? `<b>The end.</b> ${b}: <code>${esc((bad.error || "").slice(0, 140))}</code>`
     : `<b>The end.</b> ${b} takes ${secs(bad.seconds)}${bad.spill_bytes ? ` and writes ${gib(bad.spill_bytes)} to disk` : ""}; ${g} takes ${secs(good.seconds)}.`;
   steps.push({ html: end });
-  const ol = $("pl-steps");
-  ol.innerHTML = steps.map(s => `<li>${s.html}</li>`).join("");
-  [...ol.children].forEach((li, i) => {
+  // One row of step titles: hover for the step, click to light its node and read it in the pick box.
+  const ol = $("pl-why");
+  const title = s => s.html.match(/^<b>(.*?)\.?<\/b>/)[1];
+  ol.innerHTML = `<li class="lbl">What went wrong</li>${steps.map(s => `<li tabindex="0">${title(s)}</li>`).join("")}`;
+  [...ol.querySelectorAll("li[tabindex]")].forEach((li, i) => {
     const s = steps[i];
-    li.onclick = () => {
-      if (!s.node) return;
-      pick(s.plan, s.node);
-      [...ol.children].forEach(x => x.classList.toggle("on", x === li));
-      $(`pl-${s.plan === good ? "good" : "bad"}-tree`).scrollIntoView({ block: "nearest", behavior: "smooth" });
+    noteTip(li, title(s), `<div>${s.html.replace(/^<b>.*?<\/b>\s*/, "")}</div>`);
+    li.classList.remove("has-note");
+    li.onclick = li.onkeydown = e => {
+      if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+      if (s.node) pick(s.plan, s.node); else clearPick();
+      ol.querySelectorAll("li").forEach(x => x.classList.toggle("on", x === li));
+      $("pl-pick").innerHTML = `${s.html} <button class="ghost" id="pl-clear">clear</button>`;
+      $("pl-clear").onclick = clearPick;
     };
   });
 }
@@ -1645,6 +1663,20 @@ function moveTip(x, y) {
   tip.style.top = `${Math.max(8, y - h - 12)}px`;
 }
 function hideTip() { tip.classList.remove("on"); }
+// A note that would be a grey paragraph under a table, shown on hover or keyboard focus instead.
+function noteTip(el, title, html) {
+  el.classList.add("has-note");
+  el.onmouseenter = el.onfocus = () => {
+    tip.style.setProperty("--c", "var(--accent)");
+    tip.classList.add("wide");
+    tip.innerHTML = `<div class="t"><span class="sw"></span>${title}</div>${html}`;
+    const r = el.getBoundingClientRect();
+    moveTip(r.left + r.width / 2, r.top);
+    tip.classList.add("on");
+  };
+  el.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+  el.onmouseleave = el.onblur = () => { hideTip(); tip.classList.remove("wide"); };
+}
 
 // THE CONCURRENCY TAB: one run, two scenarios. First the ETL as it runs: a job streams CSV batches from a
 // bucket into a table, every batch becomes a new file, and the table changes only once, at the commit

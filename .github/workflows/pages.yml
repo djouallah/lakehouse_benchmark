@@ -1,0 +1,60 @@
+name: pages
+
+# The only publisher of the results page. It deploys docs/ to GitHub Pages after the tests pass,
+# including tests/test_layout.py: no tab of the page may scroll on a 1080p screen. A failing check
+# leaves the last good page live. The bench workflows push their results with GITHUB_TOKEN, which
+# does not fire `push`, so their completion triggers a deploy too.
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", "tests/**", ".github/workflows/pages.yml"]
+  workflow_run:
+    workflows: [tpch bench, tpcds bench, light etl bench, iceberg support, bug reports, plans]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      LAYOUT_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+      - run: pip install -r requirements/dev.txt -r requirements/layout.txt
+      - run: python -m playwright install --with-deps chromium
+      - run: pytest -q
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

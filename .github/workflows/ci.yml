@@ -1,9 +1,10 @@
 name: ci
 
-# Offline. No secrets, no network, no Azure -- so it runs on forks and on pull requests from
+# No secrets, no Azure -- so it runs on forks and on pull requests from
 # them, which is what makes the port contributable. Everything it checks is the logic that would
 # otherwise only fail 20 minutes into a real run: the 22 statements parsing, the placeholders
-# rendering, each engine's identifier style, the part-count plan, and the token scrubber.
+# rendering, each engine's identifier style, the part-count plan, and the token scrubber. Plus the results page's layout in Chromium
+# (tests/test_layout.py): no tab may scroll on a 1080p screen.
 
 on:
   push:
@@ -24,8 +25,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements/dev.txt
-      - run: pip install -r requirements/dev.txt
+          cache-dependency-path: requirements/*.txt
+      - run: pip install -r requirements/dev.txt -r requirements/layout.txt
+      - run: python -m playwright install --with-deps chromium
       - run: ruff check .
       - run: ruff format --check .
+      # LAYOUT_REQUIRED: tests/test_layout.py fails, not skips, without Chromium.
       - run: pytest -q
+        env:
+          LAYOUT_REQUIRED: "1"
