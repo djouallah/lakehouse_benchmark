@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.2",
+ "version": "0.7.2+main151a417d5d",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.2; _bench_capability listed"
+   "detail": "pysail 0.7.2+main151a417d5d; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -15,6 +15,13 @@
    "question": "CREATE TABLE ... USING iceberg",
    "outcome": "supported",
    "detail": "field ids [1, 2], format-version 2"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
   },
   {
    "key": "ctas",
@@ -34,8 +41,8 @@
    "key": "sort_order",
    "group": "create",
    "question": "ALTER TABLE ... WRITE ORDERED BY (sort order)",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found WRITE at 66:71 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+   "outcome": "supported",
+   "detail": "sort order set"
   },
   {
    "key": "partition_bucket",
@@ -97,8 +104,8 @@
    "key": "delete_mor",
    "group": "write",
    "question": "DELETE FROM, merge-on-read table",
-   "outcome": "no-op",
-   "detail": "merge-on-read DELETE returned success; expected [(2, 20), (3, 30)], pyiceberg reads pyiceberg could not read it: ValueError: PyIceberg does not yet support equality deletes: https://github.com/apache/iceberg/issues/6568, Sail reads [(2, 20), (3, 30)]"
+   "outcome": "supported",
+   "detail": "merge-on-read DELETE: pyiceberg reads [(2, 20), (3, 30)]; Sail agrees; 1 position_deletes"
   },
   {
    "key": "update",
@@ -157,39 +164,46 @@
    "detail": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
   },
   {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "supported",
+   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Sail agrees; 1 snapshot(s), operation overwrite"
+  },
+  {
    "key": "add_column",
    "group": "schema",
    "question": "ALTER TABLE ADD COLUMN",
-   "outcome": "no",
-   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+   "outcome": "supported",
+   "detail": "schema ['id', 'v', 'w']"
   },
   {
    "key": "drop_column",
    "group": "schema",
    "question": "ALTER TABLE DROP COLUMN",
-   "outcome": "no",
-   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+   "outcome": "supported",
+   "detail": "schema now ['id']"
   },
   {
    "key": "rename_column",
    "group": "schema",
    "question": "ALTER TABLE RENAME COLUMN",
-   "outcome": "no",
-   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+   "outcome": "supported",
+   "detail": "renamed, data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Sail agrees"
   },
   {
    "key": "type_promotion",
    "group": "schema",
    "question": "ALTER COLUMN c TYPE BIGINT (int -> long)",
-   "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_promote"
+   "outcome": "supported",
+   "detail": "c is long, and the row written as int reads 7"
   },
   {
    "key": "partition_evolution",
    "group": "schema",
    "question": "ALTER TABLE ADD PARTITION FIELD (partition evolution)",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found FIELD at 81:86 expected '('"
+   "outcome": "supported",
+   "detail": "spec now ['bucket[4]']"
   },
   {
    "key": "write_after_evolution",
@@ -202,8 +216,8 @@
    "key": "set_property",
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
-   "outcome": "no",
-   "detail": "AnalysisException: external error: This feature is not implemented: ALTER TABLE is not yet supported for catalog-managed Iceberg tables: onelake._bench_capability.sl_38253752194_1_props"
+   "outcome": "supported",
+   "detail": "the property is on the table"
   },
   {
    "key": "time_travel",
@@ -216,8 +230,8 @@
    "key": "metadata_tables",
    "group": "read",
    "question": "metadata tables (t.snapshots)",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: table reference: [Identifier(\"onelake\"), Identifier(\"_bench_capability\"), Identifier(\"sl_38253752194_1_inspect\"), Identifier(\"snapshots\")]"
+   "outcome": "supported",
+   "detail": "t.snapshots reads 1 snapshot(s)"
   },
   {
    "key": "file_pruning",
@@ -238,49 +252,56 @@
    "group": "refs",
    "question": "ALTER TABLE ... CREATE BRANCH",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+   "detail": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'"
   },
   {
    "key": "create_tag",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE TAG",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'RENAME', 'PARTITION', 'ADD', 'DROP', 'ALTER', 'CHANGE', 'REPLACE', 'SET', 'UNSET', or 'RECOVER'"
+   "detail": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'"
   },
   {
    "key": "expire_snapshots",
    "group": "maintenance",
    "question": "CALL system.expire_snapshots",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+   "detail": "UnsupportedOperationException: Iceberg system procedure 'expire_snapshots' is recognized but not implemented"
   },
   {
    "key": "rewrite_data_files",
    "group": "maintenance",
    "question": "CALL system.rewrite_data_files (compaction)",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+   "outcome": "supported",
+   "detail": "2 -> 1 data file(s), data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30), (4, 40)]; Sail agrees"
   },
   {
    "key": "rewrite_manifests",
    "group": "maintenance",
    "question": "CALL system.rewrite_manifests",
    "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CALL at 0:4 expected something else, ';', statement, or end of input"
+   "detail": "UnsupportedOperationException: Iceberg system procedure 'rewrite_manifests' is recognized but not implemented"
   },
   {
    "key": "namespace",
    "group": "catalog",
    "question": "CREATE SCHEMA, then DROP SCHEMA",
    "outcome": "supported",
-   "detail": "`sl_38506561909_1_ns` created, listed, dropped"
+   "detail": "`sl_39231915117_1_ns` created, listed, dropped"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
   },
   {
    "key": "rename_table",
    "group": "catalog",
    "question": "ALTER TABLE ... RENAME TO, then read",
    "outcome": "no",
-   "detail": "UnsupportedOperationException: unsupported ALTER TABLE operation"
+   "detail": "AnalysisException: not supported: RENAME TABLE for catalog onelake"
   },
   {
    "key": "drop_purge",
@@ -301,38 +322,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1623046067900522122) but found Some(6813285193694807785)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(3115456295333804325) but found Some(2033456160833088177)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(8008174343184680755) but found Some(1801932485903141403)"
-  },
-  {
-   "key": "create_if_not_exists",
-   "group": "create",
-   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
-   "outcome": "supported",
-   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
-  },
-  {
-   "key": "insert_overwrite",
-   "group": "write",
-   "question": "INSERT OVERWRITE, whole table",
-   "outcome": "supported",
-   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Sail agrees; 1 snapshot(s), operation overwrite"
-  },
-  {
-   "key": "namespace_existing",
-   "group": "catalog",
-   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
-   "outcome": "supported",
-   "detail": "accepted on the existing `_bench_capability`"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1359566665501191390) but found Some(7059984582722880666)"
   }
  ],
- "run": "38991566476",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
- "date": "2026-10-17"
+ "run": "39231915117",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39231915117",
+ "date": "2026-10-19"
 }
