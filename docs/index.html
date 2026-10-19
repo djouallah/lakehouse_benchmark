@@ -1371,7 +1371,7 @@ function peakStep(p) {
 function card(p, side) {
   return `<div class="card" id="pl-${side}" style="--c: var(--${p.engine})">
     <div class="head"><div class="eng"><i></i>${LABEL[p.engine] ?? p.engine}</div><div class="clock" id="pl-${side}-clock">${secs(p.seconds)}</div></div>
-    <a class="meta" href="${esc(p.run_url || "#")}">SF ${p.sf}${p.peak_memory_bytes ? ` · peak memory <b>${gib(p.peak_memory_bytes)}</b>` : ""}${peakStep(p)}</a>
+    <a class="meta" href="${esc(p.run_url || "#")}"><b>TPC-DS SF ${p.sf}</b>${p.peak_memory_bytes ? ` · peak memory <b>${gib(p.peak_memory_bytes)}</b>` : ""}${peakStep(p)}</a>
     <div class="badges" id="pl-${side}-badges"></div>
     <div class="tree" id="pl-${side}-tree"></div></div>`;
 }
