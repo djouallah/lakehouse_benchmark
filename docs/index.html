@@ -170,7 +170,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Query plans: the same query on two engines, each engine's executed plan side by side. */
 .pl .intro { color: var(--ink-2); margin: 12px 0; }
 #overview .intro { margin: 8px 0; }
-#overview .intro ul { margin: 4px 0 0; padding-left: 18px; }
 .pl .intro b { color: var(--ink); }
 .pl .verdict { font-size: 15px; margin: 4px 0 12px; }
 .pl .verdict b { color: var(--no); }
@@ -711,9 +710,23 @@ function render() {
   const spark = items.find(i => i.engine === SPARK && !i.failed), gluten = items.find(i => i.engine === GLUTEN && !i.failed);
   if (spark && gluten) {
     $("speedup").innerHTML = `<div class="speedup"><b>${ratio(spark.mean / gluten.mean)}</b>&nbsp;
-      the same Spark plan and the same SQL; only the engine underneath changes, from Spark's JVM to Velox
+      the same Spark plan; only the engine underneath changes, from Spark's JVM to Velox
       (${fmt(gluten.mean)} vs ${fmt(spark.mean)}).</div>`;
   }
+  $("speedup").innerHTML += clusterFact(items);
+}
+
+// A CLUSTER ENGINE ON ONE MACHINE, at the scale on screen: the fastest engine that can run as a cluster
+// (ENGINE_ROWS machines) and the one-machine engines it finishes ahead of, from the same means as the bars, so it
+// follows every publish. Nothing when it is ahead of none.
+function clusterFact(items) {
+  const machines = e => ENGINE_ROWS.find(r => r.engine === e)?.machines;
+  const cluster = items.find(i => !i.failed && machines(i.engine) === "Cluster");
+  const behind = cluster ? items.filter(i => machines(i.engine) === "One" && (i.failed || fmt(i.mean) !== fmt(cluster.mean) && i.mean > cluster.mean)) : [];
+  if (!behind.length) return "";
+  return `<div class="speedup"><b>${esc(LABEL[cluster.engine])}</b>&nbsp; can run as a cluster; on this one machine
+    ${fmt(cluster.mean)}, ahead of ${behind.map(i => `${esc(LABEL[i.engine])} (${i.failed ? "failed" : fmt(i.mean)})`)
+    .join(", ")}, built for one machine only.</div>`;
 }
 
 // THE ICEBERG SUPPORT TAB: data/capability.json, written by .github/scripts/capability/render_readme.py
@@ -784,7 +797,8 @@ function renderCapability() {
   }
 }
 
-// THE ENGINES TAB: what each engine is. Facts from each project's own repo and site, no ratings.
+// THE ENGINES TAB: what each engine is. Facts from each project's own repo and site, no ratings. `machines` is not
+// a column: Cluster when the open-source engine can spread one query over several machines, One when it cannot.
 // Every engine in LABEL has a row (tests/test_results_page.py).
 const ENGINE_ROWS = [
   { engine: "pyspark_iceberg", url: "https://github.com/apache/spark", started: "UC Berkeley AMPLab, 2009",
@@ -837,7 +851,6 @@ const ENGINE_ROWS = [
 const ENGINE_NOTES = {
   "Engine": "<div>From each project's own repo and site.</div>",
   "Runs as": "<div>In-process: a library inside the Python process.</div><div>Client-server: a separate server that Python sends SQL to.</div>",
-  "Machines": "<div>Cluster: the open-source engine can spread one query over several machines.</div><div>One: it runs on one machine.</div><div>Here every engine gets the same one.</div>",
   "Scheduling": `<div>How work is split and handed to threads.</div><div class="k">Morsel-driven</div><div>Small chunks of data pushed
     through pipelines; any free thread takes the next chunk.</div><div class="k">Volcano</div><div>Each operator pulls rows or
     batches from the one below it.</div>`,
@@ -845,14 +858,14 @@ const ENGINE_NOTES = {
 };
 function renderEngines() {
   const table = rows => {
-    const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", "Install", "Runs as", "Machines", "Scheduling", "Execution"];
+    const head = ["Engine", "Started", "Governed by", "Licence", "Written in", "Made for", "Install", "Runs as", "Scheduling", "Execution"];
     return `
     <div class="wrap"><table><thead><tr>${head.map(h => `<th${ENGINE_NOTES[h] ? ` data-note="${h}" tabindex="0"` : ""}>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i><a href="${r.url}">${esc(LABEL[r.engine] ?? r.engine)}</a></td>
         <td class="n">${r.started}</td><td class="n">${r.governed}</td><td class="lv">${r.licence}</td>
         <td class="n" style="white-space: nowrap">${r.lang}</td><td class="n">${r.use}</td>
-        <td class="n">${r.install}</td><td class="n">${r.runs}</td><td class="n">${r.machines}</td>
+        <td class="n">${r.install}</td><td class="n">${r.runs}</td>
         <td class="n">${r.scheduling}</td><td class="n">${r.execution}</td>
       </tr>`).join("")}</tbody></table></div>`;
   };
@@ -1002,31 +1015,6 @@ const OV_CATALOGS = {
 const ov = { i: 0, snap: 0, files: [], timer: null, commit: null, held: false };
 const ovStill = matchMedia("(prefers-reduced-motion: reduce)");
 
-// CLUSTER ENGINES ON ONE MACHINE, read from the Results tab's own summaries so it follows every publish. Per query
-// suite and scale: the fastest cluster engine (ENGINE_ROWS machines) and the one-machine engines it finishes ahead
-// of, then whether the fastest engine overall was a one-machine engine at every scale. Numbers only; empty until
-// the results load.
-function clusterFacts() {
-  const machines = e => ENGINE_ROWS.find(r => r.engine === e)?.machines;
-  const time = i => i.failed ? "no complete run" : fmt(i.mean);
-  const lines = SUITES.filter(s => s.queries).map(s => {
-    const scales = s.sfs.map(sf => ({ sf, items: data[s.id]?.[sf] ?? [] })).filter(x => x.items.some(i => !i.failed));
-    const wins = scales.map(({ sf, items }) => {
-      const cluster = items.find(i => !i.failed && machines(i.engine) === "Cluster");
-      const behind = cluster ? items.filter(i => machines(i.engine) === "One" && (i.failed || i.mean > cluster.mean)) : [];
-      return behind.length ? `${s.scale(sf)}: ${esc(LABEL[cluster.engine])} ${fmt(cluster.mean)}, ahead of ${
-        behind.map(i => `${esc(LABEL[i.engine])} (${time(i)})`).join(", ")}` : "";
-    }).filter(Boolean);
-    if (!wins.length) return "";
-    const clusterFirst = scales.filter(x => machines(x.items.find(i => !i.failed).engine) === "Cluster").map(x => s.scale(x.sf));
-    return `<li><b>${s.title}</b>, ${wins.join("; ")}. ${clusterFirst.length
-      ? `Fastest overall, a cluster engine: ${clusterFirst.join(", ")}.` : "Fastest overall at every scale: a one-machine engine."}</li>`;
-  }).filter(Boolean);
-  return lines.length ? `<div class="intro"><b>Cluster engines on one machine.</b> Every engine runs on the same runner;
-    mean of each engine's last ${RECENT_RUNS} complete runs. Which engines can run as a cluster: the Engines tab.
-    <ul>${lines.join("")}</ul></div>` : "";
-}
-
 function renderOverview() {
   stopOverview();
   const groups = OV_GROUPS.map(g => ({ ...g,
@@ -1039,10 +1027,9 @@ function renderOverview() {
       <li class="${r.now ? "now" : ""}" tabindex="0"><span class="when">${r.when}</span><h3>${r.title}</h3><p>${r.text}</p></li>`).join("")}
     </ol>
     <p class="intro"><b>Files</b> in an object store, the <b>state</b> in a catalog, <b>compute</b> in any engine, and none
-      of them owns the data. For AI that is the opening: an agent picks today's engine and changes it tomorrow.</p>
-    <p class="intro">The catalog treats every engine the same: C++, Rust or Java, a library or a cluster, open source or
-      commercial. So does this bench: the same box, the same data, the same catalog.</p>
-    ${clusterFacts()}
+      of them owns the data. For AI that is the opening: an agent picks today's engine and changes it tomorrow.
+      The catalog treats every engine the same, C++ or Java, library or cluster, open source or commercial, and so does
+      this bench.</p>
     <div class="ov" id="ov" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog, and reads and writes the files in the object store.">
       <div class="ov-who"><span class="ov-spark" aria-hidden="true">✦</span>
         <div class="ov-whot"><b>AI agents · people · scheduled jobs</b><span>write SQL and pick the engine for the job</span></div>
