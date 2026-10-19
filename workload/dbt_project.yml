@@ -4,6 +4,7 @@
 #   duckdb   dbt-duckdb, ATTACHed to the OneLake Iceberg REST catalog   (the source's `iceberg`)
 #   polars   dbt-polars, pyiceberg REST catalog                          (the source's `polars`)
 #   gluten   dbt-spark `method: session` on Spark + Gluten/Velox, Iceberg (port of the Delta `spark`)
+#   trino    dbt-trino on bench's Trino container, Iceberg (ported from the gluten tree)
 #
 # ONE PROJECT, ONE TREE PER ENGINE: models/aemo/<engine>/<layer>/<model>.sql. Exactly one tree
 # is +enabled per run, keyed on target.name, so the same model names never collide. There is
@@ -48,6 +49,15 @@ models:
         +file_format: iceberg
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
+      trino:
+        +enabled: "{{ target.name == 'trino' }}"
+        # NO VIEWS AND NO RENAME. dbt-trino stages an incremental's source as a view, and builds a
+        # table under a temporary name and renames it; the OneLake catalog has no CREATE VIEW, so
+        # the staging relation is a table, and a rebuilt table is dropped and created in place.
+        +views_enabled: false
+        +on_table_exists: drop
+        dimensions: {+schema: mart}
+        marts:      {+schema: landing}
 
 data_tests:
   aemo_electricity:
@@ -58,3 +68,4 @@ data_tests:
       duckdb: {+enabled: "{{ target.name == 'duckdb' }}"}
       polars: {+enabled: "{{ target.name == 'polars' }}"}
       gluten: {+enabled: "{{ target.name == 'gluten' }}"}
+      trino:  {+enabled: "{{ target.name == 'trino' }}"}

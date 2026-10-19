@@ -10,6 +10,9 @@
 {% macro parse_filename(filepath) %}
   {%- if target.type == 'spark' -%}
     substring_index(element_at(split({{ filepath }}, '/'), -1), '.', 1)
+  {%- elif target.type == 'trino' -%}
+    {#-- Trino's split_part takes no negative index. #}
+    split_part(element_at(split({{ filepath }}, '/'), -1), '.', 1)
   {%- else -%}
     {#-- DuckDB family (duckrun, iceberg, ducklake) and Polars SQL #}
     split_part(split_part({{ filepath }}, '/', -1), '.', 1)

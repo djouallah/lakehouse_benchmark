@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from bench.config import ICEBERG_ENDPOINT, Config
 
 # The dbt targets, in run order. Same names as workload/profiles.yml and the engine folders under
-# workload/models/aemo/. Trino is next (the plan in LEARNING.md); it needs its own model tree.
-ENGINES = ("duckdb", "polars", "gluten")
+# workload/models/aemo/.
+ENGINES = ("duckdb", "polars", "gluten", "trino")
 
 # bench's engine id for each target, so labels and colours match the rest of the page once it is
 # shown there.
@@ -22,6 +22,7 @@ BENCH_ENGINE = {
     "duckdb": "duckdb_iceberg",
     "polars": "polars_iceberg",
     "gluten": "pyspark_gluten_iceberg",
+    "trino": "trino_iceberg",
 }
 
 # Parity baseline: Spark, as in fabric-dbt-examples' parity.py.

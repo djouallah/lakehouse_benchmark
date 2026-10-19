@@ -43,7 +43,17 @@ PACKAGES = {
     "duckdb": ("dbt-core", "dbt-duckdb", "duckdb"),
     "polars": ("dbt-core", "dbt-polars", "polars", "pyiceberg"),
     "gluten": ("dbt-core", "dbt-spark", "pyspark"),
+    "trino": ("dbt-core", "dbt-trino", "trino"),
 }
+
+# The Hive EXTERNAL tables the trino tree reads the landing zone through (workload/macros/
+# trino_read_csv.sql): folder under Files/dbt/csv_raw, and how many VARCHAR columns, c0..c{n-1}.
+# 140 clears the widest AEMO record (price, 130); the DUID reference files are under 30.
+TRINO_CSV_TABLES = {"daily": 140, "price_today": 140, "scada_today": 140, "duid": 30}
+TRINO_ARCHIVE_LOG = (
+    "source_type varchar, source_filename varchar, archive_path varchar, archived_at timestamp(3), "
+    "row_count bigint, source_url varchar, etag varchar, csv_filename varchar"
+)
 
 
 def versions(engine: str) -> dict[str, str]:
@@ -67,6 +77,51 @@ def start_gluten(cfg: WorkloadConfig):
     # it as an identifier (pyspark_iceberg.py, for TPC-DS). Nothing in these models double-quotes.
     spark.conf.set("spark.sql.ansi.doubleQuotedIdentifiers", "false")
     return engine
+
+
+def start_trino(cfg: WorkloadConfig, token: str) -> str:
+    """bench's Trino container with the OneLake catalog attached, and a Hive catalog `files` over
+    the landing zone -- the Trino ETL's shape (bench/etl/engines/trino_iceberg.py). Returns the
+    server version."""
+    from bench import trino
+
+    trino.start()
+    conn = trino.connect()
+    try:
+        trino.attach(conn, cfg, token)
+        trino.create_catalog(
+            conn,
+            "files",
+            "hive",
+            {
+                "hive.metastore": "file",
+                "hive.metastore.catalog.dir": "local:///trino-metastore",
+                "fs.native-local.enabled": "true",
+                "local.location": "/tmp",
+                **trino.storage_properties(),
+            },
+        )
+        trino.sql(conn, "CREATE SCHEMA IF NOT EXISTS files.dbt")
+        for folder, width in TRINO_CSV_TABLES.items():
+            columns = ", ".join(f"c{i} varchar" for i in range(width))
+            trino.sql(conn, f"DROP TABLE IF EXISTS files.dbt.{folder}")
+            trino.sql(
+                conn,
+                f"CREATE TABLE files.dbt.{folder} ({columns}) WITH ("
+                f"external_location = '{cfg.files_abfss}/csv_raw/{folder}', "
+                "format = 'CSV', skip_header_line_count = 1)",
+            )
+        # The archive log is the one parquet file directly under Files/dbt; Hive does not descend
+        # into csv_raw/ (hive.recursive-directories is off).
+        trino.sql(conn, "DROP TABLE IF EXISTS files.dbt.archive_log")
+        trino.sql(
+            conn,
+            f"CREATE TABLE files.dbt.archive_log ({TRINO_ARCHIVE_LOG}) WITH (external_location = "
+            f"'{cfg.files_abfss}', format = 'PARQUET')",
+        )
+        return f"{trino.version(conn)} ({trino.IMAGE})"
+    finally:
+        conn.close()
 
 
 class Dbt:
@@ -143,6 +198,8 @@ def main(parts: Path) -> int:
         if engine == "gluten":
             spark = start_gluten(cfg)
             part["versions"]["spark"] = spark.version
+        if engine == "trino":
+            part["versions"]["trino-server"] = start_trino(cfg, token)
         os.chdir(PROJECT)
         dbt = Dbt(engine)
 

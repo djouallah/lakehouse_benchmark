@@ -31,6 +31,11 @@
     {%- set dbl = 'DOUBLE' -%}
     {%- set to_text = "CAST(MIN(`date`) AS STRING)" -%}
     {%- set to_text_max = "CAST(MAX(`date`) AS STRING)" -%}
+  {%- elif target.type == 'trino' -%}
+    {%- set d, t, mw, price = '"date"', '"time"', 'mw', 'price' -%}
+    {%- set dbl = 'DOUBLE' -%}
+    {%- set to_text = 'CAST(MIN("date") AS VARCHAR)' -%}
+    {%- set to_text_max = 'CAST(MAX("date") AS VARCHAR)' -%}
   {%- else -%}
     {%- set d, t, mw, price = 'date', 'time', 'mw', 'price' -%}
     {%- set dbl = 'DOUBLE' -%}

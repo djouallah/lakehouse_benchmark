@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       engines:
-        description: Comma-separated dbt targets (duckdb, polars, gluten).
+        description: Comma-separated dbt targets (duckdb, polars, gluten, trino).
         type: string
-        default: duckdb,polars,gluten
+        default: duckdb,polars,gluten,trino
       process_limit:
         description: Files each fact model folds per run, newest first. A backlog converges over runs.
         type: string
@@ -77,7 +77,7 @@ jobs:
 
       - id: plan
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb,polars,gluten' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb,polars,gluten,trino' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
@@ -119,6 +119,7 @@ jobs:
       ${{ matrix.engine == 'duckdb' && '🦆 dbt-duckdb'
       || matrix.engine == 'polars' && '🐻‍❄️ dbt-polars'
       || matrix.engine == 'gluten' && '🚀 dbt-spark on Gluten/Velox'
+      || matrix.engine == 'trino' && '🐰 dbt-trino'
       || matrix.engine }}
     runs-on: ubuntu-latest
     # The OneLake bearer is baked into the profile (DuckDB's ATTACH, pyiceberg's catalog) and
@@ -176,6 +177,11 @@ jobs:
             ~/.m2/repository
           key: ivy-spark41-iceberg111-v1
 
+      # The official image bench/trino.py pins, pulled before the build.
+      - name: Pull the Trino image
+        if: matrix.engine == 'trino'
+        run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
+
       - name: dbt build (${{ matrix.engine }})
         # pipefail via `shell: bash`. dbt prints its own errors straight to stdout, unscrubbed, and
         # a failing ATTACH can quote the bearer: redact JWT and SAS shapes on the way to the log.
@@ -184,6 +190,13 @@ jobs:
           python .github/scripts/workload_run_engine.py parts 2>&1 \
             | sed -uE 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g' \
             | tee "workload_${{ matrix.engine }}.log"
+
+      # The catalog DDL carries the bearer: redact JWT shapes.
+      - name: Trino server log
+        if: always() && matrix.engine == 'trino'
+        run: |
+          docker logs trino 2>&1 | tail -n 300 \
+            | sed -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'
 
       - uses: actions/upload-artifact@v6
         if: always()

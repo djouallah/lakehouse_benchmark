@@ -55,3 +55,21 @@ aemo_electricity:
       host: localhost
       schema: mart
       threads: 1
+
+    # The Trino container bench/trino.py runs, with the OneLake REST catalog `onelake` already
+    # attached by workload_run_engine.py (the bearer is the catalog's, not the profile's) and the
+    # Hive catalog `files` over the landing zone. Extended statistics off: OneLake refuses a
+    # commit that carries Puffin statistics with 400 Malformed request (bench/etl/engines/
+    # trino_iceberg.py).
+    trino:
+      type: trino
+      method: none
+      user: bench
+      host: 127.0.0.1
+      port: 8080
+      http_scheme: http
+      database: onelake
+      schema: mart
+      threads: 1
+      session_properties:
+        onelake.collect_extended_statistics_on_write: false
