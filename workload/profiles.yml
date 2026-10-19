@@ -1,0 +1,57 @@
+# Every credential comes from the environment, set by .github/scripts/workload_run_engine.py from
+# bench.auth (GitHub OIDC -> Entra): ONELAKE_TOKEN is a storage bearer, WAREHOUSE_PATH is
+# <workspace>/<lakehouse>, FILES_PATH the landing zone under that lakehouse's Files/.
+aemo_electricity:
+  target: duckdb
+  outputs:
+    duckdb:
+      type: duckdb
+      path: ':memory:'
+      database: onelake
+      schema: mart
+      threads: 2
+      settings:
+        preserve_insertion_order: false
+      # The catalog bearer covers Tables/; Files/, the landing zone every model reads, needs this.
+      secrets:
+        - type: azure
+          name: onelake_storage
+          provider: access_token
+          access_token: "{{ env_var('ONELAKE_TOKEN') }}"
+      attach:
+        - path: "{{ env_var('WAREHOUSE_PATH') }}"
+          alias: onelake
+          type: iceberg
+          options:
+            endpoint: "{{ env_var('ONELAKE_ENDPOINT') }}"
+            token: "{{ env_var('ONELAKE_TOKEN') }}"
+            stage_create_tables: 0
+            skip_create_table_metadata_updates: 1
+            default_schema: dbo
+
+    polars:
+      type: polars
+      database: onelake
+      schema: mart
+      threads: 1
+      catalogs:
+        - name: onelake
+          type: iceberg
+          schema: mart
+          pyiceberg_type: rest
+          uri: "{{ env_var('ONELAKE_ENDPOINT') }}"
+          warehouse: "{{ env_var('WAREHOUSE_PATH') }}"
+          adls.account-name: onelake
+          adls.account-host: onelake.blob.fabric.microsoft.com
+          token: "{{ env_var('ONELAKE_TOKEN') }}"
+          adls.token: "{{ env_var('ONELAKE_TOKEN') }}"
+
+    # The SparkSession is built BEFORE dbt starts (workload_run_engine.py: bench's Gluten session,
+    # Iceberg REST catalog `onelake` as spark.sql.defaultCatalog); `method: session` picks it up
+    # with getOrCreate().
+    gluten:
+      type: spark
+      method: session
+      host: localhost
+      schema: mart
+      threads: 1

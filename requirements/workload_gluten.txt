@@ -1,0 +1,11 @@
+# The gluten leg: dbt-spark `method: session` on bench's Gluten/Velox session (requirements/
+# pyspark_gluten_iceberg.txt: pyspark at the 4.1.1 the nightly bundle is tested against, and the
+# ADLS client that mints the OneLake SAS Velox reads with).
+#
+# dbt-spark WITHOUT the [session] extra: all it adds is a pyspark requirement, and the pin below
+# is the one that matters. Session mode imports pyspark at run time only.
+dbt-spark
+pyspark==4.1.1
+azure-identity>=1.19
+azure-storage-file-datalake>=12.20
+psutil>=6

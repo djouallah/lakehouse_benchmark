@@ -56,7 +56,8 @@ def test_every_engine_has_a_workload_row():
 
 def test_the_real_workload_is_the_scorecards_first_column_not_a_tab():
     assert 'id: "workload"' not in rows("GROUPS")
-    assert rows("SC_COLS").split("[", 1)[1].lstrip().startswith('{ id: "workload", title: "My workload", href: WORKLOAD_REPO,')
+    first = '{ id: "workload", title: "My workload", href: WORKLOAD_REPO,'
+    assert rows("SC_COLS").split("[", 1)[1].lstrip().startswith(first)
 
 
 def test_future_is_the_last_top_tab():

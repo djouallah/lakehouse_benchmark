@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_duid
+    description: >
+      Dispatchable units: the NEM registration list plus the WA facilities list, with
+      fuel/technology, participant and geo attributes.
+    columns:
+      - name: DUID
+        description: Unique identifier for the dispatchable unit
+        tests:
+          - unique
+          - not_null
+      - name: Region
+        description: NEM region the unit dispatches into (WA1 for WA facilities)
+      - name: State
+        description: State name derived from the region
+      - name: FuelSourceDescriptor
+        description: Fuel/technology of the unit (Solar, Wind, Coal, ...), title-cased
+      - name: Participant
+        description: Registered market participant that operates the unit
+      - name: latitude
+        description: Unit latitude from the geo reference CSV; null when unknown
+      - name: longitude
+        description: Unit longitude from the geo reference CSV; null when unknown
+
+  - name: dim_calendar
+    description: Date spine, 2018-04-01 to 2026-12-31.
+    columns:
+      - name: date
+        description: Calendar date
+        tests:
+          - unique
+          - not_null
+      - name: year
+        description: Calendar year
+      - name: month
+        description: Calendar month number

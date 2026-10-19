@@ -1,0 +1,139 @@
+version: 2
+
+models:
+  - name: fct_price
+    description: AEMO DREGION record from the daily archive files — all 130 source columns.
+    columns:
+      - name: REGIONID
+        description: NEM region (plus WA1 for the WA market)
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['QLD1', 'NSW1', 'VIC1', 'SA1', 'TAS1', 'WA1']
+      - name: SETTLEMENTDATE
+        description: 5-minute dispatch interval timestamp
+        tests:
+          - not_null
+      - name: RRP
+        description: Regional Reference Price ($/MWh) for the interval
+      - name: INTERVENTION
+        description: AEMO intervention flag (0 = normal dispatch run)
+      - name: month_key
+        description: YYYYMM partition key derived from SETTLEMENTDATE
+      - name: file
+        # 'file' is a reserved word in T-SQL. quote: true makes dbt bracket it in the
+        # generated tests, which is harmless on the other four engines — the one place a
+        # shared patch file bends to a dialect.
+        quote: true
+        description: Source CSV filename the row came from; part of the merge key
+        tests:
+          - not_null
+
+  - name: fct_scada
+    description: AEMO DUNIT record from the daily archive files — all 53 source columns.
+    columns:
+      - name: DUID
+        description: Dispatchable Unit Identifier of the generating unit
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_duid')
+                field: DUID
+              config:
+                severity: warn
+      - name: SETTLEMENTDATE
+        description: 5-minute dispatch interval timestamp
+        tests:
+          - not_null
+      - name: INITIALMW
+        description: Metered output of the unit at the start of the interval (MW)
+      - name: month_key
+        description: YYYYMM partition key derived from SETTLEMENTDATE
+      - name: file
+        quote: true
+        description: Source CSV filename the row came from; part of the merge key
+        tests:
+          - not_null
+
+  - name: fct_price_today
+    description: Intraday DISPATCHIS regional prices, landed every 5 minutes.
+    columns:
+      - name: REGIONID
+        description: NEM region (plus WA1 for the WA market)
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['QLD1', 'NSW1', 'VIC1', 'SA1', 'TAS1', 'WA1']
+      - name: SETTLEMENTDATE
+        description: 5-minute dispatch interval timestamp
+        tests:
+          - not_null
+      - name: RRP
+        description: Regional Reference Price ($/MWh) for the interval
+      - name: file
+        quote: true
+        description: Source CSV filename the row came from; part of the merge key
+        tests:
+          - not_null
+
+  - name: fct_scada_today
+    description: Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.
+    columns:
+      - name: DUID
+        description: Dispatchable Unit Identifier of the generating unit
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_duid')
+                field: DUID
+              config:
+                severity: warn
+      - name: SETTLEMENTDATE
+        description: 5-minute dispatch interval timestamp
+        tests:
+          - not_null
+      - name: INITIALMW
+        description: Metered output of the unit at the start of the interval (MW)
+      - name: file
+        quote: true
+        description: Source CSV filename the row came from; part of the merge key
+        tests:
+          - not_null
+
+  - name: fct_summary
+    description: >
+      THE GOLD TABLE, and the one every engine is compared on. One row per
+      (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt
+      from the daily facts when new daily files land, topped up from the intraday facts in
+      between. parity.py compares this table across engines.
+    columns:
+      - name: date
+        description: Calendar date of the dispatch interval
+        tests:
+          - not_null
+      - name: time
+        description: Time of day as an HHMM integer, 5-minute grain
+      - name: DUID
+        description: Dispatchable Unit Identifier of the generating unit
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_duid')
+                field: DUID
+      - name: mw
+        description: Generation for the interval (MW), DECIMAL(18,4)
+        tests:
+          - not_null
+      - name: price
+        description: Regional Reference Price matched via the unit's region ($/MWh), DECIMAL(18,4)
+        tests:
+          - not_null
+      - name: cutoff
+        description: >
+          High-water mark (max SETTLEMENTDATE seen when the batch was written), used by the
+          intraday top-up branch to know where to resume.

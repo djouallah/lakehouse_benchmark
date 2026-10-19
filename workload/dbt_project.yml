@@ -1,0 +1,60 @@
+# THE "MY WORKLOAD" dbt PROJECT, vendored from djouallah/fabric-dbt-examples (dbt1/, see SOURCE)
+# and cut down to the Iceberg legs bench can run on its own engines and its own auth:
+#
+#   duckdb   dbt-duckdb, ATTACHed to the OneLake Iceberg REST catalog   (the source's `iceberg`)
+#   polars   dbt-polars, pyiceberg REST catalog                          (the source's `polars`)
+#   gluten   dbt-spark `method: session` on Spark + Gluten/Velox, Iceberg (port of the Delta `spark`)
+#
+# ONE PROJECT, ONE TREE PER ENGINE: models/aemo/<engine>/<layer>/<model>.sql. Exactly one tree
+# is +enabled per run, keyed on target.name, so the same model names never collide. There is
+# no --select anywhere. A target name that matches no folder disables everything and
+# `dbt build` exits 0 having built nothing -- workload_run_engine.py refuses a run with no models.
+#
+# Nothing on the `aemo_electricity` project key, ever: a generic test declared in a patch file
+# gets the fqn of the YML file, so a project-key gate also disables every generic test.
+
+name: 'aemo_electricity'
+version: '1.0.0'
+profile: 'aemo_electricity'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+on-run-start:
+  # DuckDB's azure extension needs the curl transport on a Linux runner (bench/config.py,
+  # azure_transport). Set here, not in profiles.yml `settings:`: dbt-duckdb re-applies settings
+  # on every cursor and DuckDB refuses to switch temp_directory once anything has spilled.
+  - "{% if target.type == 'duckdb' and env_var('AZURE_TRANSPORT_OPTION_TYPE', 'default') != 'default' %}SET GLOBAL azure_transport_option_type = '{{ env_var('AZURE_TRANSPORT_OPTION_TYPE') }}'{% endif %}"
+  - "{% if target.type == 'duckdb' %}SET GLOBAL temp_directory = '{{ env_var('DUCKDB_TEMP_DIR', '/tmp/duckdb_spill') }}'{% endif %}"
+
+models:
+  aemo_electricity:
+    aemo:
+      # Materialization and file_format are set in every model file. The patch files
+      # (_staging.yml, _dimensions.yml, _marts.yml) sit one level above these keys so one patch
+      # documents and tests whichever tree is enabled.
+      duckdb:
+        +enabled: "{{ target.name == 'duckdb' }}"
+        dimensions: {+schema: mart}
+        marts:      {+schema: landing}
+      polars:
+        +enabled: "{{ target.name == 'polars' }}"
+        dimensions: {+schema: mart}
+        marts:      {+schema: landing}
+      gluten:
+        +enabled: "{{ target.name == 'gluten' }}"
+        +file_format: iceberg
+        dimensions: {+schema: mart}
+        marts:      {+schema: landing}
+
+data_tests:
+  aemo_electricity:
+    aemo:
+      # NOT an asymmetry to "fix": the generic tests in models/aemo/_*.yml have no engine
+      # segment in their fqn, so they must stay ungated here and run on every engine. The
+      # singular tests under tests/aemo/<engine>/ do have one, and are gated on it.
+      duckdb: {+enabled: "{{ target.name == 'duckdb' }}"}
+      polars: {+enabled: "{{ target.name == 'polars' }}"}
+      gluten: {+enabled: "{{ target.name == 'gluten' }}"}
