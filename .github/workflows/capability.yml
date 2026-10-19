@@ -20,8 +20,8 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,trino,polars,duckdb,sail,chdb,databend,daft,duckdb_isolation
-          - spark,trino,polars,duckdb,sail,chdb,databend,daft
+          - spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation
+          - spark,trino,polars,duckdb,sail,chdb,databend
           - spark
           - trino
           - polars
@@ -29,9 +29,8 @@ on:
           - sail
           - chdb
           - databend
-          - daft
           - duckdb_isolation
-        default: spark,trino,polars,duckdb,sail,chdb,databend,daft,duckdb_isolation
+        default: spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -61,7 +60,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,daft,duckdb_isolation' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -76,7 +75,6 @@ jobs:
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'chdb' && 'chDB'
       || matrix.client == 'databend' && 'Databend'
-      || matrix.client == 'daft' && 'Daft'
       || matrix.client == 'duckdb_isolation' && 'DuckDB isolation and transactions'
       || matrix.client }}
     runs-on: ubuntu-latest
@@ -119,7 +117,7 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars|daft|trino|pymysql)=' || true
+          pip list --format=freeze | grep -Ei '^(pyiceberg|pyarrow|pysail|pyspark|chdb|polars|trino|pymysql)=' || true
 
       - uses: actions/setup-java@v5
         if: matrix.client == 'spark'

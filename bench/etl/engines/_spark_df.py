@@ -18,11 +18,14 @@ from bench.etl.schema import COLUMNS, TIMESTAMP_FORMAT_SPARK
 PAD_COLS = [f"COL_{i}" for i in range(54, 131)]
 BASE_SCHEMA = ",".join(f"{column} STRING" for column in COLUMNS)
 USER_SCHEMA = BASE_SCHEMA + "," + ",".join(f"{column} STRING" for column in PAD_COLS)
-KEEP_AS_IS = {"SETTLEMENTDATE", "DUID", "UNIT"}
+KEEP_AS_IS = {"SETTLEMENTDATE", "DUID", "UNIT", "filename"}
 
 
-def transform(session, uris: list[str]):
-    """The notebook's DataFrame pipeline over `uris`, ready to write. Lazy until the write runs."""
+def transform(session, uris: list[str], filename: bool = False):
+    """The notebook's DataFrame pipeline over `uris`, ready to write. Lazy until the write runs.
+
+    `filename` adds the source path as `filename`, from `input_file_name()` taken right at the scan.
+    """
     from pyspark.sql import functions as f
 
     df = (
@@ -33,7 +36,11 @@ def transform(session, uris: list[str]):
         .option("allowTruncatedRows", "true")
         .schema(USER_SCHEMA)
         .load(uris)
-        .filter((f.col("I") == "D") & (f.col("UNIT") == "DUNIT") & (f.col("VERSION") == "3"))
+    )
+    if filename:
+        df = df.withColumn("filename", f.input_file_name())
+    df = (
+        df.filter((f.col("I") == "D") & (f.col("UNIT") == "DUNIT") & (f.col("VERSION") == "3"))
         .drop("XX", "I", *PAD_COLS)
         .withColumn(
             "SETTLEMENTDATE", f.to_timestamp(f.col("SETTLEMENTDATE"), TIMESTAMP_FORMAT_SPARK)

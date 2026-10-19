@@ -6,6 +6,9 @@ Port of the notebook's `sail_clean_csv`, the other engine there that already wro
 partitions; bench/etl/iceberg.py says why), plus a `DROP TABLE IF EXISTS` first so every run
 creates and fills a fresh table rather than appending to last run's.
 
+`filename` comes from `input_file_name()`, which Sail has from lakehq/sail#2571 (sail#1210), merged
+after 0.7.2: requirements/etl_lakesail_iceberg.txt runs a main build until a release has it.
+
 The session is the TPC-H engine's:
 `bench.tpch.engines.lakesail_iceberg.LakesailIceberg.setup()` starts the in-process
 Spark Connect server with the OneLake catalog in `SAIL_CATALOG__LIST` and the storage token
@@ -52,7 +55,7 @@ class LakesailIceberg:
         self._spark.sql(f"CREATE SCHEMA IF NOT EXISTS {self.cfg.schema}")
         self._spark.sql(f"USE SCHEMA {self.cfg.schema}")
         self._spark.sql(f"DROP TABLE IF EXISTS {self.table}")
-        df = transform(self._spark, uris)
+        df = transform(self._spark, uris, filename=True)
         df.write.mode("append").format("iceberg").saveAsTable(self.table)
         scrub.safe_print(f"    {self.cfg.schema}.{self.table} written in one append")
 
