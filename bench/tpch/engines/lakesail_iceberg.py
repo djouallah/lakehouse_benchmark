@@ -59,6 +59,10 @@ class LakesailIceberg:
         return self._spark
 
     def setup(self) -> None:
+        # Sail logs through RUST_LOG, read when its logger starts, so before the import. OneLake
+        # tables advertise vended credentials, which Sail does not use yet, and every table load
+        # logged a WARN for it (sail_iceberg::lake_source); the storage token below is what reads.
+        os.environ.setdefault("RUST_LOG", "warn,sail_iceberg::lake_source=error")
         from pysail.spark import SparkConnectServer
         from pyspark.sql import SparkSession
 
