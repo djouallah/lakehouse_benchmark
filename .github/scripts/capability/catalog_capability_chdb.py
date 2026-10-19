@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from datetime import UTC, datetime
 
 from harness import (
@@ -532,10 +533,16 @@ class ChdbCapability:
         self.sql(f"INSERT INTO {self.t(table)} VALUES (4, 40)")
         self.sql(f"INSERT INTO {self.t(table)} VALUES (5, 50)")
         before = len(self._snapshots(table))
+        # The cutoff must be past the last commit, which can land in the same second as `now`;
+        # and ClickHouse also keeps every snapshot younger than
+        # `iceberg_expire_default_max_snapshot_age_ms` (5 days by default) when the table has no
+        # `history.expire.max-snapshot-age-ms`, so a cutoff alone expires nothing young.
+        time.sleep(2)
         now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         self.sql(
             f"ALTER TABLE {self.t(table)} EXECUTE expire_snapshots('{now}') "
-            f"SETTINGS allow_experimental_expire_snapshots = 1"
+            f"SETTINGS allow_experimental_expire_snapshots = 1, "
+            f"iceberg_expire_default_max_snapshot_age_ms = 0"
         )
         after = len(self._snapshots(table))
         if after >= before:
@@ -557,7 +564,19 @@ class ChdbCapability:
     # -- catalog -----------------------------------------------------------------------------
 
     def rewrite_manifests(self) -> str:
-        raise Refused("ClickHouse has no statement to rewrite an Iceberg table's manifests")
+        """OPTIMIZE TABLE ... MANIFEST, manifest-only compaction; the threshold is set to 0 so the
+        probe's few manifests qualify (`iceberg_manifest_min_count_to_compact`, 100 by default)."""
+        table = self._fresh("manifests")
+        self.sql(f"INSERT INTO {self.t(table)} VALUES (4, 40)")
+        before = len(self._snapshots(table))
+        self.sql(
+            f"OPTIMIZE TABLE {self.t(table)} MANIFEST "
+            f"SETTINGS allow_experimental_iceberg_compaction = 1, "
+            f"iceberg_manifest_min_count_to_compact = 0"
+        )
+        if len(self._snapshots(table)) == before:
+            raise NoOp("returned success and no new snapshot was committed")
+        return self._expect(table, SEED + [(4, 40)], "manifests rewritten in a new snapshot")
 
     def rename_table(self) -> str:
         table = self._fresh("rename")
