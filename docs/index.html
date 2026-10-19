@@ -295,7 +295,6 @@ main .tiles > a { color: inherit; }
 .sc .legend { margin-bottom: 6px; }
 .sc .legend .hint { margin-left: auto; color: var(--ink-3); }
 .sc td { padding-top: 5px; padding-bottom: 5px; }
-.sc tr.tier th { padding: 8px 0 2px; }
 .sc thead th { padding-bottom: 4px; }
 .sc thead th a { color: inherit; text-decoration: none; }
 .sc thead th a:hover { color: var(--ink); text-decoration: underline; }
@@ -907,40 +906,34 @@ const DBT_ROWS = [
 // Three requirements, all measured elsewhere on this page (reading CSV from Files and writing Iceberg
 // are not columns: every engine in the bench does both, README conditions 2 and 3); the dbt
 // column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt adapter
-// for the others, and for Polars, whose grid cell is na (no DML: dbt-polars merges through pyiceberg) (tests/test_results_page.py keeps the two in step); the file name column is what
-// each engine's ETL module reads (bench/etl/engines). Every engine in LABEL has a row.
+// for the others, and for Polars, whose grid cell is na (no DML: dbt-polars merges through pyiceberg);
+// tests/test_results_page.py keeps the two in step. The file name column is what each engine's ETL
+// module reads (bench/etl/engines). Every engine in LABEL has a row; the Scorecard orders them itself.
 const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
 // The "can run my workload" tile opens the dbt example's dashboard: each engine running the project, graded.
 const DBT_EXAMPLE = "https://djouallah.github.io/fabric-dbt-examples/";
-// Three groups by age and purpose: veteran (Spark, Trino, and Gluten/Velox which runs Spark's plan), new star
-// (started 2019-2024, general purpose), niche (built for one job). Names only, no judgement in the header.
-const WORKLOAD_TIERS = [
-  { id: "veteran", title: "Veteran" },
-  { id: "star", title: "New star" },
-  { id: "niche", title: "Niche" },
-];
 const WORKLOAD_ROWS = [
-  { engine: "pyspark_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
+  { engine: "pyspark_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
     merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
-  { engine: "trino_iceberg", tier: "veteran", file: { ok: true, note: "<code>\"$path\"</code>" },
+  { engine: "trino_iceberg", file: { ok: true, note: "<code>\"$path\"</code>" },
     merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/trino-configs">dbt-trino</a>` } },
-  { engine: "pyspark_gluten_iceberg", tier: "veteran", file: { ok: true, note: "<code>input_file_name()</code>" },
+  { engine: "pyspark_gluten_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
     merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
-  { engine: "pandas_iceberg", tier: "veteran", file: { ok: null, note: "No option; set per file" },
+  { engine: "pandas_iceberg", file: { ok: null, note: "No option; set per file" },
     merge: { ok: false, note: "No Iceberg writer" } },
-  { engine: "duckdb_iceberg", tier: "star", file: { ok: true, note: "<code>filename</code>" },
+  { engine: "duckdb_iceberg", file: { ok: true, note: "<code>filename</code>" },
     merge: { ok: true, note: "" } },
-  { engine: "starrocks_iceberg", tier: "star", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },
+  { engine: "starrocks_iceberg", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },
     merge: { ok: false, note: "dbt-starrocks has no merge" } },
-  { engine: "databend_iceberg", tier: "star", file: { ok: true, note: "<code>METADATA$FILENAME</code>" },
+  { engine: "databend_iceberg", file: { ok: true, note: "<code>METADATA$FILENAME</code>" },
     merge: { ok: false, note: "Iceberg tables take no MERGE" } },
-  { engine: "polars_iceberg", tier: "star", file: { ok: true, note: "<code>include_file_paths</code>" },
+  { engine: "polars_iceberg", file: { ok: true, note: "<code>include_file_paths</code>" },
     merge: { ok: true, note: `<a href="https://github.com/datamindedbe/incubator-dbt-polars">dbt-polars</a>' <code>merge</code>, one pyiceberg commit; Polars itself has none` } },
-  { engine: "lakesail_iceberg", tier: "star", file: { ok: true, note: `<code>input_file_name()</code>, on main (<a href="https://github.com/lakehq/sail/pull/2571">sail#2571</a>)` },
+  { engine: "lakesail_iceberg", file: { ok: true, note: `<code>input_file_name()</code>, on main (<a href="https://github.com/lakehq/sail/pull/2571">sail#2571</a>)` },
     merge: { ok: true, note: "" } },
-  { engine: "chdb_iceberg", tier: "niche", file: { ok: true, note: "<code>_file</code>" },
+  { engine: "chdb_iceberg", file: { ok: true, note: "<code>_file</code>" },
     merge: { ok: false, note: "" } },
-  { engine: "daft_iceberg", tier: "niche", file: { ok: true, note: "<code>file_path_column</code>" },
+  { engine: "daft_iceberg", file: { ok: true, note: "<code>file_path_column</code>" },
     merge: { ok: false, note: "<code>write_iceberg</code> appends or overwrites" } },
 ];
 
@@ -1130,7 +1123,8 @@ function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.t
 // THE SCORECARD TAB: every tab on one page, just before Future. One row per engine, one column per question,
 // and every cell is read from its own data: the Core group of the Iceberg support grid, each benchmark at its
 // headline scale (the same mean as its bar chart), and the real workload (WORKLOAD_ROWS and DBT_ROWS, the
-// three checks in a tooltip). A cell that is not a yes links to where the reason is written.
+// three checks in a tooltip). A cell that is not a yes links to where the reason is written. No groups: the
+// workload comes first, and the rows sort by it (yes, partial, no), then by Light ETL time, fastest first.
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
 
@@ -1170,14 +1164,21 @@ function workloadTip(e) {
     <div class="k">MERGE</div><div>${w.merge.note ? `${w.merge.note}, ${word(w.merge.ok)}` : word(w.merge.ok)}</div>`;
 }
 const WORKLOAD_NOTE = `<div>One dbt project, analytics-as-code: it needs the source file name, a dbt adapter and MERGE.
-  Hover a cell in the last column for each engine's checks.</div>
+  Hover a cell in the first column for each engine's checks.</div>
   <div class="k">It is arbitrary; yours needs other things and may reach a different conclusion.</div>`;
+const suiteCol = id => {
+  const s = SUITES.find(x => x.id === id);
+  return { id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${id}`, cell: e => benchCell(s, e),
+    note: `<div>The mean of the last ${RECENT_RUNS} complete runs, and how much slower than the fastest.</div>` };
+};
+// Left to right in sort order: the workload, then Light ETL, then the rest.
 const SC_COLS = [
+  { id: "workload", title: "My workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true, note: WORKLOAD_NOTE },
+  suiteCol("etl"),
   { id: "core", title: "Iceberg core", href: `#${CAPABILITY.id}`, cell: coreCell,
     note: "<div>The Core group of the Iceberg support tab. Gluten/Velox is a plugin inside Spark, so its reading is Spark-OSS's.</div>" },
-  ...SUITES.map(s => ({ id: s.id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${s.id}`, cell: e => benchCell(s, e),
-    note: `<div>The mean of the last ${RECENT_RUNS} complete runs, and how much slower than the fastest.</div>` })),
-  { id: "workload", title: "My workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true, note: WORKLOAD_NOTE },
+  suiteCol("tpch"),
+  suiteCol("tpcds"),
 ];
 
 function renderScorecard() {
@@ -1194,6 +1195,12 @@ function renderScorecard() {
     [yes("workload"), "can run my workload", DBT_EXAMPLE],
     ...(reports ? [[reports, "bug reports filed upstream"]] : []),
   ];
+  // Ready for my workload first, then partial, then no; within each, the fastest Light ETL first (failed or
+  // not run last); ties keep the WORKLOAD_ROWS order.
+  const rank = e => ({ true: 0, null: 1, false: 2 })[cells[e][0].ok];
+  const etl = SUITES.find(s => s.id === "etl");
+  const etlMean = e => { const i = data.etl?.[etl.headline]?.find(x => x.engine === e); return i && !i.failed ? i.mean : Infinity; };
+  const order = [...WORKLOAD_ROWS].sort((a, b) => rank(a.engine) - rank(b.engine) || etlMean(a.engine) - etlMean(b.engine));
   const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
   const winners = new Set(best.map(b => b.e));
   const verdict = best.length ? `Fastest at the headline scale: ${best.map(b => `${b.s.title} <b>${esc(LABEL[b.e] ?? b.e)}</b>`).join(", ")}.
@@ -1210,12 +1217,12 @@ function renderScorecard() {
     <p class="verdict">${verdict}</p>
     <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span>
       <span class="hint">Click a column for the details, a cell for the reason.</span></div>
-    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="${c.href}" data-note="${c.id}">${esc(c.title)}</a></th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
-    <tbody><tr class="tier"><th colspan="${SC_COLS.length + 1}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => `
+    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="${c.href}" data-note="${c.id}">${esc(c.title)}</a></th>`).join("")}</tr></thead>
+    <tbody>${order.map(r => `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
         ${cells[r.engine].map((c, i) => mark(c, r.engine, SC_COLS[i])).join("")}
-      </tr>`).join("")}</tbody>`).join("")}</table></div>`;
+      </tr>`).join("")}</tbody></table></div>`;
   noteTip($("sc-workload"), "My workload", WORKLOAD_NOTE);
   for (const a of sec.querySelectorAll("th a[data-note]")) {
     const col = SC_COLS.find(c => c.id === a.dataset.note);

@@ -54,9 +54,9 @@ def test_every_engine_has_a_workload_row():
         assert f'engine: "{engine}"' in rows("WORKLOAD_ROWS"), engine
 
 
-def test_the_real_workload_is_the_scorecards_last_column_not_a_tab():
+def test_the_real_workload_is_the_scorecards_first_column_not_a_tab():
     assert 'id: "workload"' not in rows("GROUPS")
-    assert '{ id: "workload", title: "My workload", href: WORKLOAD_REPO,' in PAGE
+    assert rows("SC_COLS").split("[", 1)[1].lstrip().startswith('{ id: "workload", title: "My workload", href: WORKLOAD_REPO,')
 
 
 def test_future_is_the_last_top_tab():
@@ -80,13 +80,10 @@ def test_the_workload_merge_cells_match_the_iceberg_support_tab():
         assert (cell == "true") == (merge["cells"][engine]["o"] == "supported"), engine
 
 
-def test_every_workload_row_is_in_one_of_the_three_tiers():
-    import re
-
-    tiers = set(re.findall(r'\{ id: "(\w+)", title: "[^"]+" \}', rows("WORKLOAD_TIERS")))
-    assert tiers == {"veteran", "star", "niche"}
-    assert set(re.findall(r'tier: "(\w+)"', rows("WORKLOAD_ROWS"))) <= tiers
-    assert rows("WORKLOAD_ROWS").count("tier:") == len(LABEL)
+def test_the_scorecard_has_no_hand_picked_groups():
+    """Rows are ordered by the data (workload, then Light ETL time), not by tiers."""
+    assert "WORKLOAD_TIERS" not in PAGE
+    assert "tier:" not in rows("WORKLOAD_ROWS")
 
 
 def test_maintenance_is_a_group_of_the_iceberg_support_grid():
