@@ -112,3 +112,19 @@ def test_the_iceberg_support_grid_opens_on_core():
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
     ]
+
+
+def test_the_scorecard_is_the_first_tab_and_the_landing_page():
+    assert rows("GROUPS").split("\n")[1].strip() == (
+        '{ id: "summary", title: "Scorecard", subs: [SCORECARD] },'
+    )
+    assert "const state = { suite: SCORECARD.id," in PAGE
+
+
+def test_file_pruning_and_query_plans_share_the_less_work_tab():
+    assert '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }' in PAGE
+
+
+def test_bug_reports_come_just_before_next():
+    bar = [line for line in rows("GROUPS").split("\n") if "bar: false" not in line]
+    assert bar[-2].strip() == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'

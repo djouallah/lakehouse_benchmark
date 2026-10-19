@@ -275,6 +275,41 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .hd.no { fill: var(--no); opacity: 1; }
 .arch svg.fadein { animation: arfade .8s ease; }
 @keyframes arfade { from { opacity: 0; } }
+/* Scorecard and Bug reports: a row of big numbers, each one a headline a slide can quote. */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 4px 0 14px; }
+.tiles div { padding: 12px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); }
+.tiles b { display: block; font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tiles span { color: var(--ink-2); font-size: 13px; }
+.sc > .caption:first-child { margin-top: 12px; }
+.sc .verdict { font-size: 15px; margin: 0 0 12px; }
+.sc thead th a { color: inherit; text-decoration: none; }
+.sc thead th a:hover { color: var(--ink); text-decoration: underline; }
+.sc td.lv a { color: var(--ink-2); }
+/* Bug reports: one dot per report, per engine. */
+.rp .intro { font-size: 18px; color: var(--ink); max-width: 760px; margin: 12px 0 16px; }
+.rp .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink-2); margin: 0 0 8px; }
+.rp .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rp .legend i, .rp .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.rp .fixed i, .rp .dot.fixed { background: var(--yes); }
+.rp .open i, .rp .dot.open { border: 2px solid var(--ink-3); }
+.rp .closed i, .rp .dot.closed { background: var(--grid); }
+.rp .ln2 { display: grid; grid-template-columns: 140px 1fr auto; gap: 12px; align-items: center; padding: 7px 0; border-top: 1px solid var(--track); }
+.rp .nm { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp .nm a { color: inherit; text-decoration: none; }
+.rp .nm a:hover { text-decoration: underline; }
+.rp .nm .sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 6px; }
+.rp .dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.rp .dot { width: 16px; height: 16px; transition: transform .15s; }
+.rp .dot:hover, .rp .dot:focus-visible { transform: scale(1.3); }
+.rp .ct { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rp h3 { font-size: 15px; margin: 22px 0 6px; }
+.rp ol.land { margin: 0; padding-left: 22px; color: var(--ink-2); }
+.rp ol.land li { margin: 5px 0; }
+.rp ol.land b { color: var(--ink); }
+.rp a { color: var(--accent); }
+.rp .src { font-size: 12px; color: var(--ink-3); margin-top: 16px; }
+.arch .lb.sm { font-size: 10px; }
+.pl .pick a { color: var(--accent); }
 .nx { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 4px; }
 .nx article { padding: 14px 16px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: var(--ink-2); font-size: 14px; }
 .nx h3 { font-size: 16px; color: var(--ink); margin: 0 0 6px; }
@@ -283,6 +318,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
   .pl .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl .vs { display: none; }
+  .rp .ln2 { grid-template-columns: 96px 1fr; } .rp .ct { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pl .edge.live, .pl .nd.run circle, .pl .card.shake, .arch .ln.live, .arch .work .eng, .arch .play .dot, .arch svg.fadein { animation: none; }
@@ -309,8 +345,11 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+  <section class="cap rows sc" id="scorecard" hidden></section>
   <section class="pl arch" id="concurrency" hidden></section>
   <section class="pl arch" id="anatomy" hidden></section>
+  <section class="pl arch" id="pruning" hidden></section>
+  <section class="rp" id="reports" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="cap rows" id="workload" hidden></section>
   <section class="nx-page" id="next" hidden></section>
@@ -324,11 +363,14 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
       on the object store, not on SQL (<a href="#issues">Issues</a>).</p>
     <p>Every engine gets the same 16 GB machine. When a query fails, the agent must get an error. An engine with
       no memory limit kills the machine, and there is no error to read.</p>
-    <p>The best query is the one that does the least work. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
+    <p>The best query is the one that does the least work: skip the files the query cannot need
+      (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
     <p>No engine is the fastest on every test. What an engine supports decides; speed is a bonus
       (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
-    <p>When an engine fails, the bug is filed upstream (<a href="#issues">Issues</a>).</p>
+    <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
+      That is the best help a user can give. It does not need a pull request: the people who know the code write
+      the fix, often within days (<a href="#reports">Bug reports</a>).</p>
     <p>Engines only get better with real competition. Even if you use one engine, it needs to be challenged.
       Without that, we would still be using Hadoop.</p>
   </section>
@@ -341,7 +383,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
       <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
       <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
-      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries on 0.7.25, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open), split into <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> (open) decimal precision, Q1 and Q9; <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a> (open) <code>CASE</code> with a decimal and a literal, Q8 and Q14; cross join (fix: <a href="https://github.com/Eventual-Inc/Daft/pull/7573">PR #7573</a>, open); <code>SUBSTRING</code> (fixed on main, <a href="https://github.com/Eventual-Inc/Daft/pull/7577">PR #7577</a>); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged, not yet released). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
+      <li><b>Daft</b>: ETL only; 16/22 TPC-H queries on 0.7.25, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open), split into <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> (open) decimal precision, Q1 and Q9; <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a> (open) <code>CASE</code> with a decimal and a literal, Q8 and Q14; cross join (fix: <a href="https://github.com/Eventual-Inc/Daft/pull/7573">PR #7573</a>, merged); <code>SUBSTRING</code> (fixed on main, <a href="https://github.com/Eventual-Inc/Daft/pull/7577">PR #7577</a>); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged, not yet released). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
       <li><b>Pandas</b>: ETL only; no SQL. Filed: <a href="https://github.com/pandas-dev/pandas/issues/71034">#71034</a> (open, marked as an Arrow limitation) and Arrow <a href="https://github.com/apache/arrow/issues/53290">#53290</a> (open) <code>read_csv(engine="pyarrow")</code> takes the column count from the first row, so the bench uses the one-thread C parser and reads 4 files at once on a thread pool. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#pandas-in-the-etl-only">Details</a></li>
       <li><b>chDB</b>: not in TPC-DS; 6 of 99 queries fail on ClickHouse issues: Q36 and Q66, an alias with the column's name (<a href="https://github.com/ClickHouse/ClickHouse/issues/9715">#9715</a>, open); Q47 and Q57, column names with three or more tables in FROM (<a href="https://github.com/ClickHouse/ClickHouse/issues/34697">#34697</a>, open); Q75, <code>SUM</code> over mixed Decimal and Float (<a href="https://github.com/ClickHouse/ClickHouse/issues/106707">#106707</a>); Q18, <code>CAST(NULL AS decimal)</code> is an error, not NULL. DROP TABLE on Iceberg sent <code>purgeRequested=False</code> (<a href="https://github.com/ClickHouse/ClickHouse/issues/125410">#125410</a>, fixed by <a href="https://github.com/ClickHouse/ClickHouse/pull/125469">PR #125469</a>); fixed in the bench since chdb-core 26.10.0.dev2610180851, the nightly after the ClickHouse master sync, which also made CREATE TABLE and CTAS work. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
       <li><b>Databend</b>: added 2026-10-17. It runs a build of main (Databend's release profile, in the v1.2.952-nightly image) until a nightly carries the decimal fix. Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (fixed by <a href="https://github.com/databendlabs/databend/pull/20594">PR #20594</a>, not yet in a nightly) decimals failed, TPC-H 5/22. Azure reads (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) are in the nightlies, not in a stable release. Iceberg reads take a SAS: the workload identity does not reach its Azure reader. Filed: <a href="https://github.com/databendlabs/databend/issues/20732">#20732</a> (open) <code>UNION ALL</code> over two tables applies one table's schema to the other's file, so TPC-DS stops at Q5; <a href="https://github.com/databendlabs/databend/issues/20733">#20733</a> (open) TPC-H SF=100 Q4 builds its semi join on 379M lineitem rows and runs out of memory instead of spilling. Iceberg writes, from the Iceberg support tab: <a href="https://github.com/databendlabs/databend/issues/20735">#20735</a> (open) CTAS panics; <a href="https://github.com/databendlabs/databend/issues/20736">#20736</a> (open) DECIMAL columns; <a href="https://github.com/databendlabs/databend/issues/20737">#20737</a> (open) nested columns; <a href="https://github.com/databendlabs/databend/issues/20738">#20738</a> (open) TRUNCATE does nothing; <a href="https://github.com/databendlabs/databend/issues/20739">#20739</a> (open) INSERT OVERWRITE appends; <a href="https://github.com/databendlabs/databend/issues/20740">#20740</a> (open) ADD/DROP COLUMN do nothing; <a href="https://github.com/databendlabs/databend/issues/20741">#20741</a> (open) time travel reads the current snapshot; <a href="https://github.com/databendlabs/databend/issues/20742">#20742</a> (open) INSERT into a bucket-partitioned table panics.</li>
@@ -458,22 +500,28 @@ const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const NEXT = { id: "next", title: "Next" };
-const PAGES = [ARCH, ANATOMY, NEXT, PLANS, CAPABILITY, WORKLOAD, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
-// The top tabs and their pill sub-tabs: an engine is what it supports, and speed is a bonus.
+const SCORECARD = { id: "scorecard", title: "Scorecard" };
+const PRUNING = { id: "pruning", title: "File pruning" };
+const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
+const PAGES = [SCORECARD, ARCH, ANATOMY, PRUNING, NEXT, PLANS, CAPABILITY, WORKLOAD, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+// The top tabs and their pill sub-tabs, in the order of the story: the verdict, how a lake table works,
+// how an engine does less work, what it supports, and only then how fast it is; then how engines get better.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
+  { id: "summary", title: "Scorecard", subs: [SCORECARD] },
   { id: "catalogs", title: "Catalogs", subs: [ARCH, ANATOMY] },  // the commit is the catalog's job
+  { id: "work", title: "Less work", subs: [PRUNING, PLANS] },  // skip files, then a good join order
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
-  { id: "plans", title: "Query plans", subs: [PLANS] },
+  { id: "workload", title: "Real workload", subs: [WORKLOAD] },
   { id: "performance", title: "Benchmarks", subs: [...SUITES] },
   { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
   { id: "about", title: "About", subs: [ABOUT], bar: false },
-  { id: "workload", title: "Real workload", subs: [WORKLOAD] },
+  { id: "bugs", title: "Bug reports", subs: [REPORTS] },
   { id: "next", title: "Next", subs: [NEXT] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: SUITES[0].id, sf: {}, group: null, last: {} };
+const state = { suite: SCORECARD.id, sf: {}, group: null, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -511,8 +559,12 @@ function render() {
   if (page !== PLANS) stopRace();
   if (page !== ARCH) stopArch();
   if (page !== ANATOMY) stopAnatomy();
+  if (page !== PRUNING) stopPruning();
+  if (page === SCORECARD) { renderScorecard(); return; }
   if (page === ARCH) { renderArch(); return; }
   if (page === ANATOMY) { renderAnatomy(); return; }
+  if (page === PRUNING) { renderPruning(); return; }
+  if (page === REPORTS) { renderReports(); return; }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page === WORKLOAD) { renderWorkload(); return; }
@@ -779,6 +831,12 @@ const WORKLOAD_ROWS = [
     merge: { ok: false, note: "<code>write_iceberg</code> appends or overwrites" } },
 ];
 
+// The dbt 1 column as Yes (true), Partial (null) or No (false).
+const dbtOk = engine => {
+  const level = DBT_ROWS.find(d => d.engine === engine).level;
+  return ["excellent", "good"].includes(level) ? true : level === "partial" ? null : false;
+};
+
 function renderWorkload() {
   const sec = $(WORKLOAD.id);
   const mark = (ok, text) => `<td class="lv ${ok === true ? "excellent" : ok === false ? "none" : "partial"}"><i class="m"></i>${text}</td>`;
@@ -793,12 +851,11 @@ function renderWorkload() {
     <div class="wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
     <tbody><tr class="tier"><th colspan="${head.length}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => {
       const dbt = DBT_ROWS.find(d => d.engine === r.engine);
-      const dbtOk = ["excellent", "good"].includes(dbt.level) ? true : dbt.level === "partial" ? null : false;
       return `
       <tr style="--c: var(--${r.engine}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
         ${mark(r.file.ok, r.file.note)}
-        ${mark(dbtOk, dbt.adapter ? `<a href="${dbt.url}">${esc(dbt.adapter)}</a>` : "no adapter")}
+        ${mark(dbtOk(r.engine), dbt.adapter ? `<a href="${dbt.url}">${esc(dbt.adapter)}</a>` : "no adapter")}
         ${mark(r.merge.ok, r.merge.note || `<a href="#iceberg">${r.merge.ok ? "yes" : "no"}</a>`)}
       </tr>`; }).join("")}</tbody>`).join("")}</table></div>
     <p class="note">File name column: what each engine's <a href="#etl">Light ETL</a> reads. dbt 1: tried in <a href="${DBT_MEDALLION}">fabric-dbt-examples</a> for DuckDB, LakeSail and Polars, the adapter docs for the others.
@@ -847,6 +904,147 @@ const NEXT_ROWS = [
 function renderNext() {
   $(NEXT.id).innerHTML = `
     <div class="nx">${NEXT_ROWS.map(r => `<article><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
+}
+
+// THE SCORECARD TAB: the verdict first. One row per engine, one column per question another tab answers,
+// and every cell is read from that tab's own data: the Core group of the Iceberg support grid, each
+// benchmark at its headline scale (the same mean as its bar chart), and the three Real workload columns.
+// A cell that is not a yes links to where the reason is written.
+let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
+const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
+
+function coreCell(e) {
+  const cap = data.capability;
+  if (!cap) return { ok: "na", text: "not loaded" };
+  if (!cap.engines[e]) return { ok: "na", text: "not probed" };
+  const core = cap.rows.filter(r => r.group === "Core"), yes = core.filter(r => r.cells[e].o === "supported").length;
+  return { ok: yes === core.length ? true : yes ? null : false, text: `${yes} of ${core.length}` };
+}
+function benchCell(suite, e) {
+  const items = data[suite.id]?.[suite.headline];
+  if (!items) return { ok: "na", text: "not loaded" };
+  const item = items.find(i => i.engine === e), best = items.find(i => !i.failed);
+  if (!item) return { ok: "na", text: "not run" };
+  if (item.failed) return { ok: false, text: "failed" };
+  return { ok: true, text: `${fmt(item.mean)} · ${best.engine === e ? "fastest" : ratio(item.mean / best.mean)}` };
+}
+function workloadCell(e) {
+  const w = WORKLOAD_ROWS.find(r => r.engine === e);
+  const parts = [["file name", w.file.ok], ["dbt", dbtOk(e)], ["MERGE", w.merge.ok]];
+  const no = parts.filter(p => p[1] === false).map(p => p[0]), some = parts.filter(p => p[1] === null).map(p => p[0]);
+  if (no.length) return { ok: false, text: `no ${no.join(", no ")}` };
+  if (some.length) return { ok: null, text: `partial ${some.join(", ")}` };
+  return { ok: true, text: "ready" };
+}
+const SC_COLS = [
+  { title: "Iceberg core", tab: CAPABILITY.id, cell: coreCell },
+  ...SUITES.map(s => ({ title: `${s.title}, ${s.scale(s.headline)}`, tab: s.id, cell: e => benchCell(s, e) })),
+  { title: "Real workload", tab: WORKLOAD.id, cell: workloadCell },
+];
+
+function renderScorecard() {
+  const sec = $(SCORECARD.id);
+  if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
+  const engines = WORKLOAD_ROWS.map(r => r.engine);
+  const cells = Object.fromEntries(engines.map(e => [e, SC_COLS.map(c => c.cell(e))]));
+  const yes = tab => engines.filter(e => cells[e][SC_COLS.findIndex(c => c.tab === tab)].ok === true).length;
+  const reports = data.reports?.items.filter(i => i.author === data.reports.reporter && i.kind === "issue").length;
+  const tiles = [
+    [engines.length, "engines, one 16 GB machine"],
+    [yes("tpch"), "finish TPC-H at SF 100"],
+    [yes("tpcds"), "finish TPC-DS at SF 100"],
+    [yes(WORKLOAD.id), "can run the real workload"],
+    ...(reports ? [[reports, "bug reports filed upstream"]] : []),
+  ];
+  const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
+  const winners = new Set(best.map(b => b.e));
+  const verdict = best.length ? `Fastest at the headline scale: ${best.map(b => `${b.s.title} <b>${esc(LABEL[b.e] ?? b.e)}</b>`).join(", ")}.
+    ${winners.size > 1 ? "No engine wins every benchmark, so what an engine supports decides; speed is a bonus." : ""}` : "";
+  const mark = (c, e, col) => {
+    const cls = c.ok === true ? "excellent" : c.ok === false ? "none" : c.ok === null ? "partial" : "na";
+    const li = document.getElementById(slug(LABEL[e] ?? e));
+    const href = c.ok === true ? "" : li?.closest("#issues") ? `#${li.id}` : `#${col.tab}`;
+    return `<td class="lv ${cls}"><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
+  };
+  sec.innerHTML = `
+    <p class="caption">The verdict first. Each column is a question another tab answers; click a column for the
+      details, and a cell that is not a yes for the reason.</p>
+    <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+    <p class="verdict">${verdict}</p>
+    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span></div>
+    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="#${c.tab}">${esc(c.title)}</a></th>`).join("")}</tr></thead>${WORKLOAD_TIERS.map(t => `
+    <tbody><tr class="tier"><th colspan="${SC_COLS.length + 1}">${t.title}</th></tr>${WORKLOAD_ROWS.filter(r => r.tier === t.id).map(r => `
+      <tr style="--c: var(--${r.engine}, var(--ink-3))">
+        <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
+        ${cells[r.engine].map((c, i) => mark(c, r.engine, SC_COLS[i])).join("")}
+      </tr>`).join("")}</tbody>`).join("")}</table></div>
+    <p class="note">Iceberg core: the Core group of the <a href="#iceberg">Iceberg support</a> grid, the minimum an engine needs
+      to own a table. Benchmarks: the mean of the last ${RECENT_RUNS} complete runs, as on <a href="#performance">Benchmarks</a>, and how much
+      slower than the fastest. Real workload: the three columns of the <a href="#workload">Real workload</a> tab.</p>`;
+}
+
+// THE BUG REPORTS TAB: docs/data/reports.json, written by .github/scripts/reports_publish.py (reports.yml, daily)
+// from every GitHub link on the Issues tab. A report is an issue the bench opened; fixed is what GitHub says:
+// closed as completed, or the pull request merged. Issues opened by others are linked as context, not counted.
+const ENGINE_OF = Object.fromEntries(Object.entries(LABEL).map(([k, v]) => [v, k]));
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const median = xs => { const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+function renderReports() {
+  const rep = data.reports, sec = $(REPORTS.id);
+  if (!rep) { sec.innerHTML = `<div class="empty">${loaded ? `Could not load ${REPORTS.json}.` : "Loading…"}</div>`; return; }
+  const mine = rep.items.filter(i => i.author === rep.reporter);
+  const reports = mine.filter(i => i.kind === "issue").sort((a, b) => a.opened.localeCompare(b.opened));
+  const prs = mine.filter(i => i.kind === "pr"), fixed = reports.filter(i => i.state === "fixed");
+  const others = rep.items.filter(i => i.author !== rep.reporter && i.kind === "issue").length;
+  const groups = [...new Set(reports.map(i => i.engine))].map(name => ({ name, items: reports.filter(i => i.engine === name) }))
+    .sort((a, b) => b.items.length - a.items.length);  // stable: the Issues tab's order on a tie
+  const tiles = [
+    [reports.length, "bug reports filed upstream"],
+    [fixed.length, "fixed"],
+    [fixed.length ? `${median(fixed.map(i => daysBetween(i.opened, i.closed)))} days` : "–", "median, from report to fix"],
+    [prs.length, "pull requests from the bench"],
+  ];
+  sec.innerHTML = `
+    <p class="intro">The best way to help an engine is a bug report its maintainers can reproduce. It does not need to
+      come with a fix: the people who know the code write the fix, often within days.</p>
+    <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+    <div class="legend"><span class="fixed"><i></i>fixed</span><span class="open"><i></i>open</span><span class="closed"><i></i>closed, not fixed</span>
+      <span>one dot per report, oldest first</span></div>
+    <div class="strip">${groups.map(g => `
+      <div class="ln2" style="--c: var(--${ENGINE_OF[g.name]}, var(--ink-3))">
+        <div class="nm"><i class="sw"></i><a href="#${slug(g.name)}">${esc(g.name)}</a></div>
+        <div class="dots">${g.items.map(i => `<a class="dot ${i.state}" href="${esc(i.url)}" target="_blank" rel="noopener" data-id="${esc(i.id)}"
+          aria-label="${esc(i.id)}: ${esc(i.title)}, ${i.state}"></a>`).join("")}</div>
+        <div class="ct">${g.items.filter(i => i.state === "fixed").length} of ${g.items.length} fixed</div>
+      </div>`).join("")}</div>
+    <h3>What makes a report land</h3>
+    <ol class="land">
+      <li><b>One script, a clean machine.</b> <code>pip install</code> the release, make or download the data in the script, run the query.</li>
+      <li><b>The smallest case that still fails.</b> One query on one table, not the whole benchmark.</li>
+      <li><b>Expected and actual.</b> The error text, or the rows that are wrong next to the rows that are right.</li>
+      <li><b>The version, and main.</b> Say whether the main branch still fails; the bench builds Polars, LakeSail and Databend from main to check.</li>
+      <li><b>One bug per issue.</b> Daft <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> was split into
+        <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> and <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a>, so each can be fixed and closed on its own.</li>
+    </ol>
+    <p class="src">From the GitHub API on ${esc(rep.updated.slice(0, 10))}: every issue and pull request on the
+      <a href="#issues">Issues</a> tab that the bench opened. Fixed is what GitHub says, closed as completed, released or not.
+      ${others} more issues there were opened by others and are not counted.</p>`;
+  const byId = Object.fromEntries(reports.map(i => [i.id, i]));
+  for (const dot of sec.querySelectorAll(".dot")) {
+    const i = byId[dot.dataset.id];
+    dot.onmouseenter = dot.onfocus = () => {
+      tip.style.setProperty("--c", `var(--${ENGINE_OF[i.engine]}, var(--ink-3))`);
+      tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(i.id)}</div><div>${esc(i.title)}</div>
+        <div class="k">opened ${esc(i.opened)}${i.state === "fixed" ? ` · fixed in ${daysBetween(i.opened, i.closed)} days`
+          : i.state === "closed" ? ` · ${esc(i.note || "closed, not fixed")}` : " · open"}</div>`;
+      const r = dot.getBoundingClientRect();
+      moveTip(r.left + r.width / 2, r.top);
+      tip.classList.add("on");
+    };
+    dot.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+    dot.onmouseleave = dot.onblur = hideTip;
+  }
 }
 
 // THE QUERY PLANS TAB: the same query on two engines, each engine's executed plan side by side, with the rows every
@@ -1303,7 +1501,7 @@ function stepArch(d) {
   drawArch();
 }
 addEventListener("keydown", e => {
-  const step = { [ARCH.id]: stepArch, [ANATOMY.id]: stepAnatomy }[state.suite];
+  const step = { [ARCH.id]: stepArch, [ANATOMY.id]: stepAnatomy, [PRUNING.id]: stepPruning }[state.suite];
   if (!step || e.altKey || e.ctrlKey || e.metaKey) return;
   const d = { ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 }[e.key];
   if (d) { e.preventDefault(); step(d); }
@@ -1443,6 +1641,7 @@ function drawArch() {
 WIDE.addEventListener("change", () => {
   if (state.suite === ARCH.id) drawArch();
   if (state.suite === ANATOMY.id) drawAnatomy();
+  if (state.suite === PRUNING.id) drawPruning();
 });
 
 // THE ANATOMY TAB: what one table is made of, the standard tree from the catalog down to the Parquet
@@ -1559,6 +1758,107 @@ function drawAnatomy() {
   $("an-say").innerHTML = `<b>${t + 1}/${AN_LAST + 1}</b> ${anatomySay(t)}`;
 }
 
+// THE FILE PRUNING TAB: how an engine reads one day of a quarter without opening most of the table. The same
+// tree as the Anatomy tab, where each layer holds the range of the values under it, so a filter skips whole
+// branches before a row is read: manifests by partition, files by column min and max, row groups by the
+// Parquet footer. Then the same table written in random order, where nothing under the partition is skipped.
+// Here each manifest holds one month, to keep the picture small. Conceptual on purpose: no engine, vendor or product names.
+const PR_LAST = 7;  // 8 steps; the last one stays on screen
+const prune = { t: 0, timer: null };
+const PR_MONTHS = ["Jan", "Feb", "Mar"], PR_DAYS = ["1–10", "11–20", "21–31"], PR_GROUPS = ["11–13", "14–15", "16–18", "19–20"];
+const PR_READ = [36, 36, 12, 4, 1, 1, 12, 1];  // row groups the engine still has to read at each step
+const pruningSay = t => [
+  "The query asks for one day, 14 March. The table holds three months: 9 data files of 4 row groups each.",
+  "With no pruning, the engine opens all 9 files and reads all 36 row groups, then keeps one day of rows.",
+  "The manifest list stores the partition range of each manifest. January and February cannot hold 14 March: two manifests and their 6 files are skipped, never opened.",
+  "The March manifest stores the min and max of every column, for each file. Only the file with days 11 to 20 can hold the 14th: two more files skipped.",
+  "Inside that file, the Parquet footer stores the min and max of each row group. The engine reads 1 row group of 4.",
+  "1 row group of 36. The metadata did the work before a single row was read.",
+  "The same table, written in random order. The partitions still skip January and February, but every March file holds days 1 to 31: each range covers the 14th, so nothing else is skipped, and 12 row groups are read. Sort the data on the columns you filter on.",
+  `The same statistics decide the join order (<a href="#plans">Query plans</a>). And with server-side planning, the catalog does this pruning for the engine (<a href="#next">Next</a>).`,
+][t];
+const PR_ROWS = ["Query", "Manifest list", "Manifest files", "Data files", "Row groups"];
+
+function pruningSvg(wide, t) {
+  // Wide: the layer names in a left column. Narrow: each name above its row.
+  const L = wide
+    ? { W: 780, H: 430, mid: 500, box: 320, mc: [330, 500, 670], node: 150, fw: 26, fd: 44, rc: 670, rw: 30, rd: 44, sm: "", rows: [10, 100, 180, 266, 360] }
+    : { W: 360, H: 470, mid: 180, box: 340, mc: [65, 180, 295], node: 104, fw: 20, fd: 32, rc: 250, rw: 26, rd: 34, sm: "sm", rows: [24, 126, 208, 296, 394] };
+  const { mid, box, mc, node, fw, fd, rc, rw, rd, sm, rows: r } = L;
+  const random = t === 6, groups = t >= 4;
+  const gone = i => t >= 2 && i < 2;  // January and February, skipped by partition
+  const file = (i, k) => gone(i) ? "" : t === 1 || (i === 2 && (random || (t >= 3 && k === 1))) ? "ja c" : i === 2 && t >= 3 ? "skip" : "";
+  let svg = PR_ROWS.map((name, i) => wide
+    ? `<text class="t" x="0" y="${r[i] + (i ? i < 3 ? 21 : 20 : 33)}">${name}</text>`
+    : `<text class="lb" x="10" y="${r[i] - 8}">${name}</text>`).join("");
+  svg += arBox({ x: mid - box / 2, y: r[0], w: box, h: 56 }, t ? "cat" : "", "WHERE sale_date = '2026-03-14'",
+    `row groups to read: ${PR_READ[t]} of 36`);
+  svg += anNode(mid, r[1], node, "manifest list") + arLine(mid, r[0] + 60, mid, r[1] - 4, "");
+  PR_MONTHS.forEach((m, i) => {
+    let g = arLine(mid, r[1] + 36, mc[i], r[2] - 4, "") + anNode(mc[i], r[2], node, `month = ${m}`, i === 2 && t >= 2 ? "ja" : "");
+    PR_DAYS.forEach((d, k) => {
+      const x = mc[i] + (k - 1) * fd, c = file(i, k);
+      const f = `<line class="ln" x1="${mc[i]}" y1="${r[2] + 32}" x2="${x}" y2="${r[3]}"/>
+        <rect class="f ${c === "skip" ? "" : c}" x="${x - fw / 2}" y="${r[3]}" width="${fw}" height="30" rx="3"/>
+        <text class="lb ${sm}" x="${x}" y="${r[3] + 46}" text-anchor="middle">${random && i === 2 ? "1–31" : d}</text>`;
+      g += c === "skip" ? `<g class="gone">${f}</g>` : f;
+    });
+    svg += `<g class="${gone(i) ? "gone" : ""}">${g}</g>`;
+  });
+  // The row groups inside the one March file the query can need (all of them, in random order).
+  if (groups) PR_GROUPS.forEach((d, j) => {
+    const x = rc + (j - 1.5) * rd, hot = random || j === 1;
+    svg += `<g class="${hot ? "" : "gone"}"><line class="ln" x1="${mc[2]}" y1="${r[3] + 52}" x2="${x}" y2="${r[4]}"/>
+      <rect class="f ${hot ? "ja c" : ""}" x="${x - rw / 2}" y="${r[4]}" width="${rw}" height="22" rx="3"/>
+      <text class="lb ${sm}" x="${x}" y="${r[4] + 38}" text-anchor="middle">${random ? "1–31" : d}</text></g>`;
+  });
+  return { ...L, svg };
+}
+
+function renderPruning() {
+  stopPruning();
+  $(PRUNING.id).innerHTML = `
+    <p class="intro">The fastest data to read is the data you never open. Every layer of an Iceberg table stores the range of
+      the values under it, so a filter can skip whole branches of the tree before a single row is read.</p>
+    <div class="ctl"><button class="play" id="pr-play"></button>
+      <button class="ghost" id="pr-back">‹ Back</button><button class="ghost" id="pr-step">Next ›</button>
+      <span class="hint">or the arrow keys</span></div>
+    <div class="ar-fig an-fig" id="pr-fig"></div>
+    <p class="pick" id="pr-say"></p>`;
+  $("pr-play").onclick = playPruning;
+  $("pr-back").onclick = () => stepPruning(-1);
+  $("pr-step").onclick = $("pr-fig").onclick = () => stepPruning(1);
+  drawPruning();
+}
+// Same controls as the Anatomy tab: Play, Back / Next, a click on the picture, the arrow keys.
+function playPruning() {
+  if (prune.timer) return;
+  if (prune.t >= PR_LAST) prune.t = 0;
+  prune.timer = setInterval(() => {
+    prune.t++;
+    if (prune.t >= PR_LAST) stopPruning();
+    drawPruning();
+  }, 2400);
+  drawPruning();
+}
+function stopPruning() { clearInterval(prune.timer); prune.timer = null; }
+function stepPruning(d) {
+  stopPruning();
+  prune.t = Math.max(0, Math.min(PR_LAST, prune.t + d));
+  drawPruning();
+}
+function drawPruning() {
+  const t = prune.t, end = t === PR_LAST, b = $("pr-play"), run = !!prune.timer;
+  b.classList.toggle("busy", run);
+  b.setAttribute("aria-busy", run);
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${t + 1}/${PR_LAST + 1}` : end ? "↺ Replay" : "▶ Play";
+  $("pr-back").disabled = t === 0;
+  $("pr-step").disabled = end;
+  const pic = pruningSvg(WIDE.matches, t);
+  $("pr-fig").innerHTML = `<svg viewBox="0 0 ${pic.W} ${pic.H}" role="img" aria-label="${esc(pruningSay(t).replace(/<[^>]+>/g, ""))}">${pic.svg}</svg>`;
+  $("pr-say").innerHTML = `<b>${t + 1}/${PR_LAST + 1}</b> ${pruningSay(t)}`;
+}
+
 // Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
 for (const li of $("issues").querySelectorAll("li")) {
   const b = li.querySelector("b");
@@ -1574,7 +1874,8 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #catalogs, #concurrency, #performance, #plans (#plans-q72 for one story), #features, #workload, #next, #etl, #tpch, #tpcds, #iceberg, #issues, #about, #engines,
+// Deep links: #scorecard, #catalogs, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features, #workload,
+// #performance, #etl, #tpch, #tpcds, #iceberg, #reports, #next, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -1599,7 +1900,9 @@ Promise.all([
     .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})),
   fetch(CAPABILITY.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.capability = j; }).catch(() => {}),
-]).then(render);
+  fetch(REPORTS.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { data.reports = j; }).catch(() => {}),
+]).then(() => { loaded = true; render(); });
 </script>
 </body>
 </html>

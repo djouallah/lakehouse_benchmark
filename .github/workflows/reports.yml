@@ -1,0 +1,57 @@
+name: bug reports
+
+# THE BUG REPORTS TAB: docs/data/reports.json, what GitHub knows about every issue and pull request
+# linked on the site's Issues tab (.github/scripts/reports_publish.py). No Azure, no OneLake: it reads
+# the public GitHub API with the workflow's own token. Daily, and whenever the Issues tab changes.
+
+on:
+  schedule:
+    - cron: "41 5 * * *"
+  push:
+    branches: [main]
+    paths: [docs/index.html]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reports
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Write reports.json
+        run: python .github/scripts/reports_publish.py
+
+      - name: Commit reports.json
+        # ON A REJECTED PUSH, REGENERATE -- NEVER REBASE: the rule etl.yml's publish states.
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            # Only the date changed: nothing to publish.
+            if git diff --quiet -I '"updated":' -- docs/data/reports.json; then
+              echo "nothing to commit"
+              exit 0
+            fi
+            git add docs/data/reports.json
+            git commit -m "bug reports: GitHub states for run ${{ github.run_id }}"
+            if git push; then exit 0; fi
+            echo "push rejected (attempt $attempt); regenerating on top of origin/main"
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+            python .github/scripts/reports_publish.py
+          done
+          exit 1
