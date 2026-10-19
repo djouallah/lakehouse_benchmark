@@ -86,7 +86,6 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 | `capability.yml` (iceberg support) | `clients` polars/duckdb/sail/chdb/duckdb_isolation (all), `keep` (false) |
 | `auth_smoke.yml` | none |
 | `tmp_polars_main.yml` | `ref` (main). Temporary: builds the Polars main wheel `requirements/polars_iceberg.txt` pins, until a release has the fixes |
-| `tmp_chdb_core_main.yml` | `run-id` (a successful chdb-core main build), `version-base` (26.9.2). Copies its wheels, renumbered from the 0.0.1b1 every main build carries, to the prerelease the chDB requirements pin |
 
 `prepare` generates a namespace once and later runs reuse it. `ci.yml` (ruff check, ruff format
 and pytest) runs on every push; the smoke test's `sql` phase runs on a push that touches `bench/`,
