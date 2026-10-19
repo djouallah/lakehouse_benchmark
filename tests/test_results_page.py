@@ -73,6 +73,8 @@ def test_the_workload_merge_cells_match_the_iceberg_support_tab():
     merge = next(r for r in cap["rows"] if r["label"] == "MERGE with two actions (UPDATE + INSERT)")
     table = rows("WORKLOAD_ROWS")
     for engine in cap["engines"]:
+        if merge["cells"][engine]["o"] == "na":
+            continue  # the engine has no DML (Polars): its dbt adapter's merge decides
         start = table.index(f'engine: "{engine}"')
         cell = re.search(r"merge: \{ ok: (true|false)", table[start:]).group(1)
         assert (cell == "true") == (merge["cells"][engine]["o"] == "supported"), engine

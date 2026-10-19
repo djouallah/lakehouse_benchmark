@@ -423,6 +423,15 @@ Largest scale each engine completes, cold, every statement answered:
     delete rows by predicate ([#29843](https://github.com/pola-rs/polars/issues/29843)).
   - Open: SQL writes to Iceberg, [#29892](https://github.com/pola-rs/polars/issues/29892)–[#29896](https://github.com/pola-rs/polars/issues/29896)
     (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE).
+- **The dbt project runs on Polars** (fabric-dbt-examples [run 39257525479](https://github.com/djouallah/fabric-dbt-examples/actions/runs/39257525479),
+  2026-10-19): 50 CSV files, `fct_summary` matches Spark row for row (3,078,798 rows; the sums
+  differ only in float rounding). Two changes got it there: one SQL `read_csv()` over the file
+  list ([PR #30047](https://github.com/pola-rs/polars/pull/30047), on main) instead of a
+  `UNION ALL` per file, which holds every file at once ([#30029](https://github.com/pola-rs/polars/issues/30029), open);
+  and a dbt-polars fix for a composite-key merge that built one pyiceberg predicate per row
+  ([dbt-polars#45](https://github.com/datamindedbe/incubator-dbt-polars/issues/45), fix
+  [PR #46](https://github.com/datamindedbe/incubator-dbt-polars/pull/46), open). The MERGE is
+  dbt-polars', not Polars': overwrite the matched keys and append, in one pyiceberg commit.
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
   1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s). That was
   2.0.0-rc.2. The ETL runs the PyPI release, not the main build the query suites use.
