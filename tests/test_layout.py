@@ -18,7 +18,11 @@ import pytest
 DOCS = Path(__file__).parent.parent / "docs"
 VIEW = {"width": 1920, "height": 930}  # a 1080p screen minus the browser's own bars
 REQUIRED = os.environ.get("LAYOUT_REQUIRED") == "1"
-LOADED = "![...document.querySelectorAll('.empty')].some(e => /Loading/.test(e.textContent))"
+# No visible "Loading…": hidden sections keep their placeholder until their tab is opened.
+LOADED = (
+    "![...document.querySelectorAll('.empty')]"
+    ".some(e => e.offsetParent && /Loading/.test(e.textContent))"
+)
 # e.g. LAYOUT_CHANNEL=chrome: an installed Chrome instead of Playwright's Chromium
 CHANNEL = os.environ.get("LAYOUT_CHANNEL")
 
