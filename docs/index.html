@@ -710,7 +710,8 @@ function render() {
   const spark = items.find(i => i.engine === SPARK && !i.failed), gluten = items.find(i => i.engine === GLUTEN && !i.failed);
   if (spark && gluten) {
     $("speedup").innerHTML = `<div class="speedup"><b>${ratio(spark.mean / gluten.mean)}</b>&nbsp;
-      Gluten/Velox vs Spark-OSS on the same Spark plan (${fmt(gluten.mean)} vs ${fmt(spark.mean)}).</div>`;
+      the same Spark plan and the same SQL; only the engine underneath changes, from Spark's JVM to Velox
+      (${fmt(gluten.mean)} vs ${fmt(spark.mean)}).</div>`;
   }
 }
 
@@ -944,22 +945,20 @@ const NEXT_ROWS = [
   { title: "One-file commits (Iceberg v4)",
     text: `Today a one-file commit writes three metadata files. The v4 proposal keeps small changes in one file near
       the root; Delta 5.0 may share it.` },
-  { title: "A sandbox for user code",
-    text: `A Python function in a query runs with the engine's rights and can read other users' data. Run it in a
-      sandbox (gVisor, WebAssembly), or keep the work in SQL.` },
   { title: "Row-level commits",
     text: `Two jobs that touch the same file conflict today, even on different rows. Iceberg v3 row lineage lets the
       check be per row (<a href="#concurrency">Concurrency</a>).` },
-  { title: "Dynamic vertical scaling",
-    text: `More CPU and memory while the job runs, with no restart. Containers can do it; most engines size their
-      memory once, at start.` },
   { title: "Friendly DataFusion",
     text: `One Rust engine under many products, Sail and Comet among them. Iceberg now has its own Apache project,
       <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
-  { title: "Spark Connect for everything",
-    text: `Spark becomes an API, and the engine behind it can change: <a href="https://github.com/apache/gluten">Gluten/Velox</a>,
-      <a href="https://github.com/apache/datafusion-comet">Comet</a>, or <a href="https://github.com/lakehq/sail">Sail</a>
-      with no JVM (<a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>).` },
+  { title: "Spark, rebuilt from the inside",
+    text: `Spark is swapping its engine without changing its API. <a href="https://github.com/apache/gluten">Gluten/Velox</a>
+      became an Apache top-level project in March 2026, and <a href="https://github.com/apache/datafusion-comet">Comet</a>
+      puts DataFusion under Spark's plans. <a href="https://x.com/ApacheSpark/status/2054562882407342331">Project Feather</a>,
+      a proposal targeting Spark 4.2/4.3, makes local mode faster: no shuffle when the data fits on one node, and
+      Arrow-based caching. Spark Connect turns Spark into an API other engines can serve,
+      <a href="https://github.com/lakehq/sail">Sail</a> among them
+      (<a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>).` },
   { title: "Risk: the closed lakehouse", risk: true,  // last on purpose: the warning, not a feature
     text: `The tables are Iceberg, but the catalog hands out no storage credentials, or only to its own engines.
       Open format, closed door: any engine can see the table, and none can read a file.` },
@@ -1014,6 +1013,11 @@ function renderOverview() {
     </ol>
     <p class="intro"><b>Files</b> in an object store, the <b>state</b> in a catalog, <b>compute</b> in any engine, and none
       of them owns the data. For AI that is the opening: an agent picks today's engine and changes it tomorrow.</p>
+    <p class="intro">The catalog treats every engine the same: C++, Rust or Java, a library or a cluster, open source or
+      commercial. So does this bench: the same box, the same data, the same catalog.</p>
+    <p class="intro"><b>Built for clusters, fine on one box.</b> At TPC-DS SF=100 on 4 cores, Gluten/Velox and Trino finish
+      all 99 queries, while DuckDB and LakeSail run out of memory on Q64. At TPC-H SF=100, StarRocks, an engine designed
+      for clusters, comes third, behind only DuckDB and Polars.</p>
     <div class="ov" id="ov" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog, and reads and writes the files in the object store.">
       <div class="ov-who"><span class="ov-spark" aria-hidden="true">✦</span>
         <div class="ov-whot"><b>AI agents · people · scheduled jobs</b><span>write SQL and pick the engine for the job</span></div>
