@@ -377,6 +377,10 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .nx article:hover::before, .nx article:focus-visible::before { transform: scaleX(1); }
 .nx article:hover::after, .nx article:focus-visible::after { opacity: .25; color: var(--accent); }
 .nx article h3 { padding-right: 40px; transition: color .2s; }
+.nx article.risk::before { background: var(--no); transform: scaleX(1); }
+.nx article.risk:hover, .nx article.risk:focus-visible { border-color: color-mix(in srgb, var(--no) 45%, var(--grid)); }
+.nx article.risk:hover::after, .nx article.risk:focus-visible::after { color: var(--no); }
+.nx article.risk h3, .nx article.risk:hover h3, .nx article.risk:focus-visible h3 { color: var(--no); }
 .nx article:hover h3, .nx article:focus-visible h3 { color: var(--accent); }
 @media (max-width: 720px) {
   .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 28px; }
@@ -939,11 +943,14 @@ const NEXT_ROWS = [
     text: `Spark becomes an API, and the engine behind it can change: <a href="https://github.com/apache/gluten">Gluten/Velox</a>,
       <a href="https://github.com/apache/datafusion-comet">Comet</a>, or <a href="https://github.com/lakehq/sail">Sail</a>
       with no JVM (<a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>).` },
+  { title: "Risk: the closed lakehouse", risk: true,  // last on purpose: the warning, not a feature
+    text: `The tables are Iceberg, but the catalog hands out no storage credentials, or only to its own engines.
+      Open format, closed door: any engine can see the table, and none can read a file.` },
 ];
 
 function renderNext() {
   $(NEXT.id).innerHTML = `
-    <div class="nx">${NEXT_ROWS.map(r => `<article tabindex="0"><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
+    <div class="nx">${NEXT_ROWS.map(r => `<article tabindex="0"${r.risk ? ' class="risk"' : ""}><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
 }
 
 // THE LAKEHOUSE TAB'S OVERVIEW: how we got here, then the premise the rest of the page tests. Three eras on a rail,
