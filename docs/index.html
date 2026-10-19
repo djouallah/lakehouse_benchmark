@@ -85,6 +85,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   padding: 10px 12px; font-size: 13px; box-shadow: 0 6px 24px rgb(0 0 0 / .18); max-width: 260px;
 }
 .tip.on { opacity: 1; }
+.tip.wide { max-width: 340px; }
 .tip .t { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .tip .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
 .tip .k { color: var(--ink-2); }
@@ -356,7 +357,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 @keyframes ovping { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 55%, transparent); } to { box-shadow: 0 0 0 9px transparent; } }
 .ov-pill.ghost { --c: var(--ink-3); border-style: dashed; background: transparent; color: var(--ink-2); font-weight: 500; }
 .ov-pill.ghost:hover { transform: none; box-shadow: none; }
-.ov-band.state { border: 1.5px solid color-mix(in srgb, var(--accent) 60%, var(--grid)); background: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--accent) 14%, var(--raised)), var(--raised) 60%); }
+.ov-band.state:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ov-band.state { cursor: help; border: 1.5px solid color-mix(in srgb, var(--accent) 60%, var(--grid)); background: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--accent) 14%, var(--raised)), var(--raised) 60%); }
 .ov-band.state.flash { animation: ovflash 1s ease; }
 @keyframes ovflash { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hot) 55%, transparent); } to { box-shadow: 0 0 0 16px transparent; } }
 .ov-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -975,7 +977,12 @@ const OV_GROUPS = [
 const OV_SKIP = ["pandas_iceberg"];  // no SQL: the Light ETL only
 const OV_STORY = ["duckdb_iceberg", "trino_iceberg", "polars_iceberg", "pyspark_iceberg", "chdb_iceberg",
   "starrocks_iceberg", "lakesail_iceberg", "pyspark_gluten_iceberg", "daft_iceberg", "databend_iceberg"];
-const OV_FILES = 18;  // file glyphs the object store keeps on screen
+const OV_FILES = 18;
+// Catalogs that speak the Iceberg REST API, for the catalog band's tooltip.
+const OV_CATALOGS = {
+  managed: ["OneLake (used here)", "Snowflake Horizon", "S3 Tables and AWS Glue", "Cloudflare R2 Data Catalog", "Google BigLake metastore"],
+  open: ["Apache Polaris", "Apache Gravitino", "Lakekeeper", "Project Nessie"],
+};  // file glyphs the object store keeps on screen
 const ov = { i: 0, snap: 0, files: [], timer: null, commit: null, held: false };
 const ovStill = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -1005,7 +1012,7 @@ function renderOverview() {
         </div>
       </section>
       <div class="ov-wire"><span>commit</span></div>
-      <section class="ov-band state" id="ov-state">
+      <section class="ov-band state" id="ov-state" tabindex="0">
         <header><em>02</em><b>Iceberg REST catalog</b><span>The state: which tables exist, which snapshot is current.</span></header>
         <div class="ov-meta"><span class="tag" id="ov-snap"></span><span class="ok">commit ✓</span></div>
       </section>
@@ -1030,6 +1037,22 @@ function renderOverview() {
     b.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
     b.onmouseleave = b.onblur = () => { hideTip(); ov.held = false; playOverview(); };
   }
+  // The catalog band: the same Iceberg REST API, from many catalogs.
+  const st = $("ov-state");
+  st.onmouseenter = st.onfocus = () => {
+    tip.style.setProperty("--c", "var(--accent)");
+    tip.classList.add("wide");
+    tip.innerHTML = `<div class="t"><span class="sw"></span>One API, many catalogs</div>
+      <div>Any of these answers the same Iceberg REST calls.</div>
+      <div class="k">Managed</div><div>${OV_CATALOGS.managed.join(" · ")}</div>
+      <div class="k">Open source</div><div>${OV_CATALOGS.open.join(" · ")}</div>
+      <div class="k">An engine that speaks the API can use any of them.</div>`;
+    const r = st.getBoundingClientRect();
+    moveTip(r.left + r.width / 2, r.top);
+    tip.classList.add("on");
+  };
+  st.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+  st.onmouseleave = st.onblur = () => { hideTip(); tip.classList.remove("wide"); };
   ovShow(OV_STORY[0]);
   drawFiles(false);
   playOverview();
