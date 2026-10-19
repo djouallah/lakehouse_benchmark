@@ -79,7 +79,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 }
 .speedup b { color: var(--ink); font-size: 18px; }
 .tip {
-  position: fixed; z-index: 10; pointer-events: none; opacity: 0; transition: opacity .12s;
+  position: fixed; top: 0; left: 0; z-index: 10; pointer-events: none; opacity: 0; transition: opacity .12s;
   background: var(--raised); color: var(--ink); border: 1px solid var(--grid); border-radius: 10px;
   padding: 10px 12px; font-size: 13px; box-shadow: 0 6px 24px rgb(0 0 0 / .18); max-width: 260px;
 }
@@ -98,8 +98,8 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .details a.perm { color: var(--ink); text-decoration: none; }
 .details a.perm:hover { text-decoration: underline; }
 .details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
-#issues ul { columns: 3 380px; column-gap: 32px; font-size: 14px; }
-#issues li { break-inside: avoid; margin: 0 0 8px; }
+#issues ul { columns: 3 380px; column-gap: 32px; font-size: 13px; line-height: 1.45; }
+#issues li { break-inside: avoid; margin: 0 0 6px; }
 #issues ul { margin: 0; }
 #issues h3:first-child { margin-top: 12px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
@@ -155,7 +155,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .rows table { min-width: 0; }
 #engines table { min-width: 900px; }
 #engines { margin-top: 12px; }
-#engines td { padding-top: 6px; padding-bottom: 6px; }
+#engines td { padding-top: 5px; padding-bottom: 5px; font-size: 13px; line-height: 1.35; }
 .rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
@@ -169,6 +169,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .empty { color: var(--ink-2); padding: 24px 0; }
 /* Query plans: the same query on two engines, each engine's executed plan side by side. */
 .pl .intro { color: var(--ink-2); margin: 12px 0; }
+#overview .intro { margin: 8px 0; }
 .pl .intro b { color: var(--ink); }
 .pl .verdict { font-size: 15px; margin: 4px 0 12px; }
 .pl .verdict b { color: var(--no); }
@@ -328,18 +329,18 @@ main .tiles > a { color: inherit; }
 .nx p { margin: 0; }
 .nx a { color: var(--accent); }
 /* Lakehouse overview: three eras on a rail, then the open lakehouse as a stack with a live story. */
-.eras { list-style: none; margin: 6px 0 10px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
+.eras { list-style: none; margin: 4px 0 8px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
 .eras::before { content: ""; position: absolute; left: 24px; right: 24px; top: 9px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--grid), var(--accent)); }
-.eras li { position: relative; padding: 8px 14px 10px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.eras li { position: relative; padding: 8px 14px 10px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; line-height: 1.4; transition: transform .2s, box-shadow .2s, border-color .2s; }
 .eras li::before { content: ""; position: absolute; top: -26px; left: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--grid); border: 3px solid var(--surface); }
 .eras li.now { border-color: color-mix(in srgb, var(--accent) 55%, var(--grid)); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 12%, var(--raised)), var(--raised) 65%); }
 .eras li.now::before { background: var(--accent); animation: ovping 1.6s ease-out infinite; --c: var(--accent); }
 .eras li:hover, .eras li:focus-visible { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 12px 28px rgb(0 0 0 / .10); outline: none; }
 .eras .when { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
 .eras .now .when { color: var(--accent); }
-.eras h3 { margin: 4px 0 6px; font-size: 17px; color: var(--ink); letter-spacing: -.01em; }
+.eras h3 { margin: 2px 0 4px; font-size: 17px; color: var(--ink); letter-spacing: -.01em; }
 .eras p { margin: 0; }
-.ov { --hot: var(--accent); max-width: 980px; margin: 12px auto 4px; display: grid; }
+.ov { --hot: var(--accent); max-width: 980px; margin: 8px auto 0; display: grid; }
 .ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
 .ov-spark { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; font-size: 18px; background: linear-gradient(135deg, var(--accent), var(--hot)); box-shadow: 0 4px 14px color-mix(in srgb, var(--hot) 40%, transparent); }
 .ov-whot { display: grid; }
@@ -347,12 +348,12 @@ main .tiles > a { color: inherit; }
 .ov-whot span { font-size: 13px; color: var(--ink-2); }
 .ov-job { font-size: 13px; color: var(--ink-2); padding: 4px 12px; border-radius: 999px; background: var(--track); white-space: nowrap; }
 .ov-job b { transition: color .3s; }
-.ov-wire { position: relative; height: 28px; display: flex; justify-content: center; }
+.ov-wire { position: relative; height: 22px; display: flex; justify-content: center; }
 .ov-wire::before { content: ""; width: 3px; height: calc(100% - 7px); background: repeating-linear-gradient(to bottom, var(--hot) 0 6px, transparent 6px 12px); background-size: 3px 12px; animation: ovflow .6s linear infinite; }
 .ov-wire::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-bottom: 0; border-top-color: var(--hot); }
 .ov-wire span { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 @keyframes ovflow { to { background-position: 0 12px; } }
-.ov-band { border: 1px solid var(--grid); border-radius: 18px; padding: 12px 16px 14px; background: linear-gradient(180deg, var(--raised), color-mix(in srgb, var(--track) 55%, var(--raised))); box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 10px 28px rgb(0 0 0 / .05); }
+.ov-band { border: 1px solid var(--grid); border-radius: 18px; padding: 10px 16px 12px; background: linear-gradient(180deg, var(--raised), color-mix(in srgb, var(--track) 55%, var(--raised))); box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 10px 28px rgb(0 0 0 / .05); }
 .ov-band header { display: flex; justify-content: flex-start; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .ov-band em { font: 700 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; color: var(--accent); letter-spacing: .06em; }
 .ov-band header b { font-size: 18px; letter-spacing: -.01em; }
