@@ -1,6 +1,6 @@
-"""TEMPORARY. Minimal reproductions, no Iceberg and no TPC-DS data, of the SQL failures that keep chDB
-out of TPC-DS (smoke run 39182268676 on chdb-core 26.10.0.dev2610180851), to tell the ones already
-filed from the ones that are not."""
+"""TEMPORARY. Minimal reproductions, no Iceberg and no TPC-DS data, of the SQL failures that keep
+chDB out of TPC-DS (smoke run 39182268676 on chdb-core 26.10.0.dev2610180851), to tell the ones
+already filed from the ones that are not."""
 
 from __future__ import annotations
 
@@ -23,7 +23,10 @@ q(
     "Q18 shape: CAST of a Nullable column holding NULL",
     "SELECT avg(CAST(x AS Decimal(12, 2))) FROM values('x Nullable(Decimal(7, 2))', (1.5), (NULL))",
 )
-q("Q18 shape, with cast_keep_nullable = 1", "SELECT CAST(NULL AS Decimal(12, 2)) SETTINGS cast_keep_nullable = 1")
+q(
+    "Q18 shape, with cast_keep_nullable = 1",
+    "SELECT CAST(NULL AS Decimal(12, 2)) SETTINGS cast_keep_nullable = 1",
+)
 
 # Q36/Q66: an alias with a column's own name, then that column inside another aggregate (#9715).
 q("Q36 shape", "SELECT sum(number) AS number, max(number) FROM numbers(10)")
