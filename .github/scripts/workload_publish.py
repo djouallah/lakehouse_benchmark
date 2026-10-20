@@ -143,6 +143,7 @@ def page_data(
             "adapter": adapter(leg.get("versions", {})),
             "model_seconds": model_seconds(leg),
             "model_rows": leg.get("model_rows", {}),
+            "model_files": leg.get("model_files", {}),
             "model_config": model_config(leg),
             "error": (leg.get("error") or "")[:300],
             "last_ok": (

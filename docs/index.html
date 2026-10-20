@@ -1136,7 +1136,7 @@ function renderRealWorkload() {
       <div class="ad">${esc(l.adapter ?? "")}</div>
       ${ok(e) ? `<div class="t"><span>${fmt(l.build_seconds)}</span><i class="bar" style="width: ${(100 * l.build_seconds / slowest).toFixed(1)}%"></i></div>` : ""}
       ${l.peak_rss_mb ? `<div class="m">peak RSS ${(l.peak_rss_mb / 1024).toFixed(1)} GB${l.process_limit ? ` at ${l.process_limit} files a run` : ""}</div>` : ""}
-      ${ok(e) && l.files_behind != null ? `<div class="m">${l.files_behind ? `${l.files_behind.toLocaleString()} daily files behind` : "caught up"}</div>` : ""}
+      ${ok(e) && l.model_files?.fct_scada != null ? `<div class="m">${l.model_files.fct_scada.toLocaleString()} daily files processed</div>` : ""}
       ${!ok(e) ? `<div class="m">${esc(l.error || "")}${l.last_ok ? ` · last OK <a href="${l.last_ok.run_url}">${l.last_ok.finished.slice(0, 10)}</a>` : ""}</div>` : ""}
     </div>`;
   }).join("");

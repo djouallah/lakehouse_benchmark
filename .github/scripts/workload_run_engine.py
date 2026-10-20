@@ -357,7 +357,9 @@ def main(parts: Path) -> int:
         if dbt.run("run-operation", "model_row_counts", callbacks=[keep_log])[0]:
             found = [m for m in logged if m.lstrip().startswith('{"model_rows"')]
             if found:
-                part["model_rows"] = json.loads(found[-1])["model_rows"]
+                counted = json.loads(found[-1])
+                part["model_rows"] = counted["model_rows"]
+                part["model_files"] = counted.get("model_files", {})
         return 0
     except Exception as exc:  # noqa: BLE001 - the part is written either way
         part["error"] = scrub.scrub_exc(exc)
