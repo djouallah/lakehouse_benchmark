@@ -36,13 +36,10 @@ clean-targets: ["target", "dbt_packages"]
 
 on-run-start:
   # DuckDB's azure extension needs the curl transport on a Linux runner (bench/config.py,
-  # azure_transport). Set here, not in profiles.yml `settings:`: dbt-duckdb re-applies settings
-  # on every cursor and DuckDB refuses to switch temp_directory once anything has spilled.
+  # azure_transport). temp_directory and memory_limit are profiles.yml `config_options`, set once
+  # at connect: a hook re-sets them on `dbt retry` too, and DuckDB refuses to switch
+  # temp_directory once anything has spilled (run 39403578519).
   - "{% if target.type == 'duckdb' and env_var('AZURE_TRANSPORT_OPTION_TYPE', 'default') != 'default' %}SET GLOBAL azure_transport_option_type = '{{ env_var('AZURE_TRANSPORT_OPTION_TYPE') }}'{% endif %}"
-  - "{% if target.type == 'duckdb' %}SET GLOBAL temp_directory = '{{ env_var('DUCKDB_TEMP_DIR', '/tmp/duckdb_spill') }}'{% endif %}"
-  # A fixed cap, so DuckDB spills to temp_directory instead of growing toward the default 80% of
-  # RAM: at 100 files a run the runner died at 15.6 GB (run 39382816547) with the default.
-  - "{% if target.type == 'duckdb' %}SET GLOBAL memory_limit = '{{ env_var('DUCKDB_MEMORY_LIMIT', '9GB') }}'{% endif %}"
   # Spark's view of the archive log source (models/sources.yml): a GLOBAL temp view, because a
   # source renders schema-qualified and global_temp is the one schema a temp view lives in. Not
   # parquet.`<path>`: with the OneLake catalog as default, Spark asks it for a table named after the

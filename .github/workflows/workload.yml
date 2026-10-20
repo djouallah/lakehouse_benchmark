@@ -145,14 +145,15 @@ jobs:
       PROCESS_LIMITS: ${{ inputs.process_limits || '' }}
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
-      DUCKDB_TEMP_DIR: /tmp/duckdb_spill
+      DUCKDB_TEMP_DIR: /mnt/duckdb_spill
     steps:
       # Room for the engines' spill (DuckDB's temp dir, Spark's shuffle, Trino's spill) as the
       # tables grow: the toolchains this job never uses, as bench.yml does at SF>=30.
       - name: Free disk
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          df -h /
+          sudo mkdir -p /mnt/duckdb_spill && sudo chown "$USER" /mnt/duckdb_spill
+          df -h / /mnt
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:

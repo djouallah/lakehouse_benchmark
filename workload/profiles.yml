@@ -13,6 +13,12 @@ aemo_electricity:
       threads: 1
       settings:
         preserve_insertion_order: false
+      # At connect, once. memory_limit: a fixed cap, so DuckDB spills instead of growing toward
+      # its default 80% of RAM, which left no room for the rest of the process (the runner died at
+      # 100 files a run, 39382816547). temp_directory: /mnt, the runner's second disk.
+      config_options:
+        temp_directory: "{{ env_var('DUCKDB_TEMP_DIR', '/tmp/duckdb_spill') }}"
+        memory_limit: "{{ env_var('DUCKDB_MEMORY_LIMIT', '9GB') }}"
       # The catalog bearer covers Tables/; Files/, the landing zone every model reads, needs this.
       secrets:
         - type: azure
