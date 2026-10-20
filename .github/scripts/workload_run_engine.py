@@ -273,6 +273,16 @@ def model_dag() -> dict[str, dict]:
     return out
 
 
+def process_limit(engine: str) -> int:
+    """Files each fact model folds this run: PROCESS_LIMITS' entry for this engine
+    ("gluten=100,trino=150"), else process_limit, else the default."""
+    for item in (os.environ.get("PROCESS_LIMITS") or "").split(","):
+        name, _, value = item.strip().partition("=")
+        if name == engine and value.strip().isdigit():
+            return int(value)
+    return int(os.environ.get("process_limit") or DEFAULT_PROCESS_LIMIT)  # noqa: SIM112
+
+
 def main(parts: Path) -> int:
     cfg = WorkloadConfig.from_env()
     engine = cfg.engine
@@ -289,7 +299,7 @@ def main(parts: Path) -> int:
         "git_sha": cfg.git_sha,
         "started": started,
         # Lower case: the models read env_var('process_limit'), as in the source project.
-        "process_limit": int(os.environ.get("process_limit") or DEFAULT_PROCESS_LIMIT),  # noqa: SIM112
+        "process_limit": process_limit(engine),
         "versions": versions(engine),
         "status": "failed",
     }
