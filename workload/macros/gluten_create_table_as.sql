@@ -16,9 +16,15 @@
      next run builds it from scratch. Temporary views and every other file format go to
      dbt-spark's own macro unchanged. --#}
 {% macro spark__create_table_as(temporary, relation, compiled_code, language='sql') -%}
-  {%- if temporary or language != 'sql'
-        or config.get('file_format', validator=validation.any[basestring]) != 'iceberg' -%}
-    {{ return(dbt_spark.spark__create_table_as(temporary, relation, compiled_code, language)) }}
+  {#-- The incremental's __dbt_tmp is a temporary view: dbt-spark's own macro for it, by name (the
+       adapter's package is not a Jinja namespace here: `dbt_spark.` is undefined, workload run
+       39348470646, the first incremental run of this leg). Every table in this project is Iceberg;
+       anything else would be a new model, so it fails loudly instead of taking the staged create. --#}
+  {%- if temporary -%}
+    {{ return(create_temporary_view(relation, compiled_code)) }}
+  {%- endif -%}
+  {%- if language != 'sql' or config.get('file_format', validator=validation.any[basestring]) != 'iceberg' -%}
+    {{ exceptions.raise_compiler_error("gluten_create_table_as: only SQL Iceberg tables, not " ~ relation) }}
   {%- endif -%}
   {%- set view = relation.identifier ~ '__dbt_ctas' -%}
   {%- do run_query('create or replace temporary view ' ~ view ~ ' as\n' ~ compiled_code) -%}
