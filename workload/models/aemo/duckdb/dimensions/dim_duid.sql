@@ -20,7 +20,7 @@
 ) }}
 
 -- The reference CSVs are landed by download_aemo.py, which the log model stands for in the DAG.
--- depends_on: {{ ref('stg_csv_archive_log') }}
+-- depends_on: {{ archive_log() }}
 
 {# Plain, non-trimming comment tags below on purpose. The trimming form eats the
    newline after WITH and compiles to `WITHstates AS (`. Note also that Jinja comments

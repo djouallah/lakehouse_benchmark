@@ -17,7 +17,7 @@
     unique_key=['DUID'],
 ) }}
 
--- depends_on: {{ ref('stg_csv_archive_log') }}
+-- depends_on: {{ archive_log() }}
 
 WITH duid_csv AS (
   SELECT element_at(split("$path", '/'), -1) AS f, * FROM files.dbt.duid

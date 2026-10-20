@@ -17,7 +17,7 @@
       equals      [[column, literal], ...]     the record-selection predicate, as DATA —
                   each dialect renders it with its own quoting, but the RULE is here
       nonzero     a column that must be <> 0, or none
-      source_type the stg_csv_archive_log.source_type this record is landed under
+      source_type the archive log's source_type this record is landed under
       unique_key  the natural key the incremental strategies dedupe on
 --#}
 

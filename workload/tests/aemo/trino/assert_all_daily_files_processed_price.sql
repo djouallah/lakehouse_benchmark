@@ -7,7 +7,7 @@
 -- a count that is non-zero.
 SELECT
   csv_filename
-FROM {{ ref('stg_csv_archive_log') }}
+FROM {{ archive_log() }}
 WHERE source_type = 'daily'
   AND csv_filename NOT IN (
     SELECT DISTINCT "file"

@@ -17,7 +17,7 @@
     ]
 ) }}
 
--- depends_on: {{ ref('stg_csv_archive_log') }}
+-- depends_on: {{ archive_log() }}
 
 WITH states AS (
     SELECT 'WA1' AS RegionID, 'Western Australia' AS State

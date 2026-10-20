@@ -181,15 +181,28 @@ def model_dag() -> dict[str, dict]:
     path = PROJECT / "target" / "manifest.json"
     if not path.exists():
         return {}
-    nodes = json.loads(path.read_text(encoding="utf-8"))["nodes"]
-    models = {uid: n for uid, n in nodes.items() if n["resource_type"] == "model"}
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    models = {uid: n for uid, n in manifest["nodes"].items() if n["resource_type"] == "model"}
+    # The landed files the models read, as dbt sources: drawn as the DAG's roots.
+    sources = {uid: n for uid, n in manifest.get("sources", {}).items()}
+    names = {uid: n["name"] for uid, n in models.items()} | {
+        uid: n["name"] for uid, n in sources.items()
+    }
     out = {}
+    for n in sources.values():
+        meta = n["config"].get("meta") or n.get("meta") or {}
+        out[n["name"]] = {
+            "materialized": "source",
+            "parents": [],
+            "description": (n.get("description") or "").strip(),
+            "differences": meta.get("differences", []),
+        }
     for n in models.values():
         config, meta = n["config"], n["config"].get("meta") or n.get("meta") or {}
         key = config.get("unique_key")
         out[n["name"]] = {
             "materialized": config.get("materialized", ""),
-            "parents": sorted(models[p]["name"] for p in n["depends_on"]["nodes"] if p in models),
+            "parents": sorted(names[p] for p in n["depends_on"]["nodes"] if p in names),
             "strategy": config.get("incremental_strategy") or "",
             "unique_key": key if isinstance(key, list) else [key] if key else [],
             "merge_clauses": bool(config.get("merge_clauses")),

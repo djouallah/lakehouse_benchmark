@@ -7,7 +7,7 @@
     unique_key=['file', 'DUID', 'SETTLEMENTDATE', 'INTERVENTION'],
 ) }}
 
--- depends_on: {{ ref('stg_csv_archive_log') }}
+-- depends_on: {{ archive_log() }}
 {%- set files = polars_pending_files('daily') %}
 
 SELECT

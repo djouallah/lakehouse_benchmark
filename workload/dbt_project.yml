@@ -13,10 +13,12 @@
 #
 # ONE MATERIALIZATION PER MODEL, ON EVERY ENGINE: an incremental merge on the model's natural key,
 # update on match. A merge commits against the snapshot it read, so two concurrent runs folding the
-# same file cannot both insert it (the loser's commit fails); an append would keep both. The one
-# exception is a limitation, written on the model: DuckDB's stg_csv_archive_log is a view in its
-# in-memory catalog, because dbt-duckdb builds a table through a rename and the OneLake catalog has
-# no views. Scratch relations (Spark's stage, Trino's __dbt_tmp) carry the run's id.
+# same file cannot both insert it (the loser's commit fails); an append would keep both. Scratch
+# relations (Spark's stage, Trino's __dbt_tmp) carry the run's id.
+#
+# THE LANDED FILES ARE SOURCES, NOT MODELS (models/sources.yml): read where they land, copied by
+# nothing. The one exception is a limitation: dbt-polars cannot resolve a source to a file on
+# OneLake, so Polars reads the archive log inline (macros/archive_log.sql) and its source is off.
 #
 # Nothing on the `aemo_electricity` project key, ever: a generic test declared in a patch file
 # gets the fqn of the YML file, so a project-key gate also disables every generic test.
@@ -36,6 +38,11 @@ on-run-start:
   # on every cursor and DuckDB refuses to switch temp_directory once anything has spilled.
   - "{% if target.type == 'duckdb' and env_var('AZURE_TRANSPORT_OPTION_TYPE', 'default') != 'default' %}SET GLOBAL azure_transport_option_type = '{{ env_var('AZURE_TRANSPORT_OPTION_TYPE') }}'{% endif %}"
   - "{% if target.type == 'duckdb' %}SET GLOBAL temp_directory = '{{ env_var('DUCKDB_TEMP_DIR', '/tmp/duckdb_spill') }}'{% endif %}"
+  # Spark's view of the archive log source (models/sources.yml): a GLOBAL temp view, because a
+  # source renders schema-qualified and global_temp is the one schema a temp view lives in. Not
+  # parquet.`<path>`: with the OneLake catalog as default, Spark asks it for a table named after the
+  # path and OneLake answers 400 instead of "no such table".
+  - "{% if target.type == 'spark' %}CREATE OR REPLACE GLOBAL TEMPORARY VIEW csv_raw_archive_log USING parquet OPTIONS (path '{{ get_archive_log_path() }}'){% endif %}"
 
 models:
   aemo_electricity:
@@ -65,6 +72,13 @@ models:
         +on_table_exists: drop
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
+
+sources:
+  aemo_electricity:
+    landing:
+      # dbt-polars cannot resolve this source to the file (see the header), so it is off there
+      # and its tests with it; Polars reads the same parquet inline.
+      +enabled: "{{ target.type != 'polars' }}"
 
 data_tests:
   aemo_electricity:

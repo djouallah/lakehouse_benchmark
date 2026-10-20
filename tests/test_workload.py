@@ -38,7 +38,7 @@ def test_every_engine_has_a_target_a_model_tree_and_a_gate():
         assert re.search(rf"^    {engine}:\n", profiles, re.M), engine
         assert f"target.name == '{engine}'" in project, engine
         models = sorted(p.name for p in (PROJECT / "models" / "aemo" / engine).rglob("*.sql"))
-        assert len(models) == 8, (engine, models)
+        assert len(models) == 6, (engine, models)
         assert (PROJECT / "tests" / "aemo" / engine).is_dir(), engine
         assert (ROOT / "requirements" / f"workload_{engine}.txt").exists(), engine
         assert engine in BENCH_ENGINE
@@ -182,7 +182,7 @@ def test_every_model_says_where_the_engines_sql_differs():
     import yaml
 
     names = set()
-    for patch in ("_staging", "_dimensions", "_marts"):
+    for patch in ("_dimensions", "_marts"):
         doc = yaml.safe_load((PROJECT / "models" / "aemo" / f"{patch}.yml").read_text("utf-8"))
         for model in doc["models"]:
             names.add(model["name"])
@@ -195,8 +195,8 @@ def test_every_engine_builds_every_model_the_same_way():
     """One materialization per model on every engine: an incremental merge on the natural key.
 
     A merge commits against the snapshot it read, so two concurrent runs cannot insert a file
-    twice; an append (or an insert-only merge, a plain append commit) would keep both. The one
-    exception is DuckDB's staging view, a limitation written on the model and in dbt_project.yml.
+    twice; an append (or an insert-only merge, a plain append commit) would keep both. The landed
+    files are dbt sources, not models, so nothing here copies them.
     """
 
     def config(path: Path) -> dict:
@@ -214,9 +214,6 @@ def test_every_engine_builds_every_model_the_same_way():
             by_model.setdefault(path.stem, {})[engine] = config(path)
     for model, engines in by_model.items():
         for engine, c in engines.items():
-            if model == "stg_csv_archive_log":
-                assert c["materialized"] == ("view" if engine == "duckdb" else "table"), engine
-                continue
             assert c == {
                 "materialized": "incremental",
                 "strategy": "merge",
@@ -226,3 +223,16 @@ def test_every_engine_builds_every_model_the_same_way():
                 engine,
                 c,
             )
+
+
+def test_the_archive_log_is_a_source_not_a_copy():
+    """Nothing builds the landing log: it is a dbt source, and every model reads it through
+    archive_log() -- the source, or on Polars (no external sources on OneLake) the parquet."""
+    for engine in ENGINES:
+        tree = PROJECT / "models" / "aemo" / engine
+        assert not list(tree.rglob("stg_*.sql")), engine
+        for path in tree.rglob("*.sql"):
+            assert "ref('stg_csv_archive_log')" not in path.read_text(encoding="utf-8"), path
+    sources = (PROJECT / "models" / "sources.yml").read_text(encoding="utf-8")
+    assert "name: csv_raw_archive_log" in sources
+    assert 'external_location: "read_parquet(' in sources

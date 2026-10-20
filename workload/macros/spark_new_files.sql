@@ -16,7 +16,7 @@
   {%- set process_limit = env_var('process_limit', '1000') | int -%}
   {%- set q -%}
     SELECT archive_path
-    FROM {{ ref('stg_csv_archive_log') }}
+    FROM {{ archive_log() }}
     WHERE source_type = '{{ source_type }}'
     {%- if this_relation is not none %}
       AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this_relation }})

@@ -15,7 +15,7 @@
     unique_key=spec['unique_key']
 ) }}
 
--- depends_on: {{ ref('stg_csv_archive_log') }}
+-- depends_on: {{ archive_log() }}
 {%- set files = polars_pending_files(spec['source_type']) %}
 
 {% if files is none or files | length > 0 %}

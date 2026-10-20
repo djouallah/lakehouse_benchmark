@@ -25,11 +25,11 @@
     materialized='incremental',
     incremental_strategy='merge',
     unique_key=spec['unique_key'],
-    pre_hook="SET VARIABLE price_daily_paths = (SELECT COALESCE(NULLIF(list('{{ get_csv_archive_path() }}' || archive_path), []), ['']) FROM (SELECT DISTINCT archive_path FROM {{ ref('stg_csv_archive_log') }} WHERE source_type = '" ~ spec['source_type'] ~ "'{% if is_incremental() %} AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this }}){% endif %} ORDER BY archive_path DESC LIMIT {{ env_var('process_limit', '1000') }}))"
+    pre_hook="SET VARIABLE price_daily_paths = (SELECT COALESCE(NULLIF(list('{{ get_csv_archive_path() }}' || archive_path), []), ['']) FROM (SELECT DISTINCT archive_path FROM {{ archive_log() }} WHERE source_type = '" ~ spec['source_type'] ~ "'{% if is_incremental() %} AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this }}){% endif %} ORDER BY archive_path DESC LIMIT {{ env_var('process_limit', '1000') }}))"
 ) }}
 
 {%- set check_files_query -%}
-SELECT COUNT(*) AS cnt FROM {{ ref('stg_csv_archive_log') }}
+SELECT COUNT(*) AS cnt FROM {{ archive_log() }}
 WHERE source_type = '{{ spec['source_type'] }}'
 {%- if is_incremental() %}
 AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this }})

@@ -1141,7 +1141,7 @@ function renderRealWorkload() {
     })).join("");
     const nodes = Object.entries(w.dag).map(([n, m]) => {
       const { x, y } = pos[n];
-      const bars = runs.map((e, i) => {
+      const bars = m.materialized === "source" ? "" : runs.map((e, i) => {
         const s = w.legs[e].model_seconds?.[n] ?? 0;
         return `<rect class="b" x="${x + 12}" y="${y + 48 + i * 8}" width="${Math.max(2, (NW - 24) * s / most).toFixed(1)}" height="5" rx="2"
           style="fill: var(--${e}, var(--ink-3))"/>`;
@@ -1219,7 +1219,8 @@ function openModel(w, runs, n, at) {
   const same = rows.length && rows.every(r => r != null && r === rows[0]);
   const head = rows[0] == null ? "" : same ? `${rows[0].toLocaleString()} rows on all ${runs.length} <b class="ok">✓</b>`
     : `<b class="bad">row counts differ</b>`;
-  const lines = runs.map(e => {
+  const isSource = m.materialized === "source";
+  const lines = isSource ? "" : runs.map(e => {
     const l = w.legs[e], c = l.model_config?.[n], r = l.model_rows?.[n];
     const sql = c?.path ? `<a href="${WORKLOAD_BLOB}${c.path}">${c.sql_lines} lines ↗</a>` : "";
     return `<tr style="--c: var(--${e}, var(--ink-3))"><td><i class="sw"></i>${esc(LABEL[e] ?? e)}</td>
@@ -1233,8 +1234,9 @@ function openModel(w, runs, n, at) {
   p.innerHTML = `<button class="x" aria-label="Close">✕</button>
     <div class="h"><b>${esc(n)}</b><span>${head}</span></div>
     ${m.description ? `<p class="d">${esc(m.description)}</p>` : ""}
-    <table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Time</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
-    <tbody>${lines}</tbody></table>${diffs}`;
+    ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>`
+      : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Time</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
+    <tbody>${lines}</tbody></table>`}${diffs}`;
   document.body.append(p);
   const pw = p.offsetWidth, ph = p.offsetHeight, gap = 12;
   const left = at.right + gap + pw <= innerWidth ? at.right + gap : Math.max(8, at.left - gap - pw);
