@@ -310,6 +310,7 @@ main .tiles > a { color: inherit; }
 .rw .dag .node:hover .box { stroke: var(--accent); }
 .rw .dag .nm { font-size: 14px; font-weight: 700; fill: var(--ink); }
 .rw .dag .mt { font-size: 11px; fill: var(--ink-3); }
+.rw .dag .rc { font-size: 13px; font-weight: 700; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
 .rw .answer { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; }
 /* Bug reports: one dot per report, per engine. */
 .rp .intro { font-size: 15px; color: var(--ink); margin: 12px 0 0; }
@@ -1080,7 +1081,7 @@ function dagLayout(dag) {
   names.forEach(d);
   const cols = Math.max(...Object.values(depth)) + 1;
   const byCol = Array.from({ length: cols }, (_, c) => names.filter(n => depth[n] === c));
-  const W = 1100, NW = 236, NH = 76, GAP = 16, rows = Math.max(...byCol.map(c => c.length));
+  const W = 1100, NW = 236, NH = 90, GAP = 14, rows = Math.max(...byCol.map(c => c.length));
   const H = rows * (NH + GAP) - GAP, pos = {};
   byCol.forEach((col, c) => {
     const top = (H - (col.length * (NH + GAP) - GAP)) / 2;
@@ -1111,6 +1112,9 @@ function renderRealWorkload() {
   if (w.dag && Object.keys(w.dag).length) {
     const { W, H, NW, NH, pos } = dagLayout(w.dag);
     const most = Math.max(...runs.flatMap(e => Object.values(w.legs[e].model_seconds ?? {})), 1);
+    // Rows per model: the baseline leg's count (Spark), else the first leg that has one.
+    const rowsOf = n => { const l = [w.baseline, ...runs].map(e => w.legs[e]?.model_rows?.[n]).find(v => v != null); return l ?? null; };
+    const compact = v => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : v.toLocaleString();
     const edges = Object.entries(w.dag).flatMap(([n, m]) => m.parents.map(p => {
       const a = pos[p], b = pos[n], x1 = a.x + NW, y1 = a.y + NH / 2, x2 = b.x, y2 = b.y + NH / 2, k = (x2 - x1) / 2;
       return `<path class="edge" d="M${x1},${y1} C${x1 + k},${y1} ${x2 - k},${y2} ${x2},${y2}"/>`;
@@ -1119,16 +1123,19 @@ function renderRealWorkload() {
       const { x, y } = pos[n];
       const bars = runs.map((e, i) => {
         const s = w.legs[e].model_seconds?.[n] ?? 0;
-        return `<rect class="b" x="${x + 12}" y="${y + 40 + i * 8}" width="${Math.max(2, (NW - 24) * s / most).toFixed(1)}" height="5" rx="2"
+        return `<rect class="b" x="${x + 12}" y="${y + 48 + i * 8}" width="${Math.max(2, (NW - 24) * s / most).toFixed(1)}" height="5" rx="2"
           style="fill: var(--${e}, var(--ink-3))"/>`;
       }).join("");
+      const r = rowsOf(n);
       return `<g class="node" data-model="${n}"><rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="10"/>
         <text class="nm" x="${x + 12}" y="${y + 20}">${esc(n)}</text>
-        <text class="mt" x="${x + NW - 12}" y="${y + 20}" text-anchor="end">${esc(m.materialized)}</text>${bars}</g>`;
+        <text class="rc" x="${x + NW - 12}" y="${y + 20}" text-anchor="end">${r === null ? "" : `${compact(r)} rows`}</text>
+        <text class="mt" x="${x + 12}" y="${y + 36}">${esc(m.materialized)}</text>${bars}</g>`;
     }).join("");
     dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
 
+  const total = Object.values((w.legs[w.baseline] ?? first).model_rows ?? {}).reduce((a, b) => a + b, 0);
   const n = runs.length, off = Math.max(0, ...runs.flatMap(e => Object.values(w.legs[e].diff ?? {})));
   const answer = w.parity_ok
     ? `Same answer on all ${n}: <code>fct_summary</code> has ${first.rows.toLocaleString()} rows on each, and the money sums agree
@@ -1138,7 +1145,7 @@ function renderRealWorkload() {
   sec.innerHTML = `
     <p class="arc">Benchmarks measure speed. In real life an agent writes SQL, dbt runs it, and the engine is just the tool that moves the data from A to B; the choice will vary. What matters is that it works.</p>
     <p class="proj">One real dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
-      ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out.
+      ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out${total ? ` (${total.toLocaleString()} rows)` : ""}.
       ${n} of ${engines.length} engines run it:</p>
     <div class="cards">${cards}</div>
     ${dag}
@@ -1156,8 +1163,11 @@ function renderRealWorkload() {
           ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}</div>` : ""}`;
       } else {
         tip.style.setProperty("--c", "var(--ink-3)");
-        tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => `<div class="k"><span class="sw" style="background: var(--${x})"></span>
-          ${esc(LABEL[x] ?? x)}</div><div>${fmt(w.legs[x].model_seconds?.[m] ?? 0)}</div>`).join("");
+        tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => {
+          const rows = w.legs[x].model_rows?.[m];
+          return `<div class="k"><span class="sw" style="background: var(--${x})"></span>${esc(LABEL[x] ?? x)}</div>
+            <div>${fmt(w.legs[x].model_seconds?.[m] ?? 0)}${rows != null ? ` · ${rows.toLocaleString()} rows` : ""}</div>`;
+        }).join("");
       }
       const r = el.getBoundingClientRect();
       moveTip(r.left + r.width / 2, r.top);

@@ -100,6 +100,7 @@ def page_data(legs: dict[str, dict], grade: dict) -> dict:
             "versions": leg.get("versions", {}),
             "adapter": adapter(leg.get("versions", {})),
             "model_seconds": model_seconds(leg),
+            "model_rows": leg.get("model_rows", {}),
             "error": (leg.get("error") or "")[:300],
         }
         out["legs"][BENCH_ENGINE[engine]] = entry

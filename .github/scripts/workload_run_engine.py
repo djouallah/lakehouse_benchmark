@@ -251,6 +251,13 @@ def main(parts: Path) -> int:
         fp["engine"] = engine
         part["fingerprint"] = fp
         part["status"] = "success"
+        # Rows per model, for the Real workload tab's DAG. Best-effort: a count that fails is a
+        # missing number on the page, never a failed leg.
+        logged.clear()
+        if dbt.run("run-operation", "model_row_counts", callbacks=[keep_log])[0]:
+            found = [m for m in logged if m.lstrip().startswith('{"model_rows"')]
+            if found:
+                part["model_rows"] = json.loads(found[-1])["model_rows"]
         scrub.safe_print(
             f"{engine}: fct_summary {fp['rows_total']:,} rows, {fp['duids']} DUIDs, "
             f"{fp['days']} days, mw_sum {fp['mw_sum']}, price_sum {fp['price_sum']}"
