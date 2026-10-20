@@ -1,0 +1,1726 @@
+{
+  "run_id": "39359277605",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39359277605",
+  "started": "2026-10-20T02:45:43Z",
+  "legs": {
+    "duckdb": {
+      "suite": "workload",
+      "engine": "duckdb",
+      "bench_engine": "duckdb_iceberg",
+      "run_id": "39359277605",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39359277605",
+      "git_sha": "4de9fe1",
+      "started": "2026-10-20T02:48:23Z",
+      "process_limit": 50,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-duckdb": "1.11.0",
+        "duckdb": "2.0.0.dev2609121639"
+      },
+      "status": "success",
+      "build_seconds": 93.557,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.009,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.stg_csv_archive_log",
+          "status": "success",
+          "seconds": 1.428,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_stg_csv_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.8fa2c843b8",
+          "status": "pass",
+          "seconds": 0.148,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_archived_at.876c276de6",
+          "status": "pass",
+          "seconds": 0.114,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_csv_filename.c8ddfb2c4c",
+          "status": "pass",
+          "seconds": 0.093,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_filename.1b1293a857",
+          "status": "pass",
+          "seconds": 0.109,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_type.33ca6a8671",
+          "status": "pass",
+          "seconds": 0.093,
+          "message": ""
+        },
+        {
+          "node": "model.aemo_electricity.dim_calendar",
+          "status": "success",
+          "seconds": 3.494,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 2.77,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 7.244,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 31.8,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 5.362,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_calendar_date.dbf71911c2",
+          "status": "pass",
+          "seconds": 0.381,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_calendar_date.16c914339f",
+          "status": "pass",
+          "seconds": 0.314,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 1.174,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.283,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 0.883,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.433,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.313,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.327,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.289,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.d307df93cd",
+          "status": "pass",
+          "seconds": 0.278,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 1.238,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 0.372,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 0.337,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.304,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.354,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.62b009ed3d",
+          "status": "pass",
+          "seconds": 0.31,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 1.1,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 0.329,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.35,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.256,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.7a6c47cbc3",
+          "status": "pass",
+          "seconds": 0.298,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 1.092,
+          "message": "Got 3200 results, configured to warn if != 0"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 52.376,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 1.629,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.335,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.283,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.6a5cecd737",
+          "status": "pass",
+          "seconds": 0.288,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 2.778,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 0.74,
+          "message": "Got 5126208 results, configured to warn if != 0"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 10.11,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 1.338,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 1.446,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 0.759,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.696,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.294,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.35,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.316,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.367,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 0.672,
+          "message": ""
+        }
+      ],
+      "dag": {
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "dim_calendar": {
+          "materialized": "incremental",
+          "parents": []
+        },
+        "stg_csv_archive_log": {
+          "materialized": "view",
+          "parents": []
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        }
+      },
+      "fingerprint": {
+        "engine": "duckdb",
+        "adapter": "duckdb",
+        "model": "fct_summary",
+        "rows_total": 6318193,
+        "duids": 389,
+        "days": 101,
+        "date_min": "2026-07-12",
+        "date_max": "2026-10-20",
+        "mw_sum": 605919130.5802805,
+        "price_sum": 398964277.1794647
+      },
+      "model_rows": {
+        "dim_duid": 690,
+        "dim_calendar": 3197,
+        "stg_csv_archive_log": 795,
+        "fct_summary": 6318193,
+        "fct_scada_today": 20921,
+        "fct_scada": 16387008,
+        "fct_price_today": 330,
+        "fct_price": 144000
+      },
+      "finished": "2026-10-20T02:50:05Z"
+    },
+    "gluten": {
+      "suite": "workload",
+      "engine": "gluten",
+      "bench_engine": "pyspark_gluten_iceberg",
+      "run_id": "39359277605",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39359277605",
+      "git_sha": "4de9fe1",
+      "started": "2026-10-20T02:56:34Z",
+      "process_limit": 50,
+      "versions": {
+        "dbt-core": "1.13.0b1",
+        "dbt-spark": "1.11.0",
+        "pyspark": "4.1.1",
+        "spark": "4.1.1 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)"
+      },
+      "status": "success",
+      "build_seconds": 263.727,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.009,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.002,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_calendar",
+          "status": "success",
+          "seconds": 9.531,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.stg_csv_archive_log",
+          "status": "success",
+          "seconds": 6.397,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_calendar_date.dbf71911c2",
+          "status": "pass",
+          "seconds": 0.284,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_calendar_date.16c914339f",
+          "status": "pass",
+          "seconds": 0.44,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_stg_csv_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.8fa2c843b8",
+          "status": "pass",
+          "seconds": 0.664,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_archived_at.876c276de6",
+          "status": "pass",
+          "seconds": 0.14,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_csv_filename.c8ddfb2c4c",
+          "status": "pass",
+          "seconds": 0.171,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_filename.1b1293a857",
+          "status": "pass",
+          "seconds": 0.139,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_type.33ca6a8671",
+          "status": "pass",
+          "seconds": 0.125,
+          "message": ""
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 9.648,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 72.736,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 9.95,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 94.925,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 10.438,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 0.223,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.406,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 0.938,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 0.924,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 1.061,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.098,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.087,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.e74c09e1fc",
+          "status": "pass",
+          "seconds": 0.082,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 0.515,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.411,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.295,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.079,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.075,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.09f72e757a",
+          "status": "pass",
+          "seconds": 0.076,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 1.396,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 3.82,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.086,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.077,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.ec24672ecd",
+          "status": "pass",
+          "seconds": 0.099,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 0.863,
+          "message": "Got 5126208 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 0.61,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 0.273,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.1,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.081,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.ebf0c27c96",
+          "status": "pass",
+          "seconds": 0.075,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.297,
+          "message": "Got 3200 results, configured to warn if != 0"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 20.064,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 2.543,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 2.053,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 0.775,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.09,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.074,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.098,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.073,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.075,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 0.376,
+          "message": ""
+        }
+      ],
+      "dag": {
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ]
+        },
+        "stg_csv_archive_log": {
+          "materialized": "table",
+          "parents": []
+        },
+        "dim_calendar": {
+          "materialized": "incremental",
+          "parents": []
+        },
+        "dim_duid": {
+          "materialized": "table",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        }
+      },
+      "fingerprint": {
+        "engine": "gluten",
+        "adapter": "spark",
+        "model": "fct_summary",
+        "rows_total": 6318193,
+        "duids": 389,
+        "days": 101,
+        "date_min": "2026-07-12",
+        "date_max": "2026-10-20",
+        "mw_sum": 605919131.6674585,
+        "price_sum": 398964279.0409596
+      },
+      "model_rows": {
+        "fct_scada_today": 20921,
+        "fct_price_today": 330,
+        "fct_price": 144000,
+        "fct_scada": 16387008,
+        "fct_summary": 6318193,
+        "stg_csv_archive_log": 795,
+        "dim_calendar": 3197,
+        "dim_duid": 690
+      },
+      "finished": "2026-10-20T03:01:48Z"
+    },
+    "polars": {
+      "suite": "workload",
+      "engine": "polars",
+      "bench_engine": "polars_iceberg",
+      "run_id": "39359277605",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39359277605",
+      "git_sha": "4de9fe1",
+      "started": "2026-10-20T02:51:57Z",
+      "process_limit": 50,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-polars": "0.4.0",
+        "polars": "2.0.0",
+        "pyiceberg": "0.11.1"
+      },
+      "status": "success",
+      "build_seconds": 146.482,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.013,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_calendar",
+          "status": "success",
+          "seconds": 8.97,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.stg_csv_archive_log",
+          "status": "success",
+          "seconds": 5.476,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_calendar_date.dbf71911c2",
+          "status": "pass",
+          "seconds": 1.2,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_calendar_date.16c914339f",
+          "status": "pass",
+          "seconds": 0.152,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_stg_csv_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.8fa2c843b8",
+          "status": "pass",
+          "seconds": 1.576,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_archived_at.876c276de6",
+          "status": "pass",
+          "seconds": 0.019,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_csv_filename.c8ddfb2c4c",
+          "status": "pass",
+          "seconds": 0.017,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_filename.1b1293a857",
+          "status": "pass",
+          "seconds": 0.017,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_type.33ca6a8671",
+          "status": "pass",
+          "seconds": 0.018,
+          "message": ""
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 6.414,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 33.97,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 1.63,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 39.245,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 6.481,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 1.03,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.042,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 2.067,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 0.082,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 0.093,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.022,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.02,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.62b009ed3d",
+          "status": "pass",
+          "seconds": 0.02,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 2.232,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.047,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.035,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.02,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.019,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.d307df93cd",
+          "status": "pass",
+          "seconds": 0.019,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 2.016,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 2.37,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.026,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.025,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.6a5cecd737",
+          "status": "pass",
+          "seconds": 0.022,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 0.56,
+          "message": "Got 5126208 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 2.856,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 0.043,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.02,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.017,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.7a6c47cbc3",
+          "status": "pass",
+          "seconds": 0.017,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.064,
+          "message": "Got 3200 results, configured to warn if != 0"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 16.142,
+          "message": "OK"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 3.018,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 0.697,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 0.734,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.014,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.018,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.018,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.017,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.017,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 0.166,
+          "message": ""
+        }
+      ],
+      "dag": {
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "dim_calendar": {
+          "materialized": "incremental",
+          "parents": []
+        },
+        "stg_csv_archive_log": {
+          "materialized": "table",
+          "parents": []
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        }
+      },
+      "fingerprint": {
+        "engine": "polars",
+        "adapter": "polars",
+        "model": "fct_summary",
+        "rows_total": 6318193,
+        "duids": 389,
+        "days": 101,
+        "date_min": "2026-07-12",
+        "date_max": "2026-10-20",
+        "mw_sum": 605919117.0839,
+        "price_sum": 398964264.9647
+      },
+      "model_rows": {
+        "dim_duid": 690,
+        "dim_calendar": 3197,
+        "stg_csv_archive_log": 795,
+        "fct_summary": 6318193,
+        "fct_scada_today": 20921,
+        "fct_scada": 16387008,
+        "fct_price_today": 330,
+        "fct_price": 144000
+      },
+      "finished": "2026-10-20T02:54:35Z"
+    },
+    "trino": {
+      "suite": "workload",
+      "engine": "trino",
+      "bench_engine": "trino_iceberg",
+      "run_id": "39359277605",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39359277605",
+      "git_sha": "4de9fe1",
+      "started": "2026-10-20T03:04:23Z",
+      "process_limit": 50,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-trino": "1.10.6",
+        "trino": "0.340.0",
+        "trino-server": "484 (trinodb/trino:484)"
+      },
+      "status": "success",
+      "build_seconds": 459.913,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.012,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.005,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_calendar",
+          "status": "success",
+          "seconds": 31.347,
+          "message": "MERGE (0 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.stg_csv_archive_log",
+          "status": "success",
+          "seconds": 3.73,
+          "message": "CREATE TABLE (795 rows)"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_calendar_date.dbf71911c2",
+          "status": "pass",
+          "seconds": 0.364,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_calendar_date.16c914339f",
+          "status": "pass",
+          "seconds": 0.314,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_stg_csv_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.8fa2c843b8",
+          "status": "pass",
+          "seconds": 0.496,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_archived_at.876c276de6",
+          "status": "pass",
+          "seconds": 0.207,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_csv_filename.c8ddfb2c4c",
+          "status": "pass",
+          "seconds": 0.201,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_filename.1b1293a857",
+          "status": "pass",
+          "seconds": 0.211,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_stg_csv_archive_log_source_type.33ca6a8671",
+          "status": "pass",
+          "seconds": 0.193,
+          "message": ""
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 3.948,
+          "message": "CREATE TABLE (690 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 68.2,
+          "message": "MERGE (72_000 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 6.097,
+          "message": "MERGE (80 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 185.814,
+          "message": "MERGE (8_168_064 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 8.06,
+          "message": "MERGE (5_128 rows)"
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 0.35,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.292,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 0.716,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 0.351,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 0.6,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.199,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.171,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.62b009ed3d",
+          "status": "pass",
+          "seconds": 0.17,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 0.368,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.29,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.188,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.153,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.162,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.d307df93cd",
+          "status": "pass",
+          "seconds": 0.164,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 1.576,
+          "message": "Got 559 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 6.365,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.164,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.162,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.6a5cecd737",
+          "status": "pass",
+          "seconds": 0.144,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 1.682,
+          "message": "Got 5126208 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 0.476,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 0.222,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.165,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.161,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.7a6c47cbc3",
+          "status": "pass",
+          "seconds": 0.156,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.313,
+          "message": "Got 3200 results, configured to warn if != 0"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "error",
+          "seconds": 121.793,
+          "message": "Database Error in model fct_summary (models/aemo/trino/marts/fct_summary.sql)\n  TrinoExternalError(type=EXTERNAL, name=ICEBERG_CATALOG_ERROR, message=\"Failed to drop table 'dbt_trino_mart.fct_summary__dbt_tmp'\", query_id=20261020_031046_00099_9d3vh)\n  compiled code at target/run/aemo_electricity/models/aemo/trino/marts/fct_summary.sql"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "skipped",
+          "seconds": 0.0,
+          "message": ""
+        }
+      ],
+      "first_error": "",
+      "retry_seconds": 25.965,
+      "retry_nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.004,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 17.286,
+          "message": "MERGE (454_906 rows)"
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 2.113,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 1.613,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 0.56,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.163,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.161,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.149,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.149,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.155,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 0.849,
+          "message": ""
+        }
+      ],
+      "dag": {
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ]
+        },
+        "stg_csv_archive_log": {
+          "materialized": "table",
+          "parents": []
+        },
+        "dim_calendar": {
+          "materialized": "incremental",
+          "parents": []
+        },
+        "dim_duid": {
+          "materialized": "table",
+          "parents": [
+            "stg_csv_archive_log"
+          ]
+        }
+      },
+      "fingerprint": {
+        "engine": "trino",
+        "adapter": "trino",
+        "model": "fct_summary",
+        "rows_total": 6318193,
+        "duids": 389,
+        "days": 101,
+        "date_min": "2026-07-12",
+        "date_max": "2026-10-20",
+        "mw_sum": 605919131.667232,
+        "price_sum": 398964279.0409302
+      },
+      "model_rows": {
+        "fct_scada_today": 20921,
+        "fct_price_today": 330,
+        "fct_price": 144000,
+        "fct_scada": 16387008,
+        "fct_summary": 6318193,
+        "stg_csv_archive_log": 795,
+        "dim_calendar": 3197,
+        "dim_duid": 690
+      },
+      "finished": "2026-10-20T03:12:57Z"
+    }
+  },
+  "parity": {
+    "baseline": "gluten",
+    "engines": [
+      "gluten",
+      "duckdb",
+      "polars",
+      "trino"
+    ],
+    "failures": [],
+    "diffs": {
+      "duckdb": {
+        "mw_sum": 1.7942625262140298e-09,
+        "price_sum": 4.665818461920426e-09
+      },
+      "polars": {
+        "mw_sum": 2.4068489996816104e-08,
+        "price_sum": 3.528200481224529e-08
+      },
+      "trino": {
+        "mw_sum": 3.738083818597614e-13,
+        "price_sum": 7.365343570332712e-14
+      }
+    }
+  }
+}
