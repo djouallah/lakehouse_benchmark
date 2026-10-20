@@ -146,10 +146,11 @@ jobs:
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       DUCKDB_TEMP_DIR: /mnt/duckdb_spill
-      # Polars' streaming engine spills (out-of-core) too; its default disk budget stopped
-      # fct_scada at 360 files a run (run 39403578519). On /mnt, with room to use it.
+      # Polars' streaming engine spills (out-of-core). At 360 files a run fct_scada passed its
+      # default 64 GB budget (run 39403578519); the volume has ~105 GB free after "Free disk".
+      # /mnt is a directory on that same volume, not a second disk (tpcds.yml).
       POLARS_TEMP_DIR: /mnt/polars_spill
-      POLARS_OOC_DISK_BUDGET_MB: "60000"
+      POLARS_OOC_DISK_BUDGET_MB: "100000"
     steps:
       # Room for the engines' spill (DuckDB's temp dir, Spark's shuffle, Trino's spill) as the
       # tables grow: the toolchains this job never uses, as bench.yml does at SF>=30.
