@@ -1,7 +1,7 @@
 {
-  "run_id": "39371372058",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39371372058",
-  "finished": "2026-10-20T05:40:41Z",
+  "run_id": "39379866056",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39379866056",
+  "finished": "2026-10-20T06:40:14Z",
   "baseline": "pyspark_gluten_iceberg",
   "rel_tol": 1e-07,
   "parity_ok": true,
@@ -11,8 +11,19 @@
       "parents": [],
       "description": "One row per source file landed by download_aemo, the parquet beside the CSVs. Every engine reads the SAME file, which is what makes the fact models' file selection identical across engines.",
       "differences": [
-        "A dbt source on every engine but Polars, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), the Hive external table on Trino, and a global temp view registered at run start on Spark.",
-        "Polars reads the parquet inline: dbt-polars resolves a source's `external.location` only on a storage catalog, and has none for OneLake."
+        "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
+      ]
+    },
+    "fct_price_today": {
+      "materialized": "incremental",
+      "parents": [
+        "csv_raw_archive_log"
+      ],
+      "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+      "differences": [
+        "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+        "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+        "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
       ]
     },
     "fct_scada_today": {
@@ -28,16 +39,21 @@
         "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
       ]
     },
-    "fct_price_today": {
+    "fct_summary": {
       "materialized": "incremental",
       "parents": [
-        "csv_raw_archive_log"
+        "dim_duid",
+        "fct_price",
+        "fct_price_today",
+        "fct_scada",
+        "fct_scada_today"
       ],
-      "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+      "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
       "differences": [
-        "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
-        "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
-        "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+        "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
+        "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
+        "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
+        "Merge on (date, time, DUID) on every engine."
       ]
     },
     "fct_price": {
@@ -64,23 +80,6 @@
         "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
       ]
     },
-    "fct_summary": {
-      "materialized": "incremental",
-      "parents": [
-        "dim_duid",
-        "fct_price",
-        "fct_price_today",
-        "fct_scada",
-        "fct_scada_today"
-      ],
-      "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
-      "differences": [
-        "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
-        "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
-        "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
-        "Merge on (date, time, DUID) on every engine."
-      ]
-    },
     "dim_duid": {
       "materialized": "incremental",
       "parents": [
@@ -98,16 +97,16 @@
     "duckdb_iceberg": {
       "target": "duckdb",
       "status": "success",
-      "build_seconds": 88.247,
+      "build_seconds": 68.661,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6323649,
+      "rows": 3088760,
       "same_rows": true,
       "diff": {
-        "mw_sum": 1.7947641237783975e-09,
-        "price_sum": 4.6656402128484555e-09
+        "mw_sum": 1.8534822925242495e-09,
+        "price_sum": 4.635184584708951e-09
       },
       "versions": {
         "dbt-core": "1.12.6",
@@ -116,36 +115,24 @@
       },
       "adapter": "dbt-duckdb 1.11.0",
       "model_seconds": {
-        "dim_duid": 4.63,
-        "fct_price_today": 7.844,
-        "fct_price": 31.061,
-        "fct_scada_today": 6.496,
-        "fct_scada": 44.078,
-        "fct_summary": 10.151
+        "dim_duid": 7.854,
+        "fct_price_today": 6.583,
+        "fct_price": 28.697,
+        "fct_scada_today": 5.819,
+        "fct_scada": 24.769,
+        "fct_summary": 5.758
       },
       "model_rows": {
-        "fct_scada_today": 28293,
-        "fct_price_today": 450,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
-        "fct_summary": 6323649,
+        "fct_price_today": 250,
+        "fct_scada_today": 15501,
+        "fct_summary": 3088760,
+        "fct_price": 72000,
+        "fct_scada": 8218944,
         "dim_duid": 690
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
-        },
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/duckdb/marts/fct_scada_today.sql",
-          "sql_lines": 38
         },
         "fct_price_today": {
           "materialized": "incremental",
@@ -159,6 +146,30 @@
           "merge_clauses": false,
           "path": "models/aemo/duckdb/marts/fct_price_today.sql",
           "sql_lines": 39
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_scada_today.sql",
+          "sql_lines": 38
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_summary.sql",
+          "sql_lines": 74
         },
         "fct_price": {
           "materialized": "incremental",
@@ -186,18 +197,6 @@
           "path": "models/aemo/duckdb/marts/fct_scada.sql",
           "sql_lines": 42
         },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/duckdb/marts/fct_summary.sql",
-          "sql_lines": 74
-        },
         "dim_duid": {
           "materialized": "incremental",
           "strategy": "merge",
@@ -214,12 +213,12 @@
     "pyspark_gluten_iceberg": {
       "target": "gluten",
       "status": "success",
-      "build_seconds": 259.939,
+      "build_seconds": 287.185,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6323649,
+      "rows": 3088760,
       "same_rows": true,
       "diff": {},
       "versions": {
@@ -230,36 +229,24 @@
       },
       "adapter": "dbt-spark 1.11.0",
       "model_seconds": {
-        "dim_duid": 13.313,
-        "fct_price": 56.262,
-        "fct_price_today": 10.741,
-        "fct_scada": 96.533,
-        "fct_scada_today": 10.226,
-        "fct_summary": 23.801
+        "dim_duid": 14.848,
+        "fct_price": 64.918,
+        "fct_price_today": 14.679,
+        "fct_scada": 126.381,
+        "fct_scada_today": 14.806,
+        "fct_summary": 12.277
       },
       "model_rows": {
-        "fct_scada_today": 28293,
-        "fct_price_today": 450,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
-        "fct_summary": 6323649,
+        "fct_price_today": 250,
+        "fct_scada_today": 15501,
+        "fct_summary": 3088760,
+        "fct_price": 72000,
+        "fct_scada": 8218944,
         "dim_duid": 690
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
-        },
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/gluten/marts/fct_scada_today.sql",
-          "sql_lines": 18
         },
         "fct_price_today": {
           "materialized": "incremental",
@@ -273,6 +260,30 @@
           "merge_clauses": false,
           "path": "models/aemo/gluten/marts/fct_price_today.sql",
           "sql_lines": 20
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_scada_today.sql",
+          "sql_lines": 18
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_summary.sql",
+          "sql_lines": 75
         },
         "fct_price": {
           "materialized": "incremental",
@@ -300,18 +311,6 @@
           "path": "models/aemo/gluten/marts/fct_scada.sql",
           "sql_lines": 22
         },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/gluten/marts/fct_summary.sql",
-          "sql_lines": 75
-        },
         "dim_duid": {
           "materialized": "incremental",
           "strategy": "merge",
@@ -328,16 +327,16 @@
     "polars_iceberg": {
       "target": "polars",
       "status": "success",
-      "build_seconds": 143.07,
+      "build_seconds": 112.92,
       "models": 6,
       "models_ok": 6,
-      "tests": 35,
-      "tests_ok": 35,
-      "rows": 6323649,
+      "tests": 39,
+      "tests_ok": 39,
+      "rows": 3088760,
       "same_rows": true,
       "diff": {
-        "mw_sum": 2.407850708618038e-08,
-        "price_sum": 3.529559386269114e-08
+        "mw_sum": 2.5678602025611563e-08,
+        "price_sum": 3.417978324149354e-08
       },
       "versions": {
         "dbt-core": "1.12.6",
@@ -347,33 +346,24 @@
       },
       "adapter": "dbt-polars 0.4.0",
       "model_seconds": {
-        "dim_duid": 9.821,
-        "fct_price": 42.762,
-        "fct_price_today": 3.629,
-        "fct_scada": 54.16,
-        "fct_scada_today": 2.803,
-        "fct_summary": 9.519
+        "dim_duid": 7.473,
+        "fct_price": 36.839,
+        "fct_price_today": 4.539,
+        "fct_scada": 36.465,
+        "fct_scada_today": 3.619,
+        "fct_summary": 4.776
       },
       "model_rows": {
-        "fct_scada_today": 28293,
-        "fct_price_today": 450,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
-        "fct_summary": 6323649,
+        "fct_price_today": 250,
+        "fct_scada_today": 15501,
+        "fct_summary": 3088760,
+        "fct_price": 72000,
+        "fct_scada": 8218944,
         "dim_duid": 690
       },
       "model_config": {
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_scada_today.sql",
-          "sql_lines": 23
+        "csv_raw_archive_log": {
+          "materialized": "source"
         },
         "fct_price_today": {
           "materialized": "incremental",
@@ -387,6 +377,30 @@
           "merge_clauses": false,
           "path": "models/aemo/polars/marts/fct_price_today.sql",
           "sql_lines": 24
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_scada_today.sql",
+          "sql_lines": 23
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_summary.sql",
+          "sql_lines": 78
         },
         "fct_price": {
           "materialized": "incremental",
@@ -414,18 +428,6 @@
           "path": "models/aemo/polars/marts/fct_scada.sql",
           "sql_lines": 27
         },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_summary.sql",
-          "sql_lines": 78
-        },
         "dim_duid": {
           "materialized": "incremental",
           "strategy": "merge",
@@ -442,16 +444,16 @@
     "trino_iceberg": {
       "target": "trino",
       "status": "success",
-      "build_seconds": 291.923,
+      "build_seconds": 178.251,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6323649,
+      "rows": 3088760,
       "same_rows": true,
       "diff": {
-        "mw_sum": 5.592057358090159e-13,
-        "price_sum": 1.9017338640605207e-13
+        "mw_sum": 4.46690838020609e-14,
+        "price_sum": 3.1561594758546803e-13
       },
       "versions": {
         "dbt-core": "1.12.6",
@@ -461,36 +463,24 @@
       },
       "adapter": "dbt-trino 1.10.6",
       "model_seconds": {
-        "dim_duid": 11.786,
-        "fct_price": 65.258,
-        "fct_price_today": 6.184,
-        "fct_scada": 134.055,
-        "fct_scada_today": 9.204,
-        "fct_summary": 14.337
+        "dim_duid": 9.782,
+        "fct_price": 56.713,
+        "fct_price_today": 4.439,
+        "fct_scada": 57.787,
+        "fct_scada_today": 7.529,
+        "fct_summary": 7.418
       },
       "model_rows": {
-        "fct_scada_today": 28293,
-        "fct_price_today": 450,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
-        "fct_summary": 6323649,
+        "fct_price_today": 250,
+        "fct_scada_today": 15501,
+        "fct_summary": 3088760,
+        "fct_price": 72000,
+        "fct_scada": 8218944,
         "dim_duid": 690
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
-        },
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/trino/marts/fct_scada_today.sql",
-          "sql_lines": 15
         },
         "fct_price_today": {
           "materialized": "incremental",
@@ -504,6 +494,30 @@
           "merge_clauses": false,
           "path": "models/aemo/trino/marts/fct_price_today.sql",
           "sql_lines": 16
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_scada_today.sql",
+          "sql_lines": 15
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_summary.sql",
+          "sql_lines": 73
         },
         "fct_price": {
           "materialized": "incremental",
@@ -530,18 +544,6 @@
           "merge_clauses": false,
           "path": "models/aemo/trino/marts/fct_scada.sql",
           "sql_lines": 19
-        },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/trino/marts/fct_summary.sql",
-          "sql_lines": 73
         },
         "dim_duid": {
           "materialized": "incremental",
