@@ -1,7 +1,7 @@
 {
-  "run_id": "39384393221",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39384393221",
-  "finished": "2026-10-20T07:25:36Z",
+  "run_id": "39387172190",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39387172190",
+  "finished": "2026-10-20T07:55:04Z",
   "baseline": "pyspark_gluten_iceberg",
   "rel_tol": 1e-07,
   "parity_ok": true,
@@ -97,16 +97,17 @@
     "duckdb_iceberg": {
       "target": "duckdb",
       "status": "success",
-      "build_seconds": 96.827,
+      "build_seconds": 104.031,
+      "peak_rss_mb": 14460,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 3088898,
+      "rows": 6326054,
       "same_rows": true,
       "diff": {
-        "mw_sum": 1.8551016718959504e-09,
-        "price_sum": 4.671636389939506e-09
+        "mw_sum": 1.7959125202933792e-09,
+        "price_sum": 4.682754601104568e-09
       },
       "versions": {
         "dbt-core": "1.12.6",
@@ -115,19 +116,19 @@
       },
       "adapter": "dbt-duckdb 1.11.0",
       "model_seconds": {
-        "dim_duid": 4.049,
-        "fct_price_today": 9.075,
-        "fct_price": 52.906,
-        "fct_scada": 46.83,
-        "fct_scada_today": 8.216,
-        "fct_summary": 7.85
+        "dim_duid": 6.485,
+        "fct_price_today": 14.693,
+        "fct_price": 48.247,
+        "fct_scada_today": 10.6,
+        "fct_scada": 46.263,
+        "fct_summary": 9.696
       },
       "model_rows": {
-        "fct_price_today": 250,
-        "fct_scada_today": 15678,
-        "fct_summary": 3088898,
-        "fct_price": 72000,
-        "fct_scada": 8218944,
+        "fct_price_today": 500,
+        "fct_scada_today": 31402,
+        "fct_summary": 6326054,
+        "fct_price": 144000,
+        "fct_scada": 16387008,
         "dim_duid": 690
       },
       "model_config": {
@@ -213,12 +214,13 @@
     "pyspark_gluten_iceberg": {
       "target": "gluten",
       "status": "success",
-      "build_seconds": 269.635,
+      "build_seconds": 241.712,
+      "peak_rss_mb": 5712,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 3088898,
+      "rows": 6326054,
       "same_rows": true,
       "diff": {},
       "versions": {
@@ -229,19 +231,19 @@
       },
       "adapter": "dbt-spark 1.11.0",
       "model_seconds": {
-        "dim_duid": 32.596,
-        "fct_price": 48.179,
-        "fct_price_today": 8.489,
-        "fct_scada": 134.234,
-        "fct_scada_today": 9.022,
-        "fct_summary": 8.279
+        "dim_duid": 11.455,
+        "fct_price": 58.703,
+        "fct_price_today": 8.978,
+        "fct_scada": 89.341,
+        "fct_scada_today": 8.113,
+        "fct_summary": 28.329
       },
       "model_rows": {
-        "fct_price_today": 250,
-        "fct_scada_today": 15678,
-        "fct_summary": 3088898,
-        "fct_price": 72000,
-        "fct_scada": 8218944,
+        "fct_price_today": 500,
+        "fct_scada_today": 31402,
+        "fct_summary": 6326054,
+        "fct_price": 144000,
+        "fct_scada": 16387008,
         "dim_duid": 690
       },
       "model_config": {
@@ -327,16 +329,17 @@
     "polars_iceberg": {
       "target": "polars",
       "status": "success",
-      "build_seconds": 134.693,
+      "build_seconds": 179.239,
+      "peak_rss_mb": 9152,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 3088898,
+      "rows": 6326054,
       "same_rows": true,
       "diff": {
-        "mw_sum": 2.567828566245582e-08,
-        "price_sum": 3.422832926157836e-08
+        "mw_sum": 2.4078906018884014e-08,
+        "price_sum": 3.5324869976973924e-08
       },
       "versions": {
         "dbt-core": "1.12.6",
@@ -346,19 +349,19 @@
       },
       "adapter": "dbt-polars 0.4.0",
       "model_seconds": {
-        "dim_duid": 9.057,
-        "fct_price": 35.165,
-        "fct_price_today": 4.807,
-        "fct_scada": 38.14,
-        "fct_scada_today": 4.335,
-        "fct_summary": 9.266
+        "dim_duid": 11.224,
+        "fct_price": 43.521,
+        "fct_price_today": 8.51,
+        "fct_scada": 60.609,
+        "fct_scada_today": 12.004,
+        "fct_summary": 12.018
       },
       "model_rows": {
-        "fct_price_today": 250,
-        "fct_scada_today": 15678,
-        "fct_summary": 3088898,
-        "fct_price": 72000,
-        "fct_scada": 8218944,
+        "fct_price_today": 500,
+        "fct_scada_today": 31402,
+        "fct_summary": 6326054,
+        "fct_price": 144000,
+        "fct_scada": 16387008,
         "dim_duid": 690
       },
       "model_config": {
@@ -444,16 +447,17 @@
     "trino_iceberg": {
       "target": "trino",
       "status": "success",
-      "build_seconds": 269.799,
+      "build_seconds": 459.739,
+      "peak_rss_mb": 8928,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 3088898,
+      "rows": 6326054,
       "same_rows": true,
       "diff": {
-        "mw_sum": 1.502340047586776e-13,
-        "price_sum": 3.546606843435245e-13
+        "mw_sum": 7.002045868731478e-13,
+        "price_sum": 8.196480006885016e-13
       },
       "versions": {
         "dbt-core": "1.12.6",
@@ -463,19 +467,19 @@
       },
       "adapter": "dbt-trino 1.10.6",
       "model_seconds": {
-        "dim_duid": 30.408,
-        "fct_price": 67.809,
-        "fct_price_today": 5.177,
-        "fct_scada": 75.235,
-        "fct_scada_today": 29.095,
-        "fct_summary": 8.995
+        "dim_duid": 12.7,
+        "fct_price": 91.321,
+        "fct_price_today": 6.862,
+        "fct_scada": 277.068,
+        "fct_scada_today": 10.702,
+        "fct_summary": 21.477
       },
       "model_rows": {
-        "fct_price_today": 250,
-        "fct_scada_today": 15678,
-        "fct_summary": 3088898,
-        "fct_price": 72000,
-        "fct_scada": 8218944,
+        "fct_price_today": 500,
+        "fct_scada_today": 31402,
+        "fct_summary": 6326054,
+        "fct_price": 144000,
+        "fct_scada": 16387008,
         "dim_duid": 690
       },
       "model_config": {
