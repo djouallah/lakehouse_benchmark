@@ -46,7 +46,7 @@
      default as every engine's guard. --#}
 {% macro polars_pending_files(source_type) %}
   {%- set q -%}
-    SELECT DISTINCT archive_path FROM {{ archive_log() }}
+    SELECT DISTINCT archive_path FROM {{ source('landing', 'csv_raw_archive_log') }}
     WHERE source_type = '{{ source_type }}'
     {%- if is_incremental() %} AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this }}){% endif %}
     ORDER BY archive_path DESC LIMIT {{ env_var('process_limit', '1000') }}

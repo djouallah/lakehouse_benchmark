@@ -7,7 +7,7 @@
     unique_key=['file', 'REGIONID', 'SETTLEMENTDATE', 'INTERVENTION'],
 ) }}
 
--- depends_on: {{ archive_log() }}
+-- depends_on: {{ source('landing', 'csv_raw_archive_log') }}
 {%- set files = polars_pending_files('daily') %}
 
 SELECT

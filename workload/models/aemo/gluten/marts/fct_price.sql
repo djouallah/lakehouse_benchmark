@@ -25,7 +25,7 @@
     post_hook="{{ spark_drop_stage() }}"
 ) }}
 
--- depends_on: {{ archive_log() }}
+-- depends_on: {{ source('landing', 'csv_raw_archive_log') }}
 
 SELECT
   UNIT,

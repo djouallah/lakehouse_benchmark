@@ -226,8 +226,8 @@ def test_every_engine_builds_every_model_the_same_way():
 
 
 def test_the_archive_log_is_a_source_not_a_copy():
-    """Nothing builds the landing log: it is a dbt source, and every model reads it through
-    archive_log() -- the source, or on Polars (no external sources on OneLake) the parquet."""
+    """Nothing builds the landing log: it is a dbt source on every engine, and every model and
+    test reads it through source()."""
     for engine in ENGINES:
         tree = PROJECT / "models" / "aemo" / engine
         assert not list(tree.rglob("stg_*.sql")), engine
@@ -236,3 +236,7 @@ def test_the_archive_log_is_a_source_not_a_copy():
     sources = (PROJECT / "models" / "sources.yml").read_text(encoding="utf-8")
     assert "name: csv_raw_archive_log" in sources
     assert 'external_location: "read_parquet(' in sources
+    assert "location: csv_raw_archive_log.parquet" in sources  # dbt-polars' external.location
+    assert not (PROJECT / "macros" / "archive_log.sql").exists()
+    project = (PROJECT / "dbt_project.yml").read_text(encoding="utf-8")
+    assert "\nsources:" not in project  # no engine has the source switched off

@@ -7,16 +7,15 @@ version: 2
 #   duckdb  dbt-duckdb's meta.external_location: read_parquet('<Files/dbt>/...parquet')
 #   trino   the Hive EXTERNAL table the runner declares over the file, files.dbt.archive_log
 #   gluten  a global temp view over the file, registered at run start (on-run-start)
-#   polars  not through source(): dbt-polars resolves external.location only on a storage
-#           catalog, and has none for OneLake, so archive_log() (macros/archive_log.sql) reads
-#           the parquet inline on Polars -- the same no-copy read, without the lineage edge.
+#   polars  dbt-polars' external.location, read through `landing`, the Azure storage catalog
+#           the profile declares over Files/dbt (a source's database names its catalog)
 
 sources:
   - name: landing
     description: >
       The landing zone in Files/dbt, written by download_aemo before every run and read where
       it is.
-    database: "{{ 'files' if target.type == 'trino' else 'global_temp' if target.type == 'spark' else target.database }}"
+    database: "{{ 'files' if target.type == 'trino' else 'global_temp' if target.type == 'spark' else 'landing' if target.type == 'polars' else target.database }}"
     schema: "{{ 'dbt' if target.type == 'trino' else 'global_temp' if target.type == 'spark' else 'landing' }}"
     tables:
       - name: csv_raw_archive_log
@@ -25,12 +24,16 @@ sources:
           One row per source file landed by download_aemo, the parquet beside the CSVs. Every
           engine reads the SAME file, which is what makes the fact models' file selection
           identical across engines.
+        # dbt-polars: a path relative to its `landing` catalog's root. The other adapters
+        # ignore it.
+        external:
+          location: csv_raw_archive_log.parquet
         config:
+          file_format: parquet
           meta:
             external_location: "read_parquet('{{ env_var('FILES_PATH', '') }}/csv_raw_archive_log.parquet')"
             differences:
-              - "A dbt source on every engine but Polars, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), the Hive external table on Trino, and a global temp view registered at run start on Spark."
-              - "Polars reads the parquet inline: dbt-polars resolves a source's `external.location` only on a storage catalog, and has none for OneLake."
+              - "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
         columns:
           - name: source_filename
             data_tests: [not_null]

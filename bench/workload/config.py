@@ -60,6 +60,9 @@ class WorkloadConfig(Config):
             "ONELAKE_ENDPOINT": ICEBERG_ENDPOINT,
             "WAREHOUSE_PATH": self.warehouse,
             "FILES_PATH": self.files_abfss,
+            # dbt-polars' storage catalog over the same root (profiles.yml `landing`).
+            "FILES_CONTAINER": self.workspace_id,
+            "FILES_PREFIX": self.files_relative,
         }
 
     @classmethod

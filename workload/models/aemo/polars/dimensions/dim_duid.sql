@@ -11,7 +11,7 @@
 ) }}
 
 -- The reference CSVs are landed by download_aemo.py, which the log model stands for in the DAG.
--- depends_on: {{ archive_log() }}
+-- depends_on: {{ source('landing', 'csv_raw_archive_log') }}
 
 WITH
   states AS (

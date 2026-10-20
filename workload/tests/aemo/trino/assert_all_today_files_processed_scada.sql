@@ -7,7 +7,7 @@
 -- a count that is non-zero.
 SELECT
   csv_filename
-FROM {{ archive_log() }}
+FROM {{ source('landing', 'csv_raw_archive_log') }}
 WHERE source_type = 'scada_today'
   AND csv_filename NOT IN (
     SELECT DISTINCT "file"

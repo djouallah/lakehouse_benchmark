@@ -17,7 +17,7 @@
     ]
 ) }}
 
--- depends_on: {{ archive_log() }}
+-- depends_on: {{ source('landing', 'csv_raw_archive_log') }}
 
 WITH states AS (
     SELECT 'WA1' AS RegionID, 'Western Australia' AS State

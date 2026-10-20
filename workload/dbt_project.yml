@@ -2,7 +2,7 @@
 # and cut down to the Iceberg legs bench can run on its own engines and its own auth:
 #
 #   duckdb   dbt-duckdb, ATTACHed to the OneLake Iceberg REST catalog   (the source's `iceberg`)
-#   polars   dbt-polars, pyiceberg REST catalog                          (the source's `polars`)
+#   polars   dbt-polars, pyiceberg REST catalog (+ an Azure storage catalog over the landing)
 #   gluten   dbt-spark `method: session` on Spark + Gluten/Velox, Iceberg (port of the Delta `spark`)
 #   trino    dbt-trino on bench's Trino container, Iceberg (ported from the gluten tree)
 #
@@ -17,8 +17,7 @@
 # relations (Spark's stage, Trino's __dbt_tmp) carry the run's id.
 #
 # THE LANDED FILES ARE SOURCES, NOT MODELS (models/sources.yml): read where they land, copied by
-# nothing. The one exception is a limitation: dbt-polars cannot resolve a source to a file on
-# OneLake, so Polars reads the archive log inline (macros/archive_log.sql) and its source is off.
+# nothing, on every engine.
 #
 # Nothing on the `aemo_electricity` project key, ever: a generic test declared in a patch file
 # gets the fqn of the YML file, so a project-key gate also disables every generic test.
@@ -72,13 +71,6 @@ models:
         +on_table_exists: drop
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
-
-sources:
-  aemo_electricity:
-    landing:
-      # dbt-polars cannot resolve this source to the file (see the header), so it is off there
-      # and its tests with it; Polars reads the same parquet inline.
-      +enabled: "{{ target.type != 'polars' }}"
 
 data_tests:
   aemo_electricity:

@@ -8,7 +8,7 @@
     unique_key=['file', 'DUID', 'SETTLEMENTDATE'],
 ) }}
 
--- depends_on: {{ archive_log() }}
+-- depends_on: {{ source('landing', 'csv_raw_archive_log') }}
 {%- set files = polars_pending_files('scada_today') %}
 
 SELECT

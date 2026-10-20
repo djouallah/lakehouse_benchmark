@@ -45,6 +45,18 @@ aemo_electricity:
           adls.account-host: onelake.blob.fabric.microsoft.com
           token: "{{ env_var('ONELAKE_TOKEN') }}"
           adls.token: "{{ env_var('ONELAKE_TOKEN') }}"
+        # The landing files, for sources' external.location (models/sources.yml): OneLake's blob
+        # endpoint, the workspace as the container, the lakehouse's Files/dbt as the root.
+        - name: landing
+          type: azure
+          schema: landing
+          account_name: onelake
+          container: "{{ env_var('FILES_CONTAINER') }}"
+          prefix: "{{ env_var('FILES_PREFIX') }}"
+          credentials:
+            storage_options:
+              use_fabric_endpoint: "true"
+              bearer_token: "{{ env_var('ONELAKE_TOKEN') }}"
 
     # The SparkSession is built BEFORE dbt starts (workload_run_engine.py: bench's Gluten session,
     # Iceberg REST catalog `onelake` as spark.sql.defaultCatalog); `method: session` picks it up
