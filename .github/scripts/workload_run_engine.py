@@ -161,6 +161,23 @@ def node_timings() -> list[dict]:
     ]
 
 
+def model_dag() -> dict[str, dict]:
+    """The project's DAG as dbt itself published it (target/manifest.json): every enabled model,
+    its materialization and the models it reads. The Real workload tab draws it."""
+    path = PROJECT / "target" / "manifest.json"
+    if not path.exists():
+        return {}
+    nodes = json.loads(path.read_text(encoding="utf-8"))["nodes"]
+    models = {uid: n for uid, n in nodes.items() if n["resource_type"] == "model"}
+    return {
+        n["name"]: {
+            "materialized": n["config"].get("materialized", ""),
+            "parents": sorted(models[p]["name"] for p in n["depends_on"]["nodes"] if p in models),
+        }
+        for n in models.values()
+    }
+
+
 def main(parts: Path) -> int:
     cfg = WorkloadConfig.from_env()
     engine = cfg.engine
@@ -215,6 +232,7 @@ def main(parts: Path) -> int:
         if ok and not models:
             ok = False
             dbt.last_error = f"dbt built no model for target {engine}: check +enabled gating"
+        part["dag"] = model_dag()
         if not ok:
             part["error"] = dbt.last_error
             return 1

@@ -46,6 +46,32 @@ def counts(leg: dict) -> dict[str, int]:
     }
 
 
+def dag(legs: dict[str, dict]) -> dict[str, dict]:
+    out: dict[str, dict] = {}
+    for leg in legs.values():
+        for name, node in (leg.get("dag") or {}).items():
+            entry = out.setdefault(name, {"materialized": node["materialized"], "parents": []})
+            entry["parents"] = sorted(set(entry["parents"]) | set(node["parents"]))
+    return out
+
+
+def adapter(versions: dict[str, str]) -> str:
+    """The leg's dbt adapter and its version, e.g. "dbt-duckdb 1.10.1"."""
+    name = next((k for k in versions if k.startswith("dbt-") and k != "dbt-core"), "")
+    return f"{name} {versions[name]}".strip() if name else ""
+
+
+def model_seconds(leg: dict) -> dict[str, float]:
+    """Seconds per model; a retry's result overrides the build's."""
+    merged = {n["node"]: n for n in leg.get("nodes") or []}
+    merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
+    return {
+        uid.rsplit(".", 1)[-1]: n["seconds"]
+        for uid, n in merged.items()
+        if uid.startswith("model.") and n["status"] == "success"
+    }
+
+
 def page_data(legs: dict[str, dict], grade: dict) -> dict:
     """The latest run as the Real workload tab reads it: one entry per bench engine id."""
     out = {
@@ -55,6 +81,9 @@ def page_data(legs: dict[str, dict], grade: dict) -> dict:
         "baseline": BENCH_ENGINE.get(grade["baseline"], grade["baseline"]),
         "rel_tol": parity.REL_TOL,
         "parity_ok": len(grade["engines"]) > 1 and not grade["failures"],
+        # The project's DAG as dbt published it, the union over the legs that built: every tree
+        # has the same model names, so the union of their edges is the project's DAG.
+        "dag": dag(legs),
         "legs": {},
     }
     base = next((leg.get("fingerprint") for e, leg in legs.items() if e == grade["baseline"]), None)
@@ -69,6 +98,8 @@ def page_data(legs: dict[str, dict], grade: dict) -> dict:
             "same_rows": bool(base and fp and fp.get("rows_total") == base.get("rows_total")),
             "diff": grade["diffs"].get(engine, {}),
             "versions": leg.get("versions", {}),
+            "adapter": adapter(leg.get("versions", {})),
+            "models": model_seconds(leg),
             "error": (leg.get("error") or "")[:300],
         }
         out["legs"][BENCH_ENGINE[engine]] = entry
