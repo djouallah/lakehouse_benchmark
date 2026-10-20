@@ -99,12 +99,12 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .details a.perm:hover { text-decoration: underline; }
 .details .copied { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
 #issues ul { columns: 3 380px; column-gap: 32px; font-size: 13px; line-height: 1.45; }
-#issues li { break-inside: avoid; margin: 0 0 6px; }
+/* Entries may flow into the next column: with `avoid`, the longest entry (Databend) set a column's
+   height and the tab outgrew a 1080p page (1011px > 930px). */
+#issues li { margin: 0 0 6px; }
 #issues ul { margin: 0; }
 #issues h3:first-child { margin-top: 12px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
-/* The Issues list grows with every bug filed: two columns on a wide screen keep it on one 1080p page. */
-@media (min-width: 1200px) { #issues ul { columns: 2; column-gap: 40px; } #issues li { break-inside: avoid; margin: 0 0 6px; } }
 .details a { color: var(--accent); }
 /* Capability: operations down, engines across, one mark per cell. */
 .cap .chips { margin-top: 12px; }
