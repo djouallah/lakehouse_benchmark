@@ -243,3 +243,13 @@ def test_the_workload_runs_on_a_schedule_and_publishes():
     grade = wf["jobs"]["grade"]
     assert any("schedule" in str(step.get("if", "")) for step in grade["steps"])
     assert "decimals" not in wf["jobs"]
+
+
+def test_duckdb_stages_incremental_batches_as_views():
+    """macros/duckdb_temp_view.sql: a temporary SQL relation on DuckDB is a TEMP VIEW (streamed by
+    the MERGE), never a TEMP TABLE (held whole in memory, spilled uncompressed); every other
+    relation and adapter goes through the adapter's own create_table_as."""
+    macro = (PROJECT / "macros" / "duckdb_temp_view.sql").read_text(encoding="utf-8")
+    assert "create temporary view" in macro
+    assert "target.type == 'duckdb' and temporary and language == 'sql'" in macro
+    assert macro.count("adapter.dispatch('create_table_as', 'dbt')") == 2
