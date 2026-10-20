@@ -36,6 +36,7 @@ def test_every_github_issue_and_pull_request_on_the_issues_tab_is_parsed_once():
 def test_each_link_is_under_the_engine_its_list_item_names():
     parsed = {p["id"]: p for p in reports_publish.parse(PAGE)}
     assert parsed["pola-rs/polars#29449"]["engine"] == "Polars"
+    assert parsed["datamindedbe/incubator-dbt-polars#45"]["engine"] == "dbt-polars"
     assert parsed["facebookincubator/velox#19508"]["engine"] == "Gluten/Velox"
     assert parsed["apache/doris#68877"]["engine"] == "Apache Doris"
     assert parsed["databendlabs/databend#20594"]["kind"] == "pr"

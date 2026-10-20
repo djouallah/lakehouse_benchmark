@@ -421,15 +421,18 @@ Largest scale each engine completes, cold, every statement answered:
     (`create_namespace_if_not_exists`), so the namespace rows are `na`.
   - Open: the `bucket` partition transform
     ([#29844](https://github.com/pola-rs/polars/issues/29844)), which Polars refuses before the
-    catalog is asked; overwrite by filter ([#29842](https://github.com/pola-rs/polars/issues/29842));
-    delete rows by predicate ([#29843](https://github.com/pola-rs/polars/issues/29843)).
+    catalog is asked.
+  - Fixed on main 2026-10-20, not yet released: overwrite by filter
+    ([#29842](https://github.com/pola-rs/polars/issues/29842)) and delete rows by predicate
+    ([#29843](https://github.com/pola-rs/polars/issues/29843)), both by `pl.delete_iceberg`
+    ([PR #30032](https://github.com/pola-rs/polars/pull/30032)).
   - Open: SQL writes to Iceberg, [#29892](https://github.com/pola-rs/polars/issues/29892)–[#29896](https://github.com/pola-rs/polars/issues/29896)
     (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE).
 - **The dbt project runs on Polars** (fabric-dbt-examples [run 39257525479](https://github.com/djouallah/fabric-dbt-examples/actions/runs/39257525479),
   2026-10-19): 50 CSV files, `fct_summary` matches Spark row for row (3,078,798 rows; the sums
   differ only in float rounding). Two changes got it there: one SQL `read_csv()` over the file
   list ([PR #30047](https://github.com/pola-rs/polars/pull/30047), on main) instead of a
-  `UNION ALL` per file, which holds every file at once ([#30029](https://github.com/pola-rs/polars/issues/30029), open);
+  `UNION ALL` per file, which holds every file at once ([#30029](https://github.com/pola-rs/polars/issues/30029), fixed on main 2026-10-20 by [PR #30056](https://github.com/pola-rs/polars/pull/30056), one multi-file scan for such a union);
   and a dbt-polars fix for a composite-key merge that built one pyiceberg predicate per row
   ([dbt-polars#45](https://github.com/datamindedbe/incubator-dbt-polars/issues/45), fix
   [PR #46](https://github.com/datamindedbe/incubator-dbt-polars/pull/46), open). The MERGE is
