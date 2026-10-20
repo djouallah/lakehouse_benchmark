@@ -46,7 +46,7 @@ Tried and not added:
 | TPC-H | SF=30 | 1,439.5s | 385.3s | 3.7x |
 | TPC-H | SF=60 | 2,318.3s | 677.7s | 3.4x |
 | TPC-H | SF=100 | failed | 1,007.5s | — |
-| TPC-DS | SF=10 | 2,170.3s | 675.2s | 3.2x |
+| TPC-DS | SF=10 | 1,562.8s | 490.3s | 3.2x |
 | TPC-DS | SF=30 | 9,280.4s | 951.5s | 9.8x |
 | TPC-DS | SF=60 | 9,303.4s | 2,117.1s | 4.4x |
 | TPC-DS | SF=100 | 13,775.1s | 5,762.4s | 2.4x |
