@@ -33,11 +33,6 @@ def test_every_engine_has_an_engines_row():
         assert 'machines: "Cluster"' in row or 'machines: "One"' in row, engine
 
 
-def test_every_engine_has_a_dbt_row():
-    for engine in LABEL:
-        assert f'engine: "{engine}"' in rows("DBT_ROWS"), engine
-
-
 def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
     """The premise first: any engine, one catalog; then how a commit works."""
     assert (
@@ -49,49 +44,31 @@ def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
     assert "const state = { suite: OVERVIEW.id," in PAGE
 
 
-def test_every_engine_has_a_workload_row():
-    for engine in LABEL:
-        assert f'engine: "{engine}"' in rows("WORKLOAD_ROWS"), engine
-
-
 def test_the_real_workload_tab_reads_the_measured_workload():
-    """The Scorecard became the Real workload tab: its rows come from docs/data/workload.json."""
+    """The Real workload tab draws the latest run: a card per leg and dbt's own DAG."""
     assert (
         'const REAL_WORKLOAD = { id: "workload", title: "Real workload", '
         'json: "data/workload.json" };' in PAGE
     )
-    assert "SC_COLS" not in PAGE
-    ids = [c.split('"')[0] for c in rows("REAL_COLS").split('{ id: "')[1:]]
-    assert ids == ["dbt", "file", "iceberg", "same", "speed"]
-    # The bar is the first three columns; same result and speed are shown, not required.
-    assert "const mvp = e => [dbtCell, fileCell, icebergCell]" in PAGE
+    assert "const { W, H, NW, NH, pos } = dagLayout(w.dag);" in PAGE
+    for gone in ("SC_COLS", "REAL_COLS", "DBT_ROWS", "WORKLOAD_ROWS"):
+        assert gone not in PAGE, gone
+
+
+def test_issue_links_that_left_the_dbt_rows_are_still_on_the_page():
+    """The Bug reports tab is built from the links on this page; none may drop off."""
+    for link in (
+        "https://github.com/StarRocks/starrocks/pull/66975",
+        "https://github.com/datamindedbe/incubator-dbt-polars/issues/32",
+        "https://github.com/lakehq/sail/pull/2571",
+        "https://github.com/pola-rs/polars/issues/30074",
+        "https://github.com/duckdb/duckdb/issues/27503",
+    ):
+        assert link in PAGE, link
 
 
 def test_future_is_the_last_top_tab():
     assert rows("GROUPS").rstrip().endswith('{ id: "future", title: "Future", subs: [NEXT] },')
-
-
-def test_the_workload_merge_cells_match_the_iceberg_support_tab():
-    """The MERGE option the Real workload tab falls back on never disagrees with the probe."""
-    import json
-    import re
-
-    cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
-    cap = json.loads(cap_path.read_text(encoding="utf-8"))
-    merge = next(r for r in cap["rows"] if r["label"] == "MERGE with two actions (UPDATE + INSERT)")
-    table = rows("WORKLOAD_ROWS")
-    for engine in cap["engines"]:
-        if merge["cells"][engine]["o"] == "na":
-            continue  # the engine has no DML (Polars): its dbt adapter's merge decides
-        start = table.index(f'engine: "{engine}"')
-        cell = re.search(r"merge: \{ ok: (true|false)", table[start:]).group(1)
-        assert (cell == "true") == (merge["cells"][engine]["o"] == "supported"), engine
-
-
-def test_the_real_workload_has_no_hand_picked_groups():
-    """Rows are ordered by the data (the bar, build time, then Light ETL time), not by tiers."""
-    assert "WORKLOAD_TIERS" not in PAGE
-    assert "tier:" not in rows("WORKLOAD_ROWS")
 
 
 def test_maintenance_is_a_group_of_the_iceberg_support_grid():

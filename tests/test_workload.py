@@ -117,3 +117,49 @@ def test_runner_script_is_not_named_like_a_dbt_plugin():
     # dbt imports every top-level dbt_* module as a plugin; the script dir is sys.path[0].
     scripts = (ROOT / ".github" / "scripts").glob("*.py")
     assert not [p.name for p in scripts if p.name.startswith("dbt_")]
+
+
+def test_page_data_carries_the_dag_and_each_legs_models():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "workload_publish", ROOT / ".github" / "scripts" / "workload_publish.py"
+    )
+    publish = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(publish)
+
+    def part(engine, adapter, dag):
+        return {
+            "engine": engine,
+            "run_id": "1",
+            "status": "success",
+            "build_seconds": 10.0,
+            "finished": "2026-10-20T00:00:00Z",
+            "versions": {"dbt-core": "1.10.0", adapter: "1.10.1"},
+            "nodes": [
+                {"node": "model.aemo_electricity.stg", "status": "success", "seconds": 1.5},
+                {"node": "model.aemo_electricity.fct", "status": "success", "seconds": 4.0},
+                {"node": "test.aemo_electricity.t", "status": "pass", "seconds": 0.1},
+            ],
+            "fingerprint": _fp(engine),
+            "dag": dag,
+        }
+
+    legs = {
+        "gluten": part("gluten", "dbt-spark", {"stg": {"materialized": "table", "parents": []}}),
+        "duckdb": part(
+            "duckdb",
+            "dbt-duckdb",
+            {
+                "stg": {"materialized": "view", "parents": []},
+                "fct": {"materialized": "incremental", "parents": ["stg"]},
+            },
+        ),
+    }
+    out = publish.page_data(legs, parity.grade({e: leg["fingerprint"] for e, leg in legs.items()}))
+    assert out["dag"]["fct"]["parents"] == ["stg"]
+    assert set(out["dag"]) == {"stg", "fct"}
+    assert out["legs"]["duckdb_iceberg"]["adapter"] == "dbt-duckdb 1.10.1"
+    assert out["legs"]["duckdb_iceberg"]["model_seconds"] == {"stg": 1.5, "fct": 4.0}
+    assert out["legs"]["duckdb_iceberg"]["models"] == 2  # the count, not the seconds
+    assert out["parity_ok"]

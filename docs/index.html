@@ -284,22 +284,33 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .hd.no { fill: var(--no); opacity: 1; }
 .arch svg.fadein { animation: arfade .8s ease; }
 @keyframes arfade { from { opacity: 0; } }
-/* Real workload and Bug reports: a row of big numbers, each one a headline a slide can quote. */
+/* Bug reports: a row of big numbers, each one a headline a slide can quote. */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 12px 0 10px; }
 .tiles > * { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: inherit; text-decoration: none; }
 main .tiles > a { color: inherit; }
 .tiles a:hover, .tiles a:focus-visible { border-color: var(--accent); outline: none; }
 .tiles b { flex: none; font-size: clamp(24px, 3vw, 30px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tiles span { color: var(--ink-2); font-size: 13px; }
-.sc .verdict { font-size: 14px; margin: 0 0 8px; }
-.sc .legend { margin-bottom: 6px; }
-.sc .legend .hint { margin-left: auto; color: var(--ink-3); }
-.sc td { padding-top: 5px; padding-bottom: 5px; }
-.sc thead th { padding-bottom: 4px; }
-.sc thead th a { color: inherit; text-decoration: none; }
-.sc thead th a:hover { color: var(--ink); text-decoration: underline; }
-.sc thead th a.has-note { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; }
-.sc td.lv a { color: var(--ink-2); }
+.rw .arc { font-size: 16px; font-weight: 600; margin: 14px 0 4px; }
+.rw .proj { font-size: 14px; color: var(--ink-2); margin: 0 0 12px; max-width: 110ch; }
+.rw .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.rw .card { padding: 10px 14px; border: 1px solid var(--grid); border-top: 3px solid var(--c); border-radius: 12px; background: var(--raised); }
+.rw .card .n { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+.rw .card .sw { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+.rw .card .v { color: var(--yes); font-weight: 700; font-size: 14px; margin-top: 2px; }
+.rw .card.fail .v { color: var(--no); }
+.rw .card .ad { color: var(--ink-3); font-size: 12px; }
+.rw .card .t { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rw .card .t .bar { display: block; height: 6px; border-radius: 3px; background: var(--c); }
+.rw svg.dag { display: block; width: 100%; height: auto; max-height: 52vh; margin: 18px 0 6px; }
+.rw .dag .edge { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 6; animation: rwflow 1.4s linear infinite; }
+@keyframes rwflow { to { stroke-dashoffset: -22; } }
+@media (prefers-reduced-motion: reduce) { .rw .dag .edge { animation: none; } }
+.rw .dag .box { fill: var(--raised); stroke: var(--grid); }
+.rw .dag .node:hover .box { stroke: var(--accent); }
+.rw .dag .nm { font-size: 14px; font-weight: 700; fill: var(--ink); }
+.rw .dag .mt { font-size: 11px; fill: var(--ink-3); }
+.rw .answer { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; }
 /* Bug reports: one dot per report, per engine. */
 .rp .intro { font-size: 15px; color: var(--ink); margin: 12px 0 0; }
 
@@ -435,7 +446,7 @@ main .tiles > a { color: inherit; }
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="pl arch" id="overview" hidden></section>
-  <section class="cap rows sc" id="workload" hidden></section>
+  <section class="rw" id="workload" hidden></section>
   <section class="pl arch" id="concurrency" hidden></section>
   <section class="pl arch" id="anatomy" hidden></section>
   <section class="pl arch" id="pruning" hidden></section>
@@ -454,8 +465,8 @@ main .tiles > a { color: inherit; }
       no memory limit kills the machine, and there is no error to read.</p>
     <p>The best query is the one that does the least work: skip the files the query cannot need
       (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
-    <p>No engine is the fastest on every test. What an engine supports decides; speed is a bonus
-      (<a href="#workload">Real workload</a>).</p>
+    <p>Benchmarks are useful, but in real life you run SQL orchestrated by dbt, and it has to work. One real dbt
+      project runs on DuckDB, Trino, Polars and Gluten/Velox; speed is a bonus (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
       That is the best help a user can give. It does not need a pull request: the people who know the code write
@@ -468,9 +479,9 @@ main .tiles > a { color: inherit; }
     <h3>In the bench</h3>
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes).</li>
-      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; SQL writes to Iceberg: <a href="https://github.com/pola-rs/polars/issues/29892">#29892</a> CREATE TABLE, <a href="https://github.com/pola-rs/polars/issues/29893">#29893</a> INSERT, <a href="https://github.com/pola-rs/polars/issues/29894">#29894</a> DELETE, <a href="https://github.com/pola-rs/polars/issues/29895">#29895</a> UPDATE, <a href="https://github.com/pola-rs/polars/issues/29896">#29896</a> DROP TABLE (all open); <code>sink_iceberg</code>: <a href="https://github.com/pola-rs/polars/issues/29845">#29845</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/29908">PR #29908</a>, not yet released) create the table it writes, <a href="https://github.com/pola-rs/polars/issues/29968">#29968</a> (open) create a missing namespace, <a href="https://github.com/pola-rs/polars/issues/29844">#29844</a> (open) the <code>bucket</code> transform, <a href="https://github.com/pola-rs/polars/issues/29842">#29842</a> (open) overwrite by filter, <a href="https://github.com/pola-rs/polars/issues/29843">#29843</a> (open) delete rows by predicate;<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">dbt-polars#29</a> a dbt source cannot name a <code>.CSV</code> file (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/30">PR #30</a>); <a href="https://github.com/pola-rs/polars/issues/30029">#30029</a> (open) an unordered <code>UNION ALL</code> of N CSV scans holds every input at once, 7x the memory of <code>pl.concat</code>; the dbt project now reads its files with one <code>read_csv()</code> over the list (<a href="https://github.com/pola-rs/polars/pull/30047">PR #30047</a>, on main); <a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/45">dbt-polars#45</a> (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/46">PR #46</a>, open) a merge on a composite key builds one predicate per row, minutes at 5k rows, a segfault at 20k. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
-      <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
-      <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
+      <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; SQL writes to Iceberg: <a href="https://github.com/pola-rs/polars/issues/29892">#29892</a> CREATE TABLE, <a href="https://github.com/pola-rs/polars/issues/29893">#29893</a> INSERT, <a href="https://github.com/pola-rs/polars/issues/29894">#29894</a> DELETE, <a href="https://github.com/pola-rs/polars/issues/29895">#29895</a> UPDATE, <a href="https://github.com/pola-rs/polars/issues/29896">#29896</a> DROP TABLE (all open); <code>sink_iceberg</code>: <a href="https://github.com/pola-rs/polars/issues/29845">#29845</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/29908">PR #29908</a>, not yet released) create the table it writes, <a href="https://github.com/pola-rs/polars/issues/29968">#29968</a> (open) create a missing namespace, <a href="https://github.com/pola-rs/polars/issues/29844">#29844</a> (open) the <code>bucket</code> transform, <a href="https://github.com/pola-rs/polars/issues/29842">#29842</a> (open) overwrite by filter, <a href="https://github.com/pola-rs/polars/issues/29843">#29843</a> (open) delete rows by predicate;<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">dbt-polars#29</a> a dbt source cannot name a <code>.CSV</code> file (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/30">PR #30</a>); <a href="https://github.com/pola-rs/polars/issues/30029">#30029</a> (open) an unordered <code>UNION ALL</code> of N CSV scans holds every input at once, 7x the memory of <code>pl.concat</code>; the dbt project now reads its files with one <code>read_csv()</code> over the list (<a href="https://github.com/pola-rs/polars/pull/30047">PR #30047</a>, on main); <a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/45">dbt-polars#45</a> (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/46">PR #46</a>, open) a merge on a composite key builds one predicate per row, minutes at 5k rows, a segfault at 20k. dbt-polars rejects <code>merge_clauses</code> (<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/32">dbt-polars#32</a>, open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
+      <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <code>input_file_name()</code>, the source file name, is on main (<a href="https://github.com/lakehq/sail/pull/2571">sail#2571</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
+      <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <code>FILES()</code> has no source file name column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
       <li><b>Daft</b>: ETL only; 16/22 TPC-H queries on 0.7.25, the rest fail on decimal precision, cross join and <code>SUBSTRING</code>. Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open), split into <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> (open) decimal precision, Q1 and Q9; <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a> (open) <code>CASE</code> with a decimal and a literal, Q8 and Q14; cross join (fix: <a href="https://github.com/Eventual-Inc/Daft/pull/7573">PR #7573</a>, merged); <code>SUBSTRING</code> (fixed on main, <a href="https://github.com/Eventual-Inc/Daft/pull/7577">PR #7577</a>); OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a> (merged, not yet released). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
       <li><b>Pandas</b>: ETL only; no SQL. Filed: <a href="https://github.com/pandas-dev/pandas/issues/71034">#71034</a> (open, marked as an Arrow limitation) and Arrow <a href="https://github.com/apache/arrow/issues/53290">#53290</a> (open) <code>read_csv(engine="pyarrow")</code> takes the column count from the first row, so the bench uses the one-thread C parser and reads 4 files at once on a thread pool. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#pandas-in-the-etl-only">Details</a></li>
@@ -872,72 +883,6 @@ function renderEngines() {
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
-// WHAT THE dbt ADAPTER SAYS, for the Real workload tab's engines with no leg yet: how well dbt 1 (dbt Core) works with
-// each engine on Iceberg tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
-// level. DuckDB, LakeSail and Polars were tried in fabric-dbt-examples; the others come from
-// their adapter docs. Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in
-// LABEL has a row (tests/test_results_page.py).
-const DBT_MEDALLION = "https://github.com/djouallah/fabric-dbt-examples";
-const DBT_ROWS = [
-  { engine: "pyspark_iceberg", level: "excellent", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
-    note: "<code>file_format='iceberg'</code>; table and incremental models, with merge." },
-  { engine: "pyspark_gluten_iceberg", level: "excellent", adapter: "dbt-spark", url: "https://docs.getdbt.com/reference/resource-configs/spark-configs",
-    note: "Same as Spark: Gluten is a plugin inside Spark." },
-  { engine: "trino_iceberg", level: "excellent", adapter: "dbt-trino", url: "https://docs.getdbt.com/reference/resource-configs/trino-configs",
-    note: "Table and incremental models, with merge." },
-  { engine: "duckdb_iceberg", level: "good", adapter: "dbt-duckdb", url: "https://github.com/duckdb/dbt-duckdb",
-    note: `Works with the Iceberg catalog through <code>attach</code>. It needs two small macro overrides: <code>DESCRIBE</code> must hide Iceberg's <code>__</code> column, and <code>DROP</code> must not use <code>CASCADE</code>. <a href="${DBT_MEDALLION}/blob/main/docs/engine-nuances.md">Details</a> Its <code>DOUBLE</code> to <code>DECIMAL</code> cast rounds near-midpoint values inconsistently, so the last decimal of <code>fct_summary</code> differs from Spark's on 0.2% of rows (<a href="https://github.com/duckdb/duckdb/issues/27503">#27503</a>).` },
-  { engine: "polars_iceberg", level: "good", adapter: "dbt-polars", url: "https://github.com/datamindedbe/incubator-dbt-polars",
-    note: `Builds the whole project on the Iceberg catalog at 50 CSV files, its <code>fct_summary</code> matching Spark's row for row (<a href="https://github.com/djouallah/fabric-dbt-examples/actions/runs/39257525479">run 39257525479</a>, 2026-10-19). It runs dbt-polars 0.4.0 plus one fix, a composite-key merge that built one predicate per row (<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/45">dbt-polars#45</a>, fix in <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/46">PR #46</a>, open), on a Polars main build for its SQL fixes. The files are read with one <code>read_csv()</code> over the file list (<a href="https://github.com/pola-rs/polars/pull/30047">polars#30047</a>), not a <code>UNION ALL</code> per file, which holds every file in memory (<a href="https://github.com/pola-rs/polars/issues/30029">polars#30029</a>, open). No SQL hooks, and it rejects <code>merge_clauses</code> (<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/32">dbt-polars#32</a>), so an insert-only model is an append that leaves out the keys already stored. <a href="${DBT_MEDALLION}#engines">Details</a> Its <code>DOUBLE</code> to <code>DECIMAL</code> cast can round in the wrong direction near a midpoint, so the last decimal of <code>fct_summary</code> differs from Spark's on 2.8% of rows (<a href="https://github.com/pola-rs/polars/issues/30074">#30074</a>).` },
-  { engine: "starrocks_iceberg", level: "partial", adapter: "dbt-starrocks", url: "https://docs.starrocks.io/docs/integrations/dbt/",
-    note: "No merge." },
-  { engine: "lakesail_iceberg", level: "partial", adapter: "dbt-sail", url: "https://docs.lakesail.com/sail/main/guide/integrations/dbt.html",
-    note: `An adapter exists, but it failed when tried, so it is not used. dbt-sail installs full PySpark with its jars, and it conflicts with <code>pyspark-client</code>: you ship Spark to avoid Spark. <a href="${DBT_MEDALLION}/blob/main/docs/candidate-engines.md">Details</a>` },
-  { engine: "databend_iceberg", level: "partial", adapter: "dbt-databend", url: "https://github.com/databendcloud/dbt-databend",
-    note: "An adapter exists, with incremental models, but it targets Databend's own tables and has not changed since May 2024. Not tried on an Iceberg catalog." },
-  { engine: "chdb_iceberg", level: "none", adapter: "", url: "",
-    note: "No adapter. dbt-clickhouse needs a ClickHouse server; chDB runs inside Python." },
-  { engine: "daft_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
-  { engine: "pandas_iceberg", level: "none", adapter: "", url: "", note: "No adapter." },
-];
-
-
-// THE FILE NAME AND MERGE OPTIONS each engine has, for the Real workload tab's engines with no leg yet: the file
-// name column is what each engine's ETL module reads (bench/etl/engines); MERGE is the Iceberg support tab for
-// the engines it probes and the dbt adapter for the others, and for Polars, whose grid cell is na (no DML:
-// dbt-polars merges through pyiceberg); tests/test_results_page.py keeps the two in step. Every engine in
-// LABEL has a row, and this list is the tab's row set.
-const WORKLOAD_ROWS = [
-  { engine: "pyspark_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
-    merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
-  { engine: "trino_iceberg", file: { ok: true, note: "<code>\"$path\"</code>" },
-    merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/trino-configs">dbt-trino</a>` } },
-  { engine: "pyspark_gluten_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
-    merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
-  { engine: "pandas_iceberg", file: { ok: null, note: "No option; set per file" },
-    merge: { ok: false, note: "No Iceberg writer" } },
-  { engine: "duckdb_iceberg", file: { ok: true, note: "<code>filename</code>" },
-    merge: { ok: true, note: "" } },
-  { engine: "starrocks_iceberg", file: { ok: false, note: `<code>FILES()</code> has no path column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>)` },
-    merge: { ok: false, note: "dbt-starrocks has no merge" } },
-  { engine: "databend_iceberg", file: { ok: true, note: "<code>METADATA$FILENAME</code>" },
-    merge: { ok: false, note: "Iceberg tables take no MERGE" } },
-  { engine: "polars_iceberg", file: { ok: true, note: "<code>include_file_paths</code>" },
-    merge: { ok: true, note: `<a href="https://github.com/datamindedbe/incubator-dbt-polars">dbt-polars</a>' <code>merge</code>, one pyiceberg commit; Polars itself has none` } },
-  { engine: "lakesail_iceberg", file: { ok: true, note: `<code>input_file_name()</code>, on main (<a href="https://github.com/lakehq/sail/pull/2571">sail#2571</a>)` },
-    merge: { ok: true, note: "" } },
-  { engine: "chdb_iceberg", file: { ok: true, note: "<code>_file</code>" },
-    merge: { ok: false, note: "" } },
-  { engine: "daft_iceberg", file: { ok: true, note: "<code>file_path_column</code>" },
-    merge: { ok: false, note: "<code>write_iceberg</code> appends or overwrites" } },
-];
-
-// The dbt 1 part as Yes (true), Partial (null) or No (false).
-const dbtOk = engine => {
-  const level = DBT_ROWS.find(d => d.engine === engine).level;
-  return ["excellent", "good"].includes(level) ? true : level === "partial" ? null : false;
-};
-
 // THE FUTURE TAB: what is coming for single-node engines that I am excited about, most important first. Things on the way, not bugs:
 // those are on the Issues tab. Each card is checked against its upstream project before it goes here.
 const NEXT_ROWS = [
@@ -1115,137 +1060,110 @@ function playOverview() {
 }
 function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.timer = null; }
 
-// THE REAL WORKLOAD TAB: one real dbt project, run on every engine that has a leg, read from
-// docs/data/workload.json (written by .github/scripts/workload_publish.py, workload.yml). The project is
-// fabric-dbt-examples' AEMO pipeline (vendored as workload/): CSV files in, incremental models with MERGE,
-// Iceberg tables out. The bar to clear, the MVP, is three things: dbt runs the whole project and its tests,
-// every row keeps its source file name, the tables are Iceberg. Same result (against the Spark leg) and the
-// build time are shown, the time as a bonus. An engine with no leg yet shows its dbt adapter (DBT_ROWS),
-// its file-name option (WORKLOAD_ROWS) and its Light ETL Iceberg write, and is marked not run.
+// THE REAL WORKLOAD TAB: the arc's last step. Benchmarks measure speed; in real life you run SQL orchestrated
+// by dbt, and it has to work. One real dbt project (fabric-dbt-examples' AEMO pipeline, vendored as workload/)
+// runs on every engine with a leg in workload.yml, and this tab reads the latest run, docs/data/workload.json
+// (.github/scripts/workload_publish.py): a card per engine (it runs or it does not; the build time is a
+// bonus), the project's DAG as dbt itself published it (target/manifest.json), with each model's time on each
+// engine, and whether they all gave the same answer. An engine without a leg is not shown.
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
+const DBT_MEDALLION = "https://github.com/djouallah/fabric-dbt-examples";
 const WORKLOAD_CODE = "https://github.com/djouallah/lakehouse_benchmark/tree/main/workload";
-const realLeg = e => data.workload?.legs?.[e];
-const realOk = e => realLeg(e)?.status === "success";
-function dbtCell(e) {
-  const l = realLeg(e);
-  if (l) return realOk(e) ? { ok: true, text: `${l.models_ok}/${l.models} models, ${l.tests_ok}/${l.tests} tests` }
-    : { ok: false, text: "failed" };
-  const d = DBT_ROWS.find(r => r.engine === e);
-  if (!d.adapter) return { ok: false, text: "no adapter" };
-  // The adapter's note is the tooltip; the cell stays one line.
-  return d.level === "partial" ? { ok: null, text: `${esc(d.adapter)}, partial` }
-    : { ok: "na", text: `${esc(d.adapter)}, not run yet` };
+
+// The DAG's layout: a column per depth (the longest path from a model with no parent), the models of a column
+// stacked in name order and centred, an edge from the right of a parent to the left of its child.
+function dagLayout(dag) {
+  const depth = {}, d = n => depth[n] ??= dag[n].parents.length ? 1 + Math.max(...dag[n].parents.map(d)) : 0;
+  const names = Object.keys(dag).sort();
+  names.forEach(d);
+  const cols = Math.max(...Object.values(depth)) + 1;
+  const byCol = Array.from({ length: cols }, (_, c) => names.filter(n => depth[n] === c));
+  const W = 1100, NW = 236, NH = 76, GAP = 16, rows = Math.max(...byCol.map(c => c.length));
+  const H = rows * (NH + GAP) - GAP, pos = {};
+  byCol.forEach((col, c) => {
+    const top = (H - (col.length * (NH + GAP) - GAP)) / 2;
+    col.forEach((n, i) => { pos[n] = { x: cols > 1 ? c * (W - NW) / (cols - 1) : 0, y: top + i * (NH + GAP) }; });
+  });
+  return { W, H, NW, NH, pos };
 }
-function fileCell(e) {
-  if (realLeg(e)) return realOk(e) ? { ok: true, text: "<code>file</code> on every fact row" } : { ok: false, text: "not reached" };
-  const w = WORKLOAD_ROWS.find(r => r.engine === e).file;
-  return { ok: w.ok, text: w.note || (w.ok === false ? "no" : "yes") };
-}
-function icebergCell(e) {
-  if (realLeg(e)) return realOk(e) ? { ok: true, text: "every model" } : { ok: false, text: "not reached" };
-  const etl = SUITES.find(s => s.id === "etl"), item = data.etl?.[etl.headline]?.find(i => i.engine === e);
-  if (!item) return { ok: "na", text: "not run" };
-  return item.failed ? { ok: false, text: "Light ETL failed" } : { ok: true, text: "in the Light ETL" };
-}
-function sameCell(e) {
-  const w = data.workload, l = realLeg(e);
-  if (!l) return { ok: "na", text: "not run" };
-  if (!realOk(e)) return { ok: false, text: "no result" };
-  if (e === w.baseline) return { ok: true, text: "the baseline" };
-  const off = Math.max(0, ...Object.values(l.diff));
-  return l.same_rows && off <= w.rel_tol ? { ok: true, text: `same rows, sums ±${off.toExponential(1)}` }
-    : { ok: false, text: l.same_rows ? `sums off ${off.toExponential(1)}` : "different rows" };
-}
-function speedCell(e) {
-  if (!realOk(e)) return { ok: "na", text: realLeg(e) ? "no result" : "not run" };
-  const times = Object.keys(data.workload.legs).filter(realOk).map(x => realLeg(x).build_seconds);
-  const s = realLeg(e).build_seconds, best = Math.min(...times);
-  return { ok: true, text: `${fmt(s)} · ${s === best ? "fastest" : ratio(s / best)}` };
-}
-const mvp = e => [dbtCell, fileCell, icebergCell].every(c => c(e).ok === true);
-function realTip(e) {
-  const l = realLeg(e), d = DBT_ROWS.find(r => r.engine === e);
-  if (!l) return `<div class="k">dbt</div><div>${d.adapter ? `<a href="${d.url}">${esc(d.adapter)}</a>. ` : ""}${d.note}</div>`;
-  const v = Object.entries(l.versions).filter(([, x]) => x).map(([k, x]) => `${esc(k)} ${esc(x)}`).join(", ");
-  return `<div class="k">Target</div><div>workload/models/aemo/${esc(l.target)}</div>
-    <div class="k">Versions</div><div>${v}</div>
-    ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}</div>` : ""}
-    <div class="k">dbt</div><div>${d.note}</div>`;
-}
-const REAL_NOTE = `<div>One dbt project, the AEMO pipeline from <a href="${DBT_MEDALLION}">fabric-dbt-examples</a>: CSV files
-  from OneLake, incremental models with MERGE, Iceberg tables out, run the same way on every engine.</div>
-  <div class="k">The bar is the first three columns. Same result is checked against the Spark leg; the time is a bonus.</div>`;
-const REAL_COLS = [
-  { id: "dbt", title: "Runs the dbt project", cell: dbtCell, tip: true,
-    note: "<div>dbt build: every model and every test of the project, incremental, MERGE included.</div>" },
-  { id: "file", title: "Source file name", cell: fileCell,
-    note: "<div>Each fact row keeps the CSV it came from; the incremental models pick their new files by it.</div>" },
-  { id: "iceberg", title: "Writes Iceberg", cell: icebergCell,
-    note: "<div>Every table through the OneLake Iceberg catalog. Without a leg, the Light ETL's write.</div>" },
-  { id: "same", title: "Same result", cell: sameCell,
-    note: `<div>fct_summary against the Spark leg: the same rows, and the money sums within 1e-7. The last decimal
-      differs on ties (<a href="https://github.com/pola-rs/polars/issues/30074">Polars</a>,
-      <a href="https://github.com/duckdb/duckdb/issues/27503">DuckDB</a>).</div>` },
-  { id: "speed", title: "Build time (bonus)", cell: speedCell,
-    note: "<div>The whole dbt build, one run, on the same 16 GB runner.</div>" },
-];
 
 function renderRealWorkload() {
-  const sec = $(REAL_WORKLOAD.id);
+  const sec = $(REAL_WORKLOAD.id), w = data.workload;
   if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
-  const w = data.workload;
-  const engines = WORKLOAD_ROWS.map(r => r.engine);
-  const cells = Object.fromEntries(engines.map(e => [e, REAL_COLS.map(c => c.cell(e))]));
-  const ran = engines.filter(realLeg);
-  const reports = data.reports?.items.filter(i => i.author === data.reports.reporter && i.kind === "issue").length;
-  // Clear the bar first, fastest build first; then the engines with an adapter not run yet, partial, none;
-  // within those, the Light ETL time.
-  const rank = e => mvp(e) ? 0 : ({ na: 1, true: 1, null: 2, false: 3 })[String(cells[e][0].ok)];
-  const time = e => realOk(e) ? realLeg(e).build_seconds : Infinity;
-  const etl = SUITES.find(s => s.id === "etl");
-  const etlMean = e => { const i = data.etl?.[etl.headline]?.find(x => x.engine === e); return i && !i.failed ? i.mean : Infinity; };
-  const order = [...engines].sort((a, b) => rank(a) - rank(b) || time(a) - time(b) || etlMean(a) - etlMean(b));
-  const passed = order.filter(mvp);
-  const tiles = [
-    [engines.length, "engines, one 16 GB machine"],
-    [ran.length, "run on the real workload"],
-    [passed.length, "clear the bar"],
-    ...(reports ? [[reports, "bug reports filed upstream"]] : []),
-  ];
-  const verdict = w ? `The bar: dbt runs the whole project, every row keeps its source file name, the tables are Iceberg.
-    ${passed.length ? `Cleared by ${passed.map(e => `<b>${esc(LABEL[e] ?? e)}</b>`).join(", ")}. ` : ""}Speed is a bonus.
-    <a href="${w.run_url}">Run ${w.run_id}</a>, ${w.finished.slice(0, 10)}.` : "No run yet.";
-  const mark = (c, e, col) => {
-    const cls = c.ok === true ? "excellent" : c.ok === false ? "none" : c.ok === null ? "partial" : "na";
-    return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${c.text}</td>`;
-  };
-  sec.innerHTML = `
-    <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
-    <p class="verdict">${verdict}</p>
-    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run yet</span>
-      <span class="hint">Click a column for what it checks; hover the first for the stack.</span></div>
-    <div class="wrap"><table><thead><tr><th><a href="${WORKLOAD_CODE}" data-note="project">Engine</a></th>${REAL_COLS.map(c => `<th><a href="${WORKLOAD_CODE}" data-note="${c.id}">${esc(c.title)}</a></th>`).join("")}</tr></thead>
-    <tbody>${order.map(e => `
-      <tr style="--c: var(--${e}, var(--ink-3))">
-        <td class="e"><i class="sw"></i>${esc(LABEL[e] ?? e)}</td>
-        ${cells[e].map((c, i) => mark(c, e, REAL_COLS[i])).join("")}
-      </tr>`).join("")}</tbody></table></div>`;
-  for (const a of sec.querySelectorAll("th a[data-note]")) {
-    const col = REAL_COLS.find(c => c.id === a.dataset.note);
-    noteTip(a, col ? esc(col.title) : "The real workload", col ? col.note : REAL_NOTE);
+  if (!w) { sec.innerHTML = `<div class="empty">No run yet.</div>`; return; }
+  const ok = e => w.legs[e].status === "success";
+  const engines = Object.keys(w.legs).sort((a, b) => (ok(b) - ok(a)) || w.legs[a].build_seconds - w.legs[b].build_seconds);
+  const runs = engines.filter(ok), slowest = Math.max(...runs.map(e => w.legs[e].build_seconds));
+  const first = w.legs[runs[0] ?? engines[0]], models = Object.keys(w.dag ?? {}).length || first.models;
+  const cards = engines.map(e => {
+    const l = w.legs[e];
+    return `<div class="card${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
+      <div class="n"><i class="sw"></i>${esc(LABEL[e] ?? e)}</div>
+      <div class="v">${ok(e) ? "✓ runs" : "✗ does not run"}</div>
+      <div class="ad">${esc(l.adapter ?? "")}</div>
+      ${ok(e) ? `<div class="t"><span>${fmt(l.build_seconds)}</span><i class="bar" style="width: ${(100 * l.build_seconds / slowest).toFixed(1)}%"></i></div>` : ""}
+    </div>`;
+  }).join("");
+
+  let dag = "";
+  if (w.dag && Object.keys(w.dag).length) {
+    const { W, H, NW, NH, pos } = dagLayout(w.dag);
+    const most = Math.max(...runs.flatMap(e => Object.values(w.legs[e].model_seconds ?? {})), 1);
+    const edges = Object.entries(w.dag).flatMap(([n, m]) => m.parents.map(p => {
+      const a = pos[p], b = pos[n], x1 = a.x + NW, y1 = a.y + NH / 2, x2 = b.x, y2 = b.y + NH / 2, k = (x2 - x1) / 2;
+      return `<path class="edge" d="M${x1},${y1} C${x1 + k},${y1} ${x2 - k},${y2} ${x2},${y2}"/>`;
+    })).join("");
+    const nodes = Object.entries(w.dag).map(([n, m]) => {
+      const { x, y } = pos[n];
+      const bars = runs.map((e, i) => {
+        const s = w.legs[e].model_seconds?.[n] ?? 0;
+        return `<rect class="b" x="${x + 12}" y="${y + 40 + i * 8}" width="${Math.max(2, (NW - 24) * s / most).toFixed(1)}" height="5" rx="2"
+          style="fill: var(--${e}, var(--ink-3))"/>`;
+      }).join("");
+      return `<g class="node" data-model="${n}"><rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="10"/>
+        <text class="nm" x="${x + 12}" y="${y + 20}">${esc(n)}</text>
+        <text class="mt" x="${x + NW - 12}" y="${y + 20}" text-anchor="end">${esc(m.materialized)}</text>${bars}</g>`;
+    }).join("");
+    dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
-  for (const td of sec.querySelectorAll("td[data-tip]")) {
-    const e = td.dataset.tip;
-    td.onmouseenter = () => {
-      tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
-      tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>${realTip(e)}`;
-      const r = td.getBoundingClientRect();
+
+  const n = runs.length, off = Math.max(0, ...runs.flatMap(e => Object.values(w.legs[e].diff ?? {})));
+  const answer = w.parity_ok
+    ? `Same answer on all ${n}: <code>fct_summary</code> has ${first.rows.toLocaleString()} rows on each, and the money sums agree
+      within ${off.toExponential(0)}; the last decimal differs on ties (<a href="https://github.com/pola-rs/polars/issues/30074">Polars #30074</a>,
+      <a href="https://github.com/duckdb/duckdb/issues/27503">DuckDB #27503</a>).`
+    : "The engines did not all give the same answer.";
+  sec.innerHTML = `
+    <p class="arc">Benchmarks measure speed. In real life you run SQL orchestrated by dbt, and it has to work.</p>
+    <p class="proj">One real project, the AEMO pipeline from <a href="${DBT_MEDALLION}">fabric-dbt-examples</a>
+      (<a href="${WORKLOAD_CODE}">the code</a>): CSV files in OneLake, ${models} models, incremental with <code>MERGE</code>,
+      ${first.tests} tests, Iceberg tables out. ${n} of ${engines.length} engines run it:</p>
+    <div class="cards">${cards}</div>
+    ${dag}
+    <p class="answer">${answer} <a href="${w.run_url}">Run ${w.run_id}</a>, ${w.finished.slice(0, 10)}. Bars: each model's time on each engine.</p>`;
+
+  for (const el of sec.querySelectorAll(".card[data-tip], .node")) {
+    el.onmouseenter = () => {
+      const e = el.dataset.tip, m = el.dataset.model;
+      if (e) {
+        const l = w.legs[e];
+        tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
+        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>
+          <div class="k">Stack</div><div>${Object.entries(l.versions).filter(([, v]) => v).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(", ")}</div>
+          <div class="k">dbt build</div><div>${l.models_ok}/${l.models} models, ${l.tests_ok}/${l.tests} tests</div>
+          ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}</div>` : ""}`;
+      } else {
+        tip.style.setProperty("--c", "var(--ink-3)");
+        tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => `<div class="k"><span class="sw" style="background: var(--${x})"></span>
+          ${esc(LABEL[x] ?? x)}</div><div>${fmt(w.legs[x].model_seconds?.[m] ?? 0)}</div>`).join("");
+      }
+      const r = el.getBoundingClientRect();
       moveTip(r.left + r.width / 2, r.top);
       tip.classList.add("on");
     };
-    td.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
-    td.onmouseleave = hideTip;
+    el.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+    el.onmouseleave = hideTip;
   }
 }
 
