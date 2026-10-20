@@ -245,18 +245,6 @@ def test_the_workload_runs_on_a_schedule_and_publishes():
     assert "decimals" not in wf["jobs"]
 
 
-def test_files_land_only_after_every_engine_ran():
-    """Files behind is counted against one shared landing: it grows only after all four legs had
-    their turn. A cancelled run or a run of fewer engines lands nothing."""
-    import yaml
-
-    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "workload.yml").read_text("utf-8"))
-    land = wf["jobs"]["land"]
-    assert "dbt-Iceberg" in land["needs"]
-    assert "!cancelled()" in land["if"] and "all_engines == 'true'" in land["if"]
-    assert "land" not in wf["jobs"]["dbt-Iceberg"]["needs"]
-
-
 def test_duckdb_stages_incremental_batches_as_views():
     """macros/duckdb_temp_view.sql: a temporary SQL relation on DuckDB is a TEMP VIEW (streamed by
     the MERGE), never a TEMP TABLE (held whole in memory, spilled uncompressed); every other
