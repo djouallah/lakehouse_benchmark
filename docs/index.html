@@ -488,7 +488,7 @@ main .tiles > a { color: inherit; }
       (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
     <p>Benchmarks are useful, but in real life an agent writes SQL, dbt runs it, and the engine is just the tool
       that moves the data from A to B. Expect the tool to change from job to job; what matters is that it works.
-      One real dbt project runs on DuckDB, Trino, Polars and Gluten/Velox; speed is a bonus
+      One real dbt project runs on DuckDB, Trino, Polars and Gluten/Velox. Coverage first, speed second
       (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
@@ -1163,7 +1163,7 @@ function renderRealWorkload() {
       <a href="https://github.com/duckdb/duckdb/issues/27503">DuckDB #27503</a>).`
     : "The engines did not all give the same answer.";
   sec.innerHTML = `
-    <p class="arc">Benchmarks measure speed. In real life an agent writes SQL, dbt runs it, and the engine is just the tool that moves the data from A to B; the choice will vary. What matters is that it works.</p>
+    <p class="arc">Coverage first, speed second. Spark and Trino have been boring for years. DuckDB and Polars just got there, on a 16 GB machine.</p>
     <p class="proj">One real dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
       ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out${total ? ` (${total.toLocaleString()} rows)` : ""}.
       ${n} of ${engines.length} engines run it:</p>
