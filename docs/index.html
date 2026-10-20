@@ -465,8 +465,10 @@ main .tiles > a { color: inherit; }
       no memory limit kills the machine, and there is no error to read.</p>
     <p>The best query is the one that does the least work: skip the files the query cannot need
       (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
-    <p>Benchmarks are useful, but in real life you run SQL orchestrated by dbt, and it has to work. One real dbt
-      project runs on DuckDB, Trino, Polars and Gluten/Velox; speed is a bonus (<a href="#workload">Real workload</a>).</p>
+    <p>Benchmarks are useful, but in real life an agent writes SQL, dbt runs it, and the engine is just the tool
+      that moves the data from A to B. Expect the tool to change from job to job; what matters is that it works.
+      One real dbt project runs on DuckDB, Trino, Polars and Gluten/Velox; speed is a bonus
+      (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
       That is the best help a user can give. It does not need a pull request: the people who know the code write
@@ -1135,7 +1137,7 @@ function renderRealWorkload() {
       <a href="https://github.com/duckdb/duckdb/issues/27503">DuckDB #27503</a>).`
     : "The engines did not all give the same answer.";
   sec.innerHTML = `
-    <p class="arc">Benchmarks measure speed. In real life you run SQL orchestrated by dbt, and it has to work.</p>
+    <p class="arc">Benchmarks measure speed. In real life an agent writes SQL, dbt runs it, and the engine is just the tool that moves the data from A to B; the choice will vary. What matters is that it works.</p>
     <p class="proj">One real project, the AEMO pipeline from <a href="${DBT_MEDALLION}">fabric-dbt-examples</a>
       (<a href="${WORKLOAD_CODE}">the code</a>): CSV files in OneLake, ${models} models, incremental with <code>MERGE</code>,
       ${first.tests} tests, Iceberg tables out. ${n} of ${engines.length} engines run it:</p>
