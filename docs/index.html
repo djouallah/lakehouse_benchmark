@@ -300,6 +300,7 @@ main .tiles > a { color: inherit; }
 .rw .card .v { color: var(--yes); font-weight: 700; font-size: 14px; margin-top: 2px; }
 .rw .card.fail .v { color: var(--no); }
 .rw .card .ad { color: var(--ink-3); font-size: 12px; }
+.rw .card .m { color: var(--ink-3); font-size: 12px; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .rw .card .t { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
 .rw .card .t .bar { display: block; height: 6px; border-radius: 3px; background: var(--c); }
 .rw svg.dag { display: block; width: 100%; height: auto; max-height: 52vh; margin: 18px 0 6px; }
@@ -1131,6 +1132,7 @@ function renderRealWorkload() {
       <div class="v">${ok(e) ? "✓ runs" : "✗ does not run"}</div>
       <div class="ad">${esc(l.adapter ?? "")}</div>
       ${ok(e) ? `<div class="t"><span>${fmt(l.build_seconds)}</span><i class="bar" style="width: ${(100 * l.build_seconds / slowest).toFixed(1)}%"></i></div>` : ""}
+      ${l.peak_rss_mb ? `<div class="m">peak RSS ${(l.peak_rss_mb / 1024).toFixed(1)} GB</div>` : ""}
     </div>`;
   }).join("");
 

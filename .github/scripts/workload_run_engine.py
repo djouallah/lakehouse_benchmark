@@ -22,9 +22,11 @@ learned that one as dbt_in_fabric.py).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from datetime import UTC, datetime
@@ -123,6 +125,63 @@ def start_trino(cfg: WorkloadConfig, token: str) -> str:
         return f"{trino.version(conn)} ({trino.IMAGE})"
     finally:
         conn.close()
+
+
+class PeakRss:
+    """Peak resident memory of the leg while dbt runs: this process and its children (dbt, the
+    engine in-process, Spark's JVM) plus, on Trino, the server's processes in its container --
+    sampled twice a second, summed, the maximum kept. A leg the runner kills records nothing."""
+
+    def __init__(self, engine: str):
+        import threading
+
+        self.peak = 0
+        self._stop = threading.Event()
+        self._roots = [os.getpid()]
+        if engine == "trino":
+            from bench import trino
+
+            pid = subprocess.run(
+                ["docker", "inspect", "-f", "{{.State.Pid}}", trino.CONTAINER],
+                capture_output=True,
+                text=True,
+                check=False,
+            ).stdout.strip()
+            if pid.isdigit() and int(pid) > 0:
+                self._roots.append(int(pid))
+        self._thread = threading.Thread(target=self._sample, daemon=True)
+
+    def _rss(self) -> int:
+        import psutil
+
+        total = 0
+        for root in self._roots:
+            try:
+                proc = psutil.Process(root)
+                procs = [proc, *proc.children(recursive=True)]
+            except psutil.Error:
+                continue
+            for p in procs:
+                with contextlib.suppress(psutil.Error):
+                    total += p.memory_info().rss
+        return total
+
+    def _sample(self) -> None:
+        while not self._stop.wait(0.5):
+            self.peak = max(self.peak, self._rss())
+
+    def __enter__(self) -> PeakRss:
+        self.peak = self._rss()
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self._stop.set()
+        self._thread.join()
+
+    @property
+    def mb(self) -> int:
+        return round(self.peak / 2**20)
 
 
 class Dbt:
@@ -256,8 +315,11 @@ def main(parts: Path) -> int:
         os.chdir(PROJECT)
         dbt = Dbt(engine)
 
-        ok, build_s = dbt.run("build")
+        with PeakRss(engine) as rss:
+            ok, build_s = dbt.run("build")
         part["build_seconds"] = round(build_s, 3)
+        part["peak_rss_mb"] = rss.mb
+        scrub.safe_print(f"{engine}: peak RSS {rss.mb:,} MB during dbt build")
         part["nodes"] = node_timings()
         if not ok and (PROJECT / "target" / "run_results.json").exists():
             part["first_error"] = dbt.last_error

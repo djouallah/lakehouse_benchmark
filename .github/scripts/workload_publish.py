@@ -107,6 +107,7 @@ def page_data(legs: dict[str, dict], grade: dict) -> dict:
             "target": engine,
             "status": leg["status"],
             "build_seconds": leg.get("build_seconds"),
+            "peak_rss_mb": leg.get("peak_rss_mb"),
             **counts(leg),
             "rows": fp.get("rows_total"),
             "same_rows": bool(base and fp and fp.get("rows_total") == base.get("rows_total")),
@@ -126,14 +127,16 @@ def summary(legs: dict[str, dict], grade: dict) -> str:
     lines = [
         "## dbt workload (Iceberg)",
         "",
-        "| leg | status | build s | models ok | tests ok | fct_summary rows | mw_sum | price_sum |",
-        "|---|---|---:|---:|---:|---:|---:|---:|",
+        "| leg | status | build s | peak RSS MB | models ok | tests ok | fct_summary rows | mw_sum "
+        "| price_sum |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
         c = counts(leg)
         fp = leg.get("fingerprint") or {}
         lines.append(
             f"| {engine} | {leg['status']} | {leg.get('build_seconds', '')} "
+            f"| {leg.get('peak_rss_mb', '')} "
             f"| {c['models_ok']}/{c['models']} | {c['tests_ok']}/{c['tests']} "
             f"| {fp.get('rows_total', '')} | {fp.get('mw_sum', '')} | {fp.get('price_sum', '')} |"
         )
