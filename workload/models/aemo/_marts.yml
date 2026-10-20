@@ -2,6 +2,12 @@ version: 2
 
 models:
   - name: fct_price
+    config:
+      meta:
+        differences:
+          - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
+          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
     description: AEMO DREGION record from the daily archive files — all 130 source columns.
     columns:
       - name: REGIONID
@@ -31,6 +37,12 @@ models:
           - not_null
 
   - name: fct_scada
+    config:
+      meta:
+        differences:
+          - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
+          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
     description: AEMO DUNIT record from the daily archive files — all 53 source columns.
     columns:
       - name: DUID
@@ -58,6 +70,12 @@ models:
           - not_null
 
   - name: fct_price_today
+    config:
+      meta:
+        differences:
+          - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
+          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
     description: Intraday DISPATCHIS regional prices, landed every 5 minutes.
     columns:
       - name: REGIONID
@@ -80,6 +98,13 @@ models:
           - not_null
 
   - name: fct_scada_today
+    config:
+      meta:
+        differences:
+          - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
+          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          - "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
     description: Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.
     columns:
       - name: DUID
@@ -105,6 +130,13 @@ models:
           - not_null
 
   - name: fct_summary
+    config:
+      meta:
+        differences:
+          - "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else."
+          - "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`."
+          - "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark."
+          - "Merge on (date, time, DUID) on every engine."
     description: >
       THE GOLD TABLE, and the one every engine is compared on. One row per
       (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt

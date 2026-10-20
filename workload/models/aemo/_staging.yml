@@ -8,6 +8,11 @@ version: 2
 
 models:
   - name: stg_csv_archive_log
+    config:
+      meta:
+        differences:
+          - "A view on DuckDB, in its in-memory catalog: the OneLake Iceberg catalog has no `CREATE VIEW`. The other engines rebuild a table every run."
+          - "Reading the parquet log: `read_parquet()` on DuckDB and Polars; a `USING parquet` temp view on Spark (for `parquet.`path``, OneLake answers the catalog lookup with 400); a Hive external table on Trino."
     description: >
       One row per source file landed by download_aemo.py, read from
       csv_raw_archive_log.parquet. Every engine reads the SAME parquet file, which is what

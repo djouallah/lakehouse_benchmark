@@ -152,7 +152,16 @@ def test_page_data_carries_the_dag_and_each_legs_models():
             "dbt-duckdb",
             {
                 "stg": {"materialized": "view", "parents": []},
-                "fct": {"materialized": "incremental", "parents": ["stg"]},
+                "fct": {
+                    "materialized": "incremental",
+                    "parents": ["stg"],
+                    "strategy": "merge",
+                    "merge_clauses": True,
+                    "path": "models/aemo/duckdb/marts/fct.sql",
+                    "sql_lines": 40,
+                    "description": "A fact.",
+                    "differences": ["`GROUP BY ALL` here."],
+                },
             },
         ),
     }
@@ -163,3 +172,20 @@ def test_page_data_carries_the_dag_and_each_legs_models():
     assert out["legs"]["duckdb_iceberg"]["model_seconds"] == {"stg": 1.5, "fct": 4.0}
     assert out["legs"]["duckdb_iceberg"]["models"] == 2  # the count, not the seconds
     assert out["parity_ok"]
+    assert out["dag"]["fct"]["differences"] == ["`GROUP BY ALL` here."]
+    assert out["legs"]["duckdb_iceberg"]["model_config"]["fct"]["strategy"] == "merge"
+    assert out["legs"]["duckdb_iceberg"]["model_config"]["fct"]["sql_lines"] == 40
+
+
+def test_every_model_says_where_the_engines_sql_differs():
+    """The Real workload panel reads each model's meta.differences from the shared patch files."""
+    import yaml
+
+    names = set()
+    for patch in ("_staging", "_dimensions", "_marts"):
+        doc = yaml.safe_load((PROJECT / "models" / "aemo" / f"{patch}.yml").read_text("utf-8"))
+        for model in doc["models"]:
+            names.add(model["name"])
+            assert model["config"]["meta"]["differences"], model["name"]
+    trees = {p.stem for p in (PROJECT / "models" / "aemo" / "duckdb").rglob("*.sql")}
+    assert names == trees

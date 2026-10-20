@@ -312,6 +312,26 @@ main .tiles > a { color: inherit; }
 .rw .dag .mt { font-size: 11px; fill: var(--ink-3); }
 .rw .dag .rc { font-size: 13px; font-weight: 700; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
 .rw .answer { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; }
+.rw .dag .node { cursor: pointer; }
+.rw a, .rw-panel a { color: var(--accent); }
+.rw-panel { position: fixed; z-index: 40; width: min(600px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: auto;
+  padding: 14px 16px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: var(--ink);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .18); font-size: 13px; }
+.rw-panel .x { position: absolute; top: 8px; right: 10px; border: 0; background: none; color: var(--ink-3); font-size: 15px; cursor: pointer; }
+.rw-panel .h { display: flex; align-items: baseline; gap: 12px; padding-right: 22px; }
+.rw-panel .h b { font-size: 16px; }
+.rw-panel .h span { color: var(--ink-2); }
+.rw-panel .ok { color: var(--yes); }
+.rw-panel .bad { color: var(--no); }
+.rw-panel .d { margin: 6px 0 10px; color: var(--ink-2); }
+.rw-panel table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.rw-panel th { text-align: left; font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; padding: 0 8px 4px 0; }
+.rw-panel td { padding: 4px 8px 4px 0; border-top: 1px solid var(--grid); white-space: nowrap; }
+.rw-panel .n { text-align: right; }
+.rw-panel .sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; background: var(--c); }
+.rw-panel h4 { margin: 12px 0 4px; font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+.rw-panel ul { margin: 0; padding-left: 18px; }
+.rw-panel li { margin: 3px 0; line-height: 1.45; }
 /* Bug reports: one dot per report, per engine. */
 .rp .intro { font-size: 15px; color: var(--ink); margin: 12px 0 0; }
 
@@ -1167,7 +1187,7 @@ function renderRealWorkload() {
           const rows = w.legs[x].model_rows?.[m];
           return `<div class="k"><span class="sw" style="background: var(--${x})"></span>${esc(LABEL[x] ?? x)}</div>
             <div>${fmt(w.legs[x].model_seconds?.[m] ?? 0)}${rows != null ? ` · ${rows.toLocaleString()} rows` : ""}</div>`;
-        }).join("");
+        }).join("") + `<div class="k"></div><div>Click for how each engine builds it.</div>`;
       }
       const r = el.getBoundingClientRect();
       moveTip(r.left + r.width / 2, r.top);
@@ -1176,7 +1196,56 @@ function renderRealWorkload() {
     el.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
     el.onmouseleave = hideTip;
   }
+  for (const el of sec.querySelectorAll(".node")) {
+    el.onclick = ev => { ev.stopPropagation(); hideTip(); openModel(w, runs, el.dataset.model, el.getBoundingClientRect()); };
+  }
 }
+
+// A DAG model, clicked: how each engine builds it (from each leg's own dbt manifest) and where their SQL
+// differs (the model's meta.differences in workload/models/aemo/_*.yml). Pinned until Esc, ✕ or a click
+// elsewhere; placed beside the node and kept inside the viewport.
+const WORKLOAD_BLOB = "https://github.com/djouallah/lakehouse_benchmark/blob/main/workload/";
+const mdLine = s => esc(s).replace(/\[([^\]]+)\]\((https:[^)\s]+)\)/g, '<a href="$2">$1</a>').replace(/`([^`]+)`/g, "<code>$1</code>");
+function strategyOf(c) {
+  if (!c) return "";
+  if (c.materialized !== "incremental") return c.materialized === "table" ? "full rebuild" : c.materialized;
+  if (c.strategy === "merge") return c.merge_clauses ? "merge, insert-only" : "merge, update";
+  return c.strategy || "incremental";
+}
+function closeModel() { $("rw-panel")?.remove(); }
+function openModel(w, runs, n, at) {
+  closeModel();
+  const m = w.dag[n], rows = runs.map(e => w.legs[e].model_rows?.[n]);
+  const same = rows.length && rows.every(r => r != null && r === rows[0]);
+  const head = rows[0] == null ? "" : same ? `${rows[0].toLocaleString()} rows on all ${runs.length} <b class="ok">✓</b>`
+    : `<b class="bad">row counts differ</b>`;
+  const lines = runs.map(e => {
+    const l = w.legs[e], c = l.model_config?.[n], r = l.model_rows?.[n];
+    const sql = c?.path ? `<a href="${WORKLOAD_BLOB}${c.path}">${c.sql_lines} lines ↗</a>` : "";
+    return `<tr style="--c: var(--${e}, var(--ink-3))"><td><i class="sw"></i>${esc(LABEL[e] ?? e)}</td>
+      <td>${esc(strategyOf(c))}</td><td class="n">${fmt(l.model_seconds?.[n] ?? 0)}</td>
+      ${same ? "" : `<td class="n">${r == null ? "–" : r.toLocaleString()}</td>`}<td class="n">${sql}</td></tr>`;
+  }).join("");
+  const diffs = m.differences?.length ? `<h4>Where the SQL differs</h4><ul>${m.differences.map(d => `<li>${mdLine(d)}</li>`).join("")}</ul>` : "";
+  const p = document.createElement("div");
+  p.id = "rw-panel";
+  p.className = "rw-panel";
+  p.innerHTML = `<button class="x" aria-label="Close">✕</button>
+    <div class="h"><b>${esc(n)}</b><span>${head}</span></div>
+    ${m.description ? `<p class="d">${esc(m.description)}</p>` : ""}
+    <table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Time</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
+    <tbody>${lines}</tbody></table>${diffs}`;
+  document.body.append(p);
+  const pw = p.offsetWidth, ph = p.offsetHeight, gap = 12;
+  const left = at.right + gap + pw <= innerWidth ? at.right + gap : Math.max(8, at.left - gap - pw);
+  p.style.left = `${Math.min(left, innerWidth - pw - 8)}px`;
+  p.style.top = `${Math.max(8, Math.min(at.top, innerHeight - ph - 8))}px`;
+  p.querySelector(".x").onclick = closeModel;
+  p.onclick = ev => ev.stopPropagation();
+}
+addEventListener("keydown", ev => { if (ev.key === "Escape") closeModel(); });
+addEventListener("click", closeModel);
+addEventListener("hashchange", closeModel);
 
 // THE BUG REPORTS TAB: docs/data/reports.json, written by .github/scripts/reports_publish.py (reports.yml, daily)
 // from every GitHub link on the Issues tab. A report is an issue the bench opened; fixed is what GitHub says:

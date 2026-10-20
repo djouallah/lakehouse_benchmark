@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 from datetime import UTC, datetime
@@ -161,21 +162,43 @@ def node_timings() -> list[dict]:
     ]
 
 
+def sql_lines(rel_path: str) -> int:
+    """Lines of SQL in a model file, comments and blank lines left out."""
+    path = PROJECT / rel_path
+    if not path.exists():
+        return 0
+    text = re.sub(r"\{#.*?#\}", "", path.read_text(encoding="utf-8"), flags=re.S)
+    return sum(
+        1 for line in text.splitlines() if line.strip() and not line.strip().startswith("--")
+    )
+
+
 def model_dag() -> dict[str, dict]:
     """The project's DAG as dbt itself published it (target/manifest.json): every enabled model,
-    its materialization and the models it reads. The Real workload tab draws it."""
+    the models it reads, and how this leg builds it -- materialization, incremental strategy and
+    key, the model file and its size -- plus the description and the `meta.differences` notes the
+    shared patch files give it. The Real workload tab draws it and opens it on a click."""
     path = PROJECT / "target" / "manifest.json"
     if not path.exists():
         return {}
     nodes = json.loads(path.read_text(encoding="utf-8"))["nodes"]
     models = {uid: n for uid, n in nodes.items() if n["resource_type"] == "model"}
-    return {
-        n["name"]: {
-            "materialized": n["config"].get("materialized", ""),
+    out = {}
+    for n in models.values():
+        config, meta = n["config"], n["config"].get("meta") or n.get("meta") or {}
+        key = config.get("unique_key")
+        out[n["name"]] = {
+            "materialized": config.get("materialized", ""),
             "parents": sorted(models[p]["name"] for p in n["depends_on"]["nodes"] if p in models),
+            "strategy": config.get("incremental_strategy") or "",
+            "unique_key": key if isinstance(key, list) else [key] if key else [],
+            "merge_clauses": bool(config.get("merge_clauses")),
+            "path": n["original_file_path"],
+            "sql_lines": sql_lines(n["original_file_path"]),
+            "description": (n.get("description") or "").strip(),
+            "differences": meta.get("differences", []),
         }
-        for n in models.values()
-    }
+    return out
 
 
 def main(parts: Path) -> int:

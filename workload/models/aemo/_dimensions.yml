@@ -2,6 +2,12 @@ version: 2
 
 models:
   - name: dim_duid
+    config:
+      meta:
+        differences:
+          - "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`)."
+          - "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino."
+          - "Incremental: a `merge` that only inserts new units on DuckDB, `append` on Polars, a full rebuild every run on Spark and Trino."
     description: >
       Dispatchable units: the NEM registration list plus the WA facilities list, with
       fuel/technology, participant and geo attributes.
@@ -25,6 +31,11 @@ models:
         description: Unit longitude from the geo reference CSV; null when unknown
 
   - name: dim_calendar
+    config:
+      meta:
+        differences:
+          - "The date range: `generate_series()` + `unnest` on DuckDB and Polars, `sequence()` + `explode()` on Spark, `sequence()` + `UNNEST` on Trino."
+          - "Incremental: `delete+insert` on DuckDB, `merge` on Spark and Trino, `append` on Polars."
     description: Date spine, 2018-04-01 to 2026-12-31.
     columns:
       - name: date

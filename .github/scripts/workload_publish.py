@@ -47,12 +47,26 @@ def counts(leg: dict) -> dict[str, int]:
 
 
 def dag(legs: dict[str, dict]) -> dict[str, dict]:
+    """The project's DAG: the union of the legs' edges, with each model's description and notes
+    (the shared patch files give every leg the same ones)."""
     out: dict[str, dict] = {}
     for leg in legs.values():
         for name, node in (leg.get("dag") or {}).items():
             entry = out.setdefault(name, {"materialized": node["materialized"], "parents": []})
             entry["parents"] = sorted(set(entry["parents"]) | set(node["parents"]))
+            for field in ("description", "differences"):
+                if node.get(field) and not entry.get(field):
+                    entry[field] = node[field]
     return out
+
+
+def model_config(leg: dict) -> dict[str, dict]:
+    """How this leg builds each model, from its own manifest."""
+    fields = ("materialized", "strategy", "unique_key", "merge_clauses", "path", "sql_lines")
+    return {
+        name: {f: node[f] for f in fields if f in node}
+        for name, node in (leg.get("dag") or {}).items()
+    }
 
 
 def adapter(versions: dict[str, str]) -> str:
@@ -101,6 +115,7 @@ def page_data(legs: dict[str, dict], grade: dict) -> dict:
             "adapter": adapter(leg.get("versions", {})),
             "model_seconds": model_seconds(leg),
             "model_rows": leg.get("model_rows", {}),
+            "model_config": model_config(leg),
             "error": (leg.get("error") or "")[:300],
         }
         out["legs"][BENCH_ENGINE[engine]] = entry
