@@ -5,6 +5,56 @@
   "baseline": "pyspark_gluten_iceberg",
   "rel_tol": 1e-07,
   "parity_ok": true,
+  "dag": {
+    "fct_scada_today": {
+      "materialized": "incremental",
+      "parents": [
+        "stg_csv_archive_log"
+      ]
+    },
+    "fct_price_today": {
+      "materialized": "incremental",
+      "parents": [
+        "stg_csv_archive_log"
+      ]
+    },
+    "fct_price": {
+      "materialized": "incremental",
+      "parents": [
+        "stg_csv_archive_log"
+      ]
+    },
+    "fct_scada": {
+      "materialized": "incremental",
+      "parents": [
+        "stg_csv_archive_log"
+      ]
+    },
+    "fct_summary": {
+      "materialized": "incremental",
+      "parents": [
+        "dim_duid",
+        "fct_price",
+        "fct_price_today",
+        "fct_scada",
+        "fct_scada_today"
+      ]
+    },
+    "stg_csv_archive_log": {
+      "materialized": "view",
+      "parents": []
+    },
+    "dim_calendar": {
+      "materialized": "incremental",
+      "parents": []
+    },
+    "dim_duid": {
+      "materialized": "incremental",
+      "parents": [
+        "stg_csv_archive_log"
+      ]
+    }
+  },
   "legs": {
     "duckdb_iceberg": {
       "target": "duckdb",
@@ -25,6 +75,17 @@
         "dbt-duckdb": "1.11.0",
         "duckdb": "2.0.0.dev2609121639"
       },
+      "adapter": "dbt-duckdb 1.11.0",
+      "model_seconds": {
+        "stg_csv_archive_log": 2.0,
+        "dim_calendar": 5.25,
+        "dim_duid": 4.55,
+        "fct_price_today": 8.056,
+        "fct_price": 35.68,
+        "fct_scada_today": 6.15,
+        "fct_scada": 33.316,
+        "fct_summary": 6.467
+      },
       "error": ""
     },
     "pyspark_gluten_iceberg": {
@@ -43,6 +104,17 @@
         "dbt-spark": "1.11.0",
         "pyspark": "4.1.1",
         "spark": "4.1.1 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)"
+      },
+      "adapter": "dbt-spark 1.11.0",
+      "model_seconds": {
+        "dim_calendar": 12.302,
+        "stg_csv_archive_log": 4.079,
+        "dim_duid": 9.647,
+        "fct_price": 46.608,
+        "fct_price_today": 6.412,
+        "fct_scada": 69.922,
+        "fct_scada_today": 5.648,
+        "fct_summary": 12.465
       },
       "error": ""
     },
@@ -66,6 +138,17 @@
         "polars": "2.0.0",
         "pyiceberg": "0.11.1"
       },
+      "adapter": "dbt-polars 0.4.0",
+      "model_seconds": {
+        "dim_calendar": 8.357,
+        "stg_csv_archive_log": 8.302,
+        "dim_duid": 30.234,
+        "fct_price": 38.373,
+        "fct_price_today": 5.234,
+        "fct_scada": 61.438,
+        "fct_scada_today": 7.163,
+        "fct_summary": 9.648
+      },
       "error": ""
     },
     "trino_iceberg": {
@@ -87,6 +170,17 @@
         "dbt-trino": "1.10.6",
         "trino": "0.340.0",
         "trino-server": "484 (trinodb/trino:484)"
+      },
+      "adapter": "dbt-trino 1.10.6",
+      "model_seconds": {
+        "dim_calendar": 27.906,
+        "stg_csv_archive_log": 3.548,
+        "dim_duid": 4.255,
+        "fct_price": 55.032,
+        "fct_price_today": 3.893,
+        "fct_scada": 59.293,
+        "fct_scada_today": 3.825,
+        "fct_summary": 7.555
       },
       "error": ""
     }

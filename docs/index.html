@@ -1070,7 +1070,6 @@ function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.t
 // engine, and whether they all gave the same answer. An engine without a leg is not shown.
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
-const DBT_MEDALLION = "https://github.com/djouallah/fabric-dbt-examples";
 const WORKLOAD_CODE = "https://github.com/djouallah/lakehouse_benchmark/tree/main/workload";
 
 // The DAG's layout: a column per depth (the longest path from a model with no parent), the models of a column
@@ -1138,9 +1137,9 @@ function renderRealWorkload() {
     : "The engines did not all give the same answer.";
   sec.innerHTML = `
     <p class="arc">Benchmarks measure speed. In real life an agent writes SQL, dbt runs it, and the engine is just the tool that moves the data from A to B; the choice will vary. What matters is that it works.</p>
-    <p class="proj">One real project, the AEMO pipeline from <a href="${DBT_MEDALLION}">fabric-dbt-examples</a>
-      (<a href="${WORKLOAD_CODE}">the code</a>): CSV files in OneLake, ${models} models, incremental with <code>MERGE</code>,
-      ${first.tests} tests, Iceberg tables out. ${n} of ${engines.length} engines run it:</p>
+    <p class="proj">One real dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
+      ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out.
+      ${n} of ${engines.length} engines run it:</p>
     <div class="cards">${cards}</div>
     ${dag}
     <p class="answer">${answer} <a href="${w.run_url}">Run ${w.run_id}</a>, ${w.finished.slice(0, 10)}. Bars: each model's time on each engine.</p>`;
