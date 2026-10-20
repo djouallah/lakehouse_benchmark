@@ -3,11 +3,18 @@ name: dbt workload
 # THE "MY WORKLOAD" TEST: the fabric-dbt-examples dbt project (workload/, see workload/SOURCE),
 # run by bench on its own engines and auth, Iceberg only.
 #
-#   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino; one at a time)  ->  grade
+#   plan  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino; one at a time)  ->  land  ->  grade
 #
-# ON A SCHEDULE, EVERY 2 HOURS, NEVER RESET: new AEMO files land every run and each engine folds
-# process_limit of them into its own tables, which only grow. The Real workload tab shows how far
-# each engine has got -- files behind, peak RSS -- and an engine whose runner dies (out of memory)
+# ON A SCHEDULE, EVERY 2 HOURS, NEVER RESET: each engine folds process_limit of the landed files
+# into its own tables, which only grow, then new AEMO files land for the next run.
+#
+# LAND LAST, AND ONLY WHEN EVERY ENGINE RAN. "Files behind" is each engine's count against ONE
+# shared landing, so the landing may only grow when every engine has had its turn at it. It used
+# to land first: cancelled runs and duckdb-only runs landed 420 files (2026-10-20) that the other
+# engines never saw, and their cards' files-behind stopped being comparable. Now a cancelled run
+# lands nothing, and a run of fewer than all four engines lands nothing.
+#
+# The Real workload tab shows how far each engine has got -- files behind, peak RSS -- and an engine whose runner dies (out of memory)
 # stays on the page as "died", carried forward from the last run (workload_publish.py).
 #
 # `land` is the SINGLE WRITER of Files/dbt (the CSVs and the archive-log parquet the models select
@@ -62,43 +69,27 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
 jobs:
-  land:
+  plan:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      id-token: write
-      contents: read
+    timeout-minutes: 5
     outputs:
       engines: ${{ steps.plan.outputs.engines }}
+      all_engines: ${{ steps.plan.outputs.all_engines }}
       started: ${{ steps.plan.outputs.started }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements/workload_land.txt
-      - run: pip install -r requirements/workload_land.txt
-
       - id: plan
         run: |
+          ALL='["duckdb","gluten","polars","trino"]'
           ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb,polars,gluten,trino' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
+          echo "all_engines=$(jq -n --argjson e "$ENGINES" --argjson a "$ALL" '($e | unique) == $a')" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
           echo "engines: $ENGINES"
 
-      - name: Land the AEMO files into Files/dbt (idempotent)
-        env:
-          DOWNLOAD_LIMIT: ${{ inputs.download_limit || '6' }}
-          DAILY_DOWNLOAD_LIMIT: ${{ inputs.daily_download_limit || '360' }}
-          # The GitHub mirror listing is a contents-API call per year; anonymous is 60/hour.
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python .github/scripts/workload_land.py
-
   # Opt-in, before any leg: see workload_reset.py.
   reset:
-    needs: land
+    needs: plan
     if: inputs.reset
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -117,9 +108,9 @@ jobs:
         run: python .github/scripts/workload_reset.py
 
   dbt-Iceberg:
-    needs: [land, reset]
+    needs: [plan, reset]
     # Runs after reset, or without it when reset was not asked for (skipped is fine, failed is not).
-    if: ${{ !cancelled() && needs.land.result == 'success' && needs.reset.result != 'failure' }}
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.reset.result != 'failure' }}
     name: >-
       ${{ matrix.engine == 'duckdb' && '🦆 dbt-duckdb'
       || matrix.engine == 'polars' && '🐻‍❄️ dbt-polars'
@@ -137,7 +128,7 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        engine: ${{ fromJSON(needs.land.outputs.engines) }}
+        engine: ${{ fromJSON(needs.plan.outputs.engines) }}
     env:
       BENCH_ENGINE: ${{ matrix.engine }}
       BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -229,18 +220,45 @@ jobs:
             workload/logs/dbt.log
           if-no-files-found: warn
 
+  # After the legs, for the NEXT run (see the header): skipped when the run was cancelled or asked
+  # for fewer than every engine. A failed leg still had its turn, so it does not block the landing.
+  land:
+    needs: [plan, dbt-Iceberg]
+    if: ${{ !cancelled() && needs.plan.outputs.all_engines == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/workload_land.txt
+      - run: pip install -r requirements/workload_land.txt
+
+      - name: Land the AEMO files into Files/dbt (idempotent)
+        env:
+          DOWNLOAD_LIMIT: ${{ inputs.download_limit || '6' }}
+          DAILY_DOWNLOAD_LIMIT: ${{ inputs.daily_download_limit || '360' }}
+          # The GitHub mirror listing is a contents-API call per year; anonymous is 60/hour.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python .github/scripts/workload_land.py
+
   grade:
-    needs: [land, dbt-Iceberg]
-    if: ${{ !cancelled() && needs.land.result == 'success' }}
+    needs: [plan, dbt-Iceberg, land]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
     env:
-      BENCH_RUN_STARTED_AT: ${{ needs.land.outputs.started }}
+      BENCH_RUN_STARTED_AT: ${{ needs.plan.outputs.started }}
       BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       # The engines this run asked for: one with no part had its runner killed ("died").
-      WORKLOAD_ENGINES: ${{ needs.land.outputs.engines }}
+      WORKLOAD_ENGINES: ${{ needs.plan.outputs.engines }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
