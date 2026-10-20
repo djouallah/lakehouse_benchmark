@@ -1,10 +1,7 @@
 {
-  "run_id": "39387172190",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39387172190",
-  "finished": "2026-10-20T07:55:04Z",
-  "baseline": "pyspark_gluten_iceberg",
-  "rel_tol": 1e-07,
-  "parity_ok": true,
+  "run_id": "39392442560",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39392442560",
+  "finished": "2026-10-20T08:42:29Z",
   "dag": {
     "csv_raw_archive_log": {
       "materialized": "source",
@@ -97,18 +94,13 @@
     "duckdb_iceberg": {
       "target": "duckdb",
       "status": "success",
-      "build_seconds": 104.031,
-      "peak_rss_mb": 14460,
+      "build_seconds": 82.065,
+      "peak_rss_mb": 14508,
+      "files_behind": 1049,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6326054,
-      "same_rows": true,
-      "diff": {
-        "mw_sum": 1.7959125202933792e-09,
-        "price_sum": 4.682754601104568e-09
-      },
       "versions": {
         "dbt-core": "1.12.6",
         "dbt-duckdb": "1.11.0",
@@ -116,19 +108,19 @@
       },
       "adapter": "dbt-duckdb 1.11.0",
       "model_seconds": {
-        "dim_duid": 6.485,
-        "fct_price_today": 14.693,
-        "fct_price": 48.247,
-        "fct_scada_today": 10.6,
-        "fct_scada": 46.263,
-        "fct_summary": 9.696
+        "dim_duid": 6.69,
+        "fct_price_today": 6.05,
+        "fct_price": 28.729,
+        "fct_scada_today": 5.61,
+        "fct_scada": 32.751,
+        "fct_summary": 11.399
       },
       "model_rows": {
-        "fct_price_today": 500,
-        "fct_scada_today": 31402,
-        "fct_summary": 6326054,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
+        "fct_price_today": 600,
+        "fct_scada_today": 37972,
+        "fct_summary": 9566707,
+        "fct_price": 216000,
+        "fct_scada": 24499968,
         "dim_duid": 690
       },
       "model_config": {
@@ -209,20 +201,23 @@
           "sql_lines": 71
         }
       },
-      "error": ""
+      "error": "",
+      "last_ok": {
+        "run_id": "39392442560",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39392442560",
+        "finished": "2026-10-20T08:22:43Z"
+      }
     },
     "pyspark_gluten_iceberg": {
       "target": "gluten",
       "status": "success",
-      "build_seconds": 241.712,
-      "peak_rss_mb": 5712,
+      "build_seconds": 346.5,
+      "peak_rss_mb": 6988,
+      "files_behind": 1049,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6326054,
-      "same_rows": true,
-      "diff": {},
       "versions": {
         "dbt-core": "1.13.0b1",
         "dbt-spark": "1.11.0",
@@ -231,19 +226,19 @@
       },
       "adapter": "dbt-spark 1.11.0",
       "model_seconds": {
-        "dim_duid": 11.455,
-        "fct_price": 58.703,
-        "fct_price_today": 8.978,
-        "fct_scada": 89.341,
-        "fct_scada_today": 8.113,
-        "fct_summary": 28.329
+        "dim_duid": 11.452,
+        "fct_price": 60.929,
+        "fct_price_today": 8.665,
+        "fct_scada": 157.481,
+        "fct_scada_today": 10.244,
+        "fct_summary": 56.982
       },
       "model_rows": {
-        "fct_price_today": 500,
-        "fct_scada_today": 31402,
-        "fct_summary": 6326054,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
+        "fct_price_today": 600,
+        "fct_scada_today": 37972,
+        "fct_summary": 9566707,
+        "fct_price": 216000,
+        "fct_scada": 24499968,
         "dim_duid": 690
       },
       "model_config": {
@@ -324,23 +319,23 @@
           "sql_lines": 65
         }
       },
-      "error": ""
+      "error": "",
+      "last_ok": {
+        "run_id": "39392442560",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39392442560",
+        "finished": "2026-10-20T08:35:04Z"
+      }
     },
     "polars_iceberg": {
       "target": "polars",
       "status": "success",
-      "build_seconds": 179.239,
-      "peak_rss_mb": 9152,
+      "build_seconds": 191.573,
+      "peak_rss_mb": 8932,
+      "files_behind": 1049,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6326054,
-      "same_rows": true,
-      "diff": {
-        "mw_sum": 2.4078906018884014e-08,
-        "price_sum": 3.5324869976973924e-08
-      },
       "versions": {
         "dbt-core": "1.12.6",
         "dbt-polars": "0.4.0",
@@ -349,19 +344,19 @@
       },
       "adapter": "dbt-polars 0.4.0",
       "model_seconds": {
-        "dim_duid": 11.224,
-        "fct_price": 43.521,
-        "fct_price_today": 8.51,
-        "fct_scada": 60.609,
-        "fct_scada_today": 12.004,
-        "fct_summary": 12.018
+        "dim_duid": 8.201,
+        "fct_price": 60.055,
+        "fct_price_today": 2.256,
+        "fct_scada": 64.234,
+        "fct_scada_today": 8.323,
+        "fct_summary": 16.115
       },
       "model_rows": {
-        "fct_price_today": 500,
-        "fct_scada_today": 31402,
-        "fct_summary": 6326054,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
+        "fct_price_today": 600,
+        "fct_scada_today": 37972,
+        "fct_summary": 9566707,
+        "fct_price": 216000,
+        "fct_scada": 24499968,
         "dim_duid": 690
       },
       "model_config": {
@@ -442,23 +437,23 @@
           "sql_lines": 73
         }
       },
-      "error": ""
+      "error": "",
+      "last_ok": {
+        "run_id": "39392442560",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39392442560",
+        "finished": "2026-10-20T08:27:24Z"
+      }
     },
     "trino_iceberg": {
       "target": "trino",
       "status": "success",
-      "build_seconds": 459.739,
-      "peak_rss_mb": 8928,
+      "build_seconds": 335.304,
+      "peak_rss_mb": 9228,
+      "files_behind": 1049,
       "models": 6,
       "models_ok": 6,
       "tests": 39,
       "tests_ok": 39,
-      "rows": 6326054,
-      "same_rows": true,
-      "diff": {
-        "mw_sum": 7.002045868731478e-13,
-        "price_sum": 8.196480006885016e-13
-      },
       "versions": {
         "dbt-core": "1.12.6",
         "dbt-trino": "1.10.6",
@@ -467,19 +462,19 @@
       },
       "adapter": "dbt-trino 1.10.6",
       "model_seconds": {
-        "dim_duid": 12.7,
-        "fct_price": 91.321,
-        "fct_price_today": 6.862,
-        "fct_scada": 277.068,
-        "fct_scada_today": 10.702,
-        "fct_summary": 21.477
+        "dim_duid": 33.162,
+        "fct_price": 45.53,
+        "fct_price_today": 5.755,
+        "fct_scada": 164.512,
+        "fct_scada_today": 31.828,
+        "fct_summary": 16.468
       },
       "model_rows": {
-        "fct_price_today": 500,
-        "fct_scada_today": 31402,
-        "fct_summary": 6326054,
-        "fct_price": 144000,
-        "fct_scada": 16387008,
+        "fct_price_today": 600,
+        "fct_scada_today": 37972,
+        "fct_summary": 9566707,
+        "fct_price": 216000,
+        "fct_scada": 24499968,
         "dim_duid": 690
       },
       "model_config": {
@@ -560,7 +555,12 @@
           "sql_lines": 69
         }
       },
-      "error": ""
+      "error": "",
+      "last_ok": {
+        "run_id": "39392442560",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39392442560",
+        "finished": "2026-10-20T08:42:29Z"
+      }
     }
   }
 }
