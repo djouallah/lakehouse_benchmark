@@ -146,7 +146,6 @@ jobs:
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       DUCKDB_TEMP_DIR: /mnt/duckdb_spill
-      DUCKDB_SCRATCH: /mnt/duckdb_spill/scratch.duckdb
       # Polars' streaming engine spills (out-of-core). At 360 files a run fct_scada passed its
       # default 64 GB budget (run 39403578519); the volume has ~105 GB free after "Free disk".
       # /mnt is a directory on that same volume, not a second disk (tpcds.yml).
