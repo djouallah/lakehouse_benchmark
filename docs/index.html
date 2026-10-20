@@ -1115,7 +1115,9 @@ function renderRealWorkload() {
   if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
   if (!w) { sec.innerHTML = `<div class="empty">No run yet.</div>`; return; }
   const ok = e => w.legs[e].status === "success";
-  const engines = Object.keys(w.legs).sort((a, b) => (ok(b) - ok(a)) || w.legs[a].build_seconds - w.legs[b].build_seconds);
+  // By maturity, not speed: Spark (Gluten/Velox), Trino, DuckDB, Polars.
+  const rank = e => { const i = ["gluten", "trino", "duckdb", "polars"].indexOf(e); return i < 0 ? 99 : i; };
+  const engines = Object.keys(w.legs).sort((a, b) => rank(a) - rank(b));
   const runs = engines.filter(ok), slowest = Math.max(...runs.map(e => w.legs[e].build_seconds));
   const first = w.legs[runs[0] ?? engines[0]], models = Object.keys(w.dag ?? {}).length || first.models;
   const cards = engines.map(e => {
