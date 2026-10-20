@@ -1,0 +1,94 @@
+{
+  "run_id": "39343538354",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39343538354",
+  "finished": "2026-10-20T00:06:25Z",
+  "baseline": "pyspark_gluten_iceberg",
+  "rel_tol": 1e-07,
+  "parity_ok": true,
+  "legs": {
+    "duckdb_iceberg": {
+      "target": "duckdb",
+      "status": "success",
+      "build_seconds": 90.0,
+      "models": 8,
+      "models_ok": 8,
+      "tests": 42,
+      "tests_ok": 42,
+      "rows": 3086181,
+      "same_rows": true,
+      "diff": {
+        "mw_sum": 1.8510356483349168e-09,
+        "price_sum": 4.628188860225401e-09
+      },
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-duckdb": "1.11.0",
+        "duckdb": "2.0.0.dev2609121639"
+      },
+      "error": ""
+    },
+    "pyspark_gluten_iceberg": {
+      "target": "gluten",
+      "status": "success",
+      "build_seconds": 219.928,
+      "models": 8,
+      "models_ok": 8,
+      "tests": 42,
+      "tests_ok": 42,
+      "rows": 3086181,
+      "same_rows": true,
+      "diff": {},
+      "versions": {
+        "dbt-core": "1.13.0b1",
+        "dbt-spark": "1.11.0",
+        "pyspark": "4.1.1",
+        "spark": "4.1.1 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)"
+      },
+      "error": ""
+    },
+    "polars_iceberg": {
+      "target": "polars",
+      "status": "success",
+      "build_seconds": 208.465,
+      "models": 8,
+      "models_ok": 8,
+      "tests": 42,
+      "tests_ok": 42,
+      "rows": 3086181,
+      "same_rows": true,
+      "diff": {
+        "mw_sum": 2.5669666425183673e-08,
+        "price_sum": 3.41157194618343e-08
+      },
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-polars": "0.4.0",
+        "polars": "2.0.0",
+        "pyiceberg": "0.11.1"
+      },
+      "error": ""
+    },
+    "trino_iceberg": {
+      "target": "trino",
+      "status": "success",
+      "build_seconds": 197.999,
+      "models": 8,
+      "models_ok": 8,
+      "tests": 42,
+      "tests_ok": 42,
+      "rows": 3086181,
+      "same_rows": true,
+      "diff": {
+        "mw_sum": 1.34267108485446e-13,
+        "price_sum": 8.329440760751381e-13
+      },
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-trino": "1.10.6",
+        "trino": "0.340.0",
+        "trino-server": "484 (trinodb/trino:484)"
+      },
+      "error": ""
+    }
+  }
+}

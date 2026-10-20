@@ -1,8 +1,8 @@
 """Grade and record a workload run: `python workload_publish.py parts [--write] [--check]`.
 
 Always: the per-leg table and the parity verdict, to stdout and the job summary.
---write: results/workload/<run_id>.json, the run's immutable record. NOTHING under docs/: the
-         dashboard does not show this test until every leg passes (workload.yml).
+--write: results/workload/<run_id>.json, the run's immutable record, and docs/data/workload.json,
+         the page's copy of the latest run (the Real workload tab), keyed by bench engine id.
 --check: exit 1 unless every leg in the run built and the legs agree.
 """
 
@@ -15,9 +15,11 @@ from pathlib import Path
 
 from bench.report import leak_check
 from bench.workload import parity
+from bench.workload.config import BENCH_ENGINE
 
 REPO = Path(__file__).resolve().parents[2]
 RESULTS = REPO / "results" / "workload"
+PAGE_DATA = REPO / "docs" / "data" / "workload.json"
 
 
 def load(parts: Path) -> dict[str, dict]:
@@ -28,6 +30,51 @@ def load(parts: Path) -> dict[str, dict]:
     return legs
 
 
+def counts(leg: dict) -> dict[str, int]:
+    """Models and tests, built and passed. A retry re-runs only what failed, so its results
+    override the build's, node by node."""
+    merged = {n["node"]: n for n in leg.get("nodes") or []}
+    merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
+    nodes = list(merged.values())
+    models = [n for n in nodes if n["node"].startswith("model.")]
+    tests = [n for n in nodes if n["node"].startswith("test.")]
+    return {
+        "models": len(models),
+        "models_ok": sum(n["status"] == "success" for n in models),
+        "tests": len(tests),
+        "tests_ok": sum(n["status"] in ("pass", "warn") for n in tests),
+    }
+
+
+def page_data(legs: dict[str, dict], grade: dict) -> dict:
+    """The latest run as the Real workload tab reads it: one entry per bench engine id."""
+    out = {
+        "run_id": next(iter(legs.values()))["run_id"],
+        "run_url": os.environ.get("BENCH_RUN_URL") or next(iter(legs.values())).get("run_url", ""),
+        "finished": max(leg.get("finished", "") for leg in legs.values()),
+        "baseline": BENCH_ENGINE.get(grade["baseline"], grade["baseline"]),
+        "rel_tol": parity.REL_TOL,
+        "parity_ok": len(grade["engines"]) > 1 and not grade["failures"],
+        "legs": {},
+    }
+    base = next((leg.get("fingerprint") for e, leg in legs.items() if e == grade["baseline"]), None)
+    for engine, leg in legs.items():
+        fp = leg.get("fingerprint") or {}
+        entry = {
+            "target": engine,
+            "status": leg["status"],
+            "build_seconds": leg.get("build_seconds"),
+            **counts(leg),
+            "rows": fp.get("rows_total"),
+            "same_rows": bool(base and fp and fp.get("rows_total") == base.get("rows_total")),
+            "diff": grade["diffs"].get(engine, {}),
+            "versions": leg.get("versions", {}),
+            "error": (leg.get("error") or "")[:300],
+        }
+        out["legs"][BENCH_ENGINE[engine]] = entry
+    return out
+
+
 def summary(legs: dict[str, dict], grade: dict) -> str:
     lines = [
         "## dbt workload (Iceberg)",
@@ -36,17 +83,11 @@ def summary(legs: dict[str, dict], grade: dict) -> str:
         "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
-        # A retry re-runs only what failed, so its results override the build's, node by node.
-        merged = {n["node"]: n for n in leg.get("nodes") or []}
-        merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
-        nodes = list(merged.values())
-        models = [n for n in nodes if n["node"].startswith("model.")]
-        tests = [n for n in nodes if n["node"].startswith("test.")]
+        c = counts(leg)
         fp = leg.get("fingerprint") or {}
         lines.append(
             f"| {engine} | {leg['status']} | {leg.get('build_seconds', '')} "
-            f"| {sum(n['status'] == 'success' for n in models)}/{len(models)} "
-            f"| {sum(n['status'] in ('pass', 'warn') for n in tests)}/{len(tests)} "
+            f"| {c['models_ok']}/{c['models']} | {c['tests_ok']}/{c['tests']} "
             f"| {fp.get('rows_total', '')} | {fp.get('mw_sum', '')} | {fp.get('price_sum', '')} |"
         )
     lines.append("")
@@ -92,8 +133,9 @@ def main(argv: list[str]) -> int:
             "parity": grade,
         }
         out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
-        leak_check([out])
-        print(f"wrote {out.relative_to(REPO)}")
+        PAGE_DATA.write_text(json.dumps(page_data(legs, grade), indent=2) + "\n", encoding="utf-8")
+        leak_check([out, PAGE_DATA])
+        print(f"wrote {out.relative_to(REPO)} and {PAGE_DATA.relative_to(REPO)}")
 
     if "--check" in argv:
         failed = [e for e, leg in legs.items() if leg["status"] != "success"]

@@ -54,10 +54,17 @@ def test_every_engine_has_a_workload_row():
         assert f'engine: "{engine}"' in rows("WORKLOAD_ROWS"), engine
 
 
-def test_the_real_workload_is_the_scorecards_first_column_not_a_tab():
-    assert 'id: "workload"' not in rows("GROUPS")
-    first = '{ id: "workload", title: "My workload", href: WORKLOAD_REPO,'
-    assert rows("SC_COLS").split("[", 1)[1].lstrip().startswith(first)
+def test_the_real_workload_tab_reads_the_measured_workload():
+    """The Scorecard became the Real workload tab: its rows come from docs/data/workload.json."""
+    assert (
+        'const REAL_WORKLOAD = { id: "workload", title: "Real workload", '
+        'json: "data/workload.json" };' in PAGE
+    )
+    assert "SC_COLS" not in PAGE
+    ids = [c.split('"')[0] for c in rows("REAL_COLS").split('{ id: "')[1:]]
+    assert ids == ["dbt", "file", "iceberg", "same", "speed"]
+    # The bar is the first three columns; same result and speed are shown, not required.
+    assert "const mvp = e => [dbtCell, fileCell, icebergCell]" in PAGE
 
 
 def test_future_is_the_last_top_tab():
@@ -65,7 +72,7 @@ def test_future_is_the_last_top_tab():
 
 
 def test_the_workload_merge_cells_match_the_iceberg_support_tab():
-    """The Scorecard's real workload MERGE check never disagrees with the probe that measured it."""
+    """The MERGE option the Real workload tab falls back on never disagrees with the probe."""
     import json
     import re
 
@@ -81,8 +88,8 @@ def test_the_workload_merge_cells_match_the_iceberg_support_tab():
         assert (cell == "true") == (merge["cells"][engine]["o"] == "supported"), engine
 
 
-def test_the_scorecard_has_no_hand_picked_groups():
-    """Rows are ordered by the data (workload, then Light ETL time), not by tiers."""
+def test_the_real_workload_has_no_hand_picked_groups():
+    """Rows are ordered by the data (the bar, build time, then Light ETL time), not by tiers."""
     assert "WORKLOAD_TIERS" not in PAGE
     assert "tier:" not in rows("WORKLOAD_ROWS")
 
@@ -128,7 +135,7 @@ def test_file_pruning_and_query_plans_share_the_less_work_tab():
     assert '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }' in PAGE
 
 
-def test_bug_reports_then_the_scorecard_come_just_before_future():
+def test_bug_reports_then_the_real_workload_come_just_before_future():
     bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
     assert bar[-3] == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'
-    assert bar[-2] == '{ id: "summary", title: "Scorecard", subs: [SCORECARD] },'
+    assert bar[-2] == '{ id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },'

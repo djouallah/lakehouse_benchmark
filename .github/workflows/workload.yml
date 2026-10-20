@@ -38,7 +38,7 @@ on:
         type: boolean
         default: false
       publish:
-        description: Commit results/workload/<run>.json. Off leaves the artifacts and touches nothing.
+        description: Commit results/workload/<run>.json and the Real workload tab's data (docs/data/workload.json). Off leaves the artifacts and touches nothing.
         type: boolean
         default: false
 
@@ -236,7 +236,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results/workload
+          git add results/workload docs/data/workload.json
           git diff --cached --quiet && { echo "nothing to commit"; exit 0; }
           git commit -m "workload: results for run ${{ github.run_id }}"
           for attempt in 1 2 3; do

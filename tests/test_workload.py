@@ -2,8 +2,7 @@
 
 What would otherwise fail only minutes into a real run, or -- worse -- pass green having built
 nothing: a target with no model tree, a leg missing from the workflow, a grade that misses a
-row-count difference. And the one promise of this test while it is new: the page shows nothing
-from it.
+row-count difference. And the page reads exactly the file the publish step writes.
 """
 
 from __future__ import annotations
@@ -65,12 +64,15 @@ def test_workflow_default_engines_are_the_engines():
     assert tuple(default.split(",")) == ENGINES
 
 
-def test_not_on_the_dashboard_yet():
+def test_the_page_reads_what_publish_writes():
     page = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
-    assert "results/workload" not in page
-    assert "workload_results" not in page
+    assert 'json: "data/workload.json"' in page
+    publish = (ROOT / ".github" / "scripts" / "workload_publish.py").read_text(encoding="utf-8")
+    assert 'PAGE_DATA = REPO / "docs" / "data" / "workload.json"' in publish
+    workflow = (ROOT / ".github" / "workflows" / "workload.yml").read_text(encoding="utf-8")
+    assert "git add results/workload docs/data/workload.json" in workflow
     pages = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
-    assert "dbt workload" not in pages
+    assert "dbt workload" in pages
 
 
 def test_grade_passes_rounding_noise():

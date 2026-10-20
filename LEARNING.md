@@ -743,6 +743,14 @@ so they share one history. First all-green run:
   asks the catalog for a table named after the path. OneLake answers with 400 instead of "no such
   table", so Spark never falls back to reading the file. The gluten leg reads the archive log
   through a `USING parquet` temp view instead.
+- **Trino joined as the fourth leg** (dbt-trino 1.10, run
+  [39343538354](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39343538354)). It
+  reads the CSVs and the archive log through Hive EXTERNAL tables, as the Trino ETL does, and has
+  no views and no rename (`views_enabled: false`, `on_table_exists: drop`). It lands within 1e-13
+  of Spark on the sums: its DOUBLE to DECIMAL cast breaks ties like Spark's.
+- The Real workload tab (it was the Scorecard) reads `docs/data/workload.json`. The bar is three
+  checks: dbt runs the project, the source file name is kept, the tables are Iceberg. Same result
+  and build time are shown, the time as a bonus.
 - **dbt-polars tests need `azure/login`.** They read through pyiceberg's ADLS FileIO with no
   credential, which falls back to azure-identity's default chain.
 

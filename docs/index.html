@@ -284,7 +284,7 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .arch .hd.no { fill: var(--no); opacity: 1; }
 .arch svg.fadein { animation: arfade .8s ease; }
 @keyframes arfade { from { opacity: 0; } }
-/* Scorecard and Bug reports: a row of big numbers, each one a headline a slide can quote. */
+/* Real workload and Bug reports: a row of big numbers, each one a headline a slide can quote. */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 12px 0 10px; }
 .tiles > * { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: inherit; text-decoration: none; }
 main .tiles > a { color: inherit; }
@@ -435,7 +435,7 @@ main .tiles > a { color: inherit; }
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
   <section class="pl arch" id="overview" hidden></section>
-  <section class="cap rows sc" id="scorecard" hidden></section>
+  <section class="cap rows sc" id="workload" hidden></section>
   <section class="pl arch" id="concurrency" hidden></section>
   <section class="pl arch" id="anatomy" hidden></section>
   <section class="pl arch" id="pruning" hidden></section>
@@ -455,7 +455,7 @@ main .tiles > a { color: inherit; }
     <p>The best query is the one that does the least work: skip the files the query cannot need
       (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
     <p>No engine is the fastest on every test. What an engine supports decides; speed is a bonus
-      (<a href="#scorecard">Scorecard</a>).</p>
+      (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
       That is the best help a user can give. It does not need a pull request: the people who know the code write
@@ -589,10 +589,10 @@ const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const NEXT = { id: "future", title: "Future" };
 const OVERVIEW = { id: "overview", title: "Overview" };
-const SCORECARD = { id: "scorecard", title: "Scorecard" };
+const REAL_WORKLOAD = { id: "workload", title: "Real workload", json: "data/workload.json" };
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [OVERVIEW, SCORECARD, ARCH, ANATOMY, PRUNING, NEXT, PLANS, CAPABILITY, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, NEXT, PLANS, CAPABILITY, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works, how an engine does less work, what it supports, and only then how fast it is; then how
 // engines get better, everything on one page, and what comes next.
@@ -606,7 +606,7 @@ const GROUPS = [
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
   { id: "about", title: "About", subs: [ABOUT], bar: false },
   { id: "bugs", title: "Bug reports", subs: [REPORTS] },
-  { id: "summary", title: "Scorecard", subs: [SCORECARD] },
+  { id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },
   { id: "future", title: "Future", subs: [NEXT] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
@@ -651,7 +651,7 @@ function render() {
   if (page !== PRUNING) stopPruning();
   if (page !== OVERVIEW) stopOverview();
   if (page === OVERVIEW) { renderOverview(); return; }
-  if (page === SCORECARD) { renderScorecard(); return; }
+  if (page === REAL_WORKLOAD) { renderRealWorkload(); return; }
   if (page === ARCH) { renderArch(); return; }
   if (page === ANATOMY) { renderAnatomy(); return; }
   if (page === PRUNING) { renderPruning(); return; }
@@ -872,8 +872,8 @@ function renderEngines() {
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
-// THE DBT 1 PART of the Scorecard's My workload column: how well dbt 1 (dbt Core) works with each engine on Iceberg
-// tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
+// WHAT THE dbt ADAPTER SAYS, for the Real workload tab's engines with no leg yet: how well dbt 1 (dbt Core) works with
+// each engine on Iceberg tables. Excellent and good are Yes, partial is Partial, none is No; the note is the record behind the
 // level. DuckDB, LakeSail and Polars were tried in fabric-dbt-examples; the others come from
 // their adapter docs. Engine and adapter gaps only, nothing the OneLake catalog blocks. Every engine in
 // LABEL has a row (tests/test_results_page.py).
@@ -902,16 +902,11 @@ const DBT_ROWS = [
 ];
 
 
-// THE SCORECARD'S MY WORKLOAD COLUMN: can the engine replace DuckDB in my dbt project, analytics-as-code?
-// Three requirements, all measured elsewhere on this page (reading CSV from Files and writing Iceberg
-// are not columns: every engine in the bench does both, README conditions 2 and 3); the dbt
-// column is DBT_ROWS; MERGE is the Iceberg support tab for the engines it probes and the dbt adapter
-// for the others, and for Polars, whose grid cell is na (no DML: dbt-polars merges through pyiceberg);
-// tests/test_results_page.py keeps the two in step. The file name column is what each engine's ETL
-// module reads (bench/etl/engines). Every engine in LABEL has a row; the Scorecard orders them itself.
-const WORKLOAD_REPO = "https://github.com/djouallah/analytics-as-code";
-// The "can run my workload" tile opens the dbt example's dashboard: each engine running the project, graded.
-const DBT_EXAMPLE = "https://djouallah.github.io/fabric-dbt-examples/";
+// THE FILE NAME AND MERGE OPTIONS each engine has, for the Real workload tab's engines with no leg yet: the file
+// name column is what each engine's ETL module reads (bench/etl/engines); MERGE is the Iceberg support tab for
+// the engines it probes and the dbt adapter for the others, and for Polars, whose grid cell is na (no DML:
+// dbt-polars merges through pyiceberg); tests/test_results_page.py keeps the two in step. Every engine in
+// LABEL has a row, and this list is the tab's row set.
 const WORKLOAD_ROWS = [
   { engine: "pyspark_iceberg", file: { ok: true, note: "<code>input_file_name()</code>" },
     merge: { ok: true, note: `<a href="https://docs.getdbt.com/reference/resource-configs/spark-configs">dbt-spark</a>` } },
@@ -1120,119 +1115,131 @@ function playOverview() {
 }
 function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.timer = null; }
 
-// THE SCORECARD TAB: every tab on one page, just before Future. One row per engine, one column per question,
-// and every cell is read from its own data: the Core group of the Iceberg support grid, each benchmark at its
-// headline scale (the same mean as its bar chart), and the real workload (WORKLOAD_ROWS and DBT_ROWS, the
-// three checks in a tooltip). A cell that is not a yes links to where the reason is written. No groups: the
-// workload comes first, and the rows sort by it (yes, partial, no), then by Light ETL time, fastest first.
+// THE REAL WORKLOAD TAB: one real dbt project, run on every engine that has a leg, read from
+// docs/data/workload.json (written by .github/scripts/workload_publish.py, workload.yml). The project is
+// fabric-dbt-examples' AEMO pipeline (vendored as workload/): CSV files in, incremental models with MERGE,
+// Iceberg tables out. The bar to clear, the MVP, is three things: dbt runs the whole project and its tests,
+// every row keeps its source file name, the tables are Iceberg. Same result (against the Spark leg) and the
+// build time are shown, the time as a bonus. An engine with no leg yet shows its dbt adapter (DBT_ROWS),
+// its file-name option (WORKLOAD_ROWS) and its Light ETL Iceberg write, and is marked not run.
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
-
-// Gluten is a plugin inside Spark: the catalog and every Iceberg operation go through Spark's Iceberg Java
-// library, so its Iceberg support is Spark-OSS's reading.
-const SAME_ICEBERG = { pyspark_gluten_iceberg: SPARK };
-function coreCell(e) {
-  const cap = data.capability;
-  if (!cap) return { ok: "na", text: "not loaded" };
-  const src = cap.engines[e] ? e : SAME_ICEBERG[e];
-  if (!src || !cap.engines[src]) return { ok: "na", text: "not probed" };
-  const core = cap.rows.filter(r => r.group === "Core"), yes = core.filter(r => r.cells[src].o === "supported").length;
-  return { ok: yes === core.length ? true : yes ? null : false,
-           text: `${yes} of ${core.length}${src === e ? "" : `, as ${LABEL[src]}`}` };
+const WORKLOAD_CODE = "https://github.com/djouallah/lakehouse_benchmark/tree/main/workload";
+const realLeg = e => data.workload?.legs?.[e];
+const realOk = e => realLeg(e)?.status === "success";
+function dbtCell(e) {
+  const l = realLeg(e);
+  if (l) return realOk(e) ? { ok: true, text: `${l.models_ok}/${l.models} models, ${l.tests_ok}/${l.tests} tests` }
+    : { ok: false, text: "failed" };
+  const d = DBT_ROWS.find(r => r.engine === e);
+  if (!d.adapter) return { ok: false, text: "no adapter" };
+  // The adapter's note is the tooltip; the cell stays one line.
+  return d.level === "partial" ? { ok: null, text: `${esc(d.adapter)}, partial` }
+    : { ok: "na", text: `${esc(d.adapter)}, not run yet` };
 }
-function benchCell(suite, e) {
-  const items = data[suite.id]?.[suite.headline];
-  if (!items) return { ok: "na", text: "not loaded" };
-  const item = items.find(i => i.engine === e), best = items.find(i => !i.failed);
+function fileCell(e) {
+  if (realLeg(e)) return realOk(e) ? { ok: true, text: "<code>file</code> on every fact row" } : { ok: false, text: "not reached" };
+  const w = WORKLOAD_ROWS.find(r => r.engine === e).file;
+  return { ok: w.ok, text: w.note || (w.ok === false ? "no" : "yes") };
+}
+function icebergCell(e) {
+  if (realLeg(e)) return realOk(e) ? { ok: true, text: "every model" } : { ok: false, text: "not reached" };
+  const etl = SUITES.find(s => s.id === "etl"), item = data.etl?.[etl.headline]?.find(i => i.engine === e);
   if (!item) return { ok: "na", text: "not run" };
-  if (item.failed) return { ok: false, text: "failed" };
-  return { ok: true, text: `${fmt(item.mean)} · ${best.engine === e ? "fastest" : ratio(item.mean / best.mean)}` };
+  return item.failed ? { ok: false, text: "Light ETL failed" } : { ok: true, text: "in the Light ETL" };
 }
-function workloadCell(e) {
-  const w = WORKLOAD_ROWS.find(r => r.engine === e);
-  const parts = [["file name", w.file.ok], ["dbt", dbtOk(e)], ["MERGE", w.merge.ok]];
-  const no = parts.filter(p => p[1] === false).map(p => p[0]), some = parts.filter(p => p[1] === null).map(p => p[0]);
-  if (no.length) return { ok: false, text: `no ${no.join(", no ")}` };
-  if (some.length) return { ok: null, text: `partial ${some.join(", ")}` };
-  return { ok: true, text: "ready" };
+function sameCell(e) {
+  const w = data.workload, l = realLeg(e);
+  if (!l) return { ok: "na", text: "not run" };
+  if (!realOk(e)) return { ok: false, text: "no result" };
+  if (e === w.baseline) return { ok: true, text: "the baseline" };
+  const off = Math.max(0, ...Object.values(l.diff));
+  return l.same_rows && off <= w.rel_tol ? { ok: true, text: `same rows, sums ±${off.toExponential(1)}` }
+    : { ok: false, text: l.same_rows ? `sums off ${off.toExponential(1)}` : "different rows" };
 }
-function workloadTip(e) {
-  const w = WORKLOAD_ROWS.find(r => r.engine === e), dbt = DBT_ROWS.find(d => d.engine === e);
-  const word = ok => ok === true ? "yes" : ok === false ? "no" : "partial";
-  return `<div class="k">File name column</div><div>${w.file.note || word(w.file.ok)}</div>
-    <div class="k">dbt 1</div><div>${dbt.adapter ? `${esc(dbt.adapter)}, ${word(dbtOk(e))}` : "no adapter"}</div>
-    <div class="k">MERGE</div><div>${w.merge.note ? `${w.merge.note}, ${word(w.merge.ok)}` : word(w.merge.ok)}</div>`;
+function speedCell(e) {
+  if (!realOk(e)) return { ok: "na", text: realLeg(e) ? "no result" : "not run" };
+  const times = Object.keys(data.workload.legs).filter(realOk).map(x => realLeg(x).build_seconds);
+  const s = realLeg(e).build_seconds, best = Math.min(...times);
+  return { ok: true, text: `${fmt(s)} · ${s === best ? "fastest" : ratio(s / best)}` };
 }
-const WORKLOAD_NOTE = `<div>One dbt project, analytics-as-code: it needs the source file name, a dbt adapter and MERGE.
-  Hover a cell in the first column for each engine's checks.</div>
-  <div class="k">It is arbitrary; yours needs other things and may reach a different conclusion.</div>`;
-const suiteCol = id => {
-  const s = SUITES.find(x => x.id === id);
-  return { id, title: `${s.title}, ${s.scale(s.headline)}`, href: `#${id}`, cell: e => benchCell(s, e),
-    note: `<div>The mean of the last ${RECENT_RUNS} complete runs, and how much slower than the fastest.</div>` };
-};
-// Left to right in sort order: the workload, then Light ETL, then the rest.
-const SC_COLS = [
-  { id: "workload", title: "My workload", href: WORKLOAD_REPO, cell: workloadCell, tip: true, note: WORKLOAD_NOTE },
-  suiteCol("etl"),
-  { id: "core", title: "Iceberg core", href: `#${CAPABILITY.id}`, cell: coreCell,
-    note: "<div>The Core group of the Iceberg support tab. Gluten/Velox is a plugin inside Spark, so its reading is Spark-OSS's.</div>" },
-  suiteCol("tpch"),
-  suiteCol("tpcds"),
+const mvp = e => [dbtCell, fileCell, icebergCell].every(c => c(e).ok === true);
+function realTip(e) {
+  const l = realLeg(e), d = DBT_ROWS.find(r => r.engine === e);
+  if (!l) return `<div class="k">dbt</div><div>${d.adapter ? `<a href="${d.url}">${esc(d.adapter)}</a>. ` : ""}${d.note}</div>`;
+  const v = Object.entries(l.versions).filter(([, x]) => x).map(([k, x]) => `${esc(k)} ${esc(x)}`).join(", ");
+  return `<div class="k">Target</div><div>workload/models/aemo/${esc(l.target)}</div>
+    <div class="k">Versions</div><div>${v}</div>
+    ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}</div>` : ""}
+    <div class="k">dbt</div><div>${d.note}</div>`;
+}
+const REAL_NOTE = `<div>One dbt project, the AEMO pipeline from <a href="${DBT_MEDALLION}">fabric-dbt-examples</a>: CSV files
+  from OneLake, incremental models with MERGE, Iceberg tables out, run the same way on every engine.</div>
+  <div class="k">The bar is the first three columns. Same result is checked against the Spark leg; the time is a bonus.</div>`;
+const REAL_COLS = [
+  { id: "dbt", title: "Runs the dbt project", cell: dbtCell, tip: true,
+    note: "<div>dbt build: every model and every test of the project, incremental, MERGE included.</div>" },
+  { id: "file", title: "Source file name", cell: fileCell,
+    note: "<div>Each fact row keeps the CSV it came from; the incremental models pick their new files by it.</div>" },
+  { id: "iceberg", title: "Writes Iceberg", cell: icebergCell,
+    note: "<div>Every table through the OneLake Iceberg catalog. Without a leg, the Light ETL's write.</div>" },
+  { id: "same", title: "Same result", cell: sameCell,
+    note: `<div>fct_summary against the Spark leg: the same rows, and the money sums within 1e-7. The last decimal
+      differs on ties (<a href="https://github.com/pola-rs/polars/issues/30074">Polars</a>,
+      <a href="https://github.com/duckdb/duckdb/issues/27503">DuckDB</a>).</div>` },
+  { id: "speed", title: "Build time (bonus)", cell: speedCell,
+    note: "<div>The whole dbt build, one run, on the same 16 GB runner.</div>" },
 ];
 
-function renderScorecard() {
-  const sec = $(SCORECARD.id);
+function renderRealWorkload() {
+  const sec = $(REAL_WORKLOAD.id);
   if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
+  const w = data.workload;
   const engines = WORKLOAD_ROWS.map(r => r.engine);
-  const cells = Object.fromEntries(engines.map(e => [e, SC_COLS.map(c => c.cell(e))]));
-  const yes = id => engines.filter(e => cells[e][SC_COLS.findIndex(c => c.id === id)].ok === true).length;
+  const cells = Object.fromEntries(engines.map(e => [e, REAL_COLS.map(c => c.cell(e))]));
+  const ran = engines.filter(realLeg);
   const reports = data.reports?.items.filter(i => i.author === data.reports.reporter && i.kind === "issue").length;
-  const tiles = [
-    [engines.length, "engines, one 16 GB machine"],
-    [yes("tpch"), "finish TPC-H at SF 100"],
-    [yes("tpcds"), "finish TPC-DS at SF 100"],
-    [yes("workload"), "can run my workload", DBT_EXAMPLE],
-    ...(reports ? [[reports, "bug reports filed upstream"]] : []),
-  ];
-  // Ready for my workload first, then partial, then no; within each, the fastest Light ETL first (failed or
-  // not run last); ties keep the WORKLOAD_ROWS order.
-  const rank = e => ({ true: 0, null: 1, false: 2 })[cells[e][0].ok];
+  // Clear the bar first, fastest build first; then the engines with an adapter not run yet, partial, none;
+  // within those, the Light ETL time.
+  const rank = e => mvp(e) ? 0 : ({ na: 1, true: 1, null: 2, false: 3 })[String(cells[e][0].ok)];
+  const time = e => realOk(e) ? realLeg(e).build_seconds : Infinity;
   const etl = SUITES.find(s => s.id === "etl");
   const etlMean = e => { const i = data.etl?.[etl.headline]?.find(x => x.engine === e); return i && !i.failed ? i.mean : Infinity; };
-  const order = [...WORKLOAD_ROWS].sort((a, b) => rank(a.engine) - rank(b.engine) || etlMean(a.engine) - etlMean(b.engine));
-  const best = SUITES.map(s => ({ s, e: data[s.id]?.[s.headline]?.find(i => !i.failed)?.engine })).filter(b => b.e);
-  const winners = new Set(best.map(b => b.e));
-  const verdict = best.length ? `Fastest at the headline scale: ${best.map(b => `${b.s.title} <b>${esc(LABEL[b.e] ?? b.e)}</b>`).join(", ")}.
-    ${winners.size > 1 ? "No engine wins every benchmark, so what an engine supports decides; speed is a bonus." : ""}` : "";
+  const order = [...engines].sort((a, b) => rank(a) - rank(b) || time(a) - time(b) || etlMean(a) - etlMean(b));
+  const passed = order.filter(mvp);
+  const tiles = [
+    [engines.length, "engines, one 16 GB machine"],
+    [ran.length, "run on the real workload"],
+    [passed.length, "clear the bar"],
+    ...(reports ? [[reports, "bug reports filed upstream"]] : []),
+  ];
+  const verdict = w ? `The bar: dbt runs the whole project, every row keeps its source file name, the tables are Iceberg.
+    ${passed.length ? `Cleared by ${passed.map(e => `<b>${esc(LABEL[e] ?? e)}</b>`).join(", ")}. ` : ""}Speed is a bonus.
+    <a href="${w.run_url}">Run ${w.run_id}</a>, ${w.finished.slice(0, 10)}.` : "No run yet.";
   const mark = (c, e, col) => {
     const cls = c.ok === true ? "excellent" : c.ok === false ? "none" : c.ok === null ? "partial" : "na";
-    const li = document.getElementById(slug(LABEL[e] ?? e));
-    const href = c.ok === true ? "" : col.id !== "core" && li?.closest("#issues") ? `#${li.id}` : col.href.startsWith("#") ? col.href : "";
-    return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${href ? `<a href="${href}">${c.text}</a>` : c.text}</td>`;
+    return `<td class="lv ${cls}"${col.tip ? ` data-tip="${e}"` : ""}><i class="m"></i>${c.text}</td>`;
   };
   sec.innerHTML = `
-    <div class="tiles">${tiles.map(([n, t, href]) => href ? `<a href="${href}" id="sc-workload"><b>${n}</b><span>${t}</span></a>`
-      : `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+    <div class="tiles">${tiles.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
     <p class="verdict">${verdict}</p>
-    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run or not probed</span>
-      <span class="hint">Click a column for the details, a cell for the reason.</span></div>
-    <div class="wrap"><table><thead><tr><th>Engine</th>${SC_COLS.map(c => `<th><a href="${c.href}" data-note="${c.id}">${esc(c.title)}</a></th>`).join("")}</tr></thead>
-    <tbody>${order.map(r => `
-      <tr style="--c: var(--${r.engine}, var(--ink-3))">
-        <td class="e"><i class="sw"></i>${esc(LABEL[r.engine] ?? r.engine)}</td>
-        ${cells[r.engine].map((c, i) => mark(c, r.engine, SC_COLS[i])).join("")}
+    <div class="legend"><span class="excellent"><i class="m"></i>Yes</span><span class="partial"><i class="m"></i>Partial</span><span class="none"><i class="m"></i>No</span><span class="na"><i class="m"></i>Not run yet</span>
+      <span class="hint">Click a column for what it checks; hover the first for the stack.</span></div>
+    <div class="wrap"><table><thead><tr><th><a href="${WORKLOAD_CODE}" data-note="project">Engine</a></th>${REAL_COLS.map(c => `<th><a href="${WORKLOAD_CODE}" data-note="${c.id}">${esc(c.title)}</a></th>`).join("")}</tr></thead>
+    <tbody>${order.map(e => `
+      <tr style="--c: var(--${e}, var(--ink-3))">
+        <td class="e"><i class="sw"></i>${esc(LABEL[e] ?? e)}</td>
+        ${cells[e].map((c, i) => mark(c, e, REAL_COLS[i])).join("")}
       </tr>`).join("")}</tbody></table></div>`;
-  noteTip($("sc-workload"), "My workload", WORKLOAD_NOTE);
   for (const a of sec.querySelectorAll("th a[data-note]")) {
-    const col = SC_COLS.find(c => c.id === a.dataset.note);
-    noteTip(a, esc(col.title), col.note);
+    const col = REAL_COLS.find(c => c.id === a.dataset.note);
+    noteTip(a, col ? esc(col.title) : "The real workload", col ? col.note : REAL_NOTE);
   }
   for (const td of sec.querySelectorAll("td[data-tip]")) {
     const e = td.dataset.tip;
     td.onmouseenter = () => {
       tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
-      tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>${workloadTip(e)}`;
+      tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>${realTip(e)}`;
       const r = td.getBoundingClientRect();
       moveTip(r.left + r.width / 2, r.top);
       tip.classList.add("on");
@@ -2148,7 +2155,7 @@ for (const li of $("issues").querySelectorAll("li")) {
   });
 }
 // Deep links: #lakehouse, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
-// #performance, #etl, #tpch, #tpcds, #iceberg, #reports, #scorecard, #future, #issues, #about, #engines,
+// #performance, #etl, #tpch, #tpcds, #iceberg, #reports, #workload, #future, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -2156,7 +2163,7 @@ function fromHash() {
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
   if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg support grid
-  if (h === "dbt" || h === "workload") h = SCORECARD.id;  // the dbt and Real workload tabs are the Scorecard's last column
+  if (h === "dbt" || h === "scorecard") h = REAL_WORKLOAD.id;  // the dbt tab and the Scorecard became the Real workload tab
   if (h === "next") h = NEXT.id;  // the Future tab's old name
   if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
   if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
@@ -2177,6 +2184,8 @@ Promise.all([
     .then(j => { data.capability = j; }).catch(() => {}),
   fetch(REPORTS.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.reports = j; }).catch(() => {}),
+  fetch(REAL_WORKLOAD.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { data.workload = j; }).catch(() => {}),
 ]).then(() => { loaded = true; render(); });
 </script>
 </body>
