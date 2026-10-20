@@ -15,6 +15,9 @@
 # update on match. A merge commits against the snapshot it read, so two concurrent runs folding the
 # same file cannot both insert it (the loser's commit fails); an append would keep both. Scratch
 # relations (Spark's stage, Trino's __dbt_tmp) carry the run's id.
+# The merge reads only the target rows the batch can match: macros/merge_prune.sql adds
+# `DEST.file IN (<this batch's files>)` (`date` on fct_summary) to the ON clause, as literals Iceberg
+# prunes on, so the target scan stays the size of the batch, not of the table.
 #
 # THE LANDED FILES ARE SOURCES, NOT MODELS (models/sources.yml): read where they land, copied by
 # nothing, on every engine.

@@ -240,3 +240,15 @@ def test_the_archive_log_is_a_source_not_a_copy():
     assert not (PROJECT / "macros" / "archive_log.sql").exists()
     project = (PROJECT / "dbt_project.yml").read_text(encoding="utf-8")
     assert "\nsources:" not in project  # no engine has the source switched off
+
+
+def test_merges_prune_the_target_on_a_key_column():
+    """macros/merge_prune.sql bounds every fact merge by its batch's `file` (fct_summary: `date`)
+    values; a fact whose key lost both would merge against the whole table again."""
+    macros = (PROJECT / "macros" / "merge_prune.sql").read_text(encoding="utf-8")
+    for hook in ("duckdb__get_incremental_merge_sql", "macro get_merge_sql("):
+        assert hook in macros, hook
+    for engine in ENGINES:
+        for path in (PROJECT / "models" / "aemo" / engine / "marts").glob("fct_*.sql"):
+            sql = path.read_text(encoding="utf-8")
+            assert "'file'" in sql or "spec['unique_key']" in sql or "'date'" in sql, path
