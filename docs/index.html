@@ -488,7 +488,7 @@ main .tiles > a { color: inherit; }
       (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
     <p>Benchmarks are useful, but in real life an agent writes SQL, dbt runs it, and the engine is just the tool
       that moves the data from A to B. Expect the tool to change from job to job; what matters is that it works.
-      One real dbt project runs on DuckDB, Trino, Polars and Gluten/Velox. Coverage first, speed second
+      One real dbt project runs on Spark, Trino, DuckDB and Polars. Coverage first, speed second
       (<a href="#workload">Real workload</a>).</p>
     <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
     <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
@@ -1110,20 +1110,24 @@ function dagLayout(dag) {
   return { W, H, NW, NH, pos };
 }
 
+// The Real workload tab: engines by maturity, not speed, and the Gluten/Velox leg is just Spark here
+// (dbt-spark; Velox underneath is a detail of how it runs, not what the dbt project targets).
+const WORKLOAD_ORDER = [GLUTEN, "trino_iceberg", "duckdb_iceberg", "polars_iceberg"];
+const wlName = e => e === GLUTEN ? "Spark" : (LABEL[e] ?? e);
+
 function renderRealWorkload() {
   const sec = $(REAL_WORKLOAD.id), w = data.workload;
   if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
   if (!w) { sec.innerHTML = `<div class="empty">No run yet.</div>`; return; }
   const ok = e => w.legs[e].status === "success";
-  // By maturity, not speed: Spark (Gluten/Velox), Trino, DuckDB, Polars.
-  const rank = e => { const i = ["gluten", "trino", "duckdb", "polars"].indexOf(e); return i < 0 ? 99 : i; };
+  const rank = e => { const i = WORKLOAD_ORDER.indexOf(e); return i < 0 ? 99 : i; };
   const engines = Object.keys(w.legs).sort((a, b) => rank(a) - rank(b));
   const runs = engines.filter(ok), slowest = Math.max(...runs.map(e => w.legs[e].build_seconds));
   const first = w.legs[runs[0] ?? engines[0]], models = Object.keys(w.dag ?? {}).length || first.models;
   const cards = engines.map(e => {
     const l = w.legs[e];
     return `<div class="card${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
-      <div class="n"><i class="sw"></i>${esc(LABEL[e] ?? e)}</div>
+      <div class="n"><i class="sw"></i>${esc(wlName(e))}</div>
       <div class="v">${ok(e) ? "✓ runs" : "✗ does not run"}</div>
       <div class="ad">${esc(l.adapter ?? "")}</div>
       ${ok(e) ? `<div class="t"><span>${fmt(l.build_seconds)}</span><i class="bar" style="width: ${(100 * l.build_seconds / slowest).toFixed(1)}%"></i></div>` : ""}
@@ -1179,7 +1183,7 @@ function renderRealWorkload() {
       if (e) {
         const l = w.legs[e];
         tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
-        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(LABEL[e] ?? e)}</div>
+        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(wlName(e))}</div>
           <div class="k">Stack</div><div>${Object.entries(l.versions).filter(([, v]) => v).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(", ")}</div>
           <div class="k">dbt build</div><div>${l.models_ok}/${l.models} models, ${l.tests_ok}/${l.tests} tests</div>
           ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}</div>` : ""}`;
@@ -1187,7 +1191,7 @@ function renderRealWorkload() {
         tip.style.setProperty("--c", "var(--ink-3)");
         tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => {
           const rows = w.legs[x].model_rows?.[m];
-          return `<div class="k"><span class="sw" style="background: var(--${x})"></span>${esc(LABEL[x] ?? x)}</div>
+          return `<div class="k"><span class="sw" style="background: var(--${x})"></span>${esc(wlName(x))}</div>
             <div>${fmt(w.legs[x].model_seconds?.[m] ?? 0)}${rows != null ? ` · ${rows.toLocaleString()} rows` : ""}</div>`;
         }).join("") + `<div class="k"></div><div>Click for how each engine builds it.</div>`;
       }
@@ -1225,7 +1229,7 @@ function openModel(w, runs, n, at) {
   const lines = isSource ? "" : runs.map(e => {
     const l = w.legs[e], c = l.model_config?.[n], r = l.model_rows?.[n];
     const sql = c?.path ? `<a href="${WORKLOAD_BLOB}${c.path}">${c.sql_lines} lines ↗</a>` : "";
-    return `<tr style="--c: var(--${e}, var(--ink-3))"><td><i class="sw"></i>${esc(LABEL[e] ?? e)}</td>
+    return `<tr style="--c: var(--${e}, var(--ink-3))"><td><i class="sw"></i>${esc(wlName(e))}</td>
       <td>${esc(strategyOf(c))}</td><td class="n">${fmt(l.model_seconds?.[n] ?? 0)}</td>
       ${same ? "" : `<td class="n">${r == null ? "–" : r.toLocaleString()}</td>`}<td class="n">${sql}</td></tr>`;
   }).join("");
