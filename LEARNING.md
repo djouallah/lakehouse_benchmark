@@ -730,20 +730,46 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
 
 ## The dbt workload test (the Real workload tab)
 
-**Now (2026-10-20):** it runs every 2 hours on a schedule, never resets, and lands new AEMO files
-every run. Each engine folds `process_limit` (50) files a run into its own tables, which only grow.
-The question is how far each engine gets. The parity grade and the decimals job were removed once
-the last-decimal differences were understood and filed (below). Measured on a 15.6 GB runner at 50
-files a run (run 39387172190), peak RSS during `dbt build`:
-- Spark 5.7 GB;
-- Trino 8.9 GB;
-- Polars 9.2 GB (the merge collects the batch: dbt-polars `.collect()`s before it merges);
-- DuckDB 14.5 GB (mostly its buffer pool, 80% of RAM by default).
+**Now (2026-10-20):** it runs every 2 hours on a schedule, never resets, lands up to 360 new daily
+AEMO files a run, and each engine folds its largest proven batch into its own tables, which only
+grow: Spark 360, DuckDB 360, Trino 100, Polars 75 files a run (`PROCESS_LIMITS` in workload.yml).
+The parity grade and the decimals job were removed once the last-decimal differences were
+understood and filed (below). A runner that dies uploads nothing; the publish step keeps that
+engine on the page as "died", with its last good run.
 
-At 100 files a run, DuckDB's runner died during `fct_scada` (run 39382816547, exit 143). A runner
-that dies uploads nothing; the publish step keeps that engine on the page as "died", with its last
-good run. Each merge's `ON` clause carries `DEST.file IN (<this batch's files>)` (`date` on
-`fct_summary`, `workload/macros/merge_prune.sql`), so the target scan stays the size of the batch.
+**Batch size: what each engine does with N files a run** (15.6 GB runner; peak RSS during `dbt build`):
+
+| Engine | Largest good batch | What failed above it |
+|---|---|---|
+| Spark (Gluten) | 360 (1,025 s, 9.4 GB; run 39403578519) | not tried higher |
+| DuckDB | 360 with the TEMP VIEW batch (1,396 s, 12.9 GB; 39427985965) | TEMP TABLE batch: the runner died at 100 (39382816547); at 360 the spill write was refused, EDQUOT (39403578519) |
+| Trino | 100 (13.8 GB; 39396351158) | 360: `EXCEEDED_LOCAL_MEMORY_LIMIT`, its 9 GB per-query cap; the MERGE's `HashBuilderOperator` held 8.66 GB of the batch |
+| Polars | 75 (12.7 GB; 39396351158) | 360: "spilled data exceeded the out-of-core disk budget" -- over 64 GB of spill (POLARS_OOC_DISK_BUDGET_MB, default 64 GB at the pinned commit; now 100 GB) |
+
+- **The batch is the cost, not the merge.** Each merge's `ON` clause carries
+  `DEST.file IN (<this batch's files>)` (`date` on `fct_summary`; `workload/macros/merge_prune.sql`),
+  so the target side stays the size of the batch. What grows with N is staging the batch.
+- **dbt stages the batch before the MERGE, and the adapters differ.** dbt-core's incremental recipe
+  (dbt-duckdb, dbt-trino) runs the model into a temp relation, reads its columns, then merges from
+  it. dbt-spark uses a temp VIEW (Spark SQL has no session temp tables), so its MERGE streams the
+  CSVs and Spark writes only shuffle files to disk. That is why Spark held 360 files at 9.4 GB.
+- **A DuckDB TEMP TABLE is uncompressed, in memory and in its spill.** TEMP objects live in the
+  in-memory `temp` catalog whatever the main database is; `COMPRESS` exists only as an ATTACH option
+  for an in-memory database, not for TEMP. Measured on 20M rows under a 300 MB cap: TEMP TABLE + MERGE
+  spilled 813 MiB (12 s), TEMP VIEW + MERGE spilled nothing (28 s); the same rows as a regular table
+  are 203 MiB compressed. `workload/macros/duckdb_temp_view.sql` stages every temporary SQL
+  relation on DuckDB as a TEMP VIEW. The cost is time: the view is evaluated twice (merge filter,
+  then MERGE), so Spark beat DuckDB at 360 files (1,025 s vs 1,396 s).
+- **Dead ends:** a scratch DuckDB file for the batch fails -- one transaction may write only one
+  attached database, and dbt-duckdb creates the batch and merges in one transaction (39412999718).
+  `/mnt` on the runner is a directory on the same volume as `/`, not a second disk.
+- **DuckDB `memory_limit`** is 9 GB and `temp_directory` is set once at connect (profiles.yml
+  `config_options`): the default 80% of RAM left no room for the rest of the process, and an
+  on-run-start `SET temp_directory` broke `dbt retry` ("Cannot switch temporary directory").
+- **DuckDB 2.0 dev, 2026-10-20 (`2.0.0.dev2610192346`, alpha49003):** the Python relational API was
+  rewritten (duckdb-python #697, lazy relations compiled to one SQL query). `con.sql(...).fetchone()`
+  is gone (`fetchall()`, or DB-API `con.execute(...).fetchone()`), and a connection with a partly
+  read result refuses other work until it is finished. dbt-duckdb's incremental merge runs on it.
 
 **History:**
 
