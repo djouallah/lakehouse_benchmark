@@ -27,7 +27,7 @@ on:
         type: string
         default: "50"
       process_limits:
-        description: Per-engine overrides of process_limit, e.g. "gluten=100,trino=150". Engines not named use process_limit.
+        description: Per-engine files a run, e.g. "gluten=100,trino=150"; empty uses each engine's proven batch (gluten=360,duckdb=360,trino=100,polars=75). Engines not named use process_limit.
         type: string
         default: ""
       daily_download_limit:
@@ -142,7 +142,9 @@ jobs:
       BENCH_ENGINE: ${{ matrix.engine }}
       BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       process_limit: ${{ inputs.process_limit || '50' }}
-      PROCESS_LIMITS: ${{ inputs.process_limits || '' }}
+      # Each engine's largest proven batch (2026-10-20): Spark 360 (39403578519), DuckDB 360 with the
+      # TEMP VIEW batch (39427985965), Trino 100 (its 9 GB per-query cap failed 360), Polars 75.
+      PROCESS_LIMITS: ${{ inputs.process_limits || 'gluten=360,duckdb=360,trino=100,polars=75' }}
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       DUCKDB_TEMP_DIR: /mnt/duckdb_spill
