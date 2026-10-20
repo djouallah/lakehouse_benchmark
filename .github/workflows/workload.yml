@@ -31,9 +31,9 @@ on:
         type: string
         default: ""
       daily_download_limit:
-        description: Daily archive files the landing adds per run.
+        description: Daily archive files the landing adds per run (360 keeps pace with the largest batch).
         type: string
-        default: "60"
+        default: "360"
       download_limit:
         description: Intraday files per feed the landing adds per run (nemweb throttles bursts).
         type: string
@@ -91,7 +91,7 @@ jobs:
       - name: Land the AEMO files into Files/dbt (idempotent)
         env:
           DOWNLOAD_LIMIT: ${{ inputs.download_limit || '6' }}
-          DAILY_DOWNLOAD_LIMIT: ${{ inputs.daily_download_limit || '60' }}
+          DAILY_DOWNLOAD_LIMIT: ${{ inputs.daily_download_limit || '360' }}
           # The GitHub mirror listing is a contents-API call per year; anonymous is 60/hour.
           GITHUB_TOKEN: ${{ github.token }}
         run: python .github/scripts/workload_land.py
