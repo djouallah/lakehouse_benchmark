@@ -1,7 +1,7 @@
 -- Intraday SCADA (Spark), selected by name from the landed PUBLIC_DISPATCHSCADA files.
 {#-- Column layout comes from macros/aemo_columns.sql, the single source of truth shared
      by every engine. --#}
-{#-- The CSV read happens in the two pre_hooks and lands in the stage_<model> temp view; this body only
+{#-- The CSV read happens in the two pre_hooks and lands in the <model>__stage table; this body only
      casts and parses. See macros/spark_read_csv.sql and the fct_price.sql header. --#}
 {#-- Merge on the natural key, not append -- a match only happens when two runs fold the same file. See the
      fct_price.sql header for why. No INTERVENTION in the key: this feed has no such column. --#}

@@ -1,24 +1,26 @@
 {#-- How the gluten (Spark + Gluten/Velox) fact models read the landed CSVs. Ported from
      fabric-dbt-examples' Delta spark leg (dbt1/macros/spark_read_csv.sql); the record rule and
-     the file choice are unchanged, the STAGE is not.
+     the file choice are unchanged.
 
        pre_hook 1  spark_stage_view(record)   CREATE OR REPLACE TEMPORARY VIEW raw_<record>
                                               (<explicit STRING schema>) USING csv OPTIONS
                                               (path '<folder>/{this run's files}', header, PERMISSIVE)
-       pre_hook 2  spark_stage_table(record)  CREATE OR REPLACE TEMPORARY VIEW stage_<model>
-                                              AS SELECT *, input_file_name() FROM raw_<record>
-                                              WHERE <record filter>
-       model body                             SELECT <casts> FROM stage_<model>
-       post_hook   spark_drop_stage()         DROP VIEW IF EXISTS stage_<model>
+       pre_hook 2  spark_stage_table(record)  DROP + CREATE TABLE <model>__stage USING iceberg,
+                                              then INSERT ... SELECT *, input_file_name()
+                                              FROM raw_<record> WHERE <record filter>
+       model body                             SELECT <casts> FROM <model>__stage
+       post_hook   spark_drop_stage()         DROP TABLE IF EXISTS <model>__stage PURGE
 
-     THE STAGE IS A TEMPORARY VIEW HERE, NOT A TABLE. The source repo staged into a persistent
-     Delta table because dbt-fabricspark builds its __dbt_tmp as a PERSISTENT view, which may not
-     reference a temp view. dbt-spark builds __dbt_tmp as a TEMPORARY view, which may, and a CTAS
-     may read one too -- so the stage costs no OneLake write and no Iceberg commit (each commit
-     is a REST round-trip against the catalog, and a stage table would be two per model per run).
+     THE STAGE IS A TABLE, as in the source, and it has to be. Iceberg's MERGE (copy-on-write
+     ReplaceData) matches target rows with a subquery over the merge source, and Spark refuses a
+     non-deterministic expression there: with the stage as a temp view, `file` was still
+     input_file_name() and every incremental run failed INVALID_NON_DETERMINISTIC_EXPRESSIONS
+     (workload run 39354663786). Stored in a table, `file` is a column. Created with a plain
+     CREATE TABLE and filled with INSERT -- not CREATE OR REPLACE ... AS, which Spark sends as a
+     staged create and OneLake refuses (gluten_create_table_as.sql).
 
      Both hooks resolve THIS RUN's file list at run time (spark_new_files, capped at
-     process_limit). With nothing new the stage is an EMPTY view of the same columns, so the
+     process_limit). With nothing new the stage stays an EMPTY table of the same columns, so the
      body always has something to read; the merge source is zero rows. --#}
 
 {#-- The backtick-quoted STRING schema both the temp view and the empty stage need. --#}
@@ -37,9 +39,9 @@
 {% endmacro %}
 
 
-{#-- stage_<model>: a single-part name, because a temporary view has no schema. --#}
+{#-- <model>__stage, in the model's own schema, quoted like {{ this }}. --#}
 {% macro spark_stage_relation() %}
-  {{ return('stage_' ~ this.identifier) }}
+  {{ return(this.incorporate(path={'identifier': this.identifier ~ '__stage'})) }}
 {% endmacro %}
 
 
@@ -59,19 +61,18 @@
 {% endmacro %}
 
 
-{#-- pre_hook 2: the record's rows, as a temp view. The record filter runs HERE, on the raw
+{#-- pre_hook 2: the record's rows into the stage table. The record filter runs HERE, on the raw
      strings, so the stage holds only DREGION/DUNIT/PRICE/SCADA rows -- a PUBLIC_DAILY file is
-     mostly other report types. input_file_name() sits directly on the csv scan: it is the only
-     place the provenance exists, and the models' `file` column is parsed from it. --#}
+     mostly other report types. input_file_name() is captured now, on the csv scan: it is the only
+     place the provenance exists, and the models' `file` column is parsed from it. The drop and the
+     create run here, the INSERT is the hook's statement (empty, so skipped, with nothing new). --#}
 {% macro spark_stage_table(record) %}
   {%- set files = spark_stage_files(record) -%}
   {%- set stage = spark_stage_relation() -%}
-  {%- if files | length == 0 -%}
-  CREATE OR REPLACE TEMPORARY VIEW {{ stage }} AS SELECT
-  {%- for c in aemo_columns(record) %} CAST(NULL AS STRING) AS `{{ c }}`,{% endfor %} CAST(NULL AS STRING) AS `_fname`
-  WHERE 1 = 0
-  {%- else -%}
-  CREATE OR REPLACE TEMPORARY VIEW {{ stage }} AS
+  {%- do run_query('DROP TABLE IF EXISTS ' ~ stage) -%}
+  {%- do run_query('CREATE TABLE ' ~ stage ~ ' (' ~ spark_csv_schema(record) ~ ', `_fname` STRING) USING iceberg') -%}
+  {%- if files | length > 0 -%}
+  INSERT INTO {{ stage }}
   SELECT *, input_file_name() AS _fname
   FROM raw_{{ record }}
   WHERE {{ spark_record_filter(record) }}
@@ -79,9 +80,10 @@
 {% endmacro %}
 
 
-{#-- post_hook: the stage is scratch, and session-scoped anyway. --#}
+{#-- post_hook: the stage is scratch. A run that dies before this leaves one behind; the next
+     run's pre_hook drops it first. --#}
 {% macro spark_drop_stage() %}
-  DROP VIEW IF EXISTS {{ spark_stage_relation() }}
+  DROP TABLE IF EXISTS {{ spark_stage_relation() }} PURGE
 {% endmacro %}
 
 
