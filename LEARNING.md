@@ -725,7 +725,24 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
 - **ETL:** a Hive external table over `Files/csv`, then one `INSERT ... SELECT` into the Iceberg
   table, one commit (c8bb84b). 1000 files in 892 s.
 
-## The dbt workload test (not on the page yet)
+## The dbt workload test (the Real workload tab)
+
+**Now (2026-10-20):** it runs every 2 hours on a schedule, never resets, and lands new AEMO files
+every run. Each engine folds `process_limit` (50) files a run into its own tables, which only grow.
+The question is how far each engine gets. The parity grade and the decimals job were removed once
+the last-decimal differences were understood and filed (below). Measured on a 15.6 GB runner at 50
+files a run (run 39387172190), peak RSS during `dbt build`:
+- Spark 5.7 GB;
+- Trino 8.9 GB;
+- Polars 9.2 GB (the merge collects the batch: dbt-polars `.collect()`s before it merges);
+- DuckDB 14.5 GB (mostly its buffer pool, 80% of RAM by default).
+
+At 100 files a run, DuckDB's runner died during `fct_scada` (run 39382816547, exit 143). A runner
+that dies uploads nothing; the publish step keeps that engine on the page as "died", with its last
+good run. Each merge's `ON` clause carries `DEST.file IN (<this batch's files>)` (`date` on
+`fct_summary`, `workload/macros/merge_prune.sql`), so the target scan stays the size of the batch.
+
+**History:**
 
 `workload.yml` runs the fabric-dbt-examples project (`workload/`, source commit in
 `workload/SOURCE`) on three Iceberg legs: dbt-duckdb, dbt-polars, and dbt-spark on Gluten/Velox.

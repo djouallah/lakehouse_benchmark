@@ -1,8 +1,8 @@
 """Land the AEMO files the dbt workload reads. Idempotent. The `land` job of workload.yml.
 
 THE SINGLE WRITER of Files/dbt: the engine legs only read it, so they cannot race on the
-archive-log parquet (bench/workload/landing.py rewrites it), and every leg folds the same files,
-which is what makes the parity grade mean anything.
+archive-log parquet (bench/workload/landing.py rewrites it), and every leg selects from the same
+files.
 """
 
 from __future__ import annotations

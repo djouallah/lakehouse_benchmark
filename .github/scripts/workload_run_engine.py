@@ -1,6 +1,6 @@
 """Run the dbt workload on ONE engine and write its part: `python workload_run_engine.py parts`.
 
-The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars or gluten.
+The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, gluten or trino.
 
     1. mint the OneLake bearer and hand it to the profile through the environment
     2. gluten only: start bench's Gluten/Velox SparkSession (the ETL's writing variant, so the
@@ -10,9 +10,10 @@ The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars or
        writing run_results.json, which heals a transient catalog error on a single node
     4. refuse a build that ran NO model: a target matching no folder disables every tree and
        dbt exits 0 having built nothing
-    5. `dbt run-operation parity_fingerprint`, fct_summary through the leg's own adapter
-    6. parts/workload_<engine>.json: status, timings per node, fingerprint -- scrubbed and
-       leak-checked, and written on failure too, so the publish job always sees every leg
+    5. `dbt run-operation model_row_counts`, rows per model for the page's DAG (best-effort)
+    6. parts/workload_<engine>.json: status, timings per node, peak RSS -- scrubbed and
+       leak-checked, and written on failure too (a runner that dies writes nothing: the publish
+       job carries that engine forward as "died")
 
 THE FILE NAME MUST NOT START WITH `dbt_`. dbt's plugin manager imports every top-level module
 named dbt_* when a command starts, and this script's directory is sys.path[0]: as dbt_*.py it
@@ -35,7 +36,6 @@ from pathlib import Path
 
 from bench import auth, scrub
 from bench.report import leak_check
-from bench.workload import parity
 from bench.workload.config import BENCH_ENGINE, DEFAULT_PROCESS_LIMIT, ENGINES, WorkloadConfig
 
 REPO = Path(__file__).resolve().parents[2]
@@ -341,25 +341,13 @@ def main(parts: Path) -> int:
             if event.info.name.startswith("JinjaLog"):
                 logged.append(event.info.msg)
 
-        fp_ok, _ = dbt.run("run-operation", "parity_fingerprint", callbacks=[keep_log])
-        fp = parity.extract("\n".join(logged)) if fp_ok else None
-        if fp is None:
-            part["error"] = "fingerprint failed: " + (dbt.last_error or "no JSON in the log")
-            return 1
-        fp["engine"] = engine
-        part["fingerprint"] = fp
         part["status"] = "success"
         # Rows per model, for the Real workload tab's DAG. Best-effort: a count that fails is a
         # missing number on the page, never a failed leg.
-        logged.clear()
         if dbt.run("run-operation", "model_row_counts", callbacks=[keep_log])[0]:
             found = [m for m in logged if m.lstrip().startswith('{"model_rows"')]
             if found:
                 part["model_rows"] = json.loads(found[-1])["model_rows"]
-        scrub.safe_print(
-            f"{engine}: fct_summary {fp['rows_total']:,} rows, {fp['duids']} DUIDs, "
-            f"{fp['days']} days, mw_sum {fp['mw_sum']}, price_sum {fp['price_sum']}"
-        )
         return 0
     except Exception as exc:  # noqa: BLE001 - the part is written either way
         part["error"] = scrub.scrub_exc(exc)

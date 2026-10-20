@@ -1,21 +1,25 @@
-"""Grade and record a workload run: `python workload_publish.py parts [--write] [--check]`.
+"""Record a workload run: `python workload_publish.py parts [--write] [--check]`.
 
-Always: the per-leg table and the parity verdict, to stdout and the job summary.
+Always: the per-leg table, to stdout and the job summary.
 --write: results/workload/<run_id>.json, the run's immutable record, and docs/data/workload.json,
-         the page's copy of the latest run (the Real workload tab), keyed by bench engine id.
---check: exit 1 unless every leg in the run built and the legs agree.
+         the page's copy of the latest state (the Real workload tab), keyed by bench engine id.
+         An engine this run asked for (WORKLOAD_ENGINES) that left no part had its runner killed
+         -- the out-of-memory case, exit 143, nothing uploaded -- and stays on the page as
+         "died", carried forward from the previous page data with its last good run. An engine
+         this run did not ask for is carried forward unchanged.
+--check: exit 1 when a leg failed or died.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
 from bench.report import leak_check
-from bench.workload import parity
-from bench.workload.config import BENCH_ENGINE
+from bench.workload.config import BENCH_ENGINE, ENGINES
 
 REPO = Path(__file__).resolve().parents[2]
 RESULTS = REPO / "results" / "workload"
@@ -86,93 +90,117 @@ def model_seconds(leg: dict) -> dict[str, float]:
     }
 
 
-def page_data(legs: dict[str, dict], grade: dict) -> dict:
-    """The latest run as the Real workload tab reads it: one entry per bench engine id."""
+def files_behind(leg: dict) -> int | None:
+    """Daily files the leg has not folded yet: its own assert_all_daily_files_processed_* tests
+    count them ("Got N results", a warning) and pass at zero. None when they did not run."""
+    merged = {n["node"]: n for n in leg.get("nodes") or []}
+    merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
+    found = None
+    for uid, n in merged.items():
+        if ".assert_all_daily_files_processed_" not in uid:
+            continue
+        m = re.search(r"Got (\d+) result", n.get("message") or "")
+        count = int(m.group(1)) if m else (0 if n["status"] == "pass" else None)
+        if count is not None:
+            found = max(found or 0, count)
+    return found
+
+
+def page_data(
+    legs: dict[str, dict], previous: dict | None = None, asked: list[str] | None = None
+) -> dict:
+    """The latest state as the Real workload tab reads it: one entry per bench engine id.
+
+    `previous` is the page data before this run, `asked` the engines this run was given."""
+    previous = previous or {}
+    asked = list(legs) if asked is None else asked
+    first = next(iter(legs.values()), {})
+    # Every runner dead leaves no part to read the run from: the workflow's own id then.
+    run_id = first.get("run_id") or os.environ.get("GITHUB_RUN_ID", "")
+    run_url = os.environ.get("BENCH_RUN_URL") or first.get("run_url", "")
     out = {
-        "run_id": next(iter(legs.values()))["run_id"],
-        "run_url": os.environ.get("BENCH_RUN_URL") or next(iter(legs.values())).get("run_url", ""),
-        "finished": max(leg.get("finished", "") for leg in legs.values()),
-        "baseline": BENCH_ENGINE.get(grade["baseline"], grade["baseline"]),
-        "rel_tol": parity.REL_TOL,
-        "parity_ok": len(grade["engines"]) > 1 and not grade["failures"],
+        "run_id": run_id,
+        "run_url": run_url,
+        "finished": max((leg.get("finished", "") for leg in legs.values()), default=""),
         # The project's DAG as dbt published it, the union over the legs that built: every tree
         # has the same model names, so the union of their edges is the project's DAG.
-        "dag": dag(legs),
+        "dag": dag(legs) or previous.get("dag", {}),
         "legs": {},
     }
-    base = next((leg.get("fingerprint") for e, leg in legs.items() if e == grade["baseline"]), None)
+    before = previous.get("legs") or {}
     for engine, leg in legs.items():
-        fp = leg.get("fingerprint") or {}
-        entry = {
+        old = before.get(BENCH_ENGINE[engine], {})
+        ok = leg["status"] == "success"
+        out["legs"][BENCH_ENGINE[engine]] = {
             "target": engine,
             "status": leg["status"],
             "build_seconds": leg.get("build_seconds"),
             "peak_rss_mb": leg.get("peak_rss_mb"),
+            "files_behind": files_behind(leg),
             **counts(leg),
-            "rows": fp.get("rows_total"),
-            "same_rows": bool(base and fp and fp.get("rows_total") == base.get("rows_total")),
-            "diff": grade["diffs"].get(engine, {}),
             "versions": leg.get("versions", {}),
             "adapter": adapter(leg.get("versions", {})),
             "model_seconds": model_seconds(leg),
             "model_rows": leg.get("model_rows", {}),
             "model_config": model_config(leg),
             "error": (leg.get("error") or "")[:300],
+            "last_ok": (
+                {"run_id": run_id, "run_url": run_url, "finished": leg.get("finished", "")}
+                if ok
+                else old.get("last_ok")
+            ),
         }
-        out["legs"][BENCH_ENGINE[engine]] = entry
+    for engine in ENGINES:
+        old = before.get(BENCH_ENGINE[engine])
+        if engine in legs or not old:
+            continue
+        if engine in asked:
+            # Asked for and no part: the runner was killed before it could upload one.
+            old = {**old, "status": "died", "error": "runner died (likely out of memory)"}
+        out["legs"][BENCH_ENGINE[engine]] = old
     return out
 
 
-def summary(legs: dict[str, dict], grade: dict) -> str:
+def summary(legs: dict[str, dict]) -> str:
     lines = [
         "## dbt workload (Iceberg)",
         "",
-        "| leg | status | build s | peak RSS MB | models ok | tests ok | fct_summary rows | mw_sum "
-        "| price_sum |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| leg | status | build s | peak RSS MB | files behind | models ok | tests ok |",
+        "|---|---|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
         c = counts(leg)
-        fp = leg.get("fingerprint") or {}
+        behind = files_behind(leg)
         lines.append(
             f"| {engine} | {leg['status']} | {leg.get('build_seconds', '')} "
-            f"| {leg.get('peak_rss_mb', '')} "
-            f"| {c['models_ok']}/{c['models']} | {c['tests_ok']}/{c['tests']} "
-            f"| {fp.get('rows_total', '')} | {fp.get('mw_sum', '')} | {fp.get('price_sum', '')} |"
+            f"| {leg.get('peak_rss_mb', '')} | {'' if behind is None else behind} "
+            f"| {c['models_ok']}/{c['models']} | {c['tests_ok']}/{c['tests']} |"
         )
     lines.append("")
     for engine, leg in legs.items():
         if leg.get("error"):
             lines += [f"**{engine} error:**", "```", leg["error"][:1500], "```", ""]
-    if grade["baseline"] and len(grade["engines"]) > 1:
-        lines.append(f"Parity baseline: **{grade['baseline']}**, REL_TOL {parity.REL_TOL:.0e}")
-        for engine, diffs in grade["diffs"].items():
-            cells = ", ".join(f"{k} {v:.2e}" for k, v in diffs.items())
-            lines.append(f"- {engine}: {cells}")
-        lines.append("")
-    if grade["failures"]:
-        lines.append("**PARITY FAILED**")
-        lines += [f"- {f}" for f in grade["failures"]]
-    elif len(grade["engines"]) > 1:
-        lines.append(f"**PARITY OK** across {', '.join(grade['engines'])}")
-    else:
-        lines.append("Parity not graded: fewer than two legs built.")
     return "\n".join(lines) + "\n"
+
+
+def asked_engines() -> list[str] | None:
+    """The engines this run was given (the land job's matrix), so a missing part means died."""
+    raw = os.environ.get("WORKLOAD_ENGINES")
+    return json.loads(raw) if raw else None
 
 
 def main(argv: list[str]) -> int:
     parts = Path(argv[1]) if len(argv) > 1 and not argv[1].startswith("--") else Path("parts")
     legs = load(parts)
-    fps = {e: leg["fingerprint"] for e, leg in legs.items() if leg.get("fingerprint")}
-    grade = parity.grade(fps)
-    text = summary(legs, grade)
+    asked = asked_engines()
+    text = summary(legs)
     print(text)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write(text)
 
-    if "--write" in argv and legs:
-        run_id = next(iter(legs.values()))["run_id"]
+    if "--write" in argv and (legs or asked):
+        run_id = next(iter(legs.values()), {}).get("run_id") or os.environ.get("GITHUB_RUN_ID")
         RESULTS.mkdir(parents=True, exist_ok=True)
         out = RESULTS / f"{run_id}.json"
         record = {
@@ -180,20 +208,22 @@ def main(argv: list[str]) -> int:
             "run_url": os.environ.get("BENCH_RUN_URL", ""),
             "started": os.environ.get("BENCH_RUN_STARTED_AT", ""),
             "legs": legs,
-            "parity": grade,
         }
         out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
-        PAGE_DATA.write_text(json.dumps(page_data(legs, grade), indent=2) + "\n", encoding="utf-8")
+        previous = json.loads(PAGE_DATA.read_text(encoding="utf-8")) if PAGE_DATA.exists() else {}
+        page = page_data(legs, previous, asked)
+        PAGE_DATA.write_text(json.dumps(page, indent=2) + "\n", encoding="utf-8")
         leak_check([out, PAGE_DATA])
         print(f"wrote {out.relative_to(REPO)} and {PAGE_DATA.relative_to(REPO)}")
 
     if "--check" in argv:
         failed = [e for e, leg in legs.items() if leg["status"] != "success"]
+        died = [e for e in (asked or []) if e not in legs]
         if failed:
             print(f"::error::legs failed: {', '.join(failed)}")
-        if grade["failures"]:
-            print("::error::parity failed: " + "; ".join(grade["failures"]))
-        return 1 if failed or grade["failures"] or not legs else 0
+        if died:
+            print(f"::error::runner died, no result: {', '.join(died)}")
+        return 1 if failed or died or not legs else 0
     return 0
 
 

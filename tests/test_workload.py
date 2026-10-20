@@ -1,8 +1,8 @@
 """The dbt workload test (workload/, bench/workload/, workload.yml): offline checks.
 
 What would otherwise fail only minutes into a real run, or -- worse -- pass green having built
-nothing: a target with no model tree, a leg missing from the workflow, a grade that misses a
-row-count difference. And the page reads exactly the file the publish step writes.
+nothing: a target with no model tree, a leg missing from the workflow. And the page reads exactly
+the file the publish step writes, including an engine whose runner died.
 """
 
 from __future__ import annotations
@@ -10,25 +10,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from bench.workload import parity
-from bench.workload.config import BASELINE, BENCH_ENGINE, ENGINES
+from bench.workload.config import BENCH_ENGINE, ENGINES
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "workload"
-
-
-def _fp(engine: str, **over) -> dict:
-    fp = {
-        "engine": engine,
-        "rows_total": 3_078_798,
-        "duids": 500,
-        "days": 50,
-        "date_min": "2026-08-01",
-        "date_max": "2026-09-19",
-        "mw_sum": 278533061.3401898,
-        "price_sum": 184858937.75101513,
-    }
-    return fp | over
 
 
 def test_every_engine_has_a_target_a_model_tree_and_a_gate():
@@ -75,51 +60,13 @@ def test_the_page_reads_what_publish_writes():
     assert "dbt workload" in pages
 
 
-def test_grade_passes_rounding_noise():
-    g = parity.grade(
-        {
-            "gluten": _fp("gluten"),
-            "duckdb": _fp("duckdb", mw_sum=278533060.8253, price_sum=184858936.879),
-        }
-    )
-    assert g["baseline"] == BASELINE
-    assert g["failures"] == []
-    assert 1e-9 < g["diffs"]["duckdb"]["mw_sum"] < 1e-8
-
-
-def test_grade_fails_a_row_count_difference_and_a_drift():
-    g = parity.grade(
-        {
-            "gluten": _fp("gluten"),
-            "polars": _fp("polars", rows_total=3_078_797, price_sum=184858937.75101513 * 1.001),
-        }
-    )
-    assert any(f.startswith("rows_total") for f in g["failures"])
-    assert any(f.startswith("price_sum") for f in g["failures"])
-
-
-def test_grade_without_the_baseline_falls_back_to_the_first_by_name():
-    g = parity.grade({"polars": _fp("polars"), "duckdb": _fp("duckdb")})
-    assert g["baseline"] == "duckdb"
-
-
-def test_grade_of_one_leg_grades_nothing():
-    assert parity.grade({"duckdb": _fp("duckdb")})["failures"] == []
-
-
-def test_extract_reads_the_fingerprint_log():
-    log = 'noise\n{\n  "engine": "duckdb",\n  "rows_total": 3,\n  "mw_sum": 1.5\n}\nmore'
-    assert parity.extract(log) == {"engine": "duckdb", "rows_total": 3, "mw_sum": 1.5}
-    assert parity.extract("nothing here") is None
-
-
 def test_runner_script_is_not_named_like_a_dbt_plugin():
     # dbt imports every top-level dbt_* module as a plugin; the script dir is sys.path[0].
     scripts = (ROOT / ".github" / "scripts").glob("*.py")
     assert not [p.name for p in scripts if p.name.startswith("dbt_")]
 
 
-def test_page_data_carries_the_dag_and_each_legs_models():
+def _publish():
     import importlib.util
 
     spec = importlib.util.spec_from_file_location(
@@ -127,6 +74,11 @@ def test_page_data_carries_the_dag_and_each_legs_models():
     )
     publish = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(publish)
+    return publish
+
+
+def test_page_data_carries_the_dag_and_each_legs_models():
+    publish = _publish()
 
     def part(engine, adapter, dag):
         return {
@@ -140,8 +92,13 @@ def test_page_data_carries_the_dag_and_each_legs_models():
                 {"node": "model.aemo_electricity.stg", "status": "success", "seconds": 1.5},
                 {"node": "model.aemo_electricity.fct", "status": "success", "seconds": 4.0},
                 {"node": "test.aemo_electricity.t", "status": "pass", "seconds": 0.1},
+                {
+                    "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+                    "status": "warn",
+                    "seconds": 0.2,
+                    "message": "Got 809 results, configured to warn if != 0",
+                },
             ],
-            "fingerprint": _fp(engine),
             "dag": dag,
         }
 
@@ -165,13 +122,15 @@ def test_page_data_carries_the_dag_and_each_legs_models():
             },
         ),
     }
-    out = publish.page_data(legs, parity.grade({e: leg["fingerprint"] for e, leg in legs.items()}))
+    out = publish.page_data(legs)
     assert out["dag"]["fct"]["parents"] == ["stg"]
     assert set(out["dag"]) == {"stg", "fct"}
     assert out["legs"]["duckdb_iceberg"]["adapter"] == "dbt-duckdb 1.10.1"
     assert out["legs"]["duckdb_iceberg"]["model_seconds"] == {"stg": 1.5, "fct": 4.0}
     assert out["legs"]["duckdb_iceberg"]["models"] == 2  # the count, not the seconds
-    assert out["parity_ok"]
+    assert "parity_ok" not in out
+    assert out["legs"]["duckdb_iceberg"]["files_behind"] == 809
+    assert out["legs"]["duckdb_iceberg"]["last_ok"]["run_id"] == "1"
     assert out["dag"]["fct"]["differences"] == ["`GROUP BY ALL` here."]
     assert out["legs"]["duckdb_iceberg"]["model_config"]["fct"]["strategy"] == "merge"
     assert out["legs"]["duckdb_iceberg"]["model_config"]["fct"]["sql_lines"] == 40
@@ -252,3 +211,35 @@ def test_merges_prune_the_target_on_a_key_column():
         for path in (PROJECT / "models" / "aemo" / engine / "marts").glob("fct_*.sql"):
             sql = path.read_text(encoding="utf-8")
             assert "'file'" in sql or "spec['unique_key']" in sql or "'date'" in sql, path
+
+
+def test_an_engine_whose_runner_died_stays_on_the_page():
+    """A runner killed out of memory uploads no part: the engine is carried forward as "died",
+    with its last good run, not dropped from the page. An engine the run did not ask for is
+    carried forward unchanged."""
+    publish = _publish()
+    previous = {
+        "legs": {
+            "polars_iceberg": {"status": "success", "last_ok": {"run_id": "7", "finished": "x"}},
+            "trino_iceberg": {"status": "success", "last_ok": {"run_id": "7", "finished": "x"}},
+        }
+    }
+    legs = {
+        "duckdb": {"engine": "duckdb", "run_id": "8", "status": "success", "nodes": [], "dag": {}}
+    }
+    out = publish.page_data(legs, previous, asked=["duckdb", "polars"])
+    assert out["legs"]["polars_iceberg"]["status"] == "died"
+    assert out["legs"]["polars_iceberg"]["last_ok"]["run_id"] == "7"
+    assert out["legs"]["trino_iceberg"]["status"] == "success"
+    assert out["legs"]["duckdb_iceberg"]["last_ok"]["run_id"] == "8"
+
+
+def test_the_workload_runs_on_a_schedule_and_publishes():
+    import yaml
+
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "workload.yml").read_text("utf-8"))
+    assert wf[True]["schedule"], "no schedule"
+    assert wf["concurrency"]["group"] != "onelake"
+    grade = wf["jobs"]["grade"]
+    assert any("schedule" in str(step.get("if", "")) for step in grade["steps"])
+    assert "decimals" not in wf["jobs"]

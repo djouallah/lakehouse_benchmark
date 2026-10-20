@@ -504,6 +504,7 @@ main .tiles > a { color: inherit; }
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes).</li>
       <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; SQL writes to Iceberg: <a href="https://github.com/pola-rs/polars/issues/29892">#29892</a> CREATE TABLE, <a href="https://github.com/pola-rs/polars/issues/29893">#29893</a> INSERT, <a href="https://github.com/pola-rs/polars/issues/29894">#29894</a> DELETE, <a href="https://github.com/pola-rs/polars/issues/29895">#29895</a> UPDATE, <a href="https://github.com/pola-rs/polars/issues/29896">#29896</a> DROP TABLE (all open); <code>sink_iceberg</code>: <a href="https://github.com/pola-rs/polars/issues/29845">#29845</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/29908">PR #29908</a>, not yet released) create the table it writes, <a href="https://github.com/pola-rs/polars/issues/29968">#29968</a> (open) create a missing namespace, <a href="https://github.com/pola-rs/polars/issues/29844">#29844</a> (open) the <code>bucket</code> transform, <a href="https://github.com/pola-rs/polars/issues/29842">#29842</a> (open) overwrite by filter, <a href="https://github.com/pola-rs/polars/issues/29843">#29843</a> (open) delete rows by predicate;<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/29">dbt-polars#29</a> a dbt source cannot name a <code>.CSV</code> file (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/30">PR #30</a>); <a href="https://github.com/pola-rs/polars/issues/30029">#30029</a> (open) an unordered <code>UNION ALL</code> of N CSV scans holds every input at once, 7x the memory of <code>pl.concat</code>; the dbt project now reads its files with one <code>read_csv()</code> over the list (<a href="https://github.com/pola-rs/polars/pull/30047">PR #30047</a>, on main); <a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/45">dbt-polars#45</a> (fix: <a href="https://github.com/datamindedbe/incubator-dbt-polars/pull/46">PR #46</a>, open) a merge on a composite key builds one predicate per row, minutes at 5k rows, a segfault at 20k. dbt-polars rejects <code>merge_clauses</code> (<a href="https://github.com/datamindedbe/incubator-dbt-polars/issues/32">dbt-polars#32</a>, open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
+      <li><b>Real workload, last decimal place</b>: casting a <code>DOUBLE</code> to <code>DECIMAL(18,4)</code> breaks ties differently, so DuckDB and Polars land 0.0001 off Spark and Trino on some <code>fct_summary</code> rows. Filed: <a href="https://github.com/pola-rs/polars/issues/30074">polars#30074</a>, <a href="https://github.com/duckdb/duckdb/issues/27503">duckdb#27503</a>.</li>
       <li><b>LakeSail</b>: Filed: <a href="https://github.com/lakehq/sail/issues/2629">#2629</a> (open) the catalog reloads every table on every statement; <a href="https://github.com/lakehq/sail/issues/2642">#2642</a> (fixed in 0.7.2) TPC-DS Q71. <code>input_file_name()</code>, the source file name, is on main (<a href="https://github.com/lakehq/sail/pull/2571">sail#2571</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#lakesail">Details</a></li>
       <li><b>StarRocks</b>: no complete TPC-DS run; Q49 fails on a SQL bug. Filed: <a href="https://github.com/StarRocks/starrocks/issues/79807">#79807</a> (open) Q49; <a href="https://github.com/StarRocks/starrocks/issues/79806">#79806</a> (open) <code>grouping()</code> in ORDER BY, Q70 and Q86 run once it is written the standard way. <code>FILES()</code> has no source file name column (<a href="https://github.com/StarRocks/starrocks/pull/66975">#66975</a>). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#starrocks">Details</a></li>
       <li><b>Gluten/Velox</b>: Velox can't use the workload-identity token every other Spark engine reads OneLake with, so it gets a 1-hour SAS and restarts the JVM before it expires. Filed: <a href="https://github.com/facebookincubator/velox/issues/19508">velox#19508</a> (open). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#glutenvelox">Details</a></li>
@@ -1129,10 +1130,12 @@ function renderRealWorkload() {
     const l = w.legs[e];
     return `<div class="card${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
       <div class="n"><i class="sw"></i>${esc(wlName(e))}</div>
-      <div class="v">${ok(e) ? "✓ runs" : "✗ does not run"}</div>
+      <div class="v">${ok(e) ? "✓ runs" : l.status === "died" ? "✗ died" : "✗ fails"}</div>
       <div class="ad">${esc(l.adapter ?? "")}</div>
       ${ok(e) ? `<div class="t"><span>${fmt(l.build_seconds)}</span><i class="bar" style="width: ${(100 * l.build_seconds / slowest).toFixed(1)}%"></i></div>` : ""}
       ${l.peak_rss_mb ? `<div class="m">peak RSS ${(l.peak_rss_mb / 1024).toFixed(1)} GB</div>` : ""}
+      ${ok(e) && l.files_behind != null ? `<div class="m">${l.files_behind ? `${l.files_behind.toLocaleString()} daily files behind` : "caught up"}</div>` : ""}
+      ${!ok(e) ? `<div class="m">${esc(l.error || "")}${l.last_ok ? ` · last OK <a href="${l.last_ok.run_url}">${l.last_ok.finished.slice(0, 10)}</a>` : ""}</div>` : ""}
     </div>`;
   }).join("");
 
@@ -1140,8 +1143,8 @@ function renderRealWorkload() {
   if (w.dag && Object.keys(w.dag).length) {
     const { W, H, NW, NH, pos } = dagLayout(w.dag);
     const most = Math.max(...runs.flatMap(e => Object.values(w.legs[e].model_seconds ?? {})), 1);
-    // Rows per model: the baseline leg's count (Spark), else the first leg that has one.
-    const rowsOf = n => { const l = [w.baseline, ...runs].map(e => w.legs[e]?.model_rows?.[n]).find(v => v != null); return l ?? null; };
+    // Rows per model: the furthest engine's count (each engine folds at its own pace).
+    const rowsOf = n => { const v = runs.map(e => w.legs[e].model_rows?.[n]).filter(x => x != null); return v.length ? Math.max(...v) : null; };
     const compact = v => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : v.toLocaleString();
     const edges = Object.entries(w.dag).flatMap(([n, m]) => m.parents.map(p => {
       const a = pos[p], b = pos[n], x1 = a.x + NW, y1 = a.y + NH / 2, x2 = b.x, y2 = b.y + NH / 2, k = (x2 - x1) / 2;
@@ -1163,21 +1166,17 @@ function renderRealWorkload() {
     dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
 
-  const total = Object.values((w.legs[w.baseline] ?? first).model_rows ?? {}).reduce((a, b) => a + b, 0);
-  const n = runs.length, off = Math.max(0, ...runs.flatMap(e => Object.values(w.legs[e].diff ?? {})));
-  const answer = w.parity_ok
-    ? `Same answer on all ${n}: <code>fct_summary</code> has ${first.rows.toLocaleString()} rows on each, and the money sums agree
-      within ${off.toExponential(0)}; the last decimal differs on ties (<a href="https://github.com/pola-rs/polars/issues/30074">Polars #30074</a>,
-      <a href="https://github.com/duckdb/duckdb/issues/27503">DuckDB #27503</a>).`
-    : "The engines did not all give the same answer.";
+  const n = runs.length;
   sec.innerHTML = `
     <p class="arc">Coverage first, speed second. Spark and Trino have been boring for years. DuckDB and Polars just got there, on a 16 GB machine.</p>
     <p class="proj">One real dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
-      ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out${total ? ` (${total.toLocaleString()} rows)` : ""}.
+      ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out.
       ${n} of ${engines.length} engines run it:</p>
     <div class="cards">${cards}</div>
     ${dag}
-    <p class="answer">${answer} <a href="${w.run_url}">Run ${w.run_id}</a>, ${w.finished.slice(0, 10)}. Bars: each model's time on each engine.</p>`;
+    <p class="answer">Every 2 hours, never reset: new AEMO files land and each engine folds the next batch into its own
+      tables, which only grow. How far does each one get? <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.
+      Bars: each model's time on each engine.</p>`;
 
   for (const el of sec.querySelectorAll(".card[data-tip], .node")) {
     el.onmouseenter = () => {

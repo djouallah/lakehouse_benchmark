@@ -1,8 +1,8 @@
 """Drop every table the workload legs wrote, so they all start from empty. ONE-OFF, on request.
 
 `python workload_reset.py` -- the `reset` job of workload.yml, only when dispatched with
-reset=true. It is how the legs get the SAME HISTORY, which a parity grade needs: after a reset
-every leg goes through the same sequence of incremental runs over the same landing. It is not a
+reset=true, never on the schedule: after a reset every leg starts from empty over the same
+landing. It is not a
 full refresh and nothing passes --full-refresh: the runs after it are ordinary incremental runs,
 merges included. The landing zone (Files/dbt) is untouched.
 """

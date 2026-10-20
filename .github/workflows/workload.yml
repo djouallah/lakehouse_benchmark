@@ -3,18 +3,19 @@ name: dbt workload
 # THE "MY WORKLOAD" TEST: the fabric-dbt-examples dbt project (workload/, see workload/SOURCE),
 # run by bench on its own engines and auth, Iceberg only.
 #
-#   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten; one at a time)  ->  grade  ->  decimals
+#   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino; one at a time)  ->  grade
 #
-# NOT ON THE DASHBOARD. Nothing here writes under docs/, pages.yml does not listen to this
-# workflow, and docs/index.html reads nothing it produces. It stays that way until every leg
-# builds and the legs agree; the Scorecard's "My workload" column is still hand-curated from
-# fabric-dbt-examples until then.
+# ON A SCHEDULE, EVERY 2 HOURS, NEVER RESET: new AEMO files land every run and each engine folds
+# process_limit of them into its own tables, which only grow. The Real workload tab shows how far
+# each engine has got -- files behind, peak RSS -- and an engine whose runner dies (out of memory)
+# stays on the page as "died", carried forward from the last run (workload_publish.py).
 #
 # `land` is the SINGLE WRITER of Files/dbt (the CSVs and the archive-log parquet the models select
-# files from), so every leg folds the same files and the parity grade compares like with like.
-# Each leg writes its own namespaces, dbt_<engine>_landing / dbt_<engine>_mart.
+# files from). Each leg writes its own namespaces, dbt_<engine>_landing / dbt_<engine>_mart.
 
 on:
+  schedule:
+    - cron: "23 */2 * * *"
   workflow_dispatch:
     inputs:
       engines:
@@ -38,14 +39,14 @@ on:
         type: boolean
         default: false
       publish:
-        description: Commit results/workload/<run>.json and the Real workload tab's data (docs/data/workload.json). Off leaves the artifacts and touches nothing.
+        description: Commit results/workload/<run>.json and the Real workload tab's data (docs/data/workload.json). Off leaves the artifacts and touches nothing. Scheduled runs always publish.
         type: boolean
         default: false
 
-# The one OneLake queue every workflow here shares: one client on the pipe at a time. QUEUE,
-# NEVER CANCEL.
+# Its own queue, not the benchmarks' `onelake` one: that group keeps a single pending run, and a
+# scheduled workload run sitting in it would cancel a pending manual benchmark. QUEUE, NEVER CANCEL.
 concurrency:
-  group: onelake
+  group: workload
   cancel-in-progress: false
 
 env:
@@ -219,6 +220,8 @@ jobs:
     env:
       BENCH_RUN_STARTED_AT: ${{ needs.land.outputs.started }}
       BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      # The engines this run asked for: one with no part had its runner killed ("died").
+      WORKLOAD_ENGINES: ${{ needs.land.outputs.engines }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -229,10 +232,10 @@ jobs:
           pattern: workload-*
           merge-multiple: true
           path: artifacts
-      - name: Grade the legs
-        run: python .github/scripts/workload_publish.py artifacts/parts ${{ inputs.publish && '--write' || '' }}
+      - name: Summarise the legs
+        run: python .github/scripts/workload_publish.py artifacts/parts ${{ (inputs.publish || github.event_name == 'schedule') && '--write' || '' }}
       - name: Commit results/workload
-        if: inputs.publish && github.ref == 'refs/heads/main'
+        if: (inputs.publish || github.event_name == 'schedule') && github.ref == 'refs/heads/main'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -244,33 +247,8 @@ jobs:
             git pull --rebase origin main
           done
           exit 1
-      # Last, so a failure still leaves the summary and the record: the run is red until every
-      # leg built and the legs agree.
+      # Last, so a failure still leaves the summary and the record: the run is red when a leg
+      # failed or its runner died.
       - name: Verdict
         run: python .github/scripts/workload_publish.py artifacts/parts --check > /dev/null
 
-  # Row-level evidence for the last-decimal-place differences between legs (workload_diff.py).
-  decimals:
-    needs: [land, dbt-Iceberg]
-    if: ${{ !cancelled() && needs.land.result == 'success' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      id-token: write
-      contents: read
-    env:
-      AZURE_TRANSPORT_OPTION_TYPE: curl
-      CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements/workload_diff.txt
-      - run: pip install -r requirements/workload_diff.txt
-      - name: Compare fct_summary row by row
-        shell: bash
-        run: |
-          python .github/scripts/workload_diff.py 2>&1 \
-            | sed -uE 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g'

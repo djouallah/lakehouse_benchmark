@@ -25,8 +25,6 @@ BENCH_ENGINE = {
     "trino": "trino_iceberg",
 }
 
-# Parity baseline: Spark, as in fabric-dbt-examples' parity.py.
-BASELINE = "gluten"
 
 # The landing zone, inside bench's lakehouse. Its own folder: the ETL's Files/csv holds only the
 # daily CSVs, flat, while this project reads csv_raw/{daily,scada_today,price_today,duid} plus the
