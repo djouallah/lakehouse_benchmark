@@ -1,14 +1,12 @@
-{#-- Insert-only on DUID, the same pattern as every engine: new DUIDs insert, existing ones
-     are never touched. `append` plus an anti-join on {{ this }} is that operation here --
-     dbt-polars ignores merge_clauses, so the do-nothing merge the DuckDB legs ask for would
-     UPDATE matched rows instead (polars_smoke probe 4).
-
-     No parse-time "any new DUIDs?" probe, which the DuckDB legs use to skip the scan: it is
-     an optimisation, the anti-join keeps the result identical without it, and a run_query on
-     a SOURCE before any model has materialised is not something dbt-polars resolves. --#}
+{#-- The same materialization on every engine (the rule in workload/dbt_project.yml): an incremental merge on
+     the natural key, update on match. A merge commits against the snapshot it read, so two
+     runs folding the same file cannot both insert it -- the loser's commit fails; an append
+     would keep both. A key only matches when a file is folded twice, and the update then
+     rewrites identical values. --#}
 {{ config(
     materialized='incremental',
-    incremental_strategy='append',
+    incremental_strategy='merge',
+    unique_key=['DUID'],
     on_schema_change='append_new_columns'
 ) }}
 
@@ -92,6 +90,3 @@ WITH
   )
 
 SELECT * FROM batch
-{% if is_incremental() %}
-WHERE DUID NOT IN (SELECT DUID FROM {{ this }})
-{% endif %}

@@ -189,3 +189,40 @@ def test_every_model_says_where_the_engines_sql_differs():
             assert model["config"]["meta"]["differences"], model["name"]
     trees = {p.stem for p in (PROJECT / "models" / "aemo" / "duckdb").rglob("*.sql")}
     assert names == trees
+
+
+def test_every_engine_builds_every_model_the_same_way():
+    """One materialization per model on every engine: an incremental merge on the natural key.
+
+    A merge commits against the snapshot it read, so two concurrent runs cannot insert a file
+    twice; an append (or an insert-only merge, a plain append commit) would keep both. The one
+    exception is DuckDB's staging view, a limitation written on the model and in dbt_project.yml.
+    """
+
+    def config(path: Path) -> dict:
+        text = re.sub(r"\{#.*?#\}", "", path.read_text(encoding="utf-8"), flags=re.S)
+        block = text[text.index("config(") : text.index(")", text.index("config("))]
+        return {
+            "materialized": re.search(r"materialized='(\w+)'", block).group(1),
+            "strategy": (re.search(r"incremental_strategy='([\w+]+)'", block) or [None, ""])[1],
+            "merge_clauses": "merge_clauses" in block,
+        }
+
+    by_model: dict[str, dict] = {}
+    for engine in ENGINES:
+        for path in (PROJECT / "models" / "aemo" / engine).rglob("*.sql"):
+            by_model.setdefault(path.stem, {})[engine] = config(path)
+    for model, engines in by_model.items():
+        for engine, c in engines.items():
+            if model == "stg_csv_archive_log":
+                assert c["materialized"] == ("view" if engine == "duckdb" else "table"), engine
+                continue
+            assert c == {
+                "materialized": "incremental",
+                "strategy": "merge",
+                "merge_clauses": False,
+            }, (
+                model,
+                engine,
+                c,
+            )

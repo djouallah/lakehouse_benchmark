@@ -1,10 +1,14 @@
 -- DUID dimension (Spark). The reference CSVs are headered, so register them as temp views
--- (USING csv, header+inferSchema) in pre_hooks, then join. Full table replace every run --
--- atomic, so no concurrent-writer duplicate risk, and attribute changes flow through. It
--- previously also carried incremental_strategy='merge' and unique_key, which materialized
--- ='table' silently ignores; they are gone rather than left to describe a merge that never ran.
+-- (USING csv, header+inferSchema) in pre_hooks, then join.
+{#-- The same materialization on every engine (the rule in workload/dbt_project.yml): an incremental merge on
+     the natural key, update on match. A merge commits against the snapshot it read, so two
+     runs folding the same file cannot both insert it -- the loser's commit fails; an append
+     would keep both. A key only matches when a file is folded twice, and the update then
+     rewrites identical values. --#}
 {{ config(
-    materialized='table',
+    materialized='incremental',
+    incremental_strategy='merge',
+    unique_key=['DUID'],
     pre_hook=[
       "CREATE OR REPLACE TEMPORARY VIEW duid_data USING csv OPTIONS (path '" ~ get_csv_archive_path() ~ "/duid/duid_data.csv', header 'true', inferSchema 'true')",
       "CREATE OR REPLACE TEMPORARY VIEW facilities USING csv OPTIONS (path '" ~ get_csv_archive_path() ~ "/duid/facilities.csv', header 'true', inferSchema 'true')",

@@ -5,11 +5,11 @@
        pre_hook 1  spark_stage_view(record)   CREATE OR REPLACE TEMPORARY VIEW raw_<record>
                                               (<explicit STRING schema>) USING csv OPTIONS
                                               (path '<folder>/{this run's files}', header, PERMISSIVE)
-       pre_hook 2  spark_stage_table(record)  DROP + CREATE TABLE <model>__stage USING iceberg,
+       pre_hook 2  spark_stage_table(record)  DROP + CREATE TABLE <model>__stage_<run> USING iceberg,
                                               then INSERT ... SELECT *, input_file_name()
                                               FROM raw_<record> WHERE <record filter>
-       model body                             SELECT <casts> FROM <model>__stage
-       post_hook   spark_drop_stage()         DROP TABLE IF EXISTS <model>__stage PURGE
+       model body                             SELECT <casts> FROM <model>__stage_<run>
+       post_hook   spark_drop_stage()         DROP TABLE IF EXISTS <model>__stage_<run> PURGE
 
      THE STAGE IS A TABLE, as in the source, and it has to be. Iceberg's MERGE (copy-on-write
      ReplaceData) matches target rows with a subquery over the merge source, and Spark refuses a
@@ -39,9 +39,11 @@
 {% endmacro %}
 
 
-{#-- <model>__stage, in the model's own schema, quoted like {{ this }}. --#}
+{#-- <model>__stage_<run>, in the model's own schema, quoted like {{ this }}. The run's
+     invocation id in the name keeps two concurrent runs from dropping or filling each other's
+     stage. --#}
 {% macro spark_stage_relation() %}
-  {{ return(this.incorporate(path={'identifier': this.identifier ~ '__stage'})) }}
+  {{ return(this.incorporate(path={'identifier': this.identifier ~ '__stage_' ~ invocation_id[:8]})) }}
 {% endmacro %}
 
 

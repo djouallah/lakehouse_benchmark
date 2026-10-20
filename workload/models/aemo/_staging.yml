@@ -11,7 +11,7 @@ models:
     config:
       meta:
         differences:
-          - "A view on DuckDB, in its in-memory catalog: the OneLake Iceberg catalog has no `CREATE VIEW`. The other engines rebuild a table every run."
+          - "The one model built differently, and a limitation: on DuckDB it is a view in its in-memory catalog, because dbt-duckdb builds a table through a rename and the OneLake Iceberg catalog has no `CREATE VIEW`. The other engines rebuild a table every run."
           - "Reading the parquet log: `read_parquet()` on DuckDB and Polars; a `USING parquet` temp view on Spark (for `parquet.`path``, OneLake answers the catalog lookup with 400); a Hive external table on Trino."
     description: >
       One row per source file landed by download_aemo.py, read from

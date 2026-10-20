@@ -1,9 +1,9 @@
 {#-- Intraday DISPATCHSCADA: an 8-column record, landed every 5 minutes.
 
-     Insert-only, as on every engine, but by `append`: dbt-polars ignores merge_clauses, so a
-     do-nothing merge would UPDATE matched rows instead (polars_smoke probe 4). The unique_key
-     every engine dedupes on starts with `file`, and polars_pending_files() excludes every
-     file already in {{ this }}, so appending only unprocessed files IS the do-nothing merge.
+     A merge on the natural key, as on every engine: dbt-polars overwrites the matched keys
+     and appends, in one commit checked against the snapshot it read, so two runs cannot
+     both insert a file. polars_pending_files() still picks only unprocessed files, so a
+     normal run matches nothing and the merge is an append.
 
      The files are chosen at parse time -- dbt-polars has no SQL hooks -- by the same query
      the DuckDB pre-hooks run, NEWEST FIRST, capped at process_limit. See
@@ -11,7 +11,8 @@
 {%- set spec = aemo_spec('scada_today') -%}
 {{ config(
     materialized='incremental',
-    incremental_strategy='append'
+    incremental_strategy='merge',
+    unique_key=spec['unique_key']
 ) }}
 
 -- depends_on: {{ ref('stg_csv_archive_log') }}

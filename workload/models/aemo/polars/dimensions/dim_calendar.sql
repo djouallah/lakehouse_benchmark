@@ -1,10 +1,10 @@
 {#-- Same calendar as every engine, one row per day, 2018-04-01 .. 2026-12-31, by the DuckDB
-     legs' generate_series. Insert-only by `append` plus the NOT IN filter, which is what the
-     other engines' delete+insert on `date` amounts to when the filter already drops every
-     existing date. --#}
+     legs' generate_series. A merge on `date`, as on every engine; the NOT IN filter keeps
+     the merge source empty on a steady-state run. --#}
 {{ config(
     materialized='incremental',
-    incremental_strategy='append'
+    incremental_strategy='merge',
+    unique_key='date'
 ) }}
 SELECT
   CAST(date AS DATE) AS date,

@@ -7,7 +7,7 @@ models:
         differences:
           - "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`)."
           - "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino."
-          - "Incremental: a `merge` that only inserts new units on DuckDB, `append` on Polars, a full rebuild every run on Spark and Trino."
+          - "A `merge` on `DUID` on every engine: new units insert, changed attributes update."
     description: >
       Dispatchable units: the NEM registration list plus the WA facilities list, with
       fuel/technology, participant and geo attributes.
@@ -35,7 +35,7 @@ models:
       meta:
         differences:
           - "The date range: `generate_series()` + `unnest` on DuckDB and Polars, `sequence()` + `explode()` on Spark, `sequence()` + `UNNEST` on Trino."
-          - "Incremental: `delete+insert` on DuckDB, `merge` on Spark and Trino, `append` on Polars."
+          - "A `merge` on `date` on every engine."
     description: Date spine, 2018-04-01 to 2026-12-31.
     columns:
       - name: date

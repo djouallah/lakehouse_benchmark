@@ -11,6 +11,13 @@
 # no --select anywhere. A target name that matches no folder disables everything and
 # `dbt build` exits 0 having built nothing -- workload_run_engine.py refuses a run with no models.
 #
+# ONE MATERIALIZATION PER MODEL, ON EVERY ENGINE: an incremental merge on the model's natural key,
+# update on match. A merge commits against the snapshot it read, so two concurrent runs folding the
+# same file cannot both insert it (the loser's commit fails); an append would keep both. The one
+# exception is a limitation, written on the model: DuckDB's stg_csv_archive_log is a view in its
+# in-memory catalog, because dbt-duckdb builds a table through a rename and the OneLake catalog has
+# no views. Scratch relations (Spark's stage, Trino's __dbt_tmp) carry the run's id.
+#
 # Nothing on the `aemo_electricity` project key, ever: a generic test declared in a patch file
 # gets the fqn of the YML file, so a project-key gate also disables every generic test.
 

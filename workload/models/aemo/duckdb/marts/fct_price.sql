@@ -1,11 +1,7 @@
 {#-- AEMO DREGION record from the daily archive files: all 130 source columns.
 
-     Insert-only merge (WHEN MATCHED DO NOTHING): every commit stays a single append
-     snapshot — the OneLake catalog rejects multi-snapshot commits, see the fct_summary.sql
-     header — while re-processed files dedupe on the unique_key instead of double-inserting.
-     That only holds ACROSS batches: MERGE inserts every not-matched source row, so the
-     pre-hook's DISTINCT is what stops one file being read twice WITHIN a batch (the log is
-     append-only and lists a file once per run it waited). --#}
+     A merge on the natural key, as on every engine; the pre-hook's DISTINCT is what stops one
+     file being read twice WITHIN a batch (the log lists a file once per run it waited). --#}
 {%- set spec = aemo_spec('price') -%}
 {#-- THE PRE-HOOK MUST STAY ONE STRING LITERAL, WITH ITS {{ }} AND {% %} UNEVALUATED.
      dbt renders hooks at RUN time, and only then are `ref()`, `this` and `is_incremental()`
@@ -28,7 +24,6 @@
 {{ config(
     materialized='incremental',
     incremental_strategy='merge',
-    merge_clauses={'when_matched': [{'action': 'do_nothing'}]},
     unique_key=spec['unique_key'],
     pre_hook="SET VARIABLE price_daily_paths = (SELECT COALESCE(NULLIF(list('{{ get_csv_archive_path() }}' || archive_path), []), ['']) FROM (SELECT DISTINCT archive_path FROM {{ ref('stg_csv_archive_log') }} WHERE source_type = '" ~ spec['source_type'] ~ "'{% if is_incremental() %} AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this }}){% endif %} ORDER BY archive_path DESC LIMIT {{ env_var('process_limit', '1000') }}))"
 ) }}

@@ -5,8 +5,17 @@
 --   facilities.csv  Participant Name c1, Facility Code c2
 --   WA_ENERGY.csv   DUID c0, Technology c3
 --   geo_data.csv    DUID c3, latitude c5, longitude c6
--- Full table replace every run, as in the Spark tree. arbitrary() is Spark's and DuckDB's first().
-{{ config(materialized='table') }}
+-- arbitrary() is Spark's and DuckDB's first().
+{#-- The same materialization on every engine (the rule in workload/dbt_project.yml): an incremental merge on
+     the natural key, update on match. A merge commits against the snapshot it read, so two
+     runs folding the same file cannot both insert it -- the loser's commit fails; an append
+     would keep both. A key only matches when a file is folded twice, and the update then
+     rewrites identical values. --#}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='merge',
+    unique_key=['DUID'],
+) }}
 
 -- depends_on: {{ ref('stg_csv_archive_log') }}
 

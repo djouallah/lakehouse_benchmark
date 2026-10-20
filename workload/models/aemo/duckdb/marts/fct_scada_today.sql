@@ -1,6 +1,6 @@
 {#-- Intraday DISPATCHSCADA: an 8-column record, landed every 5 minutes. Narrow enough that
      the reader types the columns directly rather than reading all-varchar and casting.
-     Insert-only merge; see the fct_price.sql and fct_summary.sql headers for why. --#}
+     A merge on the natural key, as on every engine. --#}
 {%- set spec = aemo_spec('scada_today') -%}
 {#-- THE PRE-HOOK MUST STAY ONE STRING LITERAL, WITH ITS {{ }} AND {% %} UNEVALUATED.
      dbt renders hooks at RUN time, and only then are `ref()`, `this` and `is_incremental()`
@@ -23,7 +23,6 @@
 {{ config(
     materialized='incremental',
     incremental_strategy='merge',
-    merge_clauses={'when_matched': [{'action': 'do_nothing'}]},
     unique_key=spec['unique_key'],
     pre_hook="SET VARIABLE scada_today_paths = (SELECT COALESCE(NULLIF(list('{{ get_csv_archive_path() }}' || archive_path), []), ['']) FROM (SELECT DISTINCT archive_path FROM {{ ref('stg_csv_archive_log') }} WHERE source_type = '" ~ spec['source_type'] ~ "'{% if is_incremental() %} AND csv_filename NOT IN (SELECT DISTINCT file FROM {{ this }}){% endif %} ORDER BY archive_path DESC LIMIT {{ env_var('process_limit', '1000') }}))"
 ) }}

@@ -6,7 +6,7 @@ models:
       meta:
         differences:
           - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
-          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice."
           - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
     description: AEMO DREGION record from the daily archive files — all 130 source columns.
     columns:
@@ -41,7 +41,7 @@ models:
       meta:
         differences:
           - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
-          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice."
           - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
     description: AEMO DUNIT record from the daily archive files — all 53 source columns.
     columns:
@@ -74,7 +74,7 @@ models:
       meta:
         differences:
           - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
-          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice."
           - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
     description: Intraday DISPATCHIS regional prices, landed every 5 minutes.
     columns:
@@ -102,7 +102,7 @@ models:
       meta:
         differences:
           - "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings."
-          - "Incremental: an insert-only `merge` on DuckDB (`do_nothing`), an `append` of unprocessed files on Polars (no `merge_clauses`, [dbt-polars#32](https://github.com/datamindedbe/incubator-dbt-polars/issues/32)), an updating `merge` on Spark and Trino."
+          - "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice."
           - "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
           - "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
     description: Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.
