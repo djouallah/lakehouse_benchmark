@@ -9,7 +9,8 @@ aemo_electricity:
       path: ':memory:'
       database: onelake
       schema: mart
-      threads: 2
+      # One model at a time: two fact batches side by side doubled the memory.
+      threads: 1
       settings:
         preserve_insertion_order: false
       # The catalog bearer covers Tables/; Files/, the landing zone every model reads, needs this.
