@@ -330,9 +330,23 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1359566665501191390) but found Some(7059984582722880666)"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "`sl_39594010650_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
   }
  ],
- "run": "39231915117",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39231915117",
- "date": "2026-10-19"
+ "run": "39594010650",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
+ "date": "2026-10-21"
 }

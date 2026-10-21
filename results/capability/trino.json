@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_38991566476_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_39594010650_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -281,9 +281,23 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "`tr_39594010650_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
   }
  ],
- "run": "38991566476",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
- "date": "2026-10-17"
+ "run": "39594010650",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
+ "date": "2026-10-21"
 }

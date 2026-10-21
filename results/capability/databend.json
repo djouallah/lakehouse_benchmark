@@ -1,20 +1,20 @@
 {
  "engine": "databend",
- "version": "8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714)",
+ "version": "8.0.90-v1.2.953-38d782fa13(rust-1.100.0-nightly-2026-10-21T01:22:19.764725488Z) (datafuselabs/databend:v1.2.953-nightly)",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Databend starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "Databend 8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714); _bench_capability listed, seen by Databend; race catalog attached"
+   "detail": "Databend 8.0.90-v1.2.953-38d782fa13(rust-1.100.0-nightly-2026-10-21T01:22:19.764725488Z) (datafuselabs/databend:v1.2.953-nightly); _bench_capability listed, seen by Databend; race catalog attached"
   },
   {
    "key": "create_table",
    "group": "create",
    "question": "CREATE TABLE ENGINE = ICEBERG (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_39032752740_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_39594010650_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -281,9 +281,23 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
    "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_update, engine type iceberg, does not support UPDATE.')"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE DATABASE (namespace)",
+   "outcome": "supported",
+   "detail": "`db_39594010650_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP DATABASE (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
   }
  ],
- "run": "39032752740",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39032752740",
- "date": "2026-10-17"
+ "run": "39594010650",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
+ "date": "2026-10-21"
 }

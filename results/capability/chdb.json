@@ -7,7 +7,7 @@
    "group": "session",
    "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
    "outcome": "supported",
-   "detail": "chdb 4.4.0; 419 catalog table(s) listed"
+   "detail": "chdb 4.4.0; 446 catalog table(s) listed"
   },
   {
    "key": "create_table",
@@ -309,9 +309,23 @@
    "question": "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE TABLE in a new namespace (no namespace statement)",
+   "outcome": "supported",
+   "detail": "`ch_39594010650_1_ns` created through CREATE TABLE in it; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "drop a namespace (no namespace statement)",
+   "outcome": "no",
+   "detail": "ClickHouse has no statement to drop a catalog namespace"
   }
  ],
- "run": "39179243597",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39179243597",
- "date": "2026-10-19"
+ "run": "39594010650",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
+ "date": "2026-10-21"
 }
