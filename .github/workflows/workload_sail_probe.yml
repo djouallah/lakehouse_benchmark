@@ -41,11 +41,16 @@ jobs:
       BENCH_ENGINE: sail
       BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       process_limit: ${{ inputs.process_limit || '10' }}
+      # Sail's spill goes to the OS temp dir, and /tmp has a quota: fct_scada's merge failed
+      # "Disk quota exceeded (os error 122)" (run 39691469943), as Spark's shuffle and DuckDB's spill
+      # did in workload.yml. TMPDIR moves it to /mnt.
+      TMPDIR: /mnt/sail_spill
     steps:
       - name: Free disk
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          df -h /
+          sudo mkdir -p /mnt/sail_spill && sudo chown "$USER" /mnt/sail_spill
+          df -h / /mnt
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
