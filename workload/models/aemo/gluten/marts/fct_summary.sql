@@ -29,7 +29,7 @@
    glues WITH onto the `-- depends_on` comment line above, commenting the keyword out. #}
 {%- set scoped = is_incremental() %}
 {#- The sail probe target: Sail reads `GROUP BY ALL` as a column named ALL ("attribute
-    ObjectName([Identifier(\"ALL\")]) is missing from the schema", run 39688464508); the ordinals
+    ObjectName([Identifier(\"ALL\")]) is missing from the schema", run 39688464508; lakehq/sail#2836); the ordinals
     are what the Trino tree uses. #}
 {%- set group_by = '1, 2, 3' if target.name == 'sail' else 'ALL' %}
 {#- The sail probe target joins the interval on its epoch seconds: DataFusion's sort-merge join
