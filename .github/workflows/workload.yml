@@ -158,6 +158,10 @@ jobs:
       # /mnt is a directory on that same volume, not a second disk (tpcds.yml).
       POLARS_TEMP_DIR: /mnt/polars_spill
       POLARS_OOC_DISK_BUDGET_MB: "100000"
+      # fct_summary took the 16 GB runner down at 50 files a run (39602045106); the passing runs
+      # before it peaked at 14.7-14.8 GB (39585596206, 39571081210). A budget makes the streaming
+      # engine spill to POLARS_TEMP_DIR before that; experimental (LEARNING.md, run 36238938131).
+      POLARS_OOC_MEMORY_BUDGET_MB: "10000"
     steps:
       # Room for the engines' spill (DuckDB's temp dir, Spark's shuffle, Trino's spill) as the
       # tables grow: the toolchains this job never uses, as bench.yml does at SF>=30.
