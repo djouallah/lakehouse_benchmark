@@ -12,6 +12,10 @@ on:
         description: Space-separated file counts (~155k rows each).
         type: string
         default: "160 320 480 700"
+      build:
+        description: polars-main-<sha> release to install; empty uses requirements/workload_polars.txt's.
+        type: string
+        default: ""
 
 jobs:
   repro:
@@ -26,7 +30,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install the workload's Polars
-        run: grep -E '^polars' requirements/workload_polars.txt > polars.txt && pip install -r polars.txt psutil
+        run: |
+          grep -E '^polars' requirements/workload_polars.txt > polars.txt
+          if [ -n "${{ inputs.build }}" ]; then sed -Ei 's#polars-main-[0-9a-f]+#${{ inputs.build }}#' polars.txt; fi
+          cat polars.txt && pip install -r polars.txt
       - name: Disk
         run: |
           sudo mkdir -p /mnt/polars_spill /mnt/grain && sudo chown "$USER" /mnt/polars_spill /mnt/grain
