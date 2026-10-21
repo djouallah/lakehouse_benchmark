@@ -1,13 +1,9 @@
 # The duckdb leg: dbt-duckdb ATTACHed to the OneLake Iceberg REST catalog. fabric-dbt-examples'
 # requirements/iceberg.txt at the commit in workload/SOURCE, pins and all.
 #
-# duckdb IS HAND-PINNED TO ONE DEV BUILD there: the 2.0 dev line is what that leg has run green,
-# and the extension binaries (azure/iceberg/avro) are keyed to the build. An exact `==` pin to a
-# pre-release needs no `--pre`, and `--pre` would let pip pick a dbt-core 2 release candidate for
-# this dbt 1.x project. Bump it with the source, by hand.
-# 2.0.0.dev2610192346 = v2.0.0-alpha49003 (2026-10-20): iceberg, avro, azure and httpfs install
-# and load on linux_amd64, and dbt-duckdb's incremental merge runs on it (checked in WSL).
-duckdb==2.0.0.dev2610192346
+# duckdb is the 2.0 release line: the extension binaries (azure/iceberg/avro) are keyed
+# to the release and installed from extensions.duckdb.org.
+duckdb>=2
 dbt-duckdb
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
 azure-identity>=1.19
