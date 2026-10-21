@@ -21,7 +21,15 @@
   {%- set keys = [key] if key is string else (key or []) -%}
   {%- set col = (['file', 'date'] | select('in', keys) | list | first) -%}
   {%- if not col or not execute -%}{{ return([]) }}{%- endif -%}
-  {%- set values = run_query('SELECT DISTINCT ' ~ col ~ ' FROM ' ~ source).columns[0].values() -%}
+  {#-- The sail probe target casts the collected column: Sail returned `file` as Arrow string_view
+       here, which the Spark Connect client cannot read ("[UNSUPPORTED_DATA_TYPE_FOR_ARROW_CONVERSION]
+       string_view is not supported in conversion to Arrow", runs 39687083463 and 39687830566, with
+       pyspark-client 4.2.0 and 4.1.1). --#}
+  {%- set q = 'SELECT DISTINCT ' ~ col ~ ' FROM ' ~ source -%}
+  {%- if target.name == 'sail' and col == 'file' -%}
+    {%- set q = 'SELECT CAST(' ~ col ~ ' AS STRING) AS ' ~ col ~ ' FROM (' ~ q ~ ')' -%}
+  {%- endif -%}
+  {%- set values = run_query(q).columns[0].values() -%}
   {%- set literals = [] -%}
   {%- for v in values if v is not none -%}
     {%- if v is string -%}
