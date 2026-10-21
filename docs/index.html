@@ -174,7 +174,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .empty { color: var(--ink-2); padding: 24px 0; }
 /* Query plans: the same query on two engines, each engine's executed plan side by side. */
 .pl .intro { color: var(--ink-2); margin: 12px 0; }
-#overview .intro { margin: 8px 0; }
 .pl .intro b { color: var(--ink); }
 .pl .verdict { font-size: 15px; margin: 4px 0 12px; }
 .pl .verdict b { color: var(--no); }
@@ -361,11 +360,12 @@ main .tiles > a { color: inherit; }
 .rp a { color: var(--accent); }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
-/* Lakehouse timeline: three eras land one at a time on a rail that draws itself, ending on the open lakehouse. */
-.eras { list-style: none; margin: 8px 0; padding: 44px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; align-items: start; position: relative; }
+/* Lakehouse timeline: the eras land one at a time on a rail that draws itself, ending on the open lakehouse.
+   --n eras, --k the last one landed: the fill stops on its dot (column k's left edge + 33px). */
+.eras { --gap: 16px; list-style: none; margin: 8px 0; padding: 44px 0 0; display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: var(--gap); align-items: start; position: relative; }
 .eras::before, .eras .fill { content: ""; position: absolute; left: 30px; right: 30px; top: 13px; height: 4px; border-radius: 2px; background: var(--grid); }
-.eras .fill { right: auto; width: calc((100% - 60px) * var(--p, 0)); background: linear-gradient(90deg, var(--ink-3), var(--accent)); transition: width .85s cubic-bezier(.4, 0, .2, 1); }
-.eras li { position: relative; padding: 18px 22px 22px; border: 1px solid var(--grid); border-radius: 20px; background: var(--raised); color: var(--ink-2); font-size: 17px; line-height: 1.45; opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s cubic-bezier(.2, .8, .2, 1), box-shadow .2s, border-color .2s; }
+.eras .fill { right: auto; width: calc((100% + var(--gap)) / var(--n, 5) * var(--k, 0) + 3px); background: linear-gradient(90deg, var(--ink-3), var(--accent)); transition: width .85s cubic-bezier(.4, 0, .2, 1); }
+.eras li { position: relative; padding: 16px 18px 20px; border: 1px solid var(--grid); border-radius: 20px; background: var(--raised); color: var(--ink-2); font-size: 15px; line-height: 1.45; opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s cubic-bezier(.2, .8, .2, 1), box-shadow .2s, border-color .2s; }
 .eras li.in { opacity: 1; transform: none; }
 .eras li::before { content: ""; position: absolute; top: -40px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink-3); border: 4px solid var(--surface); }
 .eras li.now { border: 2px solid var(--accent); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 16%, var(--raised)), var(--raised) 65%); box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 22%, transparent); }
@@ -373,12 +373,19 @@ main .tiles > a { color: inherit; }
 .eras li.now::before { background: var(--accent); --c: var(--accent); }
 .eras li.now.in::before { animation: ovping 1.6s ease-out infinite; }
 .eras li.in:hover, .eras li.in:focus-visible { border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 12px 28px rgb(0 0 0 / .10); outline: none; }
-.eras .when { display: block; font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink-3); }
+.eras .when { display: block; font-size: 48px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink-3); }
 .eras .now .when { color: var(--accent); }
-.eras h3 { margin: 12px 0 8px; font-size: 30px; font-weight: 800; line-height: 1.1; color: var(--ink); letter-spacing: -.02em; }
+.eras h3 { margin: 12px 0 8px; font-size: 24px; font-weight: 800; line-height: 1.1; color: var(--ink); letter-spacing: -.02em; }
 .eras p { margin: 0; }
-/* Lakehouse overview: the open lakehouse as a stack with a live story. */
-.ov { --hot: var(--accent); max-width: 980px; margin: 8px auto 0; display: grid; }
+@media (max-width: 1100px) {  /* five across gets too narrow: the rail turns vertical */
+  .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 36px; }
+  .eras::before, .eras .fill { left: 11px; right: auto; top: 8px; bottom: 8px; width: 4px; height: auto; }
+  .eras .fill { bottom: auto; height: calc((100% - 16px) * var(--p, 0)); background: linear-gradient(180deg, var(--ink-3), var(--accent)); transition-property: height; }
+  .eras li::before { top: 22px; left: -34px; }
+  .eras li.now.in { transform: none; }
+}
+/* Lakehouse overview: the open lakehouse as a stack with a live story, zoomed to fill the screen (ovFit). */
+.ov { --hot: var(--accent); width: 980px; max-width: 100%; margin: 8px auto 0; display: grid; }
 .ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
 .ov-spark { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; font-size: 18px; background: linear-gradient(135deg, var(--accent), var(--hot)); box-shadow: 0 4px 14px color-mix(in srgb, var(--hot) 40%, transparent); }
 .ov-whot { display: grid; }
@@ -421,13 +428,7 @@ main .tiles > a { color: inherit; }
 .ov-files i.new { animation: ovdrop .55s cubic-bezier(.2, .8, .2, 1); }
 @keyframes ovdrop { from { transform: translateY(-16px) scale(.6); opacity: 0; } }
 @media (max-width: 720px) {
-  .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 36px; gap: 16px; }
-  .eras::before, .eras .fill { left: 11px; right: auto; top: 8px; bottom: 8px; width: 4px; height: auto; }
-  .eras .fill { bottom: auto; height: calc((100% - 16px) * var(--p, 0)); background: linear-gradient(180deg, var(--ink-3), var(--accent)); transition-property: height; }
-  .eras li::before { top: 22px; left: -34px; }
-  .eras li.now.in { transform: none; }
   .eras .when { font-size: 40px; }
-  .eras h3 { font-size: 24px; }
   .ov-wire span { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -901,13 +902,19 @@ function renderEngines() {
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
-// THE LAKEHOUSE TAB'S TIMELINE: how we got here. Three eras land one at a time on a rail that draws itself, and it
+// THE LAKEHOUSE TAB'S TIMELINE: how we got here. The eras land one at a time on a rail that draws itself, and it
 // ends on the open lakehouse; Replay runs it again, reduced motion shows it still.
+// The eras as most histories tell them: warehouse, Hadoop, cloud warehouse, open table formats (Iceberg started at
+// Netflix in 2017; "lakehouse" was named in the CIDR 2021 paper), and now the REST catalog.
 const ERAS = [
-  { when: "1990s →", title: "The warehouse",
+  { when: "1990s", title: "The warehouse",
     text: "Storage and compute in one product. The engine owns the data; changing engine is a migration." },
-  { when: "2010s →", title: "The big-cluster lakehouse",
-    text: "Open files in object storage, but writing a table needed a Java cluster (Spark, Trino) or a commercial cloud warehouse." },
+  { when: "2006", title: "Big data: Hadoop",
+    text: "Files spread over a cluster's disks. The data is open, but you need the cluster to read it." },
+  { when: "2010s", title: "The cloud warehouse",
+    text: "Snowflake, BigQuery, Redshift: elastic compute, but the tables live inside one vendor." },
+  { when: "2017", title: "Open table formats",
+    text: "Iceberg (Netflix), Hudi, Delta: tables in object storage, but writing one needed a Java cluster (Spark, Trino)." },
   { when: "Now", title: "The open lakehouse", now: true,
     text: "A REST catalog, and table libraries in Rust, C++ and Python: a library in a Python process writes the same tables as a cluster." },
 ];
@@ -927,9 +934,11 @@ function renderTimeline() {
 function playTimeline() {
   stopTimeline();
   const ol = $("tl-eras"), items = [...ol.querySelectorAll("li")];
+  ol.style.setProperty("--n", items.length);
   const show = k => {
     items.forEach((li, j) => li.classList.toggle("in", j <= k));
-    ol.style.setProperty("--p", Math.max(0, k) / (items.length - 1));
+    ol.style.setProperty("--k", Math.max(0, k));  // across: the fill stops on era k's dot
+    ol.style.setProperty("--p", Math.max(0, k) / (items.length - 1));  // down: a share of the column
   };
   if (ovStill.matches) { show(items.length - 1); return; }
   show(-1);
@@ -969,10 +978,6 @@ function renderOverview() {
   // The table so far: one commit, and one file, from every engine in the story.
   ov.i = 0; ov.files = [...OV_STORY]; ov.snap = OV_STORY.length; ov.held = false;
   $(OVERVIEW.id).innerHTML = `
-    <p class="intro"><b>Files</b> in an object store, the <b>state</b> in a catalog, <b>compute</b> in any engine, and none
-      of them owns the data. For AI that is the opening: an agent picks today's engine and changes it tomorrow.
-      The catalog treats every engine the same, C++ or Java, library or cluster, open source or commercial, and so does
-      this bench.</p>
     <div class="ov" id="ov" role="img" aria-label="Agents, people and jobs send SQL to any engine; every engine commits to one Iceberg catalog, and reads and writes the files in the object store.">
       <div class="ov-who"><span class="ov-spark" aria-hidden="true">✦</span>
         <div class="ov-whot"><b>AI agents · people · scheduled jobs</b><span>write SQL and pick the engine for the job</span></div>
@@ -1029,8 +1034,20 @@ function renderOverview() {
   st.onmouseleave = st.onblur = () => { hideTip(); tip.classList.remove("wide"); };
   ovShow(OV_STORY[0]);
   drawFiles(false);
+  ovFit();
   playOverview();
 }
+// The stack as big as the window allows with no scrolling: zoom it to the room under the tabs, 0.7× to 1.8×.
+function ovFit() {
+  const fig = $("ov");
+  if (!fig || state.suite !== OVERVIEW.id) return;
+  fig.style.zoom = 1;
+  if (innerWidth <= 720) return;  // a phone scrolls; shrinking the stack would only make it unreadable
+  const r = fig.getBoundingClientRect(), room = $(OVERVIEW.id).clientWidth;
+  const fitH = (innerHeight - (r.top + scrollY) - 16) / r.height, fitW = room / r.width;
+  fig.style.zoom = Math.max(0.7, Math.min(1.8, fitH, fitW));
+}
+addEventListener("resize", ovFit);
 // The engine that has the job: its pill lit, the wires in its colour.
 function ovShow(e) {
   const fig = $("ov");
