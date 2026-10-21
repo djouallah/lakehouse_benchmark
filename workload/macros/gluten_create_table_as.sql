@@ -29,7 +29,9 @@
   {%- set view = relation.identifier ~ '__dbt_ctas' -%}
   {%- do run_query('create or replace temporary view ' ~ view ~ ' as\n' ~ compiled_code) -%}
   {%- set columns = [] -%}
-  {%- for row in run_query('describe ' ~ view) -%}
+  {#-- `describe table`: Sail's parser wants the keyword Spark makes optional (the sail probe, run
+       39685977867: "found dim_duid__dbt_ctas ... expected ... 'TABLE'"). --#}
+  {%- for row in run_query(('describe table ' if target.name == 'sail' else 'describe ') ~ view) -%}
     {%- if row[0] and not row[0].startswith('#') -%}
       {%- do columns.append('`' ~ row[0] ~ '` ' ~ row[1]) -%}
     {%- endif -%}
