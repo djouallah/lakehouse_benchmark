@@ -2,5 +2,6 @@
 -- residual concurrent-writer race, and for an incremental strategy that stopped deduping.
 SELECT `date`, `time`, `DUID`, COUNT(*) AS n
 FROM {{ ref('fct_summary') }}
-GROUP BY ALL
+-- Ordinals on the sail probe target: Sail reads GROUP BY ALL as a column named ALL.
+GROUP BY {{ '1, 2, 3' if target.name == 'sail' else 'ALL' }}
 HAVING COUNT(*) > 1
