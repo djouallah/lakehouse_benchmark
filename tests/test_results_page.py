@@ -40,10 +40,10 @@ def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
         .split("\n")[1]
         .strip()
         .startswith(
-            '{ id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY, ENGINES] },'
+            '{ id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, ENGINES] },'
         )
     )
-    assert "const state = { suite: OVERVIEW.id," in PAGE
+    assert "const state = { suite: TIMELINE.id," in PAGE
 
 
 def test_the_real_workload_tab_reads_the_measured_workload():

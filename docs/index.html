@@ -361,18 +361,23 @@ main .tiles > a { color: inherit; }
 .rp a { color: var(--accent); }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
-/* Lakehouse overview: three eras on a rail, then the open lakehouse as a stack with a live story. */
-.eras { list-style: none; margin: 4px 0 8px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
-.eras::before { content: ""; position: absolute; left: 24px; right: 24px; top: 9px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--grid), var(--accent)); }
-.eras li { position: relative; padding: 8px 14px 10px; border: 1px solid var(--grid); border-radius: 14px; background: var(--raised); color: var(--ink-2); font-size: 14px; line-height: 1.4; transition: transform .2s, box-shadow .2s, border-color .2s; }
-.eras li::before { content: ""; position: absolute; top: -26px; left: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--grid); border: 3px solid var(--surface); }
-.eras li.now { border-color: color-mix(in srgb, var(--accent) 55%, var(--grid)); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 12%, var(--raised)), var(--raised) 65%); }
-.eras li.now::before { background: var(--accent); animation: ovping 1.6s ease-out infinite; --c: var(--accent); }
-.eras li:hover, .eras li:focus-visible { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 12px 28px rgb(0 0 0 / .10); outline: none; }
-.eras .when { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+/* Lakehouse timeline: three eras land one at a time on a rail that draws itself, ending on the open lakehouse. */
+.eras { list-style: none; margin: 8px 0; padding: 44px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; align-items: start; position: relative; }
+.eras::before, .eras .fill { content: ""; position: absolute; left: 30px; right: 30px; top: 13px; height: 4px; border-radius: 2px; background: var(--grid); }
+.eras .fill { right: auto; width: calc((100% - 60px) * var(--p, 0)); background: linear-gradient(90deg, var(--ink-3), var(--accent)); transition: width .85s cubic-bezier(.4, 0, .2, 1); }
+.eras li { position: relative; padding: 18px 22px 22px; border: 1px solid var(--grid); border-radius: 20px; background: var(--raised); color: var(--ink-2); font-size: 17px; line-height: 1.45; opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s cubic-bezier(.2, .8, .2, 1), box-shadow .2s, border-color .2s; }
+.eras li.in { opacity: 1; transform: none; }
+.eras li::before { content: ""; position: absolute; top: -40px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink-3); border: 4px solid var(--surface); }
+.eras li.now { border: 2px solid var(--accent); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 16%, var(--raised)), var(--raised) 65%); box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 22%, transparent); }
+.eras li.now.in { transform: scale(1.05); transform-origin: 100% 0; }  /* grow into the gap, not past the page edge */
+.eras li.now::before { background: var(--accent); --c: var(--accent); }
+.eras li.now.in::before { animation: ovping 1.6s ease-out infinite; }
+.eras li.in:hover, .eras li.in:focus-visible { border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 12px 28px rgb(0 0 0 / .10); outline: none; }
+.eras .when { display: block; font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink-3); }
 .eras .now .when { color: var(--accent); }
-.eras h3 { margin: 2px 0 4px; font-size: 17px; color: var(--ink); letter-spacing: -.01em; }
+.eras h3 { margin: 12px 0 8px; font-size: 30px; font-weight: 800; line-height: 1.1; color: var(--ink); letter-spacing: -.02em; }
 .eras p { margin: 0; }
+/* Lakehouse overview: the open lakehouse as a stack with a live story. */
 .ov { --hot: var(--accent); max-width: 980px; margin: 8px auto 0; display: grid; }
 .ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
 .ov-spark { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; font-size: 18px; background: linear-gradient(135deg, var(--accent), var(--hot)); box-shadow: 0 4px 14px color-mix(in srgb, var(--hot) 40%, transparent); }
@@ -416,14 +421,18 @@ main .tiles > a { color: inherit; }
 .ov-files i.new { animation: ovdrop .55s cubic-bezier(.2, .8, .2, 1); }
 @keyframes ovdrop { from { transform: translateY(-16px) scale(.6); opacity: 0; } }
 @media (max-width: 720px) {
-  .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 28px; }
-  .eras::before { left: 9px; right: auto; top: 6px; bottom: 6px; width: 2px; height: auto; background: linear-gradient(180deg, var(--grid), var(--accent)); }
-  .eras li::before { top: 16px; left: -26px; }
+  .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 36px; gap: 16px; }
+  .eras::before, .eras .fill { left: 11px; right: auto; top: 8px; bottom: 8px; width: 4px; height: auto; }
+  .eras .fill { bottom: auto; height: calc((100% - 16px) * var(--p, 0)); background: linear-gradient(180deg, var(--ink-3), var(--accent)); transition-property: height; }
+  .eras li::before { top: 22px; left: -34px; }
+  .eras li.now.in { transform: none; }
+  .eras .when { font-size: 40px; }
+  .eras h3 { font-size: 24px; }
   .ov-wire span { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ov-wire::before, .ov-pill.on i, .eras li.now::before, .ov-band.state.flash, .ov-band.state.flash .ok, .ov-files i.new { animation: none; }
-  .ov-pill, .eras li { transition: none; transform: none !important; }
+  .ov-wire::before, .ov-pill.on i, .eras li.now.in::before, .ov-band.state.flash, .ov-band.state.flash .ok, .ov-files i.new { animation: none; }
+  .ov-pill, .eras li, .eras .fill { transition: none; transform: none !important; }
 }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
@@ -453,6 +462,7 @@ main .tiles > a { color: inherit; }
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
   <div id="speedup"></div>
+  <section class="pl" id="timeline" hidden></section>
   <section class="pl arch" id="overview" hidden></section>
   <section class="rw" id="workload" hidden></section>
   <section class="pl arch" id="concurrency" hidden></section>
@@ -604,17 +614,18 @@ const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
+const TIMELINE = { id: "timeline", title: "Timeline" };
 const OVERVIEW = { id: "overview", title: "Overview" };
 const REAL_WORKLOAD = { id: "workload", title: "Real workload", json: "data/workload.json" };
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works, how an engine does less work, what it supports, and only then how fast it is; then
 // everything on one page, and how engines get better.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY, ENGINES] },  // the state is in the catalog
+  { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, ENGINES] },  // the state is in the catalog
   { id: "work", title: "Less work", subs: [PRUNING, PLANS] },  // skip files, then a good join order
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
   { id: "performance", title: "Benchmarks", subs: [...SUITES] },
@@ -623,7 +634,7 @@ const GROUPS = [
   { id: "bugs", title: "Bug reports", subs: [REPORTS] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: OVERVIEW.id, sf: {}, group: null, last: {} };
+const state = { suite: TIMELINE.id, sf: {}, group: null, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -661,7 +672,9 @@ function render() {
   if (page !== ARCH) stopArch();
   if (page !== ANATOMY) stopAnatomy();
   if (page !== PRUNING) stopPruning();
+  if (page !== TIMELINE) stopTimeline();
   if (page !== OVERVIEW) stopOverview();
+  if (page === TIMELINE) { renderTimeline(); return; }
   if (page === OVERVIEW) { renderOverview(); return; }
   if (page === REAL_WORKLOAD) { renderRealWorkload(); return; }
   if (page === ARCH) { renderArch(); return; }
@@ -888,12 +901,8 @@ function renderEngines() {
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
-// THE LAKEHOUSE TAB'S OVERVIEW: how we got here, then the premise the rest of the page tests. Three eras on a rail,
-// then the open lakehouse as a stack: who asks, the engines (stateless), the catalog (the state), the object store.
-// The engines are this bench's, grouped by how each runs (ENGINE_ROWS runs, the Engines tab), Pandas left out (no
-// SQL: the Light ETL only), plus the commercial engines that speak the same catalog, unnamed. A live story shows the
-// premise: the job moves from engine to engine, each one commits to the same catalog, and the table's files come
-// from all of them. Hovering an engine holds the story on it; reduced motion shows the picture still.
+// THE LAKEHOUSE TAB'S TIMELINE: how we got here. Three eras land one at a time on a rail that draws itself, and it
+// ends on the open lakehouse; Replay runs it again, reduced motion shows it still.
 const ERAS = [
   { when: "1990s →", title: "The warehouse",
     text: "Storage and compute in one product. The engine owns the data; changing engine is a migration." },
@@ -902,6 +911,39 @@ const ERAS = [
   { when: "Now", title: "The open lakehouse", now: true,
     text: "A REST catalog, and table libraries in Rust, C++ and Python: a library in a Python process writes the same tables as a cluster." },
 ];
+const tl = { timers: [] };
+
+function renderTimeline() {
+  stopTimeline();
+  $(TIMELINE.id).innerHTML = `
+    <div class="ctl"><button class="play" id="tl-play">↺ Replay</button></div>
+    <ol class="eras" id="tl-eras"><span class="fill" aria-hidden="true"></span>${ERAS.map(r => `
+      <li class="${r.now ? "now" : ""}" tabindex="0"><span class="when">${r.when}</span><h3>${r.title}</h3><p>${r.text}</p></li>`).join("")}
+    </ol>`;
+  $("tl-play").onclick = playTimeline;
+  playTimeline();
+}
+// One era every 900 ms, the rail filling up to each one as it lands.
+function playTimeline() {
+  stopTimeline();
+  const ol = $("tl-eras"), items = [...ol.querySelectorAll("li")];
+  const show = k => {
+    items.forEach((li, j) => li.classList.toggle("in", j <= k));
+    ol.style.setProperty("--p", Math.max(0, k) / (items.length - 1));
+  };
+  if (ovStill.matches) { show(items.length - 1); return; }
+  show(-1);
+  void ol.offsetWidth;  // start from empty, so a replay animates again
+  items.forEach((_, k) => tl.timers.push(setTimeout(() => show(k), 250 + k * 900)));
+}
+function stopTimeline() { tl.timers.forEach(clearTimeout); tl.timers = []; }
+
+// THE LAKEHOUSE TAB'S OVERVIEW: the premise the rest of the page tests, the open lakehouse as a stack: who asks,
+// the engines (stateless), the catalog (the state), the object store.
+// The engines are this bench's, grouped by how each runs (ENGINE_ROWS runs, the Engines tab), Pandas left out (no
+// SQL: the Light ETL only), plus the commercial engines that speak the same catalog, unnamed. A live story shows the
+// premise: the job moves from engine to engine, each one commits to the same catalog, and the table's files come
+// from all of them. Hovering an engine holds the story on it; reduced motion shows the picture still.
 const OV_GROUPS = [
   // LakeSail is a library too: pysail starts its Spark Connect server inside the Python process.
   { title: "A library in Python", has: r => r.runs === "In-process" || r.engine === "lakesail_iceberg" },
@@ -927,9 +969,6 @@ function renderOverview() {
   // The table so far: one commit, and one file, from every engine in the story.
   ov.i = 0; ov.files = [...OV_STORY]; ov.snap = OV_STORY.length; ov.held = false;
   $(OVERVIEW.id).innerHTML = `
-    <ol class="eras">${ERAS.map(r => `
-      <li class="${r.now ? "now" : ""}" tabindex="0"><span class="when">${r.when}</span><h3>${r.title}</h3><p>${r.text}</p></li>`).join("")}
-    </ol>
     <p class="intro"><b>Files</b> in an object store, the <b>state</b> in a catalog, <b>compute</b> in any engine, and none
       of them owns the data. For AI that is the opening: an agent picks today's engine and changes it tomorrow.
       The catalog treats every engine the same, C++ or Java, library or cluster, open source or commercial, and so does
@@ -2107,7 +2146,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #lakehouse, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
+// Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
 // #performance, #etl, #tpch, #tpcds, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
 // or one engine in that list (#datafusion).
 function fromHash() {
