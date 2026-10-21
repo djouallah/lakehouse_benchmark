@@ -115,7 +115,6 @@ jobs:
     # NO id-token, NO secrets. That is the point of this job.
     permissions:
       contents: read
-      packages: read  # the Databend image (bench/databend.py)
     strategy:
       # One engine's dialect gap must not hide another's.
       fail-fast: false
@@ -172,14 +171,7 @@ jobs:
         if: matrix.engine == 'trino_iceberg'
         run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
 
-      # Databend too, from this repo's GHCR: our build of main until a nightly carries the decimal
-      # fix (bench/databend.py says why). Pulled outside the timer.
-      - uses: docker/login-action@v3
-        if: matrix.engine == 'databend_iceberg'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
+      # Databend too, the stock nightly image (bench/databend.py). Pulled outside the timer.
       - name: Pull the Databend image
         if: matrix.engine == 'databend_iceberg'
         run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
@@ -248,7 +240,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      packages: read  # the Databend image (bench/databend.py)
     strategy:
       fail-fast: false
       matrix:
@@ -312,14 +303,6 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
-
-      # The Databend image is in this repo's GHCR (bench/databend.py); start() pulls it.
-      - uses: docker/login-action@v3
-        if: matrix.engine == 'databend_iceberg'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
 
       - name: Attach OneLake and read
         run: python .github/scripts/smoke_catalog.py

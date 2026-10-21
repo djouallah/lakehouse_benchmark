@@ -127,7 +127,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      packages: read  # the Databend image (bench/databend.py)
     strategy:
       # MANDATORY. One engine's OOM must not delete another's results.
       fail-fast: false
@@ -199,14 +198,7 @@ jobs:
         if: matrix.engine == 'trino_iceberg'
         run: docker pull "$(python -c 'from bench.trino import IMAGE; print(IMAGE)')"
 
-      # Databend too, from this repo's GHCR: our build of main until a nightly carries the decimal
-      # fix (bench/databend.py says why). Pulled outside the timer.
-      - uses: docker/login-action@v3
-        if: matrix.engine == 'databend_iceberg'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
+      # Databend too, the stock nightly image (bench/databend.py). Pulled outside the timer.
       - name: Pull the Databend image
         if: matrix.engine == 'databend_iceberg'
         run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"

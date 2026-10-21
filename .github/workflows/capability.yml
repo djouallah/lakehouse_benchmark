@@ -82,7 +82,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      packages: read  # the Databend image (bench/databend.py)
     strategy:
       # One client's failure must not delete the others' answers.
       fail-fast: false
@@ -136,13 +135,7 @@ jobs:
             ~/.m2/repository
           key: ivy-spark41-iceberg112-azure-v1
 
-      # Databend is a container from this repo's GHCR (bench/databend.py says why).
-      - uses: docker/login-action@v3
-        if: matrix.client == 'databend'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
+      # Databend is a container, the stock nightly image (bench/databend.py).
       - name: Pull the Databend image
         if: matrix.client == 'databend'
         run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
