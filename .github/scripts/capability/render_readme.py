@@ -77,7 +77,7 @@ ROWS = [
         },
     ),
     ("INSERT ... SELECT", {e: ["insert_select"] for e in FULL_SQL}),
-    ("DELETE", {e: ["delete_from"] for e in FULL_SQL}),
+    ("DELETE", {"polars": ["delete_rows"], **{e: ["delete_from"] for e in FULL_SQL}}),
     ("UPDATE", {e: ["update"] for e in FULL_SQL}),
     # The upsert. Spark and Sail ask it of a merge-on-read table; chDB has no MERGE statement.
     (

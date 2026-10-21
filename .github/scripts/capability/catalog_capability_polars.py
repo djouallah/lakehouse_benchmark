@@ -6,8 +6,10 @@ OneLake, and the commit goes through a pyiceberg Transaction on the table it is 
 frame converted to Arrow, so it would only repeat pyiceberg's answers. Reads are `scan_iceberg`
 with Polars' native reader.
 
-POLARS HAS NO DDL. It cannot delete, update, merge, evolve a spec, or touch refs and snapshots,
-so those rows are `na` in the readme. Its one create is `sink_iceberg(create_if_not_exists=True)`
+POLARS HAS NO DDL. It cannot update, merge, evolve a spec, or touch refs and snapshots, so those
+rows are `na` in the readme. It deletes rows by predicate with `pl.delete_iceberg` (Polars main,
+pola-rs/polars#30032, unstable): the predicate becomes a pyiceberg delete filter and pyiceberg
+commits it. Its one create is `sink_iceberg(create_if_not_exists=True)`
 (Polars main, pola-rs/polars#29908): an unpartitioned table from the frame's schema. Every other
 table here pyiceberg creates. What is asked here is everything Polars itself can send: create,
 append, overwrite, the schema changes `schema_mode` folds into a write, partitioned and typed
@@ -231,6 +233,21 @@ class PolarsCapability:
             table, [(7, 70), (8, 80)], f"sink_iceberg(mode='overwrite'), a {op.value} snapshot"
         )
 
+    def delete_rows(self) -> str:
+        """pl.delete_iceberg(table, predicate): Polars' DELETE (pola-rs/polars#29843)."""
+        import polars as pl
+
+        table = self.fresh("delete")
+        try:
+            pl.delete_iceberg(self.load(table), pl.col("id") == 1)
+        except Exception as exc:  # noqa: BLE001 - every Polars error is an answer
+            message = f"{type(exc).__name__}: {scrub.scrub_exc(exc, 2000)}"
+            raise Refused(_one_line(message)) from None
+        op = self.load(table).current_snapshot().summary.operation
+        return self._expect(
+            table, [r for r in SEED if r[0] != 1], f"delete_iceberg(id == 1), a {op.value} snapshot"
+        )
+
     # -- partitions and types ----------------------------------------------------------------
 
     def partitioned(self) -> str:
@@ -440,6 +457,7 @@ PROBES = [
     ("create", "sink_iceberg(create_if_not_exists=True) to a new table", "sink_create"),
     ("write", "sink_iceberg(mode='append')", "sink_append"),
     ("write", "sink_iceberg(mode='overwrite')", "sink_overwrite"),
+    ("write", "pl.delete_iceberg(table, id == 1)", "delete_rows"),
     ("create", "write an identity-partitioned table", "partitioned"),
     ("create", "write a table partitioned by bucket(4, id)", "partition_bucket"),
     ("create", "write a table partitioned by truncate(2, x)", "partition_truncate"),
