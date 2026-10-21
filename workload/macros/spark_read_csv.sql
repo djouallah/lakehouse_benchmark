@@ -31,6 +31,21 @@
 {% endmacro %}
 
 
+{#-- The sail probe target only: the csv view's schema padded to 140 STRING columns, as the Trino
+     leg's external tables are (workload_run_engine.py, TRINO_CSV_TABLES) and the Sail ETL's read is
+     (bench/etl/engines/_spark_df.py). Sail's csv reader refuses a row LONGER than the schema --
+     "incorrect number of fields for line 291, expected 53 got 120" (run 39686575857) -- where
+     Spark's PERMISSIVE nulls it and the record filter drops it. The pad columns never leave the
+     view: the stage takes the record's own columns by name. --#}
+{% macro spark_csv_view_schema(record) %}
+  {%- set schema = spark_csv_schema(record) -%}
+  {%- if target.name != 'sail' -%}{{ return(schema) }}{%- endif -%}
+  {%- set pads = [] -%}
+  {%- for i in range(aemo_columns(record) | length, 140) %}{% do pads.append('`_pad_' ~ i ~ '` STRING') %}{% endfor -%}
+  {{ return(([schema] + pads) | join(', ')) }}
+{% endmacro %}
+
+
 {#-- The files this model folds this run: all of the source type on a first build, else the
      ones {{ this }} does not hold yet. Same rule as every other engine. --#}
 {% macro spark_stage_files(record) %}
@@ -61,7 +76,7 @@
   {#-- The sail probe target: Sail's csv reader refuses a row shorter than the schema ("Csv error:
        incorrect number of fields for line 1, expected 130 got 10", run 39685977867) unless told
        otherwise; Spark's PERMISSIVE pads it with nulls. bench/etl/engines/_spark_df.py, same option. --#}
-  CREATE OR REPLACE TEMPORARY VIEW raw_{{ record }} ({{ spark_csv_schema(record) }})
+  CREATE OR REPLACE TEMPORARY VIEW raw_{{ record }} ({{ spark_csv_view_schema(record) }})
   USING csv OPTIONS (path '{{ path }}', header 'true', mode 'PERMISSIVE'
   {%- if target.name == 'sail' %}, allowTruncatedRows 'true'{% endif %})
 {% endmacro %}
@@ -79,7 +94,7 @@
   {%- do run_query('CREATE TABLE ' ~ stage ~ ' (' ~ spark_csv_schema(record) ~ ', `_fname` STRING) USING iceberg') -%}
   {%- if files | length > 0 -%}
   INSERT INTO {{ stage }}
-  SELECT *, input_file_name() AS _fname
+  SELECT {% if target.name == 'sail' %}{% for c in aemo_columns(record) %}`{{ c }}`, {% endfor %}{% else %}*, {% endif %}input_file_name() AS _fname
   FROM raw_{{ record }}
   WHERE {{ spark_record_filter(record) }}
   {%- endif -%}
