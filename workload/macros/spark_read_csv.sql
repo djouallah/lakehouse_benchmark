@@ -123,6 +123,10 @@
   {%- set spec = aemo_spec(record) -%}
   {%- set parts = [] -%}
   {%- for col, val in spec['equals'] %}{% do parts.append(prefix ~ col ~ " = '" ~ val ~ "'") %}{% endfor -%}
-  {%- if spec['nonzero'] %}{% do parts.append('CAST(' ~ prefix ~ spec['nonzero'] ~ ' AS DOUBLE) != 0') %}{% endif -%}
+  {#-- TRY_CAST on the sail probe target: Sail's CAST raises on the files' own header row ("Cast error:
+       Cannot cast string 'SCADAVALUE' to value of Float64 type", run 39687083463), where Spark's
+       gives NULL and `I = 'D'` drops the row. --#}
+  {%- set cast = 'TRY_CAST(' if target.name == 'sail' else 'CAST(' -%}
+  {%- if spec['nonzero'] %}{% do parts.append(cast ~ prefix ~ spec['nonzero'] ~ ' AS DOUBLE) != 0') %}{% endif -%}
   {{ parts | join(' AND ') }}
 {% endmacro %}

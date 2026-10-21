@@ -9,4 +9,7 @@ psutil>=6
 # Sail main (lakehq/sail@151a417d5d, tmp_sail_main.yml), as the ETL runs it: the stage table's
 # `file` comes from input_file_name() (lakehq/sail#2571), which 0.7.2 lacks.
 pysail @ https://github.com/djouallah/lakehouse_benchmark/releases/download/sail-main-151a417d5d/pysail-0.7.2%2Bmain151a417d5d-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-pyspark-client
+# 4.1.1, not 4.2: with a 4.2 client, a dbt run_query that collects a string column failed
+# "[UNSUPPORTED_DATA_TYPE_FOR_ARROW_CONVERSION] string_view is not supported in conversion to
+# Arrow" (run 39687083463), as binary_view did in lakehq/sail#2333 after Sail took up Spark 4.2.
+pyspark-client==4.1.1
