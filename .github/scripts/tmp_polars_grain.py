@@ -1,7 +1,8 @@
 """TEMPORARY: does Polars' streaming engine hold the workload's grain test on fct_scada's size?
 
     python tmp_polars_grain.py gen  <dir> <files>   # <files> parquet files, ~155k rows each
-    python tmp_polars_grain.py test <dir> <files>   # the grain test over the first <files>
+    python tmp_polars_grain.py test <dir> <files>   # the grain test over the first <files>, in SQL
+    python tmp_polars_grain.py api  <dir> <files>   # the same query through the Python API
 
 The workload's polars runner died in assert_fct_scada_grain (run 39524954142): a GROUP BY on the
 merge key over ~100M rows (635 files then), i.e. one group per row. Same shape here: per file,
@@ -41,14 +42,22 @@ def gen(out: Path, files: int) -> None:
     print(f"generated {files} files, {files * DUIDS * INTERVALS:,} rows", flush=True)
 
 
-def test(src: Path, files: int) -> None:
+def test(src: Path, files: int, api: bool = False) -> None:
     paths = sorted(src.glob("*.parquet"))[:files]
-    ctx = pl.SQLContext(fct_scada=pl.scan_parquet(paths))
-    q = ctx.execute(
-        "SELECT file, DUID, SETTLEMENTDATE, INTERVENTION, COUNT(*) AS n FROM fct_scada "
-        "GROUP BY ALL HAVING COUNT(*) > 1",
-        eager=False,
-    )
+    if api:
+        q = (
+            pl.scan_parquet(paths)
+            .group_by("file", "DUID", "SETTLEMENTDATE", "INTERVENTION")
+            .agg(pl.len().alias("n"))
+            .filter(pl.col("n") > 1)
+        )
+    else:
+        ctx = pl.SQLContext(fct_scada=pl.scan_parquet(paths))
+        q = ctx.execute(
+            "SELECT file, DUID, SETTLEMENTDATE, INTERVENTION, COUNT(*) AS n FROM fct_scada "
+            "GROUP BY ALL HAVING COUNT(*) > 1",
+            eager=False,
+        )
     t = time.time()
     out = q.collect()
     print(
@@ -60,4 +69,7 @@ def test(src: Path, files: int) -> None:
 
 if __name__ == "__main__":
     mode, path, n = sys.argv[1], Path(sys.argv[2]), int(sys.argv[3])
-    (gen if mode == "gen" else test)(path, n)
+    if mode == "gen":
+        gen(path, n)
+    else:
+        test(path, n, api=mode == "api")
