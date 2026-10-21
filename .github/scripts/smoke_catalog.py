@@ -71,7 +71,7 @@ def main() -> int:
     # The shared credential half first, so an expired federated credential does not get reported
     # as an engine bug. Cheap: one token, two REST calls.
     #
-    # PLAIN HTTP, NOT pyiceberg. Only the Polars and Daft jobs install pyiceberg -- the other four
+    # PLAIN HTTP, NOT pyiceberg. Only the Polars job installs pyiceberg -- the other
     # engines attach the catalog natively, and putting pyiceberg in their environment would be
     # dependency skew in the thing being measured. An earlier version called
     # auth.catalog().list_namespaces() here and died with ModuleNotFoundError before it had

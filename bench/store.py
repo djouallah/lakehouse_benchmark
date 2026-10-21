@@ -28,10 +28,6 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 
-# `error` goes into git permanently, so it is capped. Long enough for a ClickHouse exception with
-# its error code, short enough that a pathological stack does not bloat the file.
-ERROR_LIMIT = 2000
-
 # One row per timed statement, after flattening. These are the columns charts.py queries.
 ROW_FIELDS = (
     "run_id",
@@ -161,23 +157,6 @@ def write_run(directory: str | Path, run: Run) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_encode(run), indent=2) + "\n", encoding="utf-8")
     return path
-
-
-def read_run(path: str | Path) -> Run:
-    """A stored run, read with the same tolerance as read_engine_part: unknown keys are skipped."""
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    known_row = {f.name for f in fields(Row)}
-    engines = {
-        name: EngineResult(
-            version=e["version"],
-            status=e.get("status", "ok"),
-            rows=[Row(**{k: v for k, v in r.items() if k in known_row}) for r in e["rows"]],
-            host=e.get("host", {}),
-        )
-        for name, e in raw.get("engines", {}).items()
-    }
-    known_run = {f.name for f in fields(Run)} - {"engines"}
-    return Run(**{k: v for k, v in raw.items() if k in known_run}, engines=engines)
 
 
 def write_engine_part(directory: str | Path, engine: str, result: EngineResult) -> Path:

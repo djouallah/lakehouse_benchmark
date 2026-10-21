@@ -24,7 +24,6 @@ ENGINES = (
     "chdb_iceberg",
     "polars_iceberg",
     "lakesail_iceberg",
-    "daft_iceberg",
     "pyspark_iceberg",
     # Spark with Gluten/Velox underneath.
     "pyspark_gluten_iceberg",

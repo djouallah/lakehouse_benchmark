@@ -218,21 +218,6 @@ def _lakesail(cfg: Config, paths: dict[str, Path]):
     return engine
 
 
-def _daft(cfg: Config, paths: dict[str, Path]):
-    import daft
-    from daft import Session
-
-    from bench.tpch.engines.daft_iceberg import DaftIceberg
-
-    engine = DaftIceberg(cfg)
-    engine._sess = Session()
-    for table, path in paths.items():
-        # Identical to the real setup() except the source is read_parquet, not read_iceberg --
-        # so no IOConfig, because nothing here touches Azure.
-        engine._sess.create_temp_table(f"{cfg.schema}.{table}", daft.read_parquet(str(path)))
-    return engine
-
-
 def _pyspark(cfg: Config, paths: dict[str, Path], extra: dict[str, str] | None = None):
     from pyspark.sql import SparkSession
 
@@ -407,7 +392,6 @@ ADAPTERS = {
     "chdb_iceberg": _chdb,
     "polars_iceberg": _polars,
     "lakesail_iceberg": _lakesail,
-    "daft_iceberg": _daft,
     "pyspark_iceberg": _pyspark,
     "pyspark_gluten_iceberg": _pyspark_gluten,
     "starrocks_iceberg": _starrocks,

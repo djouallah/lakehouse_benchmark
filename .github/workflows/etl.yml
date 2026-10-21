@@ -14,7 +14,7 @@ name: light etl bench
 # workflow there is no shared table to race on. max-parallel stays 1 anyway, for the reason
 # bench.yml gives: N clients sharing one OneLake pipe measure the pipe, not the engines.
 #
-# `publish` is the SINGLE WRITER of results, under results/etl/ and docs/etl/ -- separate from
+# `publish` is the SINGLE WRITER of results, under results/etl/ and docs/data/ -- separate from
 # the TPC-H trees so the two histories never mix. It needs no Azure credentials at all.
 
 on:
@@ -110,7 +110,6 @@ jobs:
       ${{ matrix.engine == 'duckdb_iceberg' && '🦆 DuckDB'
       || matrix.engine == 'chdb_iceberg' && '⚡ chDB'
       || matrix.engine == 'polars_iceberg' && '🐻‍❄️ Polars'
-      || matrix.engine == 'daft_iceberg' && '💠 Daft'
       || matrix.engine == 'lakesail_iceberg' && '⛵ LakeSail'
       || matrix.engine == 'pyspark_iceberg' && '✨ Spark-OSS'
       || matrix.engine == 'pyspark_gluten_iceberg' && '🚀 Gluten/Velox'
@@ -157,7 +156,7 @@ jobs:
       - name: Install ${{ matrix.engine }}
         run: |
           pip install -r "requirements/etl_${BENCH_ENGINE}.txt"
-          pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pandas|daft|pysail|pyspark|pyiceberg|pyarrow)=' || true
+          pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pandas|pysail|pyspark|pyiceberg|pyarrow)=' || true
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
       # .github/scripts/duckdb_nightly.py which nightly.

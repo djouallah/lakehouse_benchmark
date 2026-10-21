@@ -3,9 +3,9 @@
 Polars and pandas produce a STREAM of Arrow record batches; in the notebook a Python library
 (deltalake) turned that stream into a table. Here that library is pyiceberg 0.12, whose `append`
 takes a `pa.RecordBatchReader` and microbatches it into files by `write.target-file-size-bytes`
--- so the engines stream, and nothing on this side holds more than one batch. Daft has its own
-writer over a pyiceberg Table; DuckDB, Sail, Spark, Trino and, since chdb-core 26.10, chDB never
-come here. Databend creates its table here (`recreate`) and writes it itself.
+-- so the engines stream, and nothing on this side holds more than one batch. DuckDB, Sail, Spark,
+Trino and, since chdb-core 26.10, chDB never come here. Databend creates its table here
+(`recreate`) and writes it itself.
 
 UNPARTITIONED, ON PURPOSE, EVERY ENGINE. The notebook partitioned each table by `year`.
 pyiceberg's streaming append is unpartitioned-only: a partitioned table takes a materialised

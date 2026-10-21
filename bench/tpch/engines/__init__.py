@@ -35,10 +35,6 @@ def get_engine(name: str, cfg: Config):
         from bench.tpch.engines.pyspark_gluten_iceberg import PysparkGlutenIceberg
 
         return PysparkGlutenIceberg(cfg)
-    if name == "daft_iceberg":
-        from bench.tpch.engines.daft_iceberg import DaftIceberg
-
-        return DaftIceberg(cfg)
     if name == "pyspark_iceberg":
         from bench.tpch.engines.pyspark_iceberg import PysparkIceberg
 

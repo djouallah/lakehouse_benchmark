@@ -53,11 +53,11 @@ from logs. `publish` also refuses to commit anything JWT-shaped (`leak_check` in
 ## 4. Run order
 
 Each step fails cheaply and points at one of the settings above. All workflows run on
-`ubuntu-latest`. `bench.yml`, `tpcds.yml`, `etl.yml`, `candidate_engine.yml` and `capability.yml`
+`ubuntu-latest`. `bench.yml`, `tpcds.yml`, `etl.yml`, `candidate_engine.yml`, `capability.yml` and `plans.yml`
 share the concurrency group `onelake`, so a second dispatch queues and never runs alongside the
 first. In the three benchmarks `publish` defaults to **true** and commits results to
-`main`, so pass `-f publish=false` for trial runs. `capability.yml` has no such input: it always
-commits.
+`main`, so pass `-f publish=false` for trial runs. `capability.yml`'s `publish` defaults to **false**:
+a run is a check unless it is ticked.
 
 ```bash
 gh workflow run smoke.yml -f catalog=false                     # dialect only: SF=1 local parquet, no Azure
@@ -65,7 +65,7 @@ gh workflow run auth_smoke.yml                                 # credential chai
 gh workflow run bench.yml -f sf=1 -f engines=duckdb_iceberg -f publish=false   # creates CH0001
 gh workflow run auth_smoke.yml                                 # again: probe 5 now reads real parquet
 gh workflow run smoke.yml                                      # catalog phase needs CH0001
-gh workflow run bench.yml -f sf=1 -f publish=false             # all eight engines
+gh workflow run bench.yml -f sf=1 -f publish=false             # all nine engines
 gh workflow run bench.yml -f sf=10                             # then 30/60/100; docs are built at 100
 gh workflow run smoke.yml -f suite=tpcds -f catalog=false
 gh workflow run tpcds.yml -f sf=1 -f publish=false             # creates DS0001
@@ -78,12 +78,12 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 
 | Workflow | Inputs (default) |
 |---|---|
-| `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (8, no daft), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
-| `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (7, no chdb or daft), `regenerate` (false), `publish` |
-| `etl.yml` | `files` 10/100/1000 (100), `engines` (10, includes daft and pandas), `publish` |
+| `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (9), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
+| `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (8, no chdb), `regenerate` (false), `publish` |
+| `etl.yml` | `files` 10/100/1000 (100), `engines` (10, includes pandas), `publish` |
 | `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
-| `capability.yml` (iceberg support) | `clients` polars/duckdb/sail/chdb/duckdb_isolation (all), `keep` (false) |
+| `capability.yml` (iceberg support) | `clients` spark/trino/polars/duckdb/sail/chdb/databend/duckdb_isolation (all), `keep` (false), `probes` (all), `publish` (false) |
 | `auth_smoke.yml` | none |
 | `tmp_polars_main.yml` | `ref` (main). Temporary: builds the Polars main wheel `requirements/polars_iceberg.txt` pins, until a release has the fixes |
 
@@ -182,10 +182,10 @@ before `bench.yml`.
 
 | Engine | Why | Revisit when |
 |---|---|---|
-| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It rejects backticks (hence `IDENT_STYLE = "quoted"`). It is in the ETL but not in `bench.yml`. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), split into [#7601](https://github.com/Eventual-Inc/Daft/issues/7601) (decimals) and [#7602](https://github.com/Eventual-Inc/Daft/issues/7602) (`CASE`) |
+| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It rejects backticks. Dropped from the ETL on 2026-10-19 and its code removed on 2026-10-21. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), split into [#7601](https://github.com/Eventual-Inc/Daft/issues/7601) (decimals) and [#7602](https://github.com/Eventual-Inc/Daft/issues/7602) (`CASE`) |
 | DataFusion Comet | Its native Iceberg scan declines `abfss://` (`builtin_storage_schemes` in `native/core/src/execution/operators/iceberg_common.rs`, which `CometScanRule.scala` loads since PR #6065), so OneLake scans run on the JVM anyway. It would also bypass `WorkloadIdentityTokenProvider`. | `abfss` appears in the native read list ([#6058](https://github.com/apache/datafusion-comet/issues/6058)) |
 
-TPC-DS runs seven engines, all but chDB and Daft. Why those two are out is in the comment above
+TPC-DS runs eight engines, all but chDB. Why it is out is in the comment above
 `ENGINES` in [`bench/tpcds/config.py`](bench/tpcds/config.py). What broke each engine, at
 what scale, and how it was fixed, is in [LEARNING.md](LEARNING.md), with one section per engine.
 

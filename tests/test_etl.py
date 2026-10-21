@@ -38,7 +38,6 @@ def test_csv_locations():
     assert cfg.csv_relative == "lh/Files/csv"
     assert cfg.csv_abfss == "abfss://ws@onelake.dfs.fabric.microsoft.com/lh/Files/csv"
     assert cfg.csv_https == "https://onelake.blob.fabric.microsoft.com/ws/lh/Files/csv"
-    assert cfg.csv_az == "az://ws/lh/Files/csv"
     assert cfg.warehouse == "ws/lh"
 
 

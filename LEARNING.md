@@ -236,7 +236,7 @@ Largest scale each engine completes, cold, every statement answered:
   It is off (`ACCESS_DELEGATION_MODE 'none'` plus a `CREATE SECRET`).
 - **Its Iceberg writer was tried for TPC-DS generation and dropped.** At SF=10 it wrote
   `store_sales` (1.2 GB) in 30 s, then hung on `inventory` (133 M rows) for 45 minutes (run
-  35726316639). Generation now writes parquet with DuckDB and registers it with pyiceberg
+  35726316639). Generation then wrote parquet with DuckDB and registered it with pyiceberg
   `add_files`, the same path as TPC-H.
 - **dsdgen output differs between DuckDB 1.5.5 and the 2.0 nightly**: same row counts, different
   values. While DuckDB generated TPC-DS, the generator had to be the DuckDB engine's own build.
@@ -248,12 +248,12 @@ Largest scale each engine completes, cold, every statement answered:
   `alpha43763` while the nightly was at `alpha44578`. But the newest nightly CLI usually cannot load
   iceberg: DuckDB publishes a nightly's extensions only when its "Deploy extensions" job runs, which
   is skipped if any extension build fails (1 of the last 10 nightlies). So
-  `.github/scripts/duckdb_nightly.py` takes the newest nightly whose iceberg, avro, azure, httpfs
-  and tpcds are on extensions.duckdb.org. `bench/duckdb_cli.py` drives one CLI process per run
+  `.github/scripts/duckdb_nightly.py` takes the newest nightly whose iceberg, avro, azure and
+  httpfs are on extensions.duckdb.org (tpcds too, until generation moved to tpcgen-cli). `bench/duckdb_cli.py` drives one CLI process per run
   over stdin.
 - **A nightly that never deployed can still be used from its own artifacts** (2026-10-15).
   alpha48043 (run 38578625719) built every Linux job, then sat `queued` on the osx_amd64 extension
-  builds, so "Deploy extensions" never ran. Its run artifacts hold the five we need:
+  builds, so "Deploy extensions" never ran. Its run artifacts hold the ones we need:
   `cloud-extensions-linux_amd64` (iceberg, azure), `core-extensions-linux_amd64` (avro),
   `release-core-extensions-linux-amd64` (httpfs, tpcds). Those builds are UNSIGNED (the 256-byte
   signature footer is zeros), so the picker puts them in a local repository, sets
@@ -350,8 +350,8 @@ Largest scale each engine completes, cold, every statement answered:
 
 ## Polars
 
-- **The main build finishes both suites at SF=100.** pola-rs/polars@e691ac01b8, the build pinned
-  in `requirements/polars_iceberg.txt`, answers TPC-DS 99/99 at every scale:
+- **The main build finishes both suites at SF=100.** pola-rs/polars@e691ac01b8, the build then pinned
+  in `requirements/polars_iceberg.txt` (769413ba3f since), answers TPC-DS 99/99 at every scale:
   - SF=10: 256 s (run 37943815509)
   - SF=30: 271 s (run 37945726671)
   - SF=60: 764 s (run 37948405184). This is the fastest result at SF=60. StarRocks takes 902 s and
@@ -421,11 +421,11 @@ Largest scale each engine completes, cold, every statement answered:
     `sink_iceberg(create_if_not_exists=True)`, which makes an unpartitioned table from the frame's
     schema. It is in no release yet, so the capability probe runs the main build. That fills
     Polars' CREATE TABLE and CREATE TABLE AS SELECT cells.
-  - Open: it does not create a missing namespace
-    ([#29968](https://github.com/pola-rs/polars/issues/29968)). `create_if_not_exists` calls
-    `create_table_if_not_exists` only, and the one `create_namespace` in Polars is `pl.Catalog`'s,
-    which is Unity-only. The namespace still comes from pyiceberg
-    (`create_namespace_if_not_exists`), so the namespace rows are `na`.
+  - Creating a missing namespace
+    ([#29968](https://github.com/pola-rs/polars/issues/29968)) was fixed on main by
+    [PR #30087](https://github.com/pola-rs/polars/pull/30087),
+    `sink_iceberg(create_namespace_if_not_exists=True)`: the Create namespace cell is a yes. Polars
+    has no way to drop one, so Drop namespace is a no, as for chDB.
   - Open: the `bucket` partition transform
     ([#29844](https://github.com/pola-rs/polars/issues/29844)), which Polars refuses before the
     catalog is asked.

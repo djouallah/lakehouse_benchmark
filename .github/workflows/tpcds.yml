@@ -12,7 +12,7 @@ name: tpcds bench
 # that already carry the Iceberg field ids. Then the TPC-H landing exactly: upload the files
 # as-is to Tables/<ns>/<table>/, one pyiceberg add_files per table (bench/tpcds/generate.py).
 #
-# `publish` is the SINGLE WRITER of results, under results/tpcds/ and docs/tpcds/ -- separate
+# `publish` is the SINGLE WRITER of results, under results/tpcds/ and docs/data/ -- separate
 # trees so the two query suites' histories never mix. It needs NO Azure credentials at all.
 
 on:
@@ -123,7 +123,6 @@ jobs:
       || matrix.engine == 'chdb_iceberg' && '⚡ chDB'
       || matrix.engine == 'polars_iceberg' && '🐻‍❄️ Polars'
       || matrix.engine == 'lakesail_iceberg' && '⛵ LakeSail'
-      || matrix.engine == 'daft_iceberg' && '💠 Daft'
       || matrix.engine == 'pyspark_iceberg' && '✨ Spark-OSS'
       || matrix.engine == 'pyspark_gluten_iceberg' && '🚀 Gluten/Velox'
       || matrix.engine == 'starrocks_iceberg' && '⭐ StarRocks'

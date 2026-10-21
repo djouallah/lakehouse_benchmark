@@ -44,17 +44,11 @@ N_QUERIES = 22
 #               resolves as a database named CH0010.
 #               Polars: no catalog at all, but the engine registers each frame under the
 #               full dotted name, so the backticks ask for that exact key.
-#   quoted      The same single identifier, but DOUBLE-QUOTED. Daft registers temp tables
-#               under the full dotted name like Polars, and then rejects backticks outright:
-#               "Daft only supports delimited identifiers with double-quotes, found `".
-#               All 22 queries failed on that alone -- a quoting style, not a dialect gap.
 #   dotted      Ordinary schema-qualified SQL. DuckDB resolves it through the attached
 #               catalog's DEFAULT_SCHEMA; LakeSail through its OneLake catalog.
 IDENT_STYLE = {
     "chdb_iceberg": "backticked",
     "polars_iceberg": "backticked",
-    # Daft: a flat namespace like Polars, but ANSI quoting -- see the note above.
-    "daft_iceberg": "quoted",
     "duckdb_iceberg": "dotted",
     # Spark has real multi-level namespaces, same as LakeSail.
     "pyspark_iceberg": "dotted",
@@ -112,8 +106,6 @@ def rewrite_identifiers(sql: str, engine: str, schema: str) -> str:
     if style == "backticked":
         return sql
     pattern = re.compile(rf"`{re.escape(schema)}\.(\w+)`")
-    if style == "quoted":
-        return pattern.sub(rf'"{schema}.\1"', sql)
     return pattern.sub(rf"{schema}.\1", sql)
 
 

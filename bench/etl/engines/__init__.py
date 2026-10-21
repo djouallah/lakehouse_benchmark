@@ -26,10 +26,6 @@ def get_engine(name: str, cfg: EtlConfig):
         from bench.etl.engines.polars_iceberg import PolarsIceberg
 
         return PolarsIceberg(cfg)
-    if name == "daft_iceberg":
-        from bench.etl.engines.daft_iceberg import DaftIceberg
-
-        return DaftIceberg(cfg)
     if name == "lakesail_iceberg":
         from bench.etl.engines.lakesail_iceberg import LakesailIceberg
 

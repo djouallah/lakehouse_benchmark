@@ -27,8 +27,6 @@ from bench.tpch.config import MAX_PARTS, TARGET_PART_MB
 #                     assertion failed`, exit 134). The chdb-core main build no longer crashes but
 #                     fails 6 of 99 on known ClickHouse issues (LEARNING.md#chdb), and a run is
 #                     all or nothing. TPC-H is unaffected -- chDB still runs there.
-#   daft_iceberg      never ran here: TPC-H already excludes it from the query benchmark
-#                     (Eventual-Inc/Daft#7532).
 #
 # Spark-OSS is slow -- bench/tpch/engines/pyspark_iceberg.py's `refresh` exists because of it --
 # but it answers all 99, so it stays.
@@ -43,8 +41,7 @@ ENGINES = (
     # and writes). Q49 fails on a StarRocks bug (StarRocks#79807); everything else runs.
     "starrocks_iceberg",
     # Trino: added 2026-09-28. 89/99 at SF=1 on its first smoke; the ten were query text, not
-    # Trino, and read the same on every engine once written as standard SQL (bench/tpcds/
-    # rewrite.py `portable`).
+    # Trino, and read the same on every engine once written as standard SQL (sql/tpcds.sql).
     "trino_iceberg",
     # LakeSail: back 2026-09-30. 0.7.2 answers 99/99 at SF=10 (run 36652684303) once its
     # double-quoted aliases are backticked (bench/tpch/queries.py BACKTICK_ALIASES).
@@ -91,9 +88,9 @@ TABLES = (
     "web_site",
 )
 
-# Approximate parquet MiB per scale factor unit of the tables big enough to split, from the SF=10
-# DuckDB-generated dataset. Used only to choose a part count, like bench/tpch/config.py's: being
-# off moves a file from 200 MB to 260 MB and changes nothing. inventory grows slower than SF
+# Approximate parquet MiB per scale factor unit of the tables big enough to split, measured on an
+# SF=10 dataset. Used only to choose a part count, like bench/tpch/config.py's: being off moves a
+# file from 200 MB to 260 MB and changes nothing. inventory grows slower than SF
 # (items x warehouses x weeks), so it is over-split at SF=100; harmless. Every other table is one
 # file, and tpcgen-cli never splits a table under 1M rows anyway.
 TABLE_MB_PER_SF = {

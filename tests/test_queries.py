@@ -64,11 +64,6 @@ def test_every_table_reference_is_rewritten(suite, engine):
         # The qualified name must survive as ONE quoted identifier.
         assert f"`{SCHEMA}.{first}`" in joined
         assert not re.search(rf"(?<!`){re.escape(SCHEMA)}\.\w+(?!`)", joined)
-    elif style == "quoted":
-        # Same single identifier, ANSI quoting. Daft rejects a backtick outright.
-        assert f'"{SCHEMA}.{first}"' in joined
-        assert "`" not in joined
-        assert not re.search(rf'(?<!"){re.escape(SCHEMA)}\.\w+(?!")', joined)
     else:
         assert f"{SCHEMA}.{first}" in joined
         if engine in BACKTICK_ALIASES:
@@ -97,8 +92,6 @@ def test_polars_and_chdb_keep_the_qualified_name_quoted():
     """
     assert IDENT_STYLE["polars_iceberg"] == "backticked"
     assert IDENT_STYLE["chdb_iceberg"] == "backticked"
-    # Daft has the same flat namespace and rejects backticks, so it gets the quoted spelling.
-    assert IDENT_STYLE["daft_iceberg"] == "quoted"
 
 
 @pytest.mark.parametrize("suite", SUITES)
@@ -123,29 +116,11 @@ def test_sf_appears_exactly_once_in_the_source():
     assert SQL_PATH.read_text(encoding="utf-8").count("{SF}") == 1
 
 
-def test_tpcds_is_a_fixed_point_of_the_rewrite():
-    """sql/build_tpcds_sql.py's guarantee, re-checked on the committed file.
-
-    Running bench/tpcds/rewrite.py over sql/tpcds.sql must change nothing: every table reference
-    is already `{schema}.`-qualified and aliased, and every other occurrence of a table name (a
-    column alias, a qualifier, a column reference through an alias) is left alone. A bare
-    `store_sales` would resolve on DuckDB (its DEFAULT_SCHEMA) and fail on every engine that
-    needs the qualified name -- a dialect gap that is not one.
-    """
-    from bench.tpcds.rewrite import qualify
-
+def test_tpcds_tables_are_qualified_and_dates_portable():
+    """sql/tpcds.sql is edited by hand: every table reference stays `{schema}.`-qualified (a bare
+    `store_sales` resolves on DuckDB alone), and no date + integer, which Trino rejected."""
     text = TpcdsConfig.SQL_PATH.read_text(encoding="utf-8")
-    assert qualify(text) == text
     assert text.count("`{schema}.") >= TpcdsConfig.N_QUERIES
-
-
-def test_tpcds_is_a_fixed_point_of_portable():
-    """sql/tpcds.sql carries bench/tpcds/rewrite.py `portable()`: no bare date literal, no
-    date + integer, no grouping() sum in ORDER BY -- each a statement Trino rejected."""
-    from bench.tpcds.rewrite import portable
-
-    text = TpcdsConfig.SQL_PATH.read_text(encoding="utf-8")
-    assert portable(text) == text
     assert "d_date + 5 " not in text
     assert "INTERVAL '5' DAY" in text
 
