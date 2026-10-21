@@ -32,6 +32,13 @@
     ObjectName([Identifier(\"ALL\")]) is missing from the schema", run 39688464508); the ordinals
     are what the Trino tree uses. #}
 {%- set group_by = '1, 2, 3' if target.name == 'sail' else 'ALL' %}
+{#- The sail probe target joins the interval on its epoch seconds: DataFusion's sort-merge join
+    cannot compare a UTC timestamp key ("Unsupported data type in sort merge join comparator:
+    Timestamp(us, \"UTC\")", run 39690013877; apache/datafusion#26003). AEMO's intervals are whole
+    seconds, so the match is the same. #}
+{%- macro interval_key(alias) -%}
+{%- if target.name == 'sail' -%}CAST({{ alias }}.SETTLEMENTDATE AS BIGINT){%- else -%}{{ alias }}.SETTLEMENTDATE{%- endif -%}
+{%- endmacro %}
 
 WITH
 -- The unit universe the DAILY branch can reproduce. Deliberately UNBOUNDED, not a trailing
@@ -82,7 +89,7 @@ daily_summary AS (
   -- INNER joins: `WHERE p.INTERVENTION = 0` always discarded null-price rows anyway.
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price') }} p
-    ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
+    ON {{ interval_key('s') }} = {{ interval_key('p') }} AND d.Region = p.REGIONID
   WHERE
     s.INTERVENTION = 0
     AND s.INITIALMW <> 0
@@ -105,7 +112,7 @@ daily_summary AS (
   FROM {{ ref('fct_scada_today') }} s
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price_today') }} p
-    ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
+    ON {{ interval_key('s') }} = {{ interval_key('p') }} AND d.Region = p.REGIONID
   WHERE
     s.INITIALMW <> 0
     AND p.INTERVENTION = 0

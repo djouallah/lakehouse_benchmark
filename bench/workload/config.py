@@ -53,12 +53,11 @@ class WorkloadConfig(Config):
 
     @property
     def estimated_gib(self) -> float:
-        """What an engine sizes its memory against: bench's Sail engine (the sail probe) switches to
-        sort-merge joins past half its 10 GiB pool. 5 keeps HASH joins. Sail's sort-merge join
-        cannot key on a time-zone-aware timestamp -- fct_summary's incremental build failed
-        "Unsupported data type in sort merge join comparator: Timestamp(us, UTC)" (run 39690013877,
-        apache/datafusion#26003) -- so the workload stays on hash joins whatever its size."""
-        return 5.0
+        """What an engine sizes its memory against (bench's Sail engine, the sail probe: sort-merge
+        joins past half its 10 GiB pool). Not an SF: the workload's tables only grow -- fct_scada is
+        past 380M rows -- so this says "bigger than memory". With hash joins the runner died in
+        fct_scada's merge (run 39690698607): a hash join's build side cannot spill."""
+        return 64.0
 
     @property
     def schema(self) -> str:
