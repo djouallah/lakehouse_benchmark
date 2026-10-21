@@ -1,0 +1,43 @@
+name: temporary polars grain repro
+
+# TEMPORARY: the workload's polars runner died in assert_fct_scada_grain (run 39524954142), a
+# GROUP BY on the merge key over ~100M rows. This reruns that query on synthetic data of the same
+# shape, with the workload's pinned Polars and spill settings, at growing sizes, and records peak
+# RSS. No OneLake. Deleted once answered.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sizes:
+        description: Space-separated file counts (~155k rows each).
+        type: string
+        default: "160 320 480 700"
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      POLARS_TEMP_DIR: /mnt/polars_spill
+      POLARS_OOC_DISK_BUDGET_MB: "100000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install the workload's Polars
+        run: grep -E '^polars' requirements/workload_polars.txt > polars.txt && pip install -r polars.txt psutil
+      - name: Disk
+        run: |
+          sudo mkdir -p /mnt/polars_spill /mnt/grain && sudo chown "$USER" /mnt/polars_spill /mnt/grain
+          df -h / /mnt
+      - name: Generate
+        run: python .github/scripts/tmp_polars_grain.py gen /mnt/grain 700
+      - name: Grain test at each size
+        run: |
+          for n in ${{ inputs.sizes }}; do
+            /usr/bin/time -v python .github/scripts/tmp_polars_grain.py test /mnt/grain "$n" 2> time.txt \
+              && echo "ok" || echo "::warning::$n files: exit $?"
+            grep -E "Maximum resident|Elapsed" time.txt
+            du -sh /mnt/polars_spill || true
+          done
