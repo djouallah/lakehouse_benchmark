@@ -136,6 +136,7 @@ def page_data(
             "status": leg["status"],
             "build_seconds": leg.get("build_seconds"),
             "peak_rss_mb": leg.get("peak_rss_mb"),
+            "peak_spill_mb": leg.get("peak_spill_mb"),
             "process_limit": leg.get("process_limit"),
             "files_behind": files_behind(leg),
             **counts(leg),
@@ -167,9 +168,9 @@ def summary(legs: dict[str, dict]) -> str:
     lines = [
         "## dbt workload (Iceberg)",
         "",
-        "| leg | status | files/run | build s | peak RSS MB | files behind | models ok "
-        "| tests ok |",
-        "|---|---|---:|---:|---:|---:|---:|---:|",
+        "| leg | status | files/run | build s | peak RSS MB | spill MB | files behind "
+        "| models ok | tests ok |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
         c = counts(leg)
@@ -177,7 +178,8 @@ def summary(legs: dict[str, dict]) -> str:
         lines.append(
             f"| {engine} | {leg['status']} | {leg.get('process_limit', '')} "
             f"| {leg.get('build_seconds', '')} "
-            f"| {leg.get('peak_rss_mb', '')} | {'' if behind is None else behind} "
+            f"| {leg.get('peak_rss_mb', '')} | {leg.get('peak_spill_mb', '')} "
+            f"| {'' if behind is None else behind} "
             f"| {c['models_ok']}/{c['models']} | {c['tests_ok']}/{c['tests']} |"
         )
     lines.append("")

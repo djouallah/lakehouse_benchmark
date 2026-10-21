@@ -86,6 +86,8 @@ def test_page_data_carries_the_dag_and_each_legs_models():
             "run_id": "1",
             "status": "success",
             "build_seconds": 10.0,
+            "peak_rss_mb": 9876,
+            "peak_spill_mb": 3200,
             "finished": "2026-10-20T00:00:00Z",
             "versions": {"dbt-core": "1.10.0", adapter: "1.10.1"},
             "nodes": [
@@ -128,6 +130,8 @@ def test_page_data_carries_the_dag_and_each_legs_models():
     assert out["legs"]["duckdb_iceberg"]["adapter"] == "dbt-duckdb 1.10.1"
     assert out["legs"]["duckdb_iceberg"]["model_seconds"] == {"stg": 1.5, "fct": 4.0}
     assert out["legs"]["duckdb_iceberg"]["models"] == 2  # the count, not the seconds
+    assert out["legs"]["duckdb_iceberg"]["peak_rss_mb"] == 9876
+    assert out["legs"]["duckdb_iceberg"]["peak_spill_mb"] == 3200
     assert "parity_ok" not in out
     assert out["legs"]["duckdb_iceberg"]["files_behind"] == 809
     assert out["legs"]["duckdb_iceberg"]["last_ok"]["run_id"] == "1"

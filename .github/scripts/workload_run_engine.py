@@ -28,6 +28,7 @@ import contextlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -131,12 +132,16 @@ def start_trino(cfg: WorkloadConfig, token: str) -> str:
 class PeakRss:
     """Peak resident memory of the leg while dbt runs: this process and its children (dbt, the
     engine in-process, Spark's JVM) plus, on Trino, the server's processes in its container --
-    sampled twice a second, summed, the maximum kept. A leg the runner kills records nothing."""
+    sampled twice a second, summed, the maximum kept. A leg the runner kills records nothing.
+    The same tick keeps the runner disk's lowest free space: every engine spills there (DuckDB's
+    temp dir, Spark's local dirs, Trino's container, Polars' streaming temp files), so the free
+    space lost at the peak is the leg's spill, plus any other temp files it wrote."""
 
     def __init__(self, engine: str):
         import threading
 
         self.peak = 0
+        self._free0 = self._lowest_free = shutil.disk_usage("/").free
         self._stop = threading.Event()
         self._roots = [os.getpid()]
         if engine == "trino":
@@ -170,6 +175,7 @@ class PeakRss:
     def _sample(self) -> None:
         while not self._stop.wait(0.5):
             self.peak = max(self.peak, self._rss())
+            self._lowest_free = min(self._lowest_free, shutil.disk_usage("/").free)
 
     def __enter__(self) -> PeakRss:
         self.peak = self._rss()
@@ -183,6 +189,10 @@ class PeakRss:
     @property
     def mb(self) -> int:
         return round(self.peak / 2**20)
+
+    @property
+    def spill_mb(self) -> int:
+        return max(0, round((self._free0 - self._lowest_free) / 2**20))
 
 
 class Dbt:
@@ -346,7 +356,11 @@ def main(parts: Path) -> int:
         with PeakRss(engine) as rss:
             ok = step("run") and step("test")
         part["peak_rss_mb"] = rss.mb
-        scrub.safe_print(f"{engine}: peak RSS {rss.mb:,} MB during dbt run and test")
+        part["peak_spill_mb"] = rss.spill_mb
+        scrub.safe_print(
+            f"{engine}: peak RSS {rss.mb:,} MB, disk spill {rss.spill_mb:,} MB "
+            "during dbt run and test"
+        )
         models = [n for n in part["nodes"] if n["node"].startswith("model.")]
         if ok and not models:
             ok = False

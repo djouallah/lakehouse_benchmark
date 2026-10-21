@@ -305,8 +305,11 @@ main .tiles > a { color: inherit; }
 .rw .card.fail .v { color: var(--no); }
 .rw .card .ad { color: var(--ink-3); font-size: 12px; }
 .rw .card .m { color: var(--ink-3); font-size: 12px; margin-top: 4px; font-variant-numeric: tabular-nums; }
-.rw .card .t { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
-.rw .card .t .bar { display: block; height: 6px; border-radius: 3px; background: var(--c); }
+.rw .card .mem { margin-top: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rw .card .mem b { font-size: 18px; }
+.rw .card .track { height: 8px; margin-top: 4px; border-radius: 4px; background: var(--track); overflow: hidden; }
+.rw .card .track i { display: block; height: 100%; border-radius: 4px; background: var(--c); }
+.rw .card .sp { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .rw svg.dag { display: block; width: 100%; height: auto; max-height: 52vh; margin: 18px 0 6px; }
 .rw .dag .edge { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 6; animation: rwflow 1.4s linear infinite; }
 @keyframes rwflow { to { stroke-dashoffset: -22; } }
@@ -1088,9 +1091,11 @@ function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.t
 // THE REAL WORKLOAD TAB: the arc's last step. Benchmarks measure speed; in real life you run SQL orchestrated
 // by dbt, and it has to work. One real dbt project (fabric-dbt-examples' AEMO pipeline, vendored as workload/)
 // runs on every engine with a leg in workload.yml, and this tab reads the latest run, docs/data/workload.json
-// (.github/scripts/workload_publish.py): a card per engine (it runs or it does not; the build time is a
-// bonus), the project's DAG as dbt itself published it (target/manifest.json), with each model's time on each
-// engine, and whether they all gave the same answer. An engine without a leg is not shown.
+// (.github/scripts/workload_publish.py): a card per engine (it runs or it does not; then its peak RSS against the
+// 16 GB machine and what it spilled to disk, never its time), the project's DAG as dbt itself published it
+// (target/manifest.json), with each model's rows, and whether they all gave the same answer. An engine without a
+// leg is not shown.
+const RUNNER_GB = 16;
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the ids in the list under Bug reports
 const WORKLOAD_CODE = "https://github.com/djouallah/lakehouse_benchmark/tree/main/workload";
@@ -1103,7 +1108,7 @@ function dagLayout(dag) {
   names.forEach(d);
   const cols = Math.max(...Object.values(depth)) + 1;
   const byCol = Array.from({ length: cols }, (_, c) => names.filter(n => depth[n] === c));
-  const W = 1100, NW = 236, NH = 90, GAP = 14, rows = Math.max(...byCol.map(c => c.length));
+  const W = 1100, NW = 236, NH = 56, GAP = 14, rows = Math.max(...byCol.map(c => c.length));
   const H = rows * (NH + GAP) - GAP, pos = {};
   byCol.forEach((col, c) => {
     const top = (H - (col.length * (NH + GAP) - GAP)) / 2;
@@ -1124,16 +1129,19 @@ function renderRealWorkload() {
   const ok = e => w.legs[e].status === "success";
   const rank = e => { const i = WORKLOAD_ORDER.indexOf(e); return i < 0 ? 99 : i; };
   const engines = Object.keys(w.legs).sort((a, b) => rank(a) - rank(b));
-  const runs = engines.filter(ok), slowest = Math.max(...runs.map(e => w.legs[e].build_seconds));
+  const runs = engines.filter(ok);
   const first = w.legs[runs[0] ?? engines[0]], models = Object.keys(w.dag ?? {}).length || first.models;
+  const gb = mb => (mb / 1024).toFixed(1);
   const cards = engines.map(e => {
     const l = w.legs[e];
     return `<div class="card${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
       <div class="n"><i class="sw"></i>${esc(wlName(e))}</div>
       <div class="v">${ok(e) ? "✓ runs" : l.status === "died" ? "✗ died" : "✗ fails"}</div>
       <div class="ad">${esc(l.adapter ?? "")}</div>
-      ${ok(e) ? `<div class="t"><span>${fmt(l.build_seconds)}</span><i class="bar" style="width: ${(100 * l.build_seconds / slowest).toFixed(1)}%"></i></div>` : ""}
-      ${l.peak_rss_mb ? `<div class="m">peak RSS ${(l.peak_rss_mb / 1024).toFixed(1)} GB${l.process_limit ? ` at ${l.process_limit} files a run` : ""}</div>` : ""}
+      ${l.peak_rss_mb ? `<div class="mem">peak RSS <b>${gb(l.peak_rss_mb)} GB</b> of ${RUNNER_GB}
+        <div class="track"><i style="width: ${Math.min(100, 100 * l.peak_rss_mb / 1024 / RUNNER_GB).toFixed(1)}%"></i></div></div>` : ""}
+      ${l.peak_spill_mb != null ? `<div class="sp">${l.peak_spill_mb >= 100 ? `spilled ${gb(l.peak_spill_mb)} GB to disk` : "no spill to disk"}</div>` : ""}
+      ${l.process_limit ? `<div class="m">${l.process_limit} files a run</div>` : ""}
       ${ok(e) && l.model_files?.fct_scada != null ? `<div class="m">${l.model_files.fct_scada.toLocaleString()} daily files processed</div>` : ""}
       ${!ok(e) ? `<div class="m">${esc(l.error || "")}${l.last_ok ? ` · last OK <a href="${l.last_ok.run_url}">${l.last_ok.finished.slice(0, 10)}</a>` : ""}</div>` : ""}
     </div>`;
@@ -1142,7 +1150,6 @@ function renderRealWorkload() {
   let dag = "";
   if (w.dag && Object.keys(w.dag).length) {
     const { W, H, NW, NH, pos } = dagLayout(w.dag);
-    const most = Math.max(...runs.flatMap(e => Object.values(w.legs[e].model_seconds ?? {})), 1);
     // Rows per model: the furthest engine's count (each engine folds at its own pace).
     const rowsOf = n => { const v = runs.map(e => w.legs[e].model_rows?.[n]).filter(x => x != null); return v.length ? Math.max(...v) : null; };
     const compact = v => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : v.toLocaleString();
@@ -1152,31 +1159,25 @@ function renderRealWorkload() {
     })).join("");
     const nodes = Object.entries(w.dag).map(([n, m]) => {
       const { x, y } = pos[n];
-      const bars = m.materialized === "source" ? "" : runs.map((e, i) => {
-        const s = w.legs[e].model_seconds?.[n] ?? 0;
-        return `<rect class="b" x="${x + 12}" y="${y + 48 + i * 8}" width="${Math.max(2, (NW - 24) * s / most).toFixed(1)}" height="5" rx="2"
-          style="fill: var(--${e}, var(--ink-3))"/>`;
-      }).join("");
       const r = rowsOf(n);
       return `<g class="node" data-model="${n}"><rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="10"/>
         <text class="nm" x="${x + 12}" y="${y + 20}">${esc(n)}</text>
         <text class="rc" x="${x + NW - 12}" y="${y + 20}" text-anchor="end">${r === null ? "" : `${compact(r)} rows`}</text>
-        <text class="mt" x="${x + 12}" y="${y + 36}">${esc(m.materialized)}</text>${bars}</g>`;
+        <text class="mt" x="${x + 12}" y="${y + 38}">${esc(m.materialized)}</text></g>`;
     }).join("");
     dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
 
   const n = runs.length;
   sec.innerHTML = `
-    <p class="arc">Coverage first, speed second. Spark and Trino have been boring for years. DuckDB and Polars just got there, on a 16 GB machine.</p>
+    <p class="arc">What decides it is memory: peak RSS against a 16 GB machine, and what spills to disk. Not speed.</p>
     <p class="proj">One real dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
       ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out.
       ${n} of ${engines.length} engines run it:</p>
     <div class="cards">${cards}</div>
     ${dag}
     <p class="answer">Every 2 hours, never reset: new AEMO files land and each engine folds the next batch into its own
-      tables, which only grow. How far does each one get? <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.
-      Bars: each model's time on each engine.</p>`;
+      tables, which only grow. How far does each one get? <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`;
 
   for (const el of sec.querySelectorAll(".card[data-tip], .node")) {
     el.onmouseenter = () => {
@@ -1193,7 +1194,7 @@ function renderRealWorkload() {
         tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => {
           const rows = w.legs[x].model_rows?.[m];
           return `<div class="k"><span class="sw" style="background: var(--${x})"></span>${esc(wlName(x))}</div>
-            <div>${fmt(w.legs[x].model_seconds?.[m] ?? 0)}${rows != null ? ` · ${rows.toLocaleString()} rows` : ""}</div>`;
+            <div>${rows != null ? `${rows.toLocaleString()} rows` : "–"}</div>`;
         }).join("") + `<div class="k"></div><div>Click for how each engine builds it.</div>`;
       }
       const r = el.getBoundingClientRect();
@@ -1231,7 +1232,7 @@ function openModel(w, runs, n, at) {
     const l = w.legs[e], c = l.model_config?.[n], r = l.model_rows?.[n];
     const sql = c?.path ? `<a href="${WORKLOAD_BLOB}${c.path}">${c.sql_lines} lines ↗</a>` : "";
     return `<tr style="--c: var(--${e}, var(--ink-3))"><td><i class="sw"></i>${esc(wlName(e))}</td>
-      <td>${esc(strategyOf(c))}</td><td class="n">${fmt(l.model_seconds?.[n] ?? 0)}</td>
+      <td>${esc(strategyOf(c))}</td>
       ${same ? "" : `<td class="n">${r == null ? "–" : r.toLocaleString()}</td>`}<td class="n">${sql}</td></tr>`;
   }).join("");
   const diffs = m.differences?.length ? `<h4>Where the SQL differs</h4><ul>${m.differences.map(d => `<li>${mdLine(d)}</li>`).join("")}</ul>` : "";
@@ -1242,7 +1243,7 @@ function openModel(w, runs, n, at) {
     <div class="h"><b>${esc(n)}</b><span>${head}</span></div>
     ${m.description ? `<p class="d">${esc(m.description)}</p>` : ""}
     ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>`
-      : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Time</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
+      : `<table><thead><tr><th>Engine</th><th>Builds it by</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
     <tbody>${lines}</tbody></table>`}${diffs}`;
   document.body.append(p);
   const pw = p.offsetWidth, ph = p.offsetHeight, gap = 12;
