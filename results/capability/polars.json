@@ -48,8 +48,8 @@
    "key": "partition_bucket",
    "group": "create",
    "question": "write a table partitioned by bucket(4, id)",
-   "outcome": "no",
-   "detail": "works: none; refused: bucket: NotImplementedError: NotImplementedError: sink to Iceberg table with 'bucket[4]' partition transform"
+   "outcome": "supported",
+   "detail": "all of bucket"
   },
   {
    "key": "partition_truncate",
@@ -119,7 +119,7 @@
    "group": "read",
    "question": "id.max() with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39538881239_1_max/data/00000-0-b086df21-a92b-4346-b0fb-5f842ecf1741.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39538881239_1_max/data/0\u2026"
+   "detail": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39590387183_1_max/data/00000-0-7cee8cbe-dd8a-470d-bfd7-f72f352306ad.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39590387183_1_max/data/0\u2026"
   },
   {
    "key": "stale_assertion",
@@ -143,7 +143,7 @@
    "detail": "retried: final [(2, 20), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "39540667430",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39540667430",
+ "run": "39590387183",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39590387183",
  "date": "2026-10-21"
 }
