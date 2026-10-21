@@ -256,6 +256,9 @@ class PolarsCapability:
             raise NoOp("sink_iceberg returned success and pyiceberg lists no new namespace")
         return f"`{ns}` created by sink_iceberg, with its table; pyiceberg lists it"
 
+    def namespace_drop(self) -> str:
+        raise Refused("Polars has no API to drop a catalog namespace")
+
     def sink_overwrite(self) -> str:
         table = self.fresh("overwrite")
         self.sink(table, rows([(7, 70), (8, 80)]), mode="overwrite")
@@ -495,6 +498,7 @@ PROBES = [
     ("create", "sink_iceberg(create_if_not_exists=True) to a new table", "sink_create"),
     ("write", "sink_iceberg(mode='append')", "sink_append"),
     ("catalog", "sink_iceberg into a new namespace, creating it", "namespace_create"),
+    ("catalog", "drop a namespace (no API)", "namespace_drop"),
     ("write", "sink_iceberg(mode='overwrite')", "sink_overwrite"),
     ("write", "pl.delete_iceberg(table, id == 1)", "delete_rows"),
     ("create", "write an identity-partitioned table", "partitioned"),

@@ -151,7 +151,7 @@ ROWS = [
             "sail": ["drop_purge"],
         },
     ),
-    # Polars creates a namespace with sink_iceberg and has no way to drop one.
+    # Polars creates a namespace with sink_iceberg; it, like chDB, has no way to drop one.
     (
         "Create namespace",
         {
@@ -173,6 +173,7 @@ ROWS = [
             "duckdb": ["drop_schema"],
             "sail": ["namespace_drop"],
             "chdb": ["namespace_drop"],
+            "polars": ["namespace_drop"],
         },
     ),
     ("CREATE SCHEMA IF NOT EXISTS, existing schema", {e: ["namespace_existing"] for e in SQL}),
