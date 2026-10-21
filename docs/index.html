@@ -295,22 +295,16 @@ main .tiles > a { color: inherit; }
 .tiles a:hover, .tiles a:focus-visible { border-color: var(--accent); outline: none; }
 .tiles b { flex: none; font-size: clamp(24px, 3vw, 30px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tiles span { color: var(--ink-2); font-size: 13px; }
-.rw .arc { font-size: 16px; font-weight: 600; margin: 14px 0 4px; }
-.rw .proj { font-size: 14px; color: var(--ink-2); margin: 0 0 12px; max-width: 110ch; }
-.rw .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-.rw .card { padding: 10px 14px; border: 1px solid var(--grid); border-top: 3px solid var(--c); border-radius: 12px; background: var(--raised); }
-.rw .card .n { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
-.rw .card .sw { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
-.rw .card .v { color: var(--yes); font-weight: 700; font-size: 14px; margin-top: 2px; }
-.rw .card.fail .v { color: var(--no); }
-.rw .card .ad { color: var(--ink-3); font-size: 12px; }
-.rw .card .m { color: var(--ink-3); font-size: 12px; margin-top: 4px; font-variant-numeric: tabular-nums; }
-.rw .card .mem { margin-top: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
-.rw .card .mem b { font-size: 18px; }
-.rw .card .track { height: 8px; margin-top: 4px; border-radius: 4px; background: var(--track); overflow: hidden; }
-.rw .card .track i { display: block; height: 100%; border-radius: 4px; background: var(--c); }
-.rw .card .sp { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.rw svg.dag { display: block; width: 100%; height: auto; max-height: 52vh; margin: 18px 0 6px; }
+.rw .eng { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 14px 0 0; }
+.rw .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid color-mix(in srgb, var(--c) 40%, var(--grid)); border-radius: 999px; background: color-mix(in srgb, var(--c) 8%, var(--raised)); font-size: 14px; font-variant-numeric: tabular-nums; cursor: default; }
+.rw .chip .v { color: var(--yes); font-weight: 800; }
+.rw .chip.fail { opacity: .6; }
+.rw .chip.fail .v { color: var(--no); }
+.rw .chip .nm { font-weight: 700; }
+.rw .chip .track { width: 60px; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.rw .chip .track i { display: block; height: 100%; background: var(--c); }
+.rw .chip .gb { color: var(--ink-2); font-size: 13px; }
+.rw svg.dag { display: block; width: 100%; height: auto; max-height: calc(100vh - 230px); margin: 18px 0 6px; }  /* the page: as big as fits */
 .rw .dag .edge { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 6; animation: rwflow 1.4s linear infinite; }
 @keyframes rwflow { to { stroke-dashoffset: -22; } }
 @media (prefers-reduced-motion: reduce) { .rw .dag .edge { animation: none; } }
@@ -319,7 +313,7 @@ main .tiles > a { color: inherit; }
 .rw .dag .nm { font-size: 14px; font-weight: 700; fill: var(--ink); }
 .rw .dag .mt { font-size: 11px; fill: var(--ink-3); }
 .rw .dag .rc { font-size: 13px; font-weight: 700; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
-.rw .answer { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; }
+.rw .dag .dot { stroke-width: 1.5; }
 .rw .dag .node { cursor: pointer; }
 .rw a, .rw-panel a { color: var(--accent); }
 .rw-panel { position: fixed; z-index: 40; width: min(600px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: auto;
@@ -1091,10 +1085,10 @@ function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.t
 // THE REAL WORKLOAD TAB: the arc's last step. Benchmarks measure speed; in real life you run SQL orchestrated
 // by dbt, and it has to work. One real dbt project (fabric-dbt-examples' AEMO pipeline, vendored as workload/)
 // runs on every engine with a leg in workload.yml, and this tab reads the latest run, docs/data/workload.json
-// (.github/scripts/workload_publish.py): a card per engine (it runs or it does not; then its peak RSS against the
-// 16 GB machine and what it spilled to disk, never its time), the project's DAG as dbt itself published it
-// (target/manifest.json), with each model's rows, and whether they all gave the same answer. An engine without a
-// leg is not shown.
+// (.github/scripts/workload_publish.py). The DAG as dbt itself published it (target/manifest.json) is the page:
+// each model's rows, and a dot per engine, filled when that engine built it. Above it, a chip per engine: it runs
+// or not, and its peak RSS against the 16 GB machine; hover for spill, files, versions and errors. Never time.
+// The project and the run are in the source node's panel. An engine without a leg is not shown.
 const RUNNER_GB = 16;
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the ids in the list under Bug reports
@@ -1108,7 +1102,8 @@ function dagLayout(dag) {
   names.forEach(d);
   const cols = Math.max(...Object.values(depth)) + 1;
   const byCol = Array.from({ length: cols }, (_, c) => names.filter(n => depth[n] === c));
-  const W = 1100, NW = 236, NH = 56, GAP = 14, rows = Math.max(...byCol.map(c => c.length));
+  // W narrow, so the page-wide SVG scales the nodes up.
+  const W = 860, NW = 236, NH = 56, GAP = 14, rows = Math.max(...byCol.map(c => c.length));
   const H = rows * (NH + GAP) - GAP, pos = {};
   byCol.forEach((col, c) => {
     const top = (H - (col.length * (NH + GAP) - GAP)) / 2;
@@ -1130,21 +1125,13 @@ function renderRealWorkload() {
   const rank = e => { const i = WORKLOAD_ORDER.indexOf(e); return i < 0 ? 99 : i; };
   const engines = Object.keys(w.legs).sort((a, b) => rank(a) - rank(b));
   const runs = engines.filter(ok);
-  const first = w.legs[runs[0] ?? engines[0]], models = Object.keys(w.dag ?? {}).length || first.models;
   const gb = mb => (mb / 1024).toFixed(1);
-  const cards = engines.map(e => {
+  const chips = engines.map(e => {
     const l = w.legs[e];
-    return `<div class="card${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
-      <div class="n"><i class="sw"></i>${esc(wlName(e))}</div>
-      <div class="v">${ok(e) ? "✓ runs" : l.status === "died" ? "✗ died" : "✗ fails"}</div>
-      <div class="ad">${esc(l.adapter ?? "")}</div>
-      ${l.peak_rss_mb ? `<div class="mem">peak RSS <b>${gb(l.peak_rss_mb)} GB</b> of ${RUNNER_GB}
-        <div class="track"><i style="width: ${Math.min(100, 100 * l.peak_rss_mb / 1024 / RUNNER_GB).toFixed(1)}%"></i></div></div>` : ""}
-      ${l.peak_spill_mb != null ? `<div class="sp">${l.peak_spill_mb >= 100 ? `spilled ${gb(l.peak_spill_mb)} GB to disk` : "no spill to disk"}</div>` : ""}
-      ${l.process_limit ? `<div class="m">${l.process_limit} files a run</div>` : ""}
-      ${ok(e) && l.model_files?.fct_scada != null ? `<div class="m">${l.model_files.fct_scada.toLocaleString()} daily files processed</div>` : ""}
-      ${!ok(e) ? `<div class="m">${esc(l.error || "")}${l.last_ok ? ` · last OK <a href="${l.last_ok.run_url}">${l.last_ok.finished.slice(0, 10)}</a>` : ""}</div>` : ""}
-    </div>`;
+    return `<span class="chip${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
+      <b class="v">${ok(e) ? "✓" : "✗"}</b><span class="nm">${esc(wlName(e))}</span>
+      ${l.peak_rss_mb ? `<span class="track"><i style="width: ${Math.min(100, 100 * l.peak_rss_mb / 1024 / RUNNER_GB).toFixed(1)}%"></i></span>
+        <span class="gb">${gb(l.peak_rss_mb)} / ${RUNNER_GB} GB</span>` : ""}</span>`;
   }).join("");
 
   let dag = "";
@@ -1160,35 +1147,37 @@ function renderRealWorkload() {
     const nodes = Object.entries(w.dag).map(([n, m]) => {
       const { x, y } = pos[n];
       const r = rowsOf(n);
+      // A dot per engine, right-aligned: filled when that engine built the model.
+      const dots = m.materialized === "source" ? "" : engines.map((e, i) => {
+        const built = ok(e) && w.legs[e].model_rows?.[n] != null;
+        return `<circle class="dot" cx="${x + NW - 16 - (engines.length - 1 - i) * 14}" cy="${y + 38}" r="4.5"
+          style="stroke: var(--${e}, var(--ink-3)); fill: ${built ? `var(--${e}, var(--ink-3))` : "none"}"/>`;
+      }).join("");
       return `<g class="node" data-model="${n}"><rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="10"/>
         <text class="nm" x="${x + 12}" y="${y + 20}">${esc(n)}</text>
         <text class="rc" x="${x + NW - 12}" y="${y + 20}" text-anchor="end">${r === null ? "" : `${compact(r)} rows`}</text>
-        <text class="mt" x="${x + 12}" y="${y + 38}">${esc(m.materialized)}</text></g>`;
+        <text class="mt" x="${x + 12}" y="${y + 42}">${esc(m.materialized)}</text>${dots}</g>`;
     }).join("");
     dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
 
-  const n = runs.length;
-  sec.innerHTML = `
-    <p class="arc">What decides it is memory: peak RSS against a 16 GB machine, and what spills to disk. Not speed.</p>
-    <p class="proj">One real dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
-      ${models} models, incremental with <code>MERGE</code>, ${first.tests} tests, Iceberg tables out.
-      ${n} of ${engines.length} engines run it:</p>
-    <div class="cards">${cards}</div>
-    ${dag}
-    <p class="answer">Every 2 hours, never reset: new AEMO files land and each engine folds the next batch into its own
-      tables, which only grow. How far does each one get? <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`;
+  sec.innerHTML = `<div class="eng">${chips}</div>${dag}`;
 
-  for (const el of sec.querySelectorAll(".card[data-tip], .node")) {
+  for (const el of sec.querySelectorAll(".chip[data-tip], .node")) {
     el.onmouseenter = () => {
       const e = el.dataset.tip, m = el.dataset.model;
       if (e) {
         const l = w.legs[e];
         tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
-        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(wlName(e))}</div>
+        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(wlName(e))} · ${ok(e) ? "runs" : l.status === "died" ? "died" : "fails"}</div>
+          <div class="k">Adapter</div><div>${esc(l.adapter ?? "")}</div>
+          ${l.peak_rss_mb ? `<div class="k">Memory</div><div>peak RSS ${gb(l.peak_rss_mb)} GB of ${RUNNER_GB}${l.peak_spill_mb != null
+            ? `; ${l.peak_spill_mb >= 100 ? `spilled ${gb(l.peak_spill_mb)} GB to disk` : "no spill to disk"}` : ""}</div>` : ""}
+          ${l.process_limit ? `<div class="k">Files</div><div>${l.process_limit} a run${ok(e) && l.model_files?.fct_scada != null
+            ? `, ${l.model_files.fct_scada.toLocaleString()} daily files processed` : ""}</div>` : ""}
           <div class="k">Stack</div><div>${Object.entries(l.versions).filter(([, v]) => v).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(", ")}</div>
           <div class="k">dbt build</div><div>${l.models_ok}/${l.models} models, ${l.tests_ok}/${l.tests} tests</div>
-          ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}</div>` : ""}`;
+          ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}${l.last_ok ? ` (last OK ${l.last_ok.finished.slice(0, 10)})` : ""}</div>` : ""}`;
       } else {
         tip.style.setProperty("--c", "var(--ink-3)");
         tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => {
@@ -1242,7 +1231,11 @@ function openModel(w, runs, n, at) {
   p.innerHTML = `<button class="x" aria-label="Close">✕</button>
     <div class="h"><b>${esc(n)}</b><span>${head}</span></div>
     ${m.description ? `<p class="d">${esc(m.description)}</p>` : ""}
-    ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>`
+    ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>
+      <p class="d">One dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
+        ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${w.legs[runs[0]]?.tests ?? ""} tests,
+        Iceberg tables out. Every 2 hours, never reset: each engine folds the next batch into its own tables.
+        <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`
       : `<table><thead><tr><th>Engine</th><th>Builds it by</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
     <tbody>${lines}</tbody></table>`}${diffs}`;
   document.body.append(p);
