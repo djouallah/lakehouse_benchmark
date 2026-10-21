@@ -67,10 +67,6 @@ def test_issue_links_that_left_the_dbt_rows_are_still_on_the_page():
         assert link in PAGE, link
 
 
-def test_future_is_the_last_top_tab():
-    assert rows("GROUPS").rstrip().endswith('{ id: "future", title: "Future", subs: [NEXT] },')
-
-
 def test_maintenance_is_a_group_of_the_iceberg_support_grid():
     import json
 
@@ -112,7 +108,7 @@ def test_file_pruning_and_query_plans_share_the_less_work_tab():
     assert '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }' in PAGE
 
 
-def test_bug_reports_then_the_real_workload_come_just_before_future():
+def test_the_real_workload_then_bug_reports_are_the_last_top_tabs():
     bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
-    assert bar[-3] == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'
     assert bar[-2] == '{ id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },'
+    assert bar[-1] == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'
