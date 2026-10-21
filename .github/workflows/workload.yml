@@ -158,10 +158,6 @@ jobs:
       # /mnt is a directory on that same volume, not a second disk (tpcds.yml).
       POLARS_TEMP_DIR: /mnt/polars_spill
       POLARS_OOC_DISK_BUDGET_MB: "100000"
-      # dbt-polars runs a TEST with a bare collect(), the in-memory engine, which cannot spill:
-      # assert_fct_scada_grain's GROUP BY over the whole fct_scada took the runner down at 50 files a
-      # run (39524954142), after every model built. Streaming for every collect() spills instead.
-      POLARS_ENGINE_AFFINITY: streaming
     steps:
       # Room for the engines' spill (DuckDB's temp dir, Spark's shuffle, Trino's spill) as the
       # tables grow: the toolchains this job never uses, as bench.yml does at SF>=30.
