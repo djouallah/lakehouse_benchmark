@@ -810,6 +810,36 @@ so they share one history. First all-green run:
 - **dbt-polars tests need `azure/login`.** They read through pyiceberg's ADLS FileIO with no
   credential, which falls back to azure-identity's default chain.
 
+### dbt on Sail (probe)
+
+`workload_sail_probe.yml` runs the gluten tree through dbt-spark `method: session` on Sail's
+in-process Spark Connect server (pysail main 151a417d5d), into `dbt_sail_*`. It is not a leg:
+workload.yml, `ENGINES` and the page do not know it. First green run, 10 files a model:
+[39692966782](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39692966782),
+6/6 models and 39/39 tests (6 warns, the same ones the legs have), every merge incremental,
+283 s, 5.6 GB peak RSS, 9.1 GB spilled. What it took, each on the `sail` target only:
+
+- **`SPARK_REMOTE`.** dbt-spark calls `SparkSession.builder.enableHiveSupport().getOrCreate()`
+  per statement; under pyspark-client that needs the Connect URL, then returns the live session.
+- **The csv view.** Sail refuses a row shorter or longer than the schema ("incorrect number of
+  fields for line 291, expected 53 got 120"); Spark's PERMISSIVE nulls it. `allowTruncatedRows`
+  plus 140 padded STRING columns, as the Trino leg and the Sail ETL do; the stage takes the
+  record's columns by name.
+- **`TRY_CAST` in the record filter.** Sail's CAST raises on the files' own header row
+  ("Cannot cast string 'SCADAVALUE' to value of Float64 type"); Spark's gives NULL.
+- **Dialect:** `DESCRIBE TABLE x`, not `DESCRIBE x`; `GROUP BY 1, 2, 3`, not `GROUP BY ALL`,
+  which Sail reads as a column named ALL (fct_summary and the five grain tests).
+- **`string_view`.** `SELECT DISTINCT file` over dbt's temp view came back as Arrow string_view,
+  which the Connect client cannot convert, with pyspark-client 4.2.0 and 4.1.1 alike; a
+  `CAST(file AS STRING)` around it in merge_prune works.
+- **Joins:** sort-merge, which spills (`WorkloadConfig.estimated_gib`). With hash joins the runner
+  died in fct_scada's merge (39690698607). Sort-merge cannot key on a UTC timestamp
+  ([apache/datafusion#26003](https://github.com/apache/datafusion/issues/26003)), so
+  fct_summary joins the interval on `CAST(SETTLEMENTDATE AS BIGINT)`.
+- **Spill on /mnt** (`TMPDIR`): `/tmp`'s quota stopped fct_scada's merge, as it did Spark and DuckDB.
+
+Not known yet: the batch it holds as the tables grow. 10 files spilled 9 GB.
+
 ### Why the decimals differ in the last place
 
 `fct_summary` casts a DOUBLE to `DECIMAL(18,4)`. AEMO publishes SCADA and prices with up to five
