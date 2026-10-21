@@ -52,6 +52,13 @@ class WorkloadConfig(Config):
         return f"{self.base_path}/{FILES_DIR}"
 
     @property
+    def estimated_gib(self) -> float:
+        """What an engine sizes its memory against (bench's Sail engine: hash joins only while the
+        data fits half its 10 GiB pool). Not an SF: the workload's tables only grow -- fct_scada is
+        past 380M rows -- so this says "bigger than memory", and Sail takes joins that can spill."""
+        return 64.0
+
+    @property
     def schema(self) -> str:
         """Not one namespace: workload/macros/generate_schema_name.sql names dbt_<engine>_*."""
         return f"dbt_{self.engine or 'duckdb'}_mart"
