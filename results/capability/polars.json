@@ -134,9 +134,16 @@
    "question": "sink append; B appends between Polars' read and commit",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "delete_iceberg(id == 1); B appends",
+   "outcome": "supported",
+   "detail": "retried: final [(2, 20), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "39538881239",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39538881239",
+ "run": "39540667430",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39540667430",
  "date": "2026-10-21"
 }
