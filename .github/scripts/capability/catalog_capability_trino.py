@@ -665,17 +665,23 @@ class TrinoCapability:
 
     # -- catalog -----------------------------------------------------------------------------
 
-    def namespace(self) -> str:
+    def namespace_create(self) -> str:
         ns = self.name("ns")
         self.sql(f'CREATE SCHEMA {CATALOG}."{ns}"')
         self.namespaces.append(ns)
         if (ns,) not in self.pyiceberg().list_namespaces():
             raise NoOp("CREATE SCHEMA returned success and pyiceberg does not list it")
+        return f"`{ns}` created; pyiceberg lists it"
+
+    def namespace_drop(self) -> str:
+        if not self.namespaces:
+            raise Skip("no namespace was created to drop")
+        ns = self.namespaces[-1]
         self.sql(f'DROP SCHEMA {CATALOG}."{ns}"')
         if (ns,) in self.pyiceberg().list_namespaces():
             raise NoOp("DROP SCHEMA returned success and pyiceberg still lists it")
         self.namespaces.remove(ns)
-        return f"`{ns}` created, listed, dropped"
+        return "the empty namespace is gone"
 
     def namespace_existing(self) -> str:
         self.sql(f'CREATE SCHEMA IF NOT EXISTS {CATALOG}."{self.ns}"')
@@ -782,7 +788,8 @@ PROBES = [
     ("maintenance", "EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "EXECUTE optimize (compaction)", "rewrite_data_files"),
     ("maintenance", "EXECUTE optimize_manifests", "rewrite_manifests"),
-    ("catalog", "CREATE SCHEMA, then DROP SCHEMA", "namespace"),
+    ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
+    ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),
     ("catalog", "DROP TABLE, its files removed", "drop_purge"),
     ("concurrency", "INSERT INTO; B appends between Trino's read and commit", "race_append"),

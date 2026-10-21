@@ -151,14 +151,28 @@ ROWS = [
             "sail": ["drop_purge"],
         },
     ),
+    # Polars creates a namespace with sink_iceberg and has no way to drop one.
     (
-        "Create / drop namespace",
+        "Create namespace",
         {
-            "spark": ["namespace"],
-            "trino": ["namespace"],
-            "databend": ["namespace"],
-            "duckdb": ["create_schema", "drop_schema"],
-            "sail": ["namespace"],
+            "spark": ["namespace_create"],
+            "trino": ["namespace_create"],
+            "databend": ["namespace_create"],
+            "duckdb": ["create_schema"],
+            "sail": ["namespace_create"],
+            "chdb": ["namespace_create"],
+            "polars": ["namespace_create"],
+        },
+    ),
+    (
+        "Drop namespace",
+        {
+            "spark": ["namespace_drop"],
+            "trino": ["namespace_drop"],
+            "databend": ["namespace_drop"],
+            "duckdb": ["drop_schema"],
+            "sail": ["namespace_drop"],
+            "chdb": ["namespace_drop"],
         },
     ),
     ("CREATE SCHEMA IF NOT EXISTS, existing schema", {e: ["namespace_existing"] for e in SQL}),
@@ -188,7 +202,6 @@ CHDB = {
     "Compaction": ["compaction"],
     "Create tag": ["create_tag"],
     "Drop table with purge": ["drop_table"],
-    "Create / drop namespace": ["namespace"],
 }
 for _label, _sources in ROWS:
     if _label in CHDB:
@@ -208,7 +221,8 @@ GROUPS = {
         "INSERT OVERWRITE, whole table",
         "TRUNCATE",
         "Drop table with purge",
-        "Create / drop namespace",
+        "Create namespace",
+        "Drop namespace",
         "CREATE SCHEMA IF NOT EXISTS, existing schema",
         "Concurrent append: both kept",
         "Concurrent writer: DELETE loses nothing",

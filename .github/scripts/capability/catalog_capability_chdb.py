@@ -588,9 +588,9 @@ class ChdbCapability:
             raise NoOp(f"renamed, and the data is unreadable under the new name: {found}")
         return "renamed, and its 3 rows read back"
 
-    def namespace(self) -> str:
+    def namespace_create(self) -> str:
         """ClickHouse has no statement for a catalog namespace. Its only way to make one is a
-        CREATE TABLE inside it (RestCatalog creates the namespace first), and none drops one."""
+        CREATE TABLE inside it (RestCatalog creates the namespace first)."""
         ns = self.name("ns")
         table = f"{DB}.`{ns}.t`"
         try:
@@ -603,7 +603,10 @@ class ChdbCapability:
                 self.pyiceberg().drop_namespace(ns)
         if not listed:
             raise NoOp("CREATE TABLE in a new namespace returned success and pyiceberg lists none")
-        raise Refused("created through CREATE TABLE; ClickHouse has no statement to drop one")
+        return f"`{ns}` created through CREATE TABLE in it; pyiceberg lists it"
+
+    def namespace_drop(self) -> str:
+        raise Refused("ClickHouse has no statement to drop a catalog namespace")
 
     def namespace_existing(self) -> str:
         raise Refused("ClickHouse has no statement for a catalog namespace")
@@ -708,7 +711,8 @@ PROBES = [
     ("maintenance", "ALTER TABLE ... EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE (compaction)", "compaction"),
     ("maintenance", "rewrite manifests (no statement)", "rewrite_manifests"),
-    ("catalog", "CREATE TABLE in a new namespace (no namespace statement)", "namespace"),
+    ("catalog", "CREATE TABLE in a new namespace (no namespace statement)", "namespace_create"),
+    ("catalog", "drop a namespace (no namespace statement)", "namespace_drop"),
     ("catalog", "namespace IF NOT EXISTS (no namespace statement)", "namespace_existing"),
     ("catalog", "RENAME TABLE, then read", "rename_table"),
     ("catalog", "DROP TABLE", "drop_table"),

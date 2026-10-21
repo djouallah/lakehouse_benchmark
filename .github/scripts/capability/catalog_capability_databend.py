@@ -577,17 +577,23 @@ class DatabendCapability:
 
     # -- catalog -----------------------------------------------------------------------------
 
-    def namespace(self) -> str:
+    def namespace_create(self) -> str:
         ns = self.name("ns")
         self.sql(f'CREATE DATABASE {CATALOG}."{ns}"')
         self.namespaces.append(ns)
         if (ns,) not in self.pyiceberg().list_namespaces():
             raise NoOp("CREATE DATABASE returned success and pyiceberg does not list it")
+        return f"`{ns}` created; pyiceberg lists it"
+
+    def namespace_drop(self) -> str:
+        if not self.namespaces:
+            raise Skip("no namespace was created to drop")
+        ns = self.namespaces[-1]
         self.sql(f'DROP DATABASE {CATALOG}."{ns}"')
         if (ns,) in self.pyiceberg().list_namespaces():
             raise NoOp("DROP DATABASE returned success and pyiceberg still lists it")
         self.namespaces.remove(ns)
-        return f"`{ns}` created, listed, dropped"
+        return "the empty namespace is gone"
 
     def namespace_existing(self) -> str:
         self.sql(f'CREATE DATABASE IF NOT EXISTS {CATALOG}."{self.ns}"')
@@ -700,7 +706,8 @@ PROBES = [
     ("maintenance", "OPTIMIZE TABLE PURGE (expire snapshots)", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE COMPACT (compaction)", "rewrite_data_files"),
     ("maintenance", "OPTIMIZE TABLE COMPACT SEGMENT (rewrite manifests)", "rewrite_manifests"),
-    ("catalog", "CREATE DATABASE, then DROP DATABASE", "namespace"),
+    ("catalog", "CREATE DATABASE (namespace)", "namespace_create"),
+    ("catalog", "DROP DATABASE (namespace)", "namespace_drop"),
     ("catalog", "CREATE DATABASE IF NOT EXISTS, existing namespace", "namespace_existing"),
     ("catalog", "DROP TABLE, its files removed", "drop_purge"),
     ("concurrency", "INSERT INTO; B appends between Databend's read and commit", "race_append"),

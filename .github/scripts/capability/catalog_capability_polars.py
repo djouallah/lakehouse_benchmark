@@ -10,10 +10,11 @@ POLARS HAS NO DDL. It cannot update, merge, evolve a spec, or touch refs and sna
 rows are `na` in the readme. It deletes rows by predicate with `pl.delete_iceberg` (Polars main,
 pola-rs/polars#30032, unstable): the predicate becomes a pyiceberg delete filter and pyiceberg
 commits it. Its one create is `sink_iceberg(create_if_not_exists=True)`
-(Polars main, pola-rs/polars#29908): an unpartitioned table from the frame's schema. Every other
-table here pyiceberg creates. What is asked here is everything Polars itself can send: create,
-append, overwrite, the schema changes `schema_mode` folds into a write, partitioned and typed
-writes, time travel.
+(Polars main, pola-rs/polars#29908): an unpartitioned table from the frame's schema. With
+`create_namespace_if_not_exists=True` (Polars main, #30087) it creates a missing namespace too; it
+has no way to drop one. Every other table here pyiceberg creates. What is asked here is everything
+Polars itself can send: create, append, overwrite, the schema changes `schema_mode` folds into a
+write, partitioned and typed writes, time travel.
 
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says. Polars'
 own read is reported beside it. Every error Polars raises is a `no` carrying its full message, so
@@ -223,6 +224,37 @@ class PolarsCapability:
         return self._expect(made, SEED, "sink_iceberg(create_if_not_exists=True)") + (
             f"; field ids {ids}"
         )
+
+    def namespace_create(self) -> str:
+        """sink_iceberg(create_if_not_exists=True, create_namespace_if_not_exists=True) into a
+        namespace that does not exist: Polars creates the namespace, then the table."""
+        import polars as pl
+
+        if self.catalog is None:
+            raise Skip("the catalog never loaded")
+        ns = self.name("ns")
+        ident = f"{ns}.t"
+        try:
+            pl.from_arrow(rows(SEED)).lazy().sink_iceberg(
+                ident,
+                mode="append",
+                create_if_not_exists=True,
+                create_namespace_if_not_exists=True,
+                catalog=self.catalog,
+                storage_options=self.storage,
+            )
+        except Exception as exc:  # noqa: BLE001 - every Polars error is an answer
+            message = f"{type(exc).__name__}: {scrub.scrub_exc(exc, 2000)}"
+            raise Refused(_one_line(message)) from None
+        finally:
+            listed = (ns,) in self.catalog.list_namespaces()
+            if listed and not self.keep:
+                for found in self.catalog.list_tables(ns):
+                    self.catalog.purge_table(found)
+                self.catalog.drop_namespace(ns)
+        if not listed:
+            raise NoOp("sink_iceberg returned success and pyiceberg lists no new namespace")
+        return f"`{ns}` created by sink_iceberg, with its table; pyiceberg lists it"
 
     def sink_overwrite(self) -> str:
         table = self.fresh("overwrite")
@@ -462,6 +494,7 @@ PROBES = [
     ("session", "Polars imports and the pyiceberg catalog attaches", "session"),
     ("create", "sink_iceberg(create_if_not_exists=True) to a new table", "sink_create"),
     ("write", "sink_iceberg(mode='append')", "sink_append"),
+    ("catalog", "sink_iceberg into a new namespace, creating it", "namespace_create"),
     ("write", "sink_iceberg(mode='overwrite')", "sink_overwrite"),
     ("write", "pl.delete_iceberg(table, id == 1)", "delete_rows"),
     ("create", "write an identity-partitioned table", "partitioned"),
