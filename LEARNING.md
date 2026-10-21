@@ -831,7 +831,8 @@ workload.yml, `ENGINES` and the page do not know it. First green run, 10 files a
   which Sail reads as a column named ALL (fct_summary and the five grain tests).
 - **`string_view`.** `SELECT DISTINCT file` over dbt's temp view came back as Arrow string_view,
   which the Connect client cannot convert, with pyspark-client 4.2.0 and 4.1.1 alike; a
-  `CAST(file AS STRING)` around it in merge_prune works.
+  `CAST(file AS STRING)` around it in merge_prune works. The trigger is `DISTINCT` over `substring_index`
+  (parse_filename), on any source: [lakehq/sail#2835](https://github.com/lakehq/sail/issues/2835).
 - **Joins:** sort-merge, which spills (`WorkloadConfig.estimated_gib`). With hash joins the runner
   died in fct_scada's merge (39690698607). Sort-merge cannot key on a UTC timestamp
   ([apache/datafusion#26003](https://github.com/apache/datafusion/issues/26003)), so
