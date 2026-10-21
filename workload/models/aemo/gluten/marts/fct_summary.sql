@@ -28,6 +28,10 @@
 {# Closes with `%}`, NOT `-%}`: a right-strip swallows the newlines after this tag and
    glues WITH onto the `-- depends_on` comment line above, commenting the keyword out. #}
 {%- set scoped = is_incremental() %}
+{#- The sail probe target: Sail reads `GROUP BY ALL` as a column named ALL ("attribute
+    ObjectName([Identifier(\"ALL\")]) is missing from the schema", run 39688464508); the ordinals
+    are what the Trino tree uses. #}
+{%- set group_by = '1, 2, 3' if target.name == 'sail' else 'ALL' %}
 
 WITH
 -- The unit universe the DAILY branch can reproduce. Deliberately UNBOUNDED, not a trailing
@@ -86,7 +90,7 @@ daily_summary AS (
     {% if scoped %}
     AND s.DATE IN (SELECT date FROM rebuild_dates)
     {% endif %}
-  GROUP BY ALL
+  GROUP BY {{ group_by }}
 
   UNION ALL
 
@@ -108,7 +112,7 @@ daily_summary AS (
     -- Only units the daily branch will be able to reproduce once this date settles.
     AND s.DUID IN (SELECT DUID FROM dispatch_duids)
     AND s.SETTLEMENTDATE > (SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMP)) FROM {{ ref('fct_scada') }})
-  GROUP BY ALL
+  GROUP BY {{ group_by }}
 )
 
 SELECT
