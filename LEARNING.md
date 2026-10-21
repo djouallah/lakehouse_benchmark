@@ -732,8 +732,7 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
 
 **Now (2026-10-20):** it runs every 2 hours on a schedule, never resets, lands up to 360 new daily
 AEMO files a run, and each engine folds its largest proven batch into its own tables, which only
-grow: DuckDB 360, Spark 100, Trino 100, Polars 50 files a run (`PROCESS_LIMITS` in workload.yml;
-Spark and Polars cut on 2026-10-21, see the table).
+grow: Spark 360, DuckDB 360, Trino 100, Polars 50 files a run (`PROCESS_LIMITS` in workload.yml).
 The parity grade and the decimals job were removed once the last-decimal differences were
 understood and filed (below). A runner that dies uploads nothing; the publish step keeps that
 engine on the page as "died", with its last good run.
@@ -742,7 +741,7 @@ engine on the page as "died", with its last good run.
 
 | Engine | Largest good batch | What failed above it |
 |---|---|---|
-| Spark (Gluten) | 360 once (1,025 s, 9.4 GB; run 39403578519), now 100 | 360 on the schedule, as the tables grew: `fct_summary`'s shuffle write failed with `[errno 122] Disk quota exceeded` three runs in a row (39458720133, 39476476815, 39493139124) |
+| Spark (Gluten) | 360 (1,025 s, 9.4 GB; run 39403578519) | not the batch: `fct_summary`'s shuffle write failed with `[errno 122] Disk quota exceeded` at 360 and at 100 (39458720133 to 39524954142). `/tmp` has a quota; the shuffle now goes to `/mnt` (`SPARK_LOCAL_DIRS`), as DuckDB's spill did |
 | DuckDB | 360 with the TEMP VIEW batch (1,396 s, 12.9 GB; 39427985965) | TEMP TABLE batch: the runner died at 100 (39382816547); at 360 the spill write was refused, EDQUOT (39403578519) |
 | Trino | 100 (13.8 GB; 39396351158) | 360: `EXCEEDED_LOCAL_MEMORY_LIMIT`, its 9 GB per-query cap; the MERGE's `HashBuilderOperator` held 8.66 GB of the batch |
 | Polars | 75 (12.7 GB; 39396351158), now 50 after the runner died at 75 (39493139124) | 360: "spilled data exceeded the out-of-core disk budget" -- over 64 GB of spill (POLARS_OOC_DISK_BUDGET_MB, default 64 GB at the pinned commit; now 100 GB) |
