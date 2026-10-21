@@ -1,8 +1,9 @@
 """Write docs/data/reports.json, the data behind the Bug reports tab of docs/index.html.
 
-Every GitHub issue and pull request linked on the page's Issues tab, with the engine it is listed
-under, read from the GitHub API: who opened it, when, and whether it was fixed. The Issues tab
-stays the one list of upstream bugs; this file only adds what GitHub knows about each one.
+Every GitHub issue and pull request linked in the issue list on the page's Bug reports tab,
+with the engine it is listed under, read from the GitHub API: who opened it, when, and whether
+it was fixed. The list stays the one list of upstream bugs; this file only adds what GitHub
+knows about each one.
 
     python .github/scripts/reports_publish.py [page] [target]
 
@@ -25,7 +26,7 @@ from bench.report import leak_check
 PAGE = Path("docs/index.html")
 TARGET = Path("docs/data/reports.json")
 REPORTER = "djouallah"  # the bench's own reports; issues by others that it links to are context
-# Closed as completed on GitHub, but nothing was fixed: the Issues tab says why.
+# Closed as completed on GitHub, but nothing was fixed: the issue list says why.
 NOT_FIXED = {
     "duckdb/duckdb-iceberg#1006": "closed: DuckDB always writes positional deletes",
     "ClickHouse/ClickHouse#126628": (
@@ -37,7 +38,7 @@ LINK = re.compile(r'href="https://github\.com/([\w.-]+/[\w.-]+)/(issues|pull)/(\
 
 
 def parse(page: str) -> list[dict]:
-    """One entry per GitHub link on the Issues tab, under the engine its list item names."""
+    """One entry per GitHub link in the issue list, under the engine its list item names."""
     start = page.index('<section class="details" id="issues"')
     section = page[start : page.index("</section>", start)]
     out, seen = [], set()

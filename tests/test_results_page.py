@@ -39,7 +39,9 @@ def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
         rows("GROUPS")
         .split("\n")[1]
         .strip()
-        .startswith('{ id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY] },')
+        .startswith(
+            '{ id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY, ENGINES] },'
+        )
     )
     assert "const state = { suite: OVERVIEW.id," in PAGE
 
@@ -102,6 +104,13 @@ def test_the_iceberg_support_grid_opens_on_core():
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
     ]
+
+
+def test_engines_and_issues_are_not_header_links_and_issues_is_under_bug_reports():
+    groups = rows("GROUPS")
+    assert 'id: "engines"' not in groups and 'id: "issues"' not in groups
+    assert 'href="#engines">Engines</a>' not in PAGE and 'href="#issues">Issues</a>' not in PAGE
+    assert PAGE.index('id="reports"') < PAGE.index('<section class="details" id="issues"')
 
 
 def test_file_pruning_and_query_plans_share_the_less_work_tab():

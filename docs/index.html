@@ -102,6 +102,9 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 /* Entries may flow into the next column: with `avoid`, the longest entry (Databend) set a column's
    height and the tab outgrew a 1080p page (1011px > 930px). */
 #issues li { margin: 0 0 6px; }
+/* Under the Bug reports dots: one line an engine, a click (or its link) shows the rest. */
+#issues li { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; cursor: pointer; }
+#issues li.open, #issues li:target { display: list-item; -webkit-line-clamp: none; overflow: visible; cursor: auto; }
 #issues ul { margin: 0; }
 #issues h3:first-child { margin-top: 12px; }
 .details li:target { background: var(--track); border-radius: 6px; outline: 4px solid var(--track); }
@@ -442,7 +445,7 @@ main .tiles > a { color: inherit; }
 </head>
 <body>
 <main>
-  <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><nav class="top"><a class="top-link" id="engines-link" href="#engines">Engines</a><a class="top-link" id="about-link" href="#about">About</a><a class="top-link" id="issues-link" href="#issues">Issues</a><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></header>
+  <header><h1>Small data, small compute <span class="sub">16 GB RAM · OneLake catalog</span></h1><nav class="top"><a class="top-link" id="about-link" href="#about">About</a><a class="gh" href="https://github.com/djouallah/lakehouse_benchmark" aria-label="Source on GitHub" title="Source on GitHub"><svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></header>
 
   <div class="tabs" role="tablist" id="tabs"></div>
   <div class="chips" id="subtabs"></div>
@@ -456,33 +459,8 @@ main .tiles > a { color: inherit; }
   <section class="pl arch" id="anatomy" hidden></section>
   <section class="pl arch" id="pruning" hidden></section>
   <section class="rp" id="reports" hidden></section>
-  <section class="cap" id="iceberg" hidden></section>
-  <section class="pl" id="plans" hidden></section>
-  <section class="details" id="about" hidden>
-    <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
-    <p>So the state lives in the catalog, not in the engine. The engine starts, does the work, and stops
-      (<a href="#overview">Lakehouse</a>).</p>
-    <p>The work is done in SQL. An agent writes the same SQL for every engine; a new syntax for every engine is not progress.</p>
-    <p>The first test is simple: read the files, write the tables. Most engines that were tried failed here,
-      on the object store, not on SQL (<a href="#issues">Issues</a>).</p>
-    <p>Every engine gets the same 16 GB machine. When a query fails, the agent must get an error. An engine with
-      no memory limit kills the machine, and there is no error to read.</p>
-    <p>The best query is the one that does the least work: skip the files the query cannot need
-      (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
-    <p>Benchmarks are useful, but in real life an agent writes SQL, dbt runs it, and the engine is just the tool
-      that moves the data from A to B. Expect the tool to change from job to job; what matters is that it works.
-      One real dbt project runs on Spark, Trino, DuckDB and Polars. Coverage first, speed second
-      (<a href="#workload">Real workload</a>).</p>
-    <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
-    <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Issues</a>).
-      That is the best help a user can give. It does not need a pull request: the people who know the code write
-      the fix, often within days (<a href="#reports">Bug reports</a>).</p>
-    <p>Engines only get better with real competition. Even if you use one engine, it needs to be challenged.
-      Without that, we would still be using Hadoop.</p>
-  </section>
-  <section class="cap rows" id="engines" hidden></section>
   <section class="details" id="issues" hidden>
-    <h3>In the bench</h3>
+    <h3>In the bench, by engine</h3>
     <ul>
       <li><b>DuckDB</b>: <code>TRUNCATE</code> is not metadata-only: it writes a delete file covering the whole table instead of dropping its data files, so every reader then has to apply it. Known: <a href="https://github.com/duckdb/duckdb-iceberg/issues/1006">duckdb-iceberg#1006</a> (closed: DuckDB always writes positional deletes). <code>DOUBLE</code> to <code>DECIMAL</code> rounds some ties down: <a href="https://github.com/duckdb/duckdb/issues/27503">duckdb#27503</a>.</li>
       <li><b>Polars</b>: TPC-H and TPC-DS run on a main build until the fixes ship in a release; the ETL runs the release. Filed: <a href="https://github.com/pola-rs/polars/issues/30074">#30074</a> <code>DOUBLE</code> to <code>DECIMAL</code> ties to even; <a href="https://github.com/pola-rs/polars/issues/29449">#29449</a> (fixed) and <a href="https://github.com/pola-rs/polars/issues/29462">#29462</a> (fixed) decimals in <code>scan_iceberg</code>; <a href="https://github.com/pola-rs/polars/issues/29461">#29461</a> (fixed) TPC-DS Q11 and Q31 one row short; <a href="https://github.com/pola-rs/polars/issues/29762">#29762</a> (fixed) TPC-H Q11 regression; <a href="https://github.com/pola-rs/polars/issues/29768">#29768</a> (fixed) TPC-DS Q72 OOM; <a href="https://github.com/pola-rs/polars/issues/29822">#29822</a> (fixed) TPC-DS Q4 OOM on main; SQL writes to Iceberg: <a href="https://github.com/pola-rs/polars/issues/29892">#29892</a> CREATE TABLE, <a href="https://github.com/pola-rs/polars/issues/29893">#29893</a> INSERT, <a href="https://github.com/pola-rs/polars/issues/29894">#29894</a> DELETE, <a href="https://github.com/pola-rs/polars/issues/29895">#29895</a> UPDATE, <a href="https://github.com/pola-rs/polars/issues/29896">#29896</a> DROP TABLE (all open); <code>sink_iceberg</code>: <a href="https://github.com/pola-rs/polars/issues/29845">#29845</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/29908">PR #29908</a>, not yet released) create the table it writes, <a href="https://github.com/pola-rs/polars/issues/29968">#29968</a> (open) create a missing namespace, <a href="https://github.com/pola-rs/polars/issues/29844">#29844</a> (open) the <code>bucket</code> transform, <a href="https://github.com/pola-rs/polars/issues/29842">#29842</a> overwrite by filter and <a href="https://github.com/pola-rs/polars/issues/29843">#29843</a> delete rows by predicate (both fixed on main by <a href="https://github.com/pola-rs/polars/pull/30032">PR #30032</a>, <code>pl.delete_iceberg</code>, not yet released); <a href="https://github.com/pola-rs/polars/issues/30029">#30029</a> (fixed on main by <a href="https://github.com/pola-rs/polars/pull/30056">PR #30056</a>, not yet released) an unordered <code>UNION ALL</code> of N CSV scans holds every input at once, 7x the memory of <code>pl.concat</code>; the dbt project now reads its files with one <code>read_csv()</code> over the list (<a href="https://github.com/pola-rs/polars/pull/30047">PR #30047</a>, on main). <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#polars">Details</a></li>
@@ -504,6 +482,31 @@ main .tiles > a { color: inherit; }
       <li><b>pg_lake</b>: (tested on 3.5.3) runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
     </ul>
   </section>
+  <section class="cap" id="iceberg" hidden></section>
+  <section class="pl" id="plans" hidden></section>
+  <section class="details" id="about" hidden>
+    <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
+    <p>So the state lives in the catalog, not in the engine. The engine starts, does the work, and stops
+      (<a href="#overview">Lakehouse</a>).</p>
+    <p>The work is done in SQL. An agent writes the same SQL for every engine; a new syntax for every engine is not progress.</p>
+    <p>The first test is simple: read the files, write the tables. Most engines that were tried failed here,
+      on the object store, not on SQL (<a href="#issues">Bug reports</a>).</p>
+    <p>Every engine gets the same 16 GB machine. When a query fails, the agent must get an error. An engine with
+      no memory limit kills the machine, and there is no error to read.</p>
+    <p>The best query is the one that does the least work: skip the files the query cannot need
+      (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
+    <p>Benchmarks are useful, but in real life an agent writes SQL, dbt runs it, and the engine is just the tool
+      that moves the data from A to B. Expect the tool to change from job to job; what matters is that it works.
+      One real dbt project runs on Spark, Trino, DuckDB and Polars. Coverage first, speed second
+      (<a href="#workload">Real workload</a>).</p>
+    <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
+    <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Bug reports</a>).
+      That is the best help a user can give. It does not need a pull request: the people who know the code write
+      the fix, often within days (<a href="#reports">Bug reports</a>).</p>
+    <p>Engines only get better with real competition. Even if you use one engine, it needs to be challenged.
+      Without that, we would still be using Hadoop.</p>
+  </section>
+  <section class="cap rows" id="engines" hidden></section>
 
 </main>
 <div class="tip" id="tip"></div>
@@ -599,7 +602,7 @@ function summarize(rows, suite) {
 const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
-const DETAILS = { id: "issues", title: "Issues" }, ABOUT = { id: "about", title: "About" };
+const ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
@@ -609,19 +612,17 @@ const OVERVIEW = { id: "overview", title: "Overview" };
 const REAL_WORKLOAD = { id: "workload", title: "Real workload", json: "data/workload.json" };
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works, how an engine does less work, what it supports, and only then how fast it is; then
 // everything on one page, and how engines get better.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY] },  // the state is in the catalog
+  { id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY, ENGINES] },  // the state is in the catalog
   { id: "work", title: "Less work", subs: [PRUNING, PLANS] },  // skip files, then a good join order
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
   { id: "performance", title: "Benchmarks", subs: [...SUITES] },
-  { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
-  { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
-  { id: "about", title: "About", subs: [ABOUT], bar: false },
+  { id: "about", title: "About", subs: [ABOUT], bar: false },  // a header link, not a tab
   { id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },
   { id: "bugs", title: "Bug reports", subs: [REPORTS] },
 ];
@@ -635,9 +636,7 @@ function renderTabs() {
   const current = groupOf(state.suite);
   state.last[current.id] = state.suite;  // a top tab reopens the sub last used in it
   $("tabs").innerHTML = ""; $("subtabs").innerHTML = "";
-  $("engines-link").toggleAttribute("aria-current", current.id === "engines");
   $("about-link").toggleAttribute("aria-current", current.id === "about");
-  $("issues-link").toggleAttribute("aria-current", current.id === "issues");
   for (const g of GROUPS.filter(g => g.bar !== false)) {
     const b = document.createElement("button");
     b.role = "tab"; b.textContent = g.title;
@@ -661,6 +660,7 @@ function render() {
   const page = PAGES.find(p => p.id === state.suite);
   for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
+  $("issues").hidden = page !== REPORTS;  // the list of reports, by engine, under the dots
   if (page !== PLANS) stopRace();
   if (page !== ARCH) stopArch();
   if (page !== ANATOMY) stopAnatomy();
@@ -671,7 +671,12 @@ function render() {
   if (page === ARCH) { renderArch(); return; }
   if (page === ANATOMY) { renderAnatomy(); return; }
   if (page === PRUNING) { renderPruning(); return; }
-  if (page === REPORTS) { renderReports(); return; }
+  if (page === REPORTS) {
+    renderReports();
+    if (location.hash === "#issues") $("issues").scrollIntoView();
+    else $("issues").querySelector("li:target")?.scrollIntoView({ block: "center" });
+    return;
+  }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
@@ -1035,7 +1040,7 @@ function stopOverview() { clearInterval(ov.timer); clearTimeout(ov.commit); ov.t
 // bonus), the project's DAG as dbt itself published it (target/manifest.json), with each model's time on each
 // engine, and whether they all gave the same answer. An engine without a leg is not shown.
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
-const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the Issues tab's ids
+const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the ids in the list under Bug reports
 const WORKLOAD_CODE = "https://github.com/djouallah/lakehouse_benchmark/tree/main/workload";
 
 // The DAG's layout: a column per depth (the longest path from a model with no parent), the models of a column
@@ -1200,7 +1205,7 @@ addEventListener("click", closeModel);
 addEventListener("hashchange", closeModel);
 
 // THE BUG REPORTS TAB: docs/data/reports.json, written by .github/scripts/reports_publish.py (reports.yml, daily)
-// from every GitHub link on the Issues tab. A report is an issue the bench opened; fixed is what GitHub says:
+// from every GitHub link in the list under it. A report is an issue the bench opened; fixed is what GitHub says:
 // closed as completed, or the pull request merged. Issues opened by others are linked as context, not counted.
 const ENGINE_OF = Object.fromEntries(Object.entries(LABEL).map(([k, v]) => [v, k]));
 const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
@@ -1214,7 +1219,7 @@ function renderReports() {
   const prs = mine.filter(i => i.kind === "pr"), fixed = reports.filter(i => i.state === "fixed");
   const others = rep.items.filter(i => i.author !== rep.reporter && i.kind === "issue").length;
   const groups = [...new Set(reports.map(i => i.engine))].map(name => ({ name, items: reports.filter(i => i.engine === name) }))
-    .sort((a, b) => b.items.length - a.items.length);  // stable: the Issues tab's order on a tie
+    .sort((a, b) => b.items.length - a.items.length);  // stable: the list's order on a tie
   const tiles = [
     [reports.length, "bug reports filed upstream", "#issues"],
     [fixed.length, "fixed"],
@@ -1238,8 +1243,8 @@ function renderReports() {
       · the version, and main · one bug per issue (Daft <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> became
       <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> and <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a>).</p>`;
   noteTip($("rp-count"), "Where the numbers come from", `<div>GitHub API, ${esc(rep.updated.slice(0, 10))}: the issues and PRs
-    on the Issues tab the bench opened; fixed means closed as completed.</div>
-    <div class="k">${others} issues opened by others are not counted. Click for the Issues tab.</div>`);
+    in the list below the bench opened; fixed means closed as completed.</div>
+    <div class="k">${others} issues opened by others are not counted. Click for the list.</div>`);
   const byId = Object.fromEntries(reports.map(i => [i.id, i]));
   for (const dot of sec.querySelectorAll(".dot")) {
     const i = byId[dot.dataset.id];
@@ -2089,8 +2094,10 @@ function drawPruning() {
   $("pr-say").innerHTML = `<b>${t + 1}/${PR_LAST + 1}</b> ${pruningSay(t)}`;
 }
 
-// Every engine on the Issues tab gets an id from its name; clicking the name links to it and copies the URL.
+// Every engine in the list under Bug reports gets an id from its name; clicking the name links to it and copies the URL,
+// clicking anywhere else in the entry opens or closes it.
 for (const li of $("issues").querySelectorAll("li")) {
+  li.onclick = ev => { if (!ev.target.closest("a")) li.classList.toggle("open"); };
   const b = li.querySelector("b");
   li.id = b.textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const a = document.createElement("a");
@@ -2105,22 +2112,21 @@ for (const li of $("issues").querySelectorAll("li")) {
   });
 }
 // Deep links: #lakehouse, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
-// #performance, #etl, #tpch, #tpcds, #iceberg, #workload, #reports, #issues, #about, #engines,
-// or one engine on the Issues tab (#datafusion).
+// #performance, #etl, #tpch, #tpcds, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
+// or one engine in that list (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
-  if (h === "details") h = DETAILS.id;  // the tab's old name
+  if (h === "details" || h === "tried") h = "issues";  // the Issues tab's old names
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
   if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg support grid
   if (h === "dbt" || h === "scorecard") h = REAL_WORKLOAD.id;  // the dbt tab and the Scorecard became the Real workload tab
   if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
-  if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
   const story = h.match(/^plans-(\w+)$/);  // one Query plans story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
   if ([...SUITES, ...PAGES].some(s => s.id === h)) state.suite = h;
   else if (GROUPS.some(g => g.id === h)) state.suite = GROUPS.find(g => g.id === h).subs[0].id;
-  else if (h && document.getElementById(h)?.closest("#issues")) state.suite = DETAILS.id;
+  else if (h && document.getElementById(h)?.closest("#issues")) state.suite = REPORTS.id;  // the list, or one engine in it
 }
 addEventListener("hashchange", () => { fromHash(); render(); });
 renderEngines();

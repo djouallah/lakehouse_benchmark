@@ -1,4 +1,4 @@
-""".github/scripts/reports_publish.py: every GitHub link on the Issues tab, under its engine."""
+""".github/scripts/reports_publish.py: every GitHub link in the issue list, under its engine."""
 
 from __future__ import annotations
 
