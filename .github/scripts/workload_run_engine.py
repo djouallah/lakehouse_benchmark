@@ -6,8 +6,9 @@ The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, g
     2. gluten only: start bench's Gluten/Velox SparkSession (the ETL's writing variant, so the
        SAS can create and delete), with the OneLake REST catalog as spark.sql.defaultCatalog --
        dbt-spark's `method: session` then getOrCreate()s it
-    3. `dbt build`, in-process through dbtRunner, timed; one `dbt retry` if it failed after
-       writing run_results.json, which heals a transient catalog error on a single node
+    3. `dbt run`, then `dbt test`, in-process through dbtRunner, timed; one `dbt retry` after
+       either if it failed after writing run_results.json, which heals a transient catalog error
+       on a single node
     4. refuse a build that ran NO model: a target matching no folder disables every tree and
        dbt exits 0 having built nothing
     5. `dbt run-operation model_row_counts`, rows per model for the page's DAG (best-effort)
@@ -325,17 +326,27 @@ def main(parts: Path) -> int:
         os.chdir(PROJECT)
         dbt = Dbt(engine)
 
+        part["build_seconds"] = 0.0
+        part["nodes"] = []
+
+        def step(command: str) -> bool:
+            ok, seconds = dbt.run(command)
+            part["build_seconds"] = round(part["build_seconds"] + seconds, 3)
+            part["nodes"] += node_timings()
+            if not ok and (PROJECT / "target" / "run_results.json").exists():
+                part.setdefault("first_error", dbt.last_error)
+                ok, retry_s = dbt.run("retry")
+                part["retry_seconds"] = round(part.get("retry_seconds", 0.0) + retry_s, 3)
+                part["retry_nodes"] = part.get("retry_nodes", []) + node_timings()
+            return ok
+
+        # Every model, then every test -- not `dbt build`, which runs each test right after its
+        # model: assert_fct_scada_grain's GROUP BY over all of fct_scada then ran just before
+        # fct_summary, and the polars runner died in fct_summary (run 39564650603).
         with PeakRss(engine) as rss:
-            ok, build_s = dbt.run("build")
-        part["build_seconds"] = round(build_s, 3)
+            ok = step("run") and step("test")
         part["peak_rss_mb"] = rss.mb
-        scrub.safe_print(f"{engine}: peak RSS {rss.mb:,} MB during dbt build")
-        part["nodes"] = node_timings()
-        if not ok and (PROJECT / "target" / "run_results.json").exists():
-            part["first_error"] = dbt.last_error
-            ok, retry_s = dbt.run("retry")
-            part["retry_seconds"] = round(retry_s, 3)
-            part["retry_nodes"] = node_timings()
+        scrub.safe_print(f"{engine}: peak RSS {rss.mb:,} MB during dbt run and test")
         models = [n for n in part["nodes"] if n["node"].startswith("model.")]
         if ok and not models:
             ok = False
