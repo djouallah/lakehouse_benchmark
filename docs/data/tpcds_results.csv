@@ -7113,3 +7113,13 @@ Due to: DaftError::TypeError Cannot infer supertypes for multiply on types: Deci
 39345232960-1,2026-10-20T00:09:28Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39345232960,3ec74ef,10,tpcds,linux-7.0.0-1017-azure,4,15.6,3.12.15,trino_iceberg,484 (trinodb/trino:484),ok,cold,query,97,2.0165,1,ok,
 39345232960-1,2026-10-20T00:09:28Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39345232960,3ec74ef,10,tpcds,linux-7.0.0-1017-azure,4,15.6,3.12.15,trino_iceberg,484 (trinodb/trino:484),ok,cold,query,98,0.9844,15080,ok,
 39345232960-1,2026-10-20T00:09:28Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39345232960,3ec74ef,10,tpcds,linux-7.0.0-1017-azure,4,15.6,3.12.15,trino_iceberg,484 (trinodb/trino:484),ok,cold,query,99,1.312,100,ok,
+39601984479-1,2026-10-21T12:46:38Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39601984479,9815b5e,100,tpcds,linux-7.0.0-1017-azure,4,15.6,3.12.15,duckdb_iceberg,v2.0.0-alpha49307,ok,cold,setup,0,3.5645,,ok,
+39601984479-1,2026-10-21T12:46:38Z,https://github.com/djouallah/lakehouse_benchmark/actions/runs/39601984479,9815b5e,100,tpcds,linux-7.0.0-1017-azure,4,15.6,3.12.15,duckdb_iceberg,v2.0.0-alpha49307,ok,cold,query,64,,,error,"RuntimeError: Out of Memory Error: failed to offload data block of size 96.0 KiB (90.4 GiB/90.4 GiB used).
+This limit was set by the 'max_temp_directory_size' setting.
+By default, this setting utilizes the available disk space on the drive where the 'temp_directory' is located.
+You can adjust this setting, by using (for example) PRAGMA max_temp_directory_size='10GiB'
+Possible solutions:
+* Reducing the number of threads (SET threads=X)
+* Disabling insertion-order preservation (SET preserve_insertion_order=false)
+* Increasing the memory limit (SET memory_limit='...GB')
+See also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"

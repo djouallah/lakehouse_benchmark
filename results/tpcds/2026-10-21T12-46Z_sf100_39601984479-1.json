@@ -1,0 +1,44 @@
+{
+  "run_id": "39601984479-1",
+  "run_started_at": "2026-10-21T12:46:38Z",
+  "sf": 100,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39601984479",
+  "git_sha": "9815b5e",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1017-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "duckdb_iceberg": {
+      "version": "v2.0.0-alpha49307",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 3.5645,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "RuntimeError: Out of Memory Error: failed to offload data block of size 96.0 KiB (90.4 GiB/90.4 GiB used).\nThis limit was set by the 'max_temp_directory_size' setting.\nBy default, this setting utilizes the available disk space on the drive where the 'temp_directory' is located.\nYou can adjust this setting, by using (for example) PRAGMA max_temp_directory_size='10GiB'\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1017-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
