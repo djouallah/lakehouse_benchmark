@@ -23,7 +23,12 @@ BENCH_ENGINE = {
     "polars": "polars_iceberg",
     "gluten": "pyspark_gluten_iceberg",
     "trino": "trino_iceberg",
+    "sail": "lakesail_iceberg",
 }
+
+# Targets workload_run_engine.py also runs, but only from their own probe workflow
+# (workload_sail_probe.yml): never in workload.yml's matrix, never published.
+PROBE_ENGINES = ("sail",)
 
 
 # The landing zone, inside bench's lakehouse. Its own folder: the ETL's Files/csv holds only the

@@ -1,11 +1,13 @@
 """Run the dbt workload on ONE engine and write its part: `python workload_run_engine.py parts`.
 
-The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, gluten or trino.
+The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, gluten or trino --
+or `sail`, the probe target, run only by workload_sail_probe.yml.
 
     1. mint the OneLake bearer and hand it to the profile through the environment
     2. gluten only: start bench's Gluten/Velox SparkSession (the ETL's writing variant, so the
        SAS can create and delete), with the OneLake REST catalog as spark.sql.defaultCatalog --
-       dbt-spark's `method: session` then getOrCreate()s it
+       dbt-spark's `method: session` then getOrCreate()s it. sail: the same, on Sail's
+       in-process Spark Connect server
     3. `dbt run`, then `dbt test`, in-process through dbtRunner, timed; one `dbt retry` after
        either if it failed after writing run_results.json, which heals a transient catalog error
        on a single node
@@ -38,7 +40,13 @@ from pathlib import Path
 
 from bench import auth, scrub
 from bench.report import leak_check
-from bench.workload.config import BENCH_ENGINE, DEFAULT_PROCESS_LIMIT, ENGINES, WorkloadConfig
+from bench.workload.config import (
+    BENCH_ENGINE,
+    DEFAULT_PROCESS_LIMIT,
+    ENGINES,
+    PROBE_ENGINES,
+    WorkloadConfig,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 PROJECT = REPO / "workload"
@@ -49,6 +57,7 @@ PACKAGES = {
     "polars": ("dbt-core", "dbt-polars", "polars", "pyiceberg"),
     "gluten": ("dbt-core", "dbt-spark", "pyspark"),
     "trino": ("dbt-core", "dbt-trino", "trino"),
+    "sail": ("dbt-core", "dbt-spark", "pysail", "pyspark-client"),
 }
 
 # The Hive EXTERNAL tables the trino tree reads the landing zone through (workload/macros/
@@ -81,6 +90,24 @@ def start_gluten(cfg: WorkloadConfig):
     # dbt-spark's macros are written for stock Spark, where "x" is a string; bench's session reads
     # it as an identifier (pyspark_iceberg.py, for TPC-DS). Nothing in these models double-quotes.
     spark.conf.set("spark.sql.ansi.doubleQuotedIdentifiers", "false")
+    return engine
+
+
+def start_sail(cfg: WorkloadConfig):
+    """bench's Sail session, the one the Sail ETL writes with. Kept alive for the process.
+
+    dbt-spark's `method: session` calls SparkSession.builder.getOrCreate() on every statement;
+    under pyspark-client (Spark Connect only) that needs SPARK_REMOTE, and then returns this
+    session, the default one."""
+    from bench.tpch.engines.lakesail_iceberg import LakesailIceberg
+
+    engine = LakesailIceberg(cfg)
+    engine.setup()
+    # Sail's Iceberg writer takes only "UTC" for a timestamptz, not the runner's "Etc/UTC"
+    # (bench/etl/engines/lakesail_iceberg.py).
+    engine.session.conf.set("spark.sql.session.timeZone", "UTC")
+    _, port = engine._server.listening_address
+    os.environ["SPARK_REMOTE"] = f"sc://localhost:{port}"
     return engine
 
 
@@ -297,8 +324,8 @@ def process_limit(engine: str) -> int:
 def main(parts: Path) -> int:
     cfg = WorkloadConfig.from_env()
     engine = cfg.engine
-    if engine not in ENGINES:
-        raise SystemExit(f"BENCH_ENGINE must be one of {ENGINES}, not {engine!r}")
+    if engine not in ENGINES + PROBE_ENGINES:
+        raise SystemExit(f"BENCH_ENGINE must be one of {ENGINES + PROBE_ENGINES}, not {engine!r}")
     parts.mkdir(parents=True, exist_ok=True)
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     part = {
@@ -331,6 +358,8 @@ def main(parts: Path) -> int:
         if engine == "gluten":
             spark = start_gluten(cfg)
             part["versions"]["spark"] = spark.version
+        if engine == "sail":
+            spark = start_sail(cfg)
         if engine == "trino":
             part["versions"]["trino-server"] = start_trino(cfg, token)
         os.chdir(PROJECT)
@@ -400,4 +429,11 @@ def main(parts: Path) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(Path(sys.argv[1] if len(sys.argv) > 1 else "parts").resolve()))
+    rc = main(Path(sys.argv[1] if len(sys.argv) > 1 else "parts").resolve())
+    if os.environ.get("BENCH_ENGINE") == "sail":
+        # Sail's gRPC server threads are not daemons: a process that returns hangs forever
+        # (bench/capability/engines/lakesail_iceberg.py). The part is already written.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(rc)
+    sys.exit(rc)

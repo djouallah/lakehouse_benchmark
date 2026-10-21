@@ -1,0 +1,12 @@
+# The sail PROBE (workload_sail_probe.yml), not a leg of workload.yml: dbt-spark `method: session`
+# on Sail's in-process Spark Connect server, running the gluten model tree.
+#
+# dbt-spark WITHOUT the [session] extra: it would pull pyspark, and Sail needs pyspark-client and
+# never pyspark (requirements/lakesail_iceberg.txt). Session mode imports pyspark at run time only.
+dbt-spark
+azure-identity>=1.19
+psutil>=6
+# Sail main (lakehq/sail@151a417d5d, tmp_sail_main.yml), as the ETL runs it: the stage table's
+# `file` comes from input_file_name() (lakehq/sail#2571), which 0.7.2 lacks.
+pysail @ https://github.com/djouallah/lakehouse_benchmark/releases/download/sail-main-151a417d5d/pysail-0.7.2%2Bmain151a417d5d-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pyspark-client

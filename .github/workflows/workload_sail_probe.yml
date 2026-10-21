@@ -1,0 +1,78 @@
+name: dbt workload sail probe
+
+# A PROBE, NOT A LEG: does the dbt workload (workload/) run on LakeSail? dbt-spark `method: session`
+# on Sail's in-process Spark Connect server, building the gluten model tree into its own namespaces,
+# dbt_sail_landing / dbt_sail_mart. workload.yml, its matrix and the Real workload tab are untouched:
+# this lands nothing (it reads the Files/dbt the scheduled runs land), grades nothing, publishes and
+# commits nothing. The part, the log and dbt's own files are the artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      process_limit:
+        description: Files each fact model folds this run, newest first.
+        type: string
+        default: "10"
+
+# Its own queue, not `workload`: that group keeps one pending run, and a pending probe there would
+# cancel a pending scheduled run (or be cancelled by one).
+concurrency:
+  group: workload-sail-probe
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  PYTHONUNBUFFERED: "1"
+  FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+  FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  sail:
+    name: ⛵ dbt-spark on LakeSail (probe)
+    runs-on: ubuntu-latest
+    # Sail reads the OneLake bearer from its environment once, at server start.
+    timeout-minutes: 60
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      BENCH_ENGINE: sail
+      BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      process_limit: ${{ inputs.process_limit || '10' }}
+    steps:
+      - name: Free disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/workload_sail.txt
+      - name: Install sail
+        run: |
+          pip install -r requirements/workload_sail.txt
+          pip list --format=freeze | grep -Ei '^(dbt-|pysail|pyspark)' || true
+
+      - name: dbt build (sail)
+        # pipefail via `shell: bash`. dbt prints its own errors straight to stdout, unscrubbed:
+        # redact JWT and SAS shapes on the way to the log, as workload.yml does.
+        shell: bash
+        run: |
+          python .github/scripts/workload_run_engine.py parts 2>&1 \
+            | sed -uE 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g' \
+            | tee workload_sail.log
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: workload-probe-sail
+          path: |
+            parts/*.json
+            workload_sail.log
+            workload/target/run_results.json
+            workload/logs/dbt.log
+          if-no-files-found: warn

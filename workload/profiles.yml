@@ -75,6 +75,16 @@ aemo_electricity:
       schema: mart
       threads: 1
 
+    # A PROBE, not a leg of workload.yml (workload_sail_probe.yml): the gluten tree on Sail's
+    # in-process Spark Connect server, which workload_run_engine.py starts before dbt; SPARK_REMOTE
+    # points `method: session`'s getOrCreate() at it.
+    sail:
+      type: spark
+      method: session
+      host: localhost
+      schema: mart
+      threads: 1
+
     # The Trino container bench/trino.py runs, with the OneLake REST catalog `onelake` already
     # attached by workload_run_engine.py (the bearer is the catalog's, not the profile's) and the
     # Hive catalog `files` over the landing zone. Extended statistics off: OneLake refuses a
