@@ -166,7 +166,10 @@ ROWS = [
     # (bench/capability/race.py).
     # DuckDB's cells are its isolation run's, at Iceberg's default level.
     ("Concurrent append: both kept", {e: ["race_append"] for e in ENGINES}),
-    ("Concurrent writer: DELETE loses nothing", {e: ["race_delete"] for e in SQL}),
+    (
+        "Concurrent writer: DELETE loses nothing",
+        {"polars": ["race_delete"], **{e: ["race_delete"] for e in SQL}},
+    ),
     ("Concurrent writer: UPDATE loses nothing", {e: ["race_update"] for e in SQL}),
 ]
 

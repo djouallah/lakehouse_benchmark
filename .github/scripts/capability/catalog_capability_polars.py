@@ -235,14 +235,9 @@ class PolarsCapability:
 
     def delete_rows(self) -> str:
         """pl.delete_iceberg(table, predicate): Polars' DELETE (pola-rs/polars#29843)."""
-        import polars as pl
 
         table = self.fresh("delete")
-        try:
-            pl.delete_iceberg(self.load(table), pl.col("id") == 1)
-        except Exception as exc:  # noqa: BLE001 - every Polars error is an answer
-            message = f"{type(exc).__name__}: {scrub.scrub_exc(exc, 2000)}"
-            raise Refused(_one_line(message)) from None
+        self._delete_id_1(self.load(table))
         op = self.load(table).current_snapshot().summary.operation
         return self._expect(
             table, [r for r in SEED if r[0] != 1], f"delete_iceberg(id == 1), a {op.value} snapshot"
@@ -433,6 +428,19 @@ class PolarsCapability:
     def race_append(self) -> str:
         return self._race("race_append", lambda t: self.sink(t, rows([(5, 50)])))
 
+    def race_delete(self) -> str:
+        return self._race("race_delete", self._delete_id_1)
+
+    def _delete_id_1(self, table) -> None:
+        """pl.delete_iceberg(id == 1). Polars' own `no` becomes `Refused`, carrying its message."""
+        import polars as pl
+
+        try:
+            pl.delete_iceberg(table, pl.col("id") == 1)
+        except Exception as exc:  # noqa: BLE001 - every Polars error is an answer
+            message = f"{type(exc).__name__}: {scrub.scrub_exc(exc, 2000)}"
+            raise Refused(_one_line(message)) from None
+
     # -- teardown ----------------------------------------------------------------------------
 
     def drop_everything(self) -> None:
@@ -472,6 +480,7 @@ PROBES = [
     ("read", "id.max() with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("commit", "is assert-ref-snapshot-id enforced on a Polars commit", "stale_assertion"),
     ("concurrency", "sink append; B appends between Polars' read and commit", "race_append"),
+    ("concurrency", "delete_iceberg(id == 1); B appends", "race_delete"),
 ]
 
 
