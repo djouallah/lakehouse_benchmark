@@ -2,8 +2,9 @@
 
 WHAT DUCKDB CAN WRITE HERE, AND WHOSE LIMIT EACH `no` IS. DuckDB's iceberg extension attaches this
 endpoint as a REST catalog and plans, writes and commits Iceberg itself. It runs the released
-CLI (capability.yml installs it; requirements/capability_duckdb.txt has no duckdb). This script sends it the Iceberg write and
-DDL vocabulary one statement at a time and checks what each statement DID.
+CLI (capability.yml installs it; requirements/capability_duckdb.txt has no duckdb). This script
+sends it the Iceberg write and DDL vocabulary one statement at a time and checks what each
+statement DID.
 
 A `no` carrying the catalog's REST error is the catalog's; any other `no` is DuckDB's. Where
 DuckDB has no statement for an operation at all, the probe asks what the parser says rather than
