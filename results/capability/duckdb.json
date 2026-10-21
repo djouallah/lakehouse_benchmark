@@ -1,13 +1,13 @@
 {
  "engine": "duckdb",
- "version": "v2.0.0-alpha49307",
+ "version": "v2.0.0",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "DuckDB attaches the REST catalog",
    "outcome": "supported",
-   "detail": "DuckDB v2.0.0-alpha49307 (azure 906e92458c, httpfs 77392a7207, iceberg 4c0c0874c4); 32 namespace(s), _bench_capability listed"
+   "detail": "DuckDB v2.0.0 (azure 906e92458c, httpfs 77392a7207, iceberg 4c0c0874c4); 32 namespace(s), _bench_capability listed"
   },
   {
    "key": "namespace_existing",
@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_39594010650_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_39612418050_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -182,7 +182,7 @@
    "group": "write",
    "question": "INSERT OVERWRITE, whole table",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_38991566476_1_ove... ^^^^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_39612418050_1_ove... ^^^^^^^^^"
   },
   {
    "key": "add_column",
@@ -273,21 +273,21 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_max/data/00000-0-8ad340ad-cc9b-4aab-9801-f9a63c02d601.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_39612418050_1_max/data/00000-0-69648188-8f11-40a6-9b8e-d705d1f00626.parquet' failed with BlobNotFound Reason Phrase: The specified blob does not exist."
   },
   {
    "key": "create_branch",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE BRANCH",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_39612418050_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
   },
   {
    "key": "create_tag",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE TAG",
    "outcome": "no",
-   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_38891149513_1_tag\" CREATE TAG probe_tag ^^^^^^"
+   "detail": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_39612418050_1_tag\" CREATE TAG probe_tag ^^^^^^"
   },
   {
    "key": "expire_snapshots",
@@ -322,14 +322,14 @@
    "group": "catalog",
    "question": "ACCESS_DELEGATION_MODE 'vended_credentials', no storage secret",
    "outcome": "no",
-   "detail": "IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_vended/metadata/snap-5409683102858694540-1d025221-e90e-443f-a771-323d594d7afa.avro' failed with code 'Unauthorized', Reason Phrase: 'Unauthorized', Message: ''"
+   "detail": "IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_39612418050_1_vended/metadata/snap-6510965012674462097-5c9ab46c-e46f-4d13-8e85-a9c4facf503a.avro' failed with code 'Unauthorized', Reason Phrase: 'Unauthorized', Message: ''"
   },
   {
    "key": "create_schema",
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`dk_39594010650_1_ns` created; pyiceberg lists it"
+   "detail": "`dk_39612418050_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "drop_schema",
@@ -339,7 +339,7 @@
    "detail": "the empty namespace is gone"
   }
  ],
- "run": "39594010650",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
+ "run": "39612418050",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39612418050",
  "date": "2026-10-21"
 }
