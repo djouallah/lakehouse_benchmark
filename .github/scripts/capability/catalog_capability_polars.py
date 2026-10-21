@@ -17,8 +17,7 @@ writes, time travel.
 
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says. Polars'
 own read is reported beside it. Every error Polars raises is a `no` carrying its full message, so
-the log says whose limit it is: a bucket partition, for one, Polars refuses before the catalog is
-asked.
+the log says whose limit it is: Polars refuses some writes before the catalog is asked.
 
 THE STORAGE CREDENTIAL is `{"bearer_token": ...}`, the same one lakehouse_benchmark's Polars
 engines give `scan_iceberg`. Polars passes keys without a dot through to object_store, and has no
@@ -332,8 +331,7 @@ class PolarsCapability:
         return self._expect(table, [(1, 7), (2, 8)], "c promoted to long", cols=("id", "c"))
 
     def write_after_evolution(self) -> str:
-        """pyiceberg adds truncate(4, id) to the spec -- Polars cannot write bucket -- and Polars
-        writes before and after."""
+        """pyiceberg adds truncate(4, id) to the spec, and Polars writes before and after."""
         from pyiceberg.transforms import TruncateTransform
 
         table = self.create("evowrite")
