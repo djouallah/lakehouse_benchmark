@@ -81,7 +81,8 @@ def test_duckdb_isolation_rows_fill_the_duckdb_column():
     append = _cells(data, "Concurrent append: both kept")
     assert append == {"polars_iceberg": {"o": "skipped"}, "duckdb_iceberg": {"o": "supported"}}
     delete = _cells(data, "Concurrent writer: DELETE loses nothing", start=True)
-    assert delete["polars_iceberg"] == {"o": "na"}
+    # Polars is asked this row too now (delete_iceberg); the fixture has no reading for it.
+    assert delete["polars_iceberg"] == {"o": "skipped"}
     assert delete["duckdb_iceberg"] == {"o": "no", "n": "lost: final [...]"}
 
 
