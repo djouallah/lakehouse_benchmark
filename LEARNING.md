@@ -86,7 +86,7 @@ Largest scale each engine completes, cold, every statement answered:
 | LakeSail | SF=100 (2,476 s) | SF=10 (1,632 s) | TPC-DS SF=60 Q72: spill passes Sail's 64 GB cap; SF=100 Q64: the 10 GiB pool runs out |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
 | chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS: 93/99 at SF=1 on the chdb-core main build; the other 6 are known ClickHouse issues |
-| Polars | SF=100 (589 s, main build c36581695d) | **SF=100** (1,167 s, main build e691ac01b8) | Nothing yet up to SF=100, the largest scale the workflows offer. Joins and group-bys still have no spill |
+| Polars | SF=100 (589 s, main build c36581695d) | **SF=100** (1,167 s, main build e691ac01b8) | Nothing yet up to SF=100, the largest scale the workflows offer. Joins still have no spill; a 100M-key group-by holds on main since #29911 |
 
 - **Velox is the robust one.** It runs on a fixed budget of 9 GB off-heap plus 3 GB heap. It,
   Trino and Polars are the only engines that finished TPC-DS at SF=100. Not one of its failures
@@ -367,6 +367,12 @@ Largest scale each engine completes, cold, every statement answered:
   - Better costing for reused subplans: [#29250](https://github.com/pola-rs/polars/pull/29250).
 
   Before this, joins ran in the order the SQL wrote them. TPC-DS star joins suffered most.
+- **A group-by with one group per row no longer kills the runner.** The workload's
+  `assert_fct_scada_grain` groups ~100M rows on a unique key. Before
+  [#29911](https://github.com/pola-rs/polars/pull/29911) the streaming group-by held every key in
+  memory: 15.5 GB at 75M rows, killed at 109M, with `POLARS_OOC_MEMORY_BUDGET_MB` or without
+  (runs 39558133289, 39558143340). Main 4426a548fd finishes 109M rows at 14.2 GB peak in 214 s
+  (run 39560656080).
 - **2.0.0-rc.2 was fine at TPC-H SF=10 (82–106 s) and gone at SF=30.** It used the streaming
   engine with 4 threads and no memory limit. At SF=30 the runner was OOM-killed 75 s into Q7. At
   TPC-DS SF=10 the runner "lost communication with the server" 55 minutes in. See "Past memory"
