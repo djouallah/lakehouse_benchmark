@@ -358,11 +358,6 @@ main .tiles > a { color: inherit; }
 .rp a { color: var(--accent); }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
-.nx { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 4px; }
-.nx article { padding: 14px 16px; border: 1px solid var(--grid); border-radius: 12px; background: var(--raised); color: var(--ink-2); font-size: 14px; }
-.nx h3 { font-size: 16px; color: var(--ink); margin: 0 0 6px; }
-.nx p { margin: 0; }
-.nx a { color: var(--accent); }
 /* Lakehouse overview: three eras on a rail, then the open lakehouse as a stack with a live story. */
 .eras { list-style: none; margin: 4px 0 8px; padding: 28px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; }
 .eras::before { content: ""; position: absolute; left: 24px; right: 24px; top: 9px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--grid), var(--accent)); }
@@ -417,20 +412,6 @@ main .tiles > a { color: inherit; }
 .ov-files i { width: 20px; height: 26px; border-radius: 3px; background: var(--c); opacity: .9; clip-path: polygon(0 0, 66% 0, 100% 26%, 100% 100%, 0 100%); }
 .ov-files i.new { animation: ovdrop .55s cubic-bezier(.2, .8, .2, 1); }
 @keyframes ovdrop { from { transform: translateY(-16px) scale(.6); opacity: 0; } }
-/* Future: each card responds, and carries its rank, most important first. */
-.nx { counter-reset: nx; }
-.nx article { position: relative; overflow: hidden; counter-increment: nx; transition: transform .2s, box-shadow .2s, border-color .2s; }
-.nx article::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, var(--yes))); transform: scaleX(0); transform-origin: left; transition: transform .35s ease; }
-.nx article::after { content: counter(nx, decimal-leading-zero); position: absolute; top: 10px; right: 14px; font-size: 28px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); opacity: .08; transition: opacity .2s, color .2s; }
-.nx article:hover, .nx article:focus-visible { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 14px 30px rgb(0 0 0 / .12); outline: none; }
-.nx article:hover::before, .nx article:focus-visible::before { transform: scaleX(1); }
-.nx article:hover::after, .nx article:focus-visible::after { opacity: .25; color: var(--accent); }
-.nx article h3 { padding-right: 40px; transition: color .2s; }
-.nx article.risk::before { background: var(--no); transform: scaleX(1); }
-.nx article.risk:hover, .nx article.risk:focus-visible { border-color: color-mix(in srgb, var(--no) 45%, var(--grid)); }
-.nx article.risk:hover::after, .nx article.risk:focus-visible::after { color: var(--no); }
-.nx article.risk h3, .nx article.risk:hover h3, .nx article.risk:focus-visible h3 { color: var(--no); }
-.nx article:hover h3, .nx article:focus-visible h3 { color: var(--accent); }
 @media (max-width: 720px) {
   .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 28px; }
   .eras::before { left: 9px; right: auto; top: 6px; bottom: 6px; width: 2px; height: auto; background: linear-gradient(180deg, var(--grid), var(--accent)); }
@@ -439,7 +420,7 @@ main .tiles > a { color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ov-wire::before, .ov-pill.on i, .eras li.now::before, .ov-band.state.flash, .ov-band.state.flash .ok, .ov-files i.new { animation: none; }
-  .ov-pill, .eras li, .nx article { transition: none; transform: none !important; }
+  .ov-pill, .eras li { transition: none; transform: none !important; }
 }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
@@ -476,7 +457,6 @@ main .tiles > a { color: inherit; }
   <section class="pl arch" id="pruning" hidden></section>
   <section class="rp" id="reports" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
-  <section class="nx-page" id="future" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
     <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
@@ -625,15 +605,14 @@ const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
 const ANATOMY = { id: "anatomy", title: "Anatomy" };
-const NEXT = { id: "future", title: "Future" };
 const OVERVIEW = { id: "overview", title: "Overview" };
 const REAL_WORKLOAD = { id: "workload", title: "Real workload", json: "data/workload.json" };
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, NEXT, PLANS, CAPABILITY, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, DETAILS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
-// a lake table works, how an engine does less work, what it supports, and only then how fast it is; then how
-// engines get better, everything on one page, and what comes next.
+// a lake table works, how an engine does less work, what it supports, and only then how fast it is; then
+// everything on one page, and how engines get better.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [OVERVIEW, ARCH, ANATOMY] },  // the state is in the catalog
@@ -643,9 +622,8 @@ const GROUPS = [
   { id: "engines", title: "Engines", subs: [ENGINES], bar: false },  // header links, not tabs
   { id: "issues", title: "Issues", subs: [DETAILS], bar: false },
   { id: "about", title: "About", subs: [ABOUT], bar: false },
-  { id: "bugs", title: "Bug reports", subs: [REPORTS] },
   { id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },
-  { id: "future", title: "Future", subs: [NEXT] },
+  { id: "bugs", title: "Bug reports", subs: [REPORTS] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
 const state = { suite: OVERVIEW.id, sf: {}, group: null, last: {} };
@@ -696,7 +674,6 @@ function render() {
   if (page === REPORTS) { renderReports(); return; }
   if (page === PLANS) { renderPlans(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
-  if (page === NEXT) { renderNext(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -908,42 +885,6 @@ function renderEngines() {
   };
   $("engines").innerHTML = table(ENGINE_ROWS);
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
-}
-
-// THE FUTURE TAB: what is coming for single-node engines that I am excited about, most important first. Things on the way, not bugs:
-// those are on the Issues tab. Each card is checked against its upstream project before it goes here.
-const NEXT_ROWS = [
-  { title: "Server-side planning",
-    text: `The catalog reads the manifests and hands the engine its list of files. In the REST spec and the Java
-      client since Iceberg 1.11; Rust, C++ and Go are on the way.` },
-  { title: "Control flow in SQL",
-    text: `<code>IF</code> and <code>WHILE</code> inside SQL, so the optimizer sees the whole job, not one statement
-      at a time from Python.` },
-  { title: "One-file commits (Iceberg v4)",
-    text: `Today a one-file commit writes three metadata files. The v4 proposal keeps small changes in one file near
-      the root; Delta 5.0 may share it.` },
-  { title: "Row-level commits",
-    text: `Two jobs that touch the same file conflict today, even on different rows. Iceberg v3 row lineage lets the
-      check be per row (<a href="#concurrency">Concurrency</a>).` },
-  { title: "Friendly DataFusion",
-    text: `One Rust engine under many products, Sail and Comet among them. Iceberg now has its own Apache project,
-      <a href="https://github.com/apache/datafusion-iceberg">datafusion-iceberg</a>.` },
-  { title: "Spark, rebuilt from the inside",
-    text: `Spark is swapping its engine without changing its API. <a href="https://github.com/apache/gluten">Gluten/Velox</a>
-      became an Apache top-level project in March 2026, and <a href="https://github.com/apache/datafusion-comet">Comet</a>
-      puts DataFusion under Spark's plans. <a href="https://x.com/ApacheSpark/status/2054562882407342331">Project Feather</a>,
-      a proposal targeting Spark 4.2/4.3, makes local mode faster: no shuffle when the data fits on one node, and
-      Arrow-based caching. Spark Connect turns Spark into an API other engines can serve,
-      <a href="https://github.com/lakehq/sail">Sail</a> among them
-      (<a href="https://issues.apache.org/jira/browse/SPARK-56398">SPARK-56398</a>).` },
-  { title: "Risk: the closed lakehouse", risk: true,  // last on purpose: the warning, not a feature
-    text: `The tables are Iceberg, but the catalog hands out no storage credentials, or only to its own engines.
-      Open format, closed door: any engine can see the table, and none can read a file.` },
-];
-
-function renderNext() {
-  $(NEXT.id).innerHTML = `
-    <div class="nx">${NEXT_ROWS.map(r => `<article tabindex="0"${r.risk ? ' class="risk"' : ""}><h3>${r.title}</h3><p>${r.text}</p></article>`).join("")}</div>`;
 }
 
 // THE LAKEHOUSE TAB'S OVERVIEW: how we got here, then the premise the rest of the page tests. Three eras on a rail,
@@ -2065,7 +2006,7 @@ const pruningSay = t => [
   "The Parquet footer has min and max per row group: read 1 of 4.",
   "1 row group of 36, before a single row was read.",
   "Written in random order, every March file spans days 1–31: nothing else is skipped, 12 row groups. Sort on what you filter.",
-  `The same statistics pick the join order (<a href="#plans">Query plans</a>); server-side planning moves this into the catalog (<a href="#future">Future</a>).`,
+  `The same statistics pick the join order (<a href="#plans">Query plans</a>).`,
 ][t];
 const PR_ROWS = ["Query", "Manifest list", "Manifest files", "Data files", "Row groups"];
 
@@ -2164,7 +2105,7 @@ for (const li of $("issues").querySelectorAll("li")) {
   });
 }
 // Deep links: #lakehouse, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
-// #performance, #etl, #tpch, #tpcds, #iceberg, #reports, #workload, #future, #issues, #about, #engines,
+// #performance, #etl, #tpch, #tpcds, #iceberg, #workload, #reports, #issues, #about, #engines,
 // or one engine on the Issues tab (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -2173,7 +2114,6 @@ function fromHash() {
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
   if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg support grid
   if (h === "dbt" || h === "scorecard") h = REAL_WORKLOAD.id;  // the dbt tab and the Scorecard became the Real workload tab
-  if (h === "next") h = NEXT.id;  // the Future tab's old name
   if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
   if (h === "tried") h = DETAILS.id;  // the engines tried and not added are on the Issues tab
   const story = h.match(/^plans-(\w+)$/);  // one Query plans story: #plans-q64
