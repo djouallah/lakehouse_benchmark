@@ -58,6 +58,27 @@ case(
     "parquet distinct expr",
     lambda: spark.sql(f"SELECT DISTINCT {expr} AS file FROM files").collect(),
 )
+for label, e in [
+    ("split", "split(path, '/')[0]"),
+    ("element_at", "element_at(split(path, '/'), -1)"),
+    ("substring_index", "substring_index(path, '.', 1)"),
+    ("upper", "upper(path)"),
+    ("concat", "concat(path, 'x')"),
+]:
+    case(
+        f"parquet distinct {label}",
+        lambda e=e: spark.sql(f"SELECT DISTINCT {e} AS s FROM files").collect(),
+    )
+    case(
+        f"parquet group by {label}",
+        lambda e=e: spark.sql(f"SELECT {e} AS s FROM files GROUP BY 1").collect(),
+    )
+case(
+    "values distinct substring_index",
+    lambda: spark.sql(
+        "SELECT DISTINCT substring_index(p, '.', 1) AS s FROM VALUES ('x1.CSV'), ('x1.CSV') AS t(p)"
+    ).collect(),
+)
 spark.sql(f"CREATE OR REPLACE TEMPORARY VIEW v AS SELECT {expr} AS file FROM files")
 case("temp view distinct", lambda: spark.sql("SELECT DISTINCT file FROM v").collect())
 case(
