@@ -485,26 +485,17 @@ main .tiles > a { color: inherit; }
   <section class="cap" id="iceberg" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
-    <p>An agent has no favourite engine. It uses the one that does the job today, and it can change tomorrow.</p>
-    <p>So the state lives in the catalog, not in the engine. The engine starts, does the work, and stops
-      (<a href="#overview">Lakehouse</a>).</p>
-    <p>The work is done in SQL. An agent writes the same SQL for every engine; a new syntax for every engine is not progress.</p>
-    <p>The first test is simple: read the files, write the tables. Most engines that were tried failed here,
-      on the object store, not on SQL (<a href="#issues">Bug reports</a>).</p>
-    <p>Every engine gets the same 16 GB machine. When a query fails, the agent must get an error. An engine with
-      no memory limit kills the machine, and there is no error to read.</p>
-    <p>The best query is the one that does the least work: skip the files the query cannot need
-      (<a href="#pruning">File pruning</a>), then pick a good join order. A good optimizer beats brute force (<a href="#plans">Query plans</a>).</p>
-    <p>Benchmarks are useful, but in real life an agent writes SQL, dbt runs it, and the engine is just the tool
-      that moves the data from A to B. Expect the tool to change from job to job; what matters is that it works.
-      One real dbt project runs on Spark, Trino, DuckDB and Polars. Coverage first, speed second
-      (<a href="#workload">Real workload</a>).</p>
-    <p>The surprise: the real limit is the runner's local disk, not CPU or memory.</p>
-    <p>When an engine fails, the bug is filed upstream, with a script that reproduces it (<a href="#issues">Bug reports</a>).
-      That is the best help a user can give. It does not need a pull request: the people who know the code write
-      the fix, often within days (<a href="#reports">Bug reports</a>).</p>
-    <p>Engines only get better with real competition. Even if you use one engine, it needs to be challenged.
-      Without that, we would still be using Hadoop.</p>
+    <p>This is not a benchmark. It is a way to find bugs in open-source engines and get them fixed.</p>
+    <p>Every engine runs the same jobs on the same GitHub runner (16 GB RAM), against the same Iceberg tables in one
+      OneLake REST catalog: load raw CSV files, TPC-H and TPC-DS (<a href="#performance">Benchmarks</a>), Iceberg
+      writes and table maintenance (<a href="#iceberg">Iceberg support</a>), and one dbt project every 2 hours on
+      Spark, Trino, DuckDB and Polars (<a href="#workload">Real workload</a>).</p>
+    <p>When a job fails, runs out of memory or returns a wrong answer, the bug is filed upstream: one issue per bug,
+      with a script that reproduces it on a clean machine. The maintainers write the fix; the bench picks it up from
+      main or the next release, and the result here changes (<a href="#reports">Bug reports</a>).</p>
+    <p>The timings are there because a slow query is a bug too. They are not a ranking.</p>
+    <p>The SQL, the workflows and every run's logs are in the
+      <a href="https://github.com/djouallah/lakehouse_benchmark">repo</a>.</p>
   </section>
   <section class="cap rows" id="engines" hidden></section>
 
