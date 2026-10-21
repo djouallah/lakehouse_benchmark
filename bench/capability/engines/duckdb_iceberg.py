@@ -32,7 +32,7 @@ def _value(cell: str):
 
 
 class Connection:
-    """The nightly CLI (bench.duckdb_cli says why not the wheel), answering like a
+    """The released CLI (bench.duckdb_cli says why not the wheel), answering like a
     `duckdb.connect()`: `execute()` and `sql()` run SQL and return rows, `close()` ends the
     process. A failed statement raises RuntimeError with DuckDB's own message."""
 

@@ -1,0 +1,38 @@
+name: DuckDB CLI
+description: >-
+  Put a released DuckDB CLI on PATH (bench/duckdb_cli.py says why the CLI and not the wheel), and
+  check that the extensions the jobs load install from extensions.duckdb.org.
+
+inputs:
+  version:
+    description: A duckdb/duckdb release tag.
+    required: false
+    default: v2.0.0
+
+outputs:
+  version:
+    description: The CLI's version, e.g. v2.0.0.
+    value: ${{ steps.install.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        dir="$RUNNER_TEMP/duckdb-cli"
+        mkdir -p "$dir"
+        gh release download "$VERSION" --repo duckdb/duckdb \
+          --pattern duckdb-cli-linux-amd64.tar.gz --dir "$dir" --clobber
+        tar -xzf "$dir/duckdb-cli-linux-amd64.tar.gz" -C "$dir"
+        chmod +x "$dir/duckdb"
+        echo "$dir" >> "$GITHUB_PATH"
+        # What the DuckDB jobs load: the catalog (iceberg, which reads manifests with avro) and
+        # storage (azure, httpfs for the REST calls). Failing here beats failing in a timed job.
+        "$dir/duckdb" -batch -c "INSTALL iceberg; INSTALL avro; INSTALL azure; INSTALL httpfs;"
+        echo "version=$("$dir/duckdb" --version | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+    - shell: bash
+      run: duckdb --version

@@ -175,7 +175,7 @@ jobs:
 
       # One self-contained file per engine. Which line it tracks -- a main-branch build for
       # polars, stable for the rest -- is a property of that file, not a workflow input. DuckDB's
-      # file holds only its Python helpers; the engine is the nightly CLI, next step.
+      # file holds only its Python helpers; the engine is the released CLI, next step.
       - name: Install ${{ matrix.engine }}
         env:
           OVERRIDE: ${{ inputs.override }}
@@ -184,11 +184,10 @@ jobs:
           if [ -n "$OVERRIDE" ]; then pip install --force-reinstall --no-deps "$OVERRIDE"; fi
           pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pysail|pyiceberg|pyarrow)=' || true
 
-      # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
-      # .github/scripts/duckdb_nightly.py which nightly.
-      - name: Install the DuckDB nightly CLI
+      # DuckDB is the released CLI, not a wheel: bench/duckdb_cli.py says why.
+      - name: Install the DuckDB CLI
         if: matrix.engine == 'duckdb_iceberg'
-        uses: ./.github/actions/duckdb-nightly
+        uses: ./.github/actions/duckdb-cli
 
       - uses: actions/setup-java@v5
         if: startsWith(matrix.engine, 'pyspark')

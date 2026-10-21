@@ -1,10 +1,8 @@
 """DuckDB as its CLI binary: one long-lived `duckdb` process per session, SQL in on stdin.
 
-WHY THE CLI AND NOT THE WHEEL. The PyPI 2.0 dev wheel moves to a new DuckDB core only when
-duckdb-python merges a submodule bump, which is a manual PR -- it ran about a week behind the
-nightly in October 2026. The nightly CLI is built every night from v2.0-cyanoptera, so the bench
-runs that instead. Which nightly is .github/scripts/duckdb_nightly.py's job: the newest one whose
-iceberg/azure extensions were actually published, which most nights they are not.
+WHY THE CLI AND NOT THE WHEEL. Through the 2.0 alphas the PyPI dev wheel ran about a week behind
+the nightly CLI, so the bench ran the nightly CLI. Since v2.0.0 (2026-10-21) it runs the released
+CLI, which the duckdb-cli action (.github/actions/duckdb-cli) puts on PATH.
 
 ONE PROCESS, NOT ONE PER STATEMENT. Secrets, the catalog ATTACH, the buffer pool and the external
 file cache all live in the process, exactly as they lived in one `duckdb.connect()`. A process per
@@ -24,12 +22,6 @@ line comes next -- the sentinel included. Matching the sentinel exactly hung eve
 anything before a carriage return are stripped from every line, and a line that ENDS with the
 sentinel ends the statement.
 
-UNSIGNED EXTENSIONS. When a nightly's extensions were never deployed, duckdb_nightly.py takes them
-from the run's artifacts, which are unsigned, puts them in a local repository and sets
-$DUCKDB_EXTENSION_REPO to it. Then the CLI runs with `-unsigned` and both install repositories
-point there, so `INSTALL azure` and the autoinstall behind `ATTACH ... TYPE ICEBERG` read those
-files instead of 404ing on extensions.duckdb.org.
-
 Values come back as strings (CSV). The callers that need a number say `int(...)`.
 """
 
@@ -45,30 +37,21 @@ import subprocess
 import threading
 import uuid
 
-# Where the binary is: $DUCKDB_CLI if set, else `duckdb` on PATH (the duckdb-nightly action puts
-# it there).
+# Where the binary is: $DUCKDB_CLI if set, else `duckdb` on PATH (the duckdb-cli action puts it
+# there).
 BINARY_ENV = "DUCKDB_CLI"
-# The local extension repository, set only when the extensions are unsigned run artifacts.
-EXTENSION_REPO_ENV = "DUCKDB_EXTENSION_REPO"
 
 # Run before the first statement. The progress bar is off for the same reason a non-interactive
 # Python connection has it off: it would write to stderr and read as an error.
 _INIT = (".bail off", ".mode csv", ".headers off", "SET enable_progress_bar = false;")
 
 
-def _repository_init(repo: str) -> tuple[str, ...]:
-    return (
-        f"SET custom_extension_repository = '{repo}';",
-        f"SET autoinstall_extension_repository = '{repo}';",
-    )
-
-
 def binary() -> str:
     path = os.environ.get(BINARY_ENV) or shutil.which("duckdb")
     if not path:
         raise RuntimeError(
-            "no duckdb CLI on PATH -- the duckdb-nightly action "
-            "(.github/actions/duckdb-nightly) installs it"
+            "no duckdb CLI on PATH -- the duckdb-cli action "
+            "(.github/actions/duckdb-cli) installs it"
         )
     return path
 
@@ -125,8 +108,7 @@ class DuckDBCli:
     """One `duckdb` process. `database` is a file path, or None for in-memory."""
 
     def __init__(self, database: str | None = None):
-        repo = os.environ.get(EXTENSION_REPO_ENV)
-        cmd = [binary(), "-batch", *(["-unsigned"] if repo else [])]
+        cmd = [binary(), "-batch"]
         if database:
             cmd.append(database)
         if shutil.which("stdbuf"):
@@ -144,7 +126,7 @@ class DuckDBCli:
         self._err: queue.Queue = queue.Queue()
         for stream, sink in ((self._proc.stdout, self._out), (self._proc.stderr, self._err)):
             threading.Thread(target=_pump, args=(stream, sink), daemon=True).start()
-        self._send("\n".join(_INIT + (_repository_init(repo) if repo else ())))
+        self._send("\n".join(_INIT))
 
     def _read_until(self, sink: queue.Queue, sentinel: str) -> list[str]:
         lines = []

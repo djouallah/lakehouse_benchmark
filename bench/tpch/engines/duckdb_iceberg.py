@@ -1,6 +1,6 @@
 """DuckDB: the iceberg extension attaches the catalog, the azure extension reads the files.
 
-THE ENGINE IS THE NIGHTLY CLI, not the PyPI wheel: one `duckdb` process per run, statements in
+THE ENGINE IS THE RELEASED CLI, not the PyPI wheel: one `duckdb` process per run, statements in
 on stdin (bench/duckdb_cli.py says how, and why the CLI).
 
 THE EXTERNAL FILE CACHE. Since 1.3 DuckDB keeps the byte ranges it reads from remote files in

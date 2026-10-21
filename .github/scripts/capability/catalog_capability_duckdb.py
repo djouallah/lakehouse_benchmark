@@ -1,9 +1,8 @@
 """What the OneLake Iceberg REST catalog lets DuckDB do.
 
 WHAT DUCKDB CAN WRITE HERE, AND WHOSE LIMIT EACH `no` IS. DuckDB's iceberg extension attaches this
-endpoint as a REST catalog and plans, writes and commits Iceberg itself. It tracks the NIGHTLY
-CLI (capability.yml installs it; requirements/capability_duckdb.txt has no duckdb), because that
-is where the extension's Iceberg write support moves. This script sends it the Iceberg write and
+endpoint as a REST catalog and plans, writes and commits Iceberg itself. It runs the released
+CLI (capability.yml installs it; requirements/capability_duckdb.txt has no duckdb). This script sends it the Iceberg write and
 DDL vocabulary one statement at a time and checks what each statement DID.
 
 A `no` carrying the catalog's REST error is the catalog's; any other `no` is DuckDB's. Where

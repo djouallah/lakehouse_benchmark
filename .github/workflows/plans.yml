@@ -33,10 +33,6 @@ on:
         description: Run each query once, untimed, before the captured run, so its files are cached.
         type: boolean
         default: false
-      duckdb-run-id:
-        description: A duckdb/duckdb nightly run to pin. Empty picks the newest usable one.
-        type: string
-        default: ""
 
 concurrency:
   group: onelake
@@ -82,11 +78,9 @@ jobs:
           cache-dependency-path: requirements/${{ inputs.engine }}.txt
       - run: pip install -r "requirements/${BENCH_ENGINE}.txt"
 
-      - name: Install the DuckDB nightly CLI
+      - name: Install the DuckDB CLI
         if: inputs.engine == 'duckdb_iceberg'
-        uses: ./.github/actions/duckdb-nightly
-        with:
-          run-id: ${{ inputs.duckdb-run-id }}
+        uses: ./.github/actions/duckdb-cli
 
       - uses: actions/setup-java@v5
         if: startsWith(inputs.engine, 'pyspark')

@@ -70,7 +70,7 @@ jobs:
     name: >-
       ${{ matrix.client == 'spark' && 'Spark'
       || matrix.client == 'trino' && 'Trino'
-      || matrix.client == 'duckdb' && 'DuckDB (nightly)'
+      || matrix.client == 'duckdb' && 'DuckDB'
       || matrix.client == 'polars' && 'Polars'
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'chdb' && 'chDB'
@@ -140,10 +140,10 @@ jobs:
         if: matrix.client == 'databend'
         run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
 
-      # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why.
-      - name: DuckDB nightly CLI
+      # DuckDB is the released CLI, not a wheel: bench/duckdb_cli.py says why.
+      - name: DuckDB CLI
         if: matrix.client == 'duckdb' || matrix.client == 'duckdb_isolation'
-        uses: ./.github/actions/duckdb-nightly
+        uses: ./.github/actions/duckdb-cli
 
       # OIDC only. No client secret exists on this app registration.
       - uses: azure/login@v3

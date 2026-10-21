@@ -11,7 +11,7 @@ storage path, explained there. It moved out of this module when the TPC-DS gener
 second caller; `attach` and `CATALOG` are re-exported here so the concurrency benchmark, which
 opens a fresh connection per writer through this name, keeps working.
 
-THE ENGINE IS THE NIGHTLY CLI, as for the read benchmark: bench/duckdb_cli.py.
+THE ENGINE IS THE RELEASED CLI, as for the read benchmark: bench/duckdb_cli.py.
 """
 
 from __future__ import annotations
