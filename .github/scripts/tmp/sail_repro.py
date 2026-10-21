@@ -5,6 +5,7 @@ TEMPORARY: deleted with tmp_sail_repro.yml once the issues are filed.
 """
 
 import os
+import sys
 import tempfile
 import traceback
 
@@ -100,4 +101,5 @@ except Exception:  # noqa: BLE001
 
 spark.stop()
 server.stop()
+sys.stdout.flush()
 os._exit(0)
