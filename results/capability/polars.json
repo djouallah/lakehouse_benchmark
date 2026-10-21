@@ -10,11 +10,32 @@
    "detail": "polars 2.0.0; pyiceberg catalog attached, _bench_capability exists"
   },
   {
+   "key": "sink_create",
+   "group": "create",
+   "question": "sink_iceberg(create_if_not_exists=True) to a new table",
+   "outcome": "supported",
+   "detail": "sink_iceberg(create_if_not_exists=True): pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees; field ids [1, 2]"
+  },
+  {
    "key": "sink_append",
    "group": "write",
    "question": "sink_iceberg(mode='append')",
    "outcome": "supported",
    "detail": "sink_iceberg(mode='append'), a append snapshot: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees"
+  },
+  {
+   "key": "sink_overwrite",
+   "group": "write",
+   "question": "sink_iceberg(mode='overwrite')",
+   "outcome": "supported",
+   "detail": "sink_iceberg(mode='overwrite'), a append snapshot: pyiceberg reads [(7, 70), (8, 80)]; Polars agrees"
+  },
+  {
+   "key": "delete_rows",
+   "group": "write",
+   "question": "pl.delete_iceberg(table, id == 1)",
+   "outcome": "supported",
+   "detail": "delete_iceberg(id == 1), a overwrite snapshot: pyiceberg reads [(2, 20), (3, 30)]; Polars agrees"
   },
   {
    "key": "partitioned",
@@ -98,7 +119,7 @@
    "group": "read",
    "question": "id.max() with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/0\u2026"
+   "detail": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39538881239_1_max/data/00000-0-b086df21-a92b-4346-b0fb-5f842ecf1741.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39538881239_1_max/data/0\u2026"
   },
   {
    "key": "stale_assertion",
@@ -113,23 +134,9 @@
    "question": "sink append; B appends between Polars' read and commit",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
-  },
-  {
-   "key": "sink_overwrite",
-   "group": "write",
-   "question": "sink_iceberg(mode='overwrite')",
-   "outcome": "supported",
-   "detail": "sink_iceberg(mode='overwrite'), a append snapshot: pyiceberg reads [(7, 70), (8, 80)]; Polars agrees"
-  },
-  {
-   "key": "sink_create",
-   "group": "create",
-   "question": "sink_iceberg(create_if_not_exists=True) to a new table",
-   "outcome": "supported",
-   "detail": "sink_iceberg(create_if_not_exists=True): pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees; field ids [1, 2]"
   }
  ],
- "run": "38991566476",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476",
- "date": "2026-10-17"
+ "run": "39538881239",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39538881239",
+ "date": "2026-10-21"
 }

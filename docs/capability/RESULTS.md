@@ -14,7 +14,7 @@ Spark is the reference: it uses the Iceberg Java library, as Trino does under it
 | CREATE TABLE IF NOT EXISTS, existing table | yes | yes | yes | yes | yes | yes | na |
 | INSERT / append | yes | yes | yes | yes | yes | yes | yes |
 | INSERT ... SELECT | yes | yes | yes | yes | yes | yes | na |
-| DELETE | yes | yes | yes | yes | yes | no ³ | na |
+| DELETE | yes | yes | yes | yes | yes | no ³ | yes |
 | UPDATE | yes | yes | yes | yes | yes | no ⁴ | na |
 | MERGE with two actions (UPDATE + INSERT) | yes | yes | yes | yes | no ⁵ | no ⁶ | na |
 | INSERT OVERWRITE, whole table | yes | no ⁷ | yes | no ⁸ | no ⁹ | no-op ¹⁰ | yes |
@@ -89,7 +89,7 @@ Spark is the reference: it uses the Iceberg Java library, as Trino does under it
 37. DuckDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: IO Error: AzureBlobStorageFileSystem Read to 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/dk_38891149513_1_max/data/00000-0-8ad340ad…`
 38. chDB, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5f6564000000. (STD_EXCEPTION)`
 39. Databend, MAX from the metadata, no data file read: max(id) with every data file deleted (min/max from metadata): `SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: OperationalError: (1105, 'StorageNotFound. Code: 3001, Text = NotFound (permanent) at read, context: { uri: https://onelake.dfs.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Table…`
-40. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_38022167812_1_max/data/00000-0-ad655b41-7953-4d9e-9182-3e0137e09cd3.parquet not found: Error performing…`
+40. Polars, MAX from the metadata, no data file read: id.max() with every data file deleted (min/max from metadata): `select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39538881239_1_max/data/00000-0-b086df21-a92b-4346-b0fb-5f842ecf1741.parquet not found: Error performing…`
 41. chDB, Compaction: OPTIMIZE TABLE (compaction): `ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)`
 42. Databend, Compaction: OPTIMIZE TABLE COMPACT (compaction): `OperationalError: (1105, "Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_39032752740_1_compact'. Table engine: 'iceberg'..")`
 43. Sail, Rewrite manifests: CALL system.rewrite_manifests: `UnsupportedOperationException: Iceberg system procedure 'rewrite_manifests' is recognized but not implemented`
@@ -169,5 +169,5 @@ The OneLake Iceberg REST catalog, read by CI (`.github/workflows/capability.yml`
 - duckdb: v2.0.0-alpha48730, [run 38991566476](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476), 2026-10-17
 - chdb: 4.4.0, [run 39179243597](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39179243597), 2026-10-19
 - databend: 8.0.90-v1.2.952-nightly-8b1dc20(rust-1.100.0-nightly-2026-10-17T09:12:10.008161229Z) (ghcr.io/djouallah/databend:main-8b1dc20714), [run 39032752740](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39032752740), 2026-10-17
-- polars: 2.0.0, [run 38991566476](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38991566476), 2026-10-17
+- polars: 2.0.0, [run 39538881239](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39538881239), 2026-10-21
 - duckdb_isolation: v2.0.0-alpha48520, [run 38892463084](https://github.com/djouallah/lakehouse_benchmark/actions/runs/38892463084), 2026-10-16
