@@ -1112,10 +1112,10 @@ function dagLayout(dag) {
   return { W, H, NW, NH, pos };
 }
 
-// The Real workload tab: engines by maturity, not speed, and the Gluten/Velox leg is just Spark here
-// (dbt-spark; Velox underneath is a detail of how it runs, not what the dbt project targets).
+// The Real workload tab: engines by maturity, not speed. The Spark leg runs on Gluten/Velox, so it is named
+// that, not "Spark", which would read as vanilla Spark.
 const WORKLOAD_ORDER = [GLUTEN, "trino_iceberg", "duckdb_iceberg", "polars_iceberg"];
-const wlName = e => e === GLUTEN ? "Spark" : (LABEL[e] ?? e);
+const wlName = e => LABEL[e] ?? e;
 
 function renderRealWorkload() {
   const sec = $(REAL_WORKLOAD.id), w = data.workload;
