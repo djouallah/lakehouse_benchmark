@@ -30,7 +30,7 @@ on:
         type: string
         default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,pandas_iceberg,databend_iceberg
       publish:
-        description: Commit results and charts. Off leaves the artifacts and touches nothing.
+        description: Commit results and the CSV. Off leaves the artifacts and touches nothing.
         type: boolean
         default: true
 
@@ -283,19 +283,19 @@ jobs:
           merge-multiple: true
           path: parts
 
-      - name: Merge, chart, and write the table view
+      - name: Merge and write the CSV
         run: python .github/scripts/etl_publish.py parts
 
-      - name: Commit results and charts
+      - name: Commit results
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         # A GITHUB_TOKEN push does not trigger workflows, so this cannot loop.
         #
         # ON A REJECTED PUSH, REGENERATE -- NEVER REBASE. Run 35550043819 lost six green engines
         # to `git pull --rebase`: another publish had landed the same four generated paths while
         # this ran, so the rebase hit add/add conflicts (two of them PNGs) and the step died with
-        # the measurements still in the artifact. Nothing under results/ or docs/ here is
+        # the measurements still in the artifact. Nothing under results/ or docs/data/ here is
         # hand-written -- every byte is a function of results/**/*.json, and the history files
-        # (the flattened CSV, the charts, the table view) are a function of ALL runs -- so even
+        # (the flattened CSV) are a function of ALL runs -- so even
         # where git could merge two generators' output, the merge would be wrong. So: drop this
         # attempt, reset onto origin/main (which now HAS the other run's JSON) and generate again.
         # parts/ is untracked, so the artifacts survive the reset.
@@ -303,7 +303,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3; do
-            git add results docs README.md
+            git add results docs/data
             if git diff --cached --quiet; then
               echo "nothing to commit"
               exit 0

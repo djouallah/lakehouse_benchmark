@@ -58,13 +58,6 @@ CSV_DIR = "Files/csv"
 
 DEFAULT_FILES = 100
 
-# The file count the headline docs are built at. docs/etl/charts/totals.png is the 1000-file
-# chart and the path never changes, so a publish at any other count records its run
-# (results/etl/, the CSV) and leaves the charts and RESULTS.md alone. Before this guard a FILES=100
-# check-run overwrote the 1000-file chart with a 100-file one under the same name (run
-# 35591414961), and the blog that embeds it and the table under it disagreed.
-HEADLINE_FILES = 1000
-
 
 @dataclass(frozen=True)
 class EtlConfig(Config):

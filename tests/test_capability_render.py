@@ -1,4 +1,4 @@
-""".github/scripts/capability/render_readme.py: RESULTS.md and the site grid, from readings."""
+""".github/scripts/capability/render_readme.py: the site grid, from readings."""
 
 import importlib.util
 from pathlib import Path
@@ -12,6 +12,13 @@ _spec.loader.exec_module(render_readme)
 
 def _row(key, outcome="supported", detail=""):
     return {"key": key, "group": "g", "question": key, "outcome": outcome, "detail": detail}
+
+
+def _cells(data, label, start=False):
+    """One row's cells in the site grid, by its label (or the label's start)."""
+    rows = render_readme.site_matrix(data)["rows"]
+    match = (lambda r: r["label"].startswith(label)) if start else (lambda r: r["label"] == label)
+    return next(r for r in rows if match(r))["cells"]
 
 
 DATA = {
@@ -48,17 +55,11 @@ def test_cell_takes_the_worst_outcome_and_keeps_the_reasons():
     assert [r["key"] for r in why] == ["merge_insert_only"]
 
 
-def test_unprobed_is_a_dash_and_absent_engine_is_na():
-    line = next(ln for ln in render_readme.render(DATA).splitlines() if ln.startswith("| UPDATE |"))
-    assert line == "| UPDATE | — | na |"
-
-
 def test_refusals_get_a_note_quoting_the_detail():
-    text = render_readme.render(DATA)
-    label = "| MERGE with two actions (UPDATE + INSERT) |"
-    merge = next(ln for ln in text.splitlines() if ln.startswith(label))
-    assert merge == f"{label} no ¹ | na |"
-    assert "merge_upsert: `400 Duplicate types: add-snapshot`" in text
+    cells = _cells(DATA, "MERGE with two actions (UPDATE + INSERT)")
+    assert cells["polars_iceberg"] == {"o": "na"}
+    assert cells["duckdb_iceberg"]["o"] == "no"
+    assert "400 Duplicate types: add-snapshot" in cells["duckdb_iceberg"]["n"]
 
 
 def test_duckdb_isolation_rows_fill_the_duckdb_column():
@@ -77,14 +78,11 @@ def test_duckdb_isolation_rows_fill_the_duckdb_column():
             "rows": [_row("race_append"), _row("race_delete", "no", "lost: final [...]")],
         },
     }
-    lines = render_readme.render(data).splitlines()
-    assert "| Concurrent append: both kept | yes | — |" in lines
-    assert any(
-        ln.startswith("| Concurrent writer: DELETE loses nothing")
-        and ln.endswith("| na |")
-        and "| no " in ln
-        for ln in lines
-    )
+    append = _cells(data, "Concurrent append: both kept")
+    assert append == {"polars_iceberg": {"o": "skipped"}, "duckdb_iceberg": {"o": "supported"}}
+    delete = _cells(data, "Concurrent writer: DELETE loses nothing", start=True)
+    assert delete["polars_iceberg"] == {"o": "na"}
+    assert delete["duckdb_iceberg"] == {"o": "no", "n": "lost: final [...]"}
 
 
 def test_every_row_is_in_exactly_one_site_group():
@@ -199,14 +197,11 @@ def test_a_truncate_that_is_not_metadata_only_is_a_no():
     """TRUNCATE means metadata-only: a delete file instead is a no, with the reason as the note."""
     slow = "TRUNCATE: DuckDB reads []; NOT metadata-only: delete snapshot, added-delete-files 1"
     data = {"duckdb": {**DATA["duckdb"], "rows": [_row("truncate", detail=slow)]}}
-    text = render_readme.render(data)
-    assert "| TRUNCATE | no ¹ |" in text.splitlines()
-    assert "DuckDB, TRUNCATE: Runs, but not as a metadata operation." in text
-    row = next(r for r in render_readme.site_matrix(data)["rows"] if r["label"] == "TRUNCATE")
-    assert row["cells"]["duckdb_iceberg"]["o"] == "no"
-    assert row["cells"]["duckdb_iceberg"]["n"].startswith("Runs, but not as a metadata operation.")
+    cell = _cells(data, "TRUNCATE")["duckdb_iceberg"]
+    assert cell["o"] == "no"
+    assert cell["n"].startswith("Runs, but not as a metadata operation.")
     fast = {"duckdb": {**DATA["duckdb"], "rows": [_row("truncate", detail="metadata-only")]}}
-    assert "| TRUNCATE | yes |" in render_readme.render(fast).splitlines()
+    assert _cells(fast, "TRUNCATE")["duckdb_iceberg"] == {"o": "supported"}
 
 
 def test_every_truncate_probe_reads_how_it_committed():
@@ -222,12 +217,9 @@ def test_every_truncate_probe_reads_how_it_committed():
 def test_a_catalog_no_gets_its_reason_and_goes_when_the_cell_is_a_yes():
     spark = {"engine": "spark", "version": "4.1", "run": "1", "url": "u", "date": "d"}
     refused = {"spark": {**spark, "rows": [_row("ctas", "no", "400 Malformed request")]}}
-    text = render_readme.render(refused)
-    assert "| CREATE TABLE AS SELECT | no ¹ |" in text
-    assert "Spark, CREATE TABLE AS SELECT: the OneLake catalog does not support staged" in text
-    site = render_readme.site_matrix(refused)
-    ctas = next(r for r in site["rows"] if r["label"] == "CREATE TABLE AS SELECT")
-    assert "staged create" in ctas["cells"]["pyspark_iceberg"]["n"]
+    ctas = _cells(refused, "CREATE TABLE AS SELECT")["pyspark_iceberg"]
+    assert ctas["o"] == "no"
+    assert ctas["n"].startswith("the OneLake catalog does not support staged create")
 
     works = {"spark": {**spark, "rows": [_row("ctas")]}}
-    assert "staged create" not in render_readme.render(works)
+    assert _cells(works, "CREATE TABLE AS SELECT")["pyspark_iceberg"] == {"o": "supported"}

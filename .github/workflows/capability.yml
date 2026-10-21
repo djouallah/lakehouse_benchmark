@@ -8,9 +8,9 @@ name: iceberg support
 # per probe through the engine, and checks the effect through pyiceberg. The concurrency rows put
 # a second writer's commit between the engine's read and its commit (bench/capability/race.py).
 #
-# `publish` is the SINGLE WRITER of results/capability/, docs/capability/RESULTS.md and
-# docs/data/capability.json. results/capability/ keeps each client's latest reading, so a run
-# that asks one client leaves the others' cells as they were. It runs only with `publish` ticked:
+# `publish` is the SINGLE WRITER of results/capability/ and docs/data/capability.json.
+# results/capability/ keeps each client's latest reading, so a run that asks one client leaves
+# the others' cells as they were. It runs only with `publish` ticked:
 # by default a run is a check, read from its job summaries and artifacts, and the site stays put.
 
 on:
@@ -198,7 +198,7 @@ jobs:
           merge-multiple: true
           path: parts
 
-      - name: Write RESULTS.md and the site's grid
+      - name: Write the site's grid
         run: |
           mkdir -p results/capability
           cp parts/results/capability/*.json results/capability/ 2>/dev/null || true
@@ -211,7 +211,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3; do
-            git add results/capability docs/capability docs/data/capability.json
+            git add results/capability docs/data/capability.json
             if git diff --cached --quiet; then
               echo "nothing to commit"
               exit 0

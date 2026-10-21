@@ -38,10 +38,7 @@ ENGINES = (
 
 TABLES = ("lineitem", "orders", "partsupp", "part", "customer", "nation", "region", "supplier")
 
-# The scale docs/RESULTS.md and the per-query chart are built at: SF=100, the scale the results
-# page opens at. A publish at another scale in TOTALS_SFS redraws them from the latest stored
-# SF=100 runs; a publish at SF=1 records its run and leaves docs/charts and docs/RESULTS.md alone,
-# for the reason bench/etl/config.py gives at HEADLINE_FILES.
+# The scale publish.py records when TPCH_SF is unset: SF=100, the scale the results page opens at.
 HEADLINE_SF = 100
 
 # Approximate parquet MiB per scale factor unit, measured from a real tpchgen-cli run. Used only
@@ -121,9 +118,8 @@ class TpchConfig(Config):
     SF_ENV = "TPCH_SF"
     # ONE COLD PASS, as TPC-DS: past SF=10 the data outgrows a 16 GB runner and a warm pass
     # measures little but a second read of OneLake, while doubling a run that the one-hour token
-    # already bounds. The totals chart compares every scale the suite runs at.
+    # already bounds.
     PASSES = ("cold",)
-    TOTALS_SFS = (10, 30, 60, 100)
     HEADLINE_SF = HEADLINE_SF
     ENGINES = ENGINES
     TABLES = TABLES
@@ -134,7 +130,6 @@ class TpchConfig(Config):
     # smoke_catalog.py's two reads: Q1 scans lineitem whole, Q6 scans it filtered.
     PROBE_QUERIES = (1, 6)
     RESULTS_DIR = "results"
-    DOCS_DIR = "docs"
     CSV = "docs/data/tpch_results.csv"
 
     @property

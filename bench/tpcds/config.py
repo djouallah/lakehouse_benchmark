@@ -118,8 +118,8 @@ def parts_for(table: str, sf: int) -> int:
 # makes a 30% error here change nothing.
 PARQUET_MB_PER_SF = 300
 
-# The scale docs/tpcds/RESULTS.md and the per-query chart are built at: SF=100, the scale the
-# results page opens at. ~30 GB of parquet does not fit a 16 GB runner, so the engines are
+# The scale publish.py records when TPCDS_SF is unset: SF=100, the scale the results page
+# opens at. ~30 GB of parquet does not fit a 16 GB runner, so the engines are
 # measured reading OneLake, not their caches. tpcds.yml still defaults to SF=60.
 HEADLINE_SF = 100
 
@@ -135,8 +135,6 @@ class TpcdsConfig(Config):
     # does not fit a 16 GB runner, so DuckDB's warm was only 8% under its cold (1,046s -> 962s).
     # One pass also halves a run that was already the longest in the repo.
     PASSES = ("cold",)
-    # The totals chart shows every scale the suite has been run at, the per-query chart only SF=100.
-    TOTALS_SFS = (10, 30, 60, 100)
     # HARD QUERIES FIRST, so a run that is going to die on one dies in its first minutes, not two
     # hours in after 98 easy ones. Q64 and Q72 lead because they are the ones that end runs
     # (DuckDB SF=100 Q64 out of spill; LakeSail SF=60 Q72 out of spill; Spark-OSS 341 s on Q72 at
@@ -155,7 +153,6 @@ class TpcdsConfig(Config):
     # the one whose data files a credential problem hides behind.
     PROBE_QUERIES = (3, 42)
     RESULTS_DIR = "results/tpcds"
-    DOCS_DIR = "docs/tpcds"
     CSV = "docs/data/tpcds_results.csv"
 
     @property

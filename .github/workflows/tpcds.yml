@@ -32,7 +32,7 @@ on:
         type: boolean
         default: false
       publish:
-        description: Commit results and charts. Off leaves the artifacts and touches nothing.
+        description: Commit results and the CSV. Off leaves the artifacts and touches nothing.
         type: boolean
         default: true
 
@@ -311,22 +311,22 @@ jobs:
           merge-multiple: true
           path: parts
 
-      - name: Merge, chart, and write the table view
+      - name: Merge and write the CSV
         run: python .github/scripts/publish.py parts
 
-      - name: Commit results and charts
+      - name: Commit results
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         # A GITHUB_TOKEN push does not trigger workflows, so this cannot loop.
         #
         # ON A REJECTED PUSH, REGENERATE -- NEVER REBASE. bench.yml has the run that paid for
-        # this rule. Nothing under results/ or docs/ is hand-written -- every byte is a function
+        # this rule. Nothing under results/ or docs/data/ is hand-written -- every byte is a function
         # of results/**/*.json -- so: drop this attempt, reset onto origin/main and generate
         # again. parts/ is untracked, so the artifacts survive the reset.
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3; do
-            git add results docs README.md
+            git add results docs/data
             if git diff --cached --quiet; then
               echo "nothing to commit"
               exit 0

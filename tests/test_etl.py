@@ -392,37 +392,3 @@ def test_runner_records_a_setup_failure():
     assert result.status == "setup_failed" and len(result.rows) == 1
     assert "no token" in result.rows[0].error and load_row(result) is None
     assert engine.closed
-
-
-# -- results page ---------------------------------------------------------------------------
-
-
-def test_each_engine_is_the_mean_of_its_own_last_three_runs(tmp_path):
-    """A run of one engine must not push the other engines off the page."""
-    from bench.etl.charts import recent_summary
-    from bench.store import EngineResult, Row, Run, load_all, write_run
-
-    def run(run_id: str, day: int, loads: dict[str, float]) -> None:
-        engines = {
-            engine: EngineResult(
-                version="v",
-                rows=[Row("cold", "setup", 0, 1.0), Row("cold", "load", 1, dur, rows=7)],
-            )
-            for engine, dur in loads.items()
-        }
-        stamp = f"2026-09-{day:02d}T00:00:00Z"
-        write_run(
-            tmp_path,
-            Run(run_id=run_id, run_started_at=stamp, sf=1000, test="etl", engines=engines),
-        )
-
-    for day, spark in ((1, 100.0), (2, 200.0), (3, 300.0), (4, 400.0)):
-        run(f"r{day}", day, {"pyspark_iceberg": spark, "duckdb_iceberg": 50.0})
-    run("r5", 5, {"pyspark_gluten_iceberg": 90.0})  # one engine, alone
-
-    summary = {r["engine"]: r for r in recent_summary(load_all(tmp_path), 1000)}
-    assert set(summary) == {"pyspark_iceberg", "duckdb_iceberg", "pyspark_gluten_iceberg"}
-    assert summary["pyspark_iceberg"]["load"] == 300.0  # runs 2-4, not run 1
-    assert summary["pyspark_iceberg"]["runs"] == 3
-    assert summary["pyspark_gluten_iceberg"]["runs"] == 1
-    assert summary["pyspark_gluten_iceberg"]["load"] == 90.0

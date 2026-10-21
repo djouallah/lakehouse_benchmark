@@ -6,7 +6,7 @@ the engine cached. A probe returns a detail string for `supported`, or raises `R
 `Skip` or `Broken`; anything else is classified by the status code in its message.
 
 Every reading lands in results/capability/<client>.json (save_results), which render_readme.py
-turns into docs/capability/RESULTS.md and the site's docs/data/capability.json.
+turns into the site's docs/data/capability.json.
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""The results file: round-trip, immutability, and the shape charts.py depends on."""
+"""The results file: round-trip, immutability, and the shape the CSV and the page depend on."""
 
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ def test_load_all_spans_multiple_runs(tmp_path):
 
 
 def test_load_all_is_empty_but_typed_on_a_fresh_repo(tmp_path):
-    """The first run publishes into an empty results/ directory; the charts must not crash."""
+    """The first run publishes into an empty results/ directory; the CSV must not crash."""
     table = load_all(tmp_path)
     assert table.num_rows == 0
     assert "engine" in table.column_names and "dur" in table.column_names
@@ -317,7 +317,7 @@ def test_a_failed_run_is_published_and_an_attach_only_run_is_not():
     )
 
 
-def test_a_failed_run_has_no_total_in_results_md():
+def test_a_failed_run_has_no_total_in_the_step_summary():
     """The sum of the queries before a failure is not a suite time; the page shows none either."""
     import importlib.util
     from pathlib import Path

@@ -1,13 +1,13 @@
-"""Write docs/capability/RESULTS.md and the site's docs/data/capability.json from
+"""Write the site's docs/data/capability.json (the Iceberg support tab) from
 results/capability/*.json. Every byte is generated; capability.yml's publish job runs this after
-the probes and commits both together with the results.
+the probes and commits it together with the results.
 
 A results file is what one probe script saved (Report.save, or isolation_duckdb's own): the
 engine, its version, the CI run, the date, and one row per probe with the probe's method name
 as `key`. A row of the capability table names, per engine, the probe keys it is read from: yes
 only if every one of them is yes, otherwise the worst outcome, with a note quoting what came back.
 
-    python .github/scripts/capability/render_readme.py [results-dir] [results-md] [site-json]
+    python .github/scripts/capability/render_readme.py [results-dir] [site-json]
 """
 
 from __future__ import annotations
@@ -25,33 +25,6 @@ ENGINES = ("spark", "trino", "sail", "duckdb", "chdb", "databend", "polars")
 SQL = ("spark", "trino", "sail", "duckdb", "chdb", "databend")
 # The SQL engines asked the DDL and row-level probes that chDB has no statement for.
 FULL_SQL = ("spark", "trino", "duckdb", "sail", "databend")
-TITLE = {
-    "spark": "Spark",
-    "trino": "Trino",
-    "polars": "Polars",
-    "duckdb": "DuckDB",
-    "sail": "Sail",
-    "chdb": "chDB",
-    "databend": "Databend",
-}
-LANGUAGE = {
-    "spark": "Java",
-    "trino": "Java",
-    "polars": "Rust",
-    "duckdb": "C++",
-    "sail": "Rust",
-    "chdb": "C++",
-    "databend": "Rust",
-}
-IMPLEMENTATION = {
-    "spark": "the Iceberg Java library, the reference",
-    "trino": "the Iceberg Java library, Trino's own SQL",
-    "polars": "own parquet reader and writer, pyiceberg for the catalog and commit",
-    "duckdb": "own",
-    "sail": "own, on DataFusion",
-    "chdb": "ClickHouse's own",
-    "databend": "iceberg-rust (its fork), Databend's own SQL",
-}
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
@@ -283,8 +256,6 @@ SITE_KEY = {
 
 # Worst first: the cell shows the worst outcome among the row's probes.
 SEVERITY = ["broken", "no", "no-op", "skipped", "supported"]
-MARK = {"supported": "yes", "no": "no", "no-op": "no-op", "skipped": "—", "broken": "?"}
-SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
 
 def load(results: Path) -> dict:
@@ -359,144 +330,8 @@ def by_engine(data: dict) -> tuple[list[str], dict]:
     return engines, by_key
 
 
-def capability(data: dict) -> tuple[list[str], list[str]]:
-    engines, by_key = by_engine(data)
-    head = ["| Operation | " + " | ".join(TITLE[e] for e in engines) + " |"]
-    head.append("|---|" + "---|" * len(engines))
-    head.append("| Version | " + " | ".join(data[e]["version"] for e in engines) + " |")
-    head.append("| Language | " + " | ".join(LANGUAGE[e] for e in engines) + " |")
-    head.append(
-        "| Iceberg implementation | " + " | ".join(IMPLEMENTATION[e] for e in engines) + " |"
-    )
-    notes: list[str] = []
-    for label, sources in ROWS:
-        cells = []
-        for e in engines:
-            if e not in sources:
-                cells.append("na")
-                continue
-            outcome, why = cell(by_key[e], sources[e])
-            short = falls_short(by_key[e], sources[e], label) if outcome == "supported" else ""
-            mark = MARK["no" if short else outcome]
-            if short:
-                notes.append(f"{TITLE[e]}, {label}: {short}")
-                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
-            elif outcome == "no" and (label, e) in CATALOG_NO:
-                notes.append(f"{TITLE[e]}, {label}: {CATALOG_NO[(label, e)]}")
-                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
-            elif why and outcome != "skipped":
-                notes.append(
-                    f"{TITLE[e]}, {label}: "
-                    + "; ".join(f"{r['question']}: `{_one_line(r['detail'])}`" for r in why)
-                )
-                mark += " " + str(len(notes)).translate(SUPERSCRIPT)
-            cells.append(mark)
-        head.append(f"| {label} | " + " | ".join(cells) + " |")
-    return head, [f"{i}. {n}" for i, n in enumerate(notes, 1)]
-
-
-LEVEL_TITLES = {
-    "insert": "INSERT, B appends",
-    "delete": "DELETE a row, B appends",
-    "update_other": "UPDATE another row, B appends",
-    "merge_other": "MERGE on another row, B appends",
-    "delete_vs_delete": "DELETE a row, B deletes another row",
-}
-
-
-def isolation(data: dict) -> list[str]:
-    iso = data.get("duckdb_isolation")
-    if not iso:
-        return []
-    levels = iso["levels"]
-    names = list(iso["configs"])
-    out = [
-        "## DuckDB: isolation levels and transactions",
-        "",
-        "DuckDB is the only one with transactions. Writer B (pyiceberg) commits between DuckDB's",
-        "read and DuckDB's commit; the race is injected at the REST commit through a local proxy",
-        "(`bench/capability/race.py`), so it is deterministic. Every DuckDB connection runs",
-        "`SET iceberg_use_metadata_log = false`",
-        "([duckdb-iceberg#1475](https://github.com/duckdb/duckdb-iceberg/issues/1475)).",
-        "",
-        "`refused` DuckDB's commit fails and B's change stands · `retried` both changes kept ·",
-        "`lost` B's change is gone · `broken` the race could not be run",
-        "",
-        "| DuckDB writes, B commits in between | " + " | ".join(names) + " |",
-        "|---|" + "---|" * len(names),
-    ]
-    for key, title in LEVEL_TITLES.items():
-        cells = [levels.get(f"{key}/{n}", {}).get("outcome", "—") for n in names]
-        if any(c != "—" for c in cells):
-            out.append(f"| {title} | " + " | ".join(cells) + " |")
-    out += [
-        "",
-        "Columns are table properties: "
-        + "; ".join(
-            f"`{n}` " + (", ".join(f"`{k} = {v}`" for k, v in p.items()) or "nothing set")
-            for n, p in iso["configs"].items()
-        )
-        + ".",
-        "",
-        "| Transaction (`BEGIN ... COMMIT`), B commits in the middle | Outcome | What came back |",
-        "|---|---|---|",
-    ]
-    out += [
-        f"| {t['title']} | {t['outcome']} | `{_one_line(t['detail'], 200)}` |"
-        for t in iso["transactions"]
-    ]
-    out += [
-        "",
-        "| Statements in one `BEGIN ... COMMIT`, no concurrent writer | Outcome | What came back |",
-        "|---|---|---|",
-    ]
-    out += [
-        f"| {c['title']} | {c['outcome']} | `{_one_line(c['detail'], 200)}` |"
-        for c in iso["combos"]
-    ]
-    return out + [""]
-
-
-def provenance(data: dict) -> list[str]:
-    lines = [
-        "## Where these readings come from",
-        "",
-        "The OneLake Iceberg REST catalog, read by CI "
-        "(`.github/workflows/capability.yml`), which writes this file. Every cell is a reading "
-        "taken by sending the request, not a property of the product: re-run rather than trust it.",
-        "",
-    ]
-    for name in (*ENGINES, "duckdb_isolation"):
-        if name in data:
-            d = data[name]
-            url = d["url"]
-            lines.append(f"- {name}: {d['version']}, [run {d['run']}]({url}), {d['date']}")
-    return lines + [""]
-
-
-def render(data: dict) -> str:
-    table, notes = capability(data)
-    out = [
-        "# Iceberg support: what each engine can do against the OneLake Iceberg REST catalog",
-        "",
-        "Spark is the reference: it uses the Iceberg Java library, as Trino does under its own "
-        "SQL. Polars, DuckDB, Sail, chDB and Databend have their own Iceberg code, no JVM.",
-        "",
-        "`yes` works · `no` refused · `no-op` accepted but not applied · `na` the engine has no "
-        "such operation · `—` not probed · `?` the probe could not ask",
-        "",
-        *table,
-        "",
-    ]
-    if notes:
-        out += ["## Notes", "", *notes, ""]
-    out += isolation(data)
-    out += provenance(data)
-    return "\n".join(out)
-
-
 def site_matrix(data: dict) -> dict:
-    """The capability grid for the site: RESULTS.md's cells, grouped. Each cell is
+    """The capability grid for the site, grouped. Each cell is
     {"o": outcome, "n": what came back}."""
     engines, by_key = by_engine(data)
     sources = dict(ROWS)
@@ -535,18 +370,15 @@ def site_matrix(data: dict) -> dict:
 
 def main() -> int:
     results = Path(sys.argv[1] if len(sys.argv) > 1 else "results/capability")
-    path = Path(sys.argv[2] if len(sys.argv) > 2 else "docs/capability/RESULTS.md")
-    site = Path(sys.argv[3] if len(sys.argv) > 3 else "docs/data/capability.json")
+    site = Path(sys.argv[2] if len(sys.argv) > 2 else "docs/data/capability.json")
     data = load(results)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render(data), encoding="utf-8", newline="\n")
     site.parent.mkdir(parents=True, exist_ok=True)
     site.write_text(
         json.dumps(site_matrix(data), ensure_ascii=False, indent=1) + "\n",
         encoding="utf-8",
         newline="\n",
     )
-    print(f"wrote {path} and {site} from {', '.join(sorted(data))}")
+    print(f"wrote {site} from {', '.join(sorted(data))}")
     return 0
 
 

@@ -180,25 +180,6 @@ def read_run(path: str | Path) -> Run:
     return Run(**{k: v for k, v in raw.items() if k in known_run}, engines=engines)
 
 
-def latest_per_engine(directory: str | Path, sf: int, engines: tuple[str, ...], run: Run) -> Run:
-    """`run`, with every engine it lacks filled in from that engine's most recent stored run.
-
-    What RESULTS.md shows once a run may carry a single engine: the page is each engine's
-    latest result at this scale, not only the engines the newest run happened to include.
-    """
-    merged = Run(**{f.name: getattr(run, f.name) for f in fields(Run) if f.name != "engines"})
-    merged.engines = dict(run.engines)
-    for path in sorted(Path(directory).glob(f"*_sf{sf}_*.json"), reverse=True):
-        missing = [e for e in engines if e not in merged.engines]
-        if not missing:
-            break
-        stored = read_run(path)
-        for engine in missing:
-            if engine in stored.engines:
-                merged.engines[engine] = stored.engines[engine]
-    return merged
-
-
 def write_engine_part(directory: str | Path, engine: str, result: EngineResult) -> Path:
     """One matrix job's slice, uploaded as an artifact for `publish` to merge."""
     path = Path(directory) / f"{engine}.json"

@@ -12,9 +12,9 @@ each engine against it from GitHub-hosted runners, with no secret that can leak.
 - **Public is required.** 4 vCPU / 16 GB runners are for public repos only. A private fork
   gets 2 vCPU / 7 GB, and SF=10 is OOM-killed.
 - **Actions are off on a new fork.** Enable them in the fork's Actions tab.
-- **The fork inherits the owner's `results/` and `docs/`.** Charts average each engine's last 3
-  complete runs (`RECENT_RUNS` in [`bench/charts.py`](bench/charts.py)), so your own numbers only
-  show once 3 of your runs replace the owner's.
+- **The fork inherits the owner's `results/` and `docs/`.** The results page averages each
+  engine's last 3 complete runs (`RECENT_RUNS` in [`docs/index.html`](docs/index.html)), so your
+  own numbers only show once 3 of your runs replace the owner's.
 
 ## 2. Azure and Fabric setup
 
@@ -55,7 +55,7 @@ from logs. `publish` also refuses to commit anything JWT-shaped (`leak_check` in
 Each step fails cheaply and points at one of the settings above. All workflows run on
 `ubuntu-latest`. `bench.yml`, `tpcds.yml`, `etl.yml`, `candidate_engine.yml` and `capability.yml`
 share the concurrency group `onelake`, so a second dispatch queues and never runs alongside the
-first. In the three benchmarks `publish` defaults to **true** and commits results and charts to
+first. In the three benchmarks `publish` defaults to **true** and commits results to
 `main`, so pass `-f publish=false` for trial runs. `capability.yml` has no such input: it always
 commits.
 
@@ -102,8 +102,8 @@ engine reads the whole working set on every run. Start at SF=1.
 
 Two rules first. A run is all or nothing: it stops at the first failed query, and so does a query
 that runs past 15 minutes (`QUERY_TIMEOUT_S` in [`bench/tpch/runner.py`](bench/tpch/runner.py)).
-The failed run is still published, as a failure with no time; charts and totals count only
-complete runs.
+The failed run is still published, as a failure with no time; the results page's totals count
+only complete runs.
 
 - **`AzureStorageFileSystem could not open file` from DuckDB, after `ATTACH` succeeded.** The azure
   extension is on its default transport, which fails the OneLake TLS handshake on Linux (on

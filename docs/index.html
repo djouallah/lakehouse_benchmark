@@ -6,8 +6,8 @@
 <title>Small Data Benchmark</title>
 <meta name="description" content="Iceberg engines on small compute: light ETL, TPC-H and TPC-DS against OneLake, fastest first.">
 <style>
-/* Surfaces, ink and engine colours are bench/charts.py's THEMES / LIGHT / DARK, so an engine looks
-   the same here as in every PNG. */
+/* Engine colours are bench/charts.py's LIGHT / DARK (tests/test_results_page.py holds them equal),
+   so an engine is the same colour on every tab. */
 :root {
   --surface: #fcfcfb; --raised: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8984;
   --grid: #d8d7d2; --track: #f0efeb; --accent: #2a78d6; --yes: #23955d; --no: #c2412d; --noop: #b07d00;
@@ -504,8 +504,12 @@ main .tiles > a { color: inherit; }
 <div class="tip" id="tip"></div>
 
 <script>
-// Same aggregation as bench/speedup.py, bench/tpch/charts.py totals_by_sf and bench/etl/charts.py.
-const RECENT_RUNS = 3;  // bench/charts.py RECENT_RUNS
+// The only aggregation of the results: each engine's mean over its last RECENT_RUNS runs.
+// ALL-HISTORY AVERAGING IS A TRAP, and it bit this repo: every config change -- credential vending
+// on and off, the catalog cache, an engine that was failing outright -- stayed blended into the
+// published number forever, invisibly. A short window shows a fix within three runs while still
+// smoothing the run-to-run noise of a shared runner, which a single run cannot do.
+const RECENT_RUNS = 3;
 const LABEL = {         // bench/charts.py LABEL
   duckdb_iceberg: "DuckDB", chdb_iceberg: "chDB", polars_iceberg: "Polars",
   lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",
