@@ -221,7 +221,7 @@ def download_aemo(
         """SELECT count(*) FROM daily_files_web
            WHERE 'daily::' || filename NOT IN (
                SELECT source_type || '::' || source_filename FROM _csv_archive_log)"""
-    ).fetchone()[0]
+    ).fetchall()[0][0]
 
     if aemo_new < daily_download_limit:
         # nemweb keeps the current window only; history comes from the GitHub mirror.
@@ -287,7 +287,7 @@ def download_aemo(
     # --- DUID REFERENCE DATA (refreshed at most once a day) --------------------------
     last = session.sql(
         "SELECT max(archived_at) FROM _csv_archive_log WHERE source_type LIKE 'duid_%'"
-    ).fetchone()[0]
+    ).fetchall()[0][0]
     fresh = last is not None and (datetime.now(last.tzinfo) - last).total_seconds() < 86400
     if fresh:
         scrub.safe_print(f"  DUID data fresh ({last}), skipping")
