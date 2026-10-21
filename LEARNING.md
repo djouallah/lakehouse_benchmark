@@ -117,9 +117,10 @@ Largest scale each engine completes, cold, every statement answered:
 
 ## Gluten/Velox
 
-- **No release, a nightly.** Gluten's releases stop at Spark 3.5. Apache's nightly Velox bundle
-  covers Spark 4.1 and is tested on 4.1.1, so this engine pins pyspark 4.1.1 while Spark-OSS runs
-  4.1.3. Compiling Velox in CI (hours, tens of GB) was ruled out.
+- **The nightly, not the release.** Gluten 1.7.0 (2026-08-26) ships a Spark 4.1 bundle; the bench
+  runs Apache's nightly 1.8.0-SNAPSHOT, which is ahead of it. The bundle is tested on Spark 4.1.1,
+  so this engine pins pyspark 4.1.1 while Spark-OSS runs 4.1.3. Compiling Velox in CI (hours, tens
+  of GB) was ruled out.
 - **Getting it to read OneLake took five fixes, each found by a smoke run.**
   1. Velox's ABFS connector only knows SharedKey, OAuth *with a client secret*, and SAS. There is
      no secret and OneLake has no account key, so the engine mints a 1-hour user-delegation SAS
