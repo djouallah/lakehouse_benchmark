@@ -28,6 +28,7 @@ ETL_ENGINES = (
     "duckdb_iceberg",
     "chdb_iceberg",
     "polars_iceberg",
+    "daft_iceberg",
     "lakesail_iceberg",
     "pyspark_iceberg",
     "pyspark_gluten_iceberg",
@@ -42,6 +43,7 @@ TABLE = {
     "duckdb_iceberg": "duckdb",
     "chdb_iceberg": "chdb",
     "polars_iceberg": "polars",
+    "daft_iceberg": "daft",
     "lakesail_iceberg": "sail",
     "pyspark_iceberg": "spark",
     "pyspark_gluten_iceberg": "gluten",
@@ -88,6 +90,12 @@ class EtlConfig(Config):
     def csv_abfss(self) -> str:
         """`abfss://` prefix of the landed CSVs, for every engine that speaks object storage."""
         return f"{self.base_path}/{CSV_DIR}"
+
+    @property
+    def csv_az(self) -> str:
+        """`az://<workspace>/<lakehouse>/Files/csv`: the same files in the one Azure URI form Daft
+        parses correctly on OneLake (see engines/daft_iceberg.py)."""
+        return f"az://{self.workspace_id}/{self.lakehouse_id}/{CSV_DIR}"
 
     @property
     def csv_https(self) -> str:

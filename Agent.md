@@ -80,7 +80,7 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 |---|---|
 | `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (9), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
 | `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (8, no chdb), `regenerate` (false), `publish` |
-| `etl.yml` | `files` 10/100/1000 (100), `engines` (10, includes pandas), `publish` |
+| `etl.yml` | `files` 10/100/1000 (100), `engines` (11, includes daft and pandas, both ETL only), `publish` |
 | `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
 | `capability.yml` (iceberg support) | `clients` spark/trino/polars/duckdb/sail/chdb/databend/duckdb_isolation (all), `keep` (false), `probes` (all), `publish` (false) |
@@ -182,7 +182,7 @@ before `bench.yml`.
 
 | Engine | Why | Revisit when |
 |---|---|---|
-| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It rejects backticks. Dropped from the ETL on 2026-10-19 and its code removed on 2026-10-21. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), split into [#7601](https://github.com/Eventual-Inc/Daft/issues/7601) (decimals) and [#7602](https://github.com/Eventual-Inc/Daft/issues/7602) (`CASE`) |
+| Daft | Runs 16/22 TPC-H queries. It stops at decimal precision 38, and `l_extendedprice * (1 - l_discount)` needs more. It runs in the ETL only, like pandas. | [Eventual-Inc/Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), split into [#7601](https://github.com/Eventual-Inc/Daft/issues/7601) (decimals) and [#7602](https://github.com/Eventual-Inc/Daft/issues/7602) (`CASE`) |
 | DataFusion Comet | Its native Iceberg scan declines `abfss://` (`builtin_storage_schemes` in `native/core/src/execution/operators/iceberg_common.rs`, which `CometScanRule.scala` loads since PR #6065), so OneLake scans run on the JVM anyway. It would also bypass `WorkloadIdentityTokenProvider`. | `abfss` appears in the native read list ([#6058](https://github.com/apache/datafusion-comet/issues/6058)) |
 
 TPC-DS runs eight engines, all but chDB. Why it is out is in the comment above

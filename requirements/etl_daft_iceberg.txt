@@ -1,0 +1,10 @@
+# Daft for the ETL only (no TPC-H or TPC-DS, Eventual-Inc/Daft#7532), plus
+# azure-storage-file-datalake (bench/etl/data.py lists Files/csv over ADLS before the engine
+# starts). Daft's own write_iceberg takes a pyiceberg Table and commits through
+# it, so pyiceberg stays. `daft[azure]` and never `daft[azure,iceberg]`, as the read benchmark
+# explains: the extra caps pyiceberg at <=0.11.1.
+azure-identity>=1.19
+azure-storage-file-datalake>=12.17
+psutil>=6
+pyiceberg[pyarrow,adlfs]>=0.12.0
+daft[azure]>=0.7.25

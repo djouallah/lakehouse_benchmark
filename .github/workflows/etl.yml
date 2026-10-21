@@ -28,7 +28,7 @@ on:
       engines:
         description: Comma-separated engines to run.
         type: string
-        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,pandas_iceberg,databend_iceberg
+        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,daft_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,pandas_iceberg,databend_iceberg
       publish:
         description: Commit results and the CSV. Off leaves the artifacts and touches nothing.
         type: boolean
@@ -80,7 +80,7 @@ jobs:
         # The matrix needs a JSON array; the input is a human-friendly CSV. `started` is stamped
         # once here so every artifact in the run shares one timestamp.
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,pandas_iceberg,databend_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,daft_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,pandas_iceberg,databend_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
@@ -110,6 +110,7 @@ jobs:
       ${{ matrix.engine == 'duckdb_iceberg' && '🦆 DuckDB'
       || matrix.engine == 'chdb_iceberg' && '⚡ chDB'
       || matrix.engine == 'polars_iceberg' && '🐻‍❄️ Polars'
+      || matrix.engine == 'daft_iceberg' && '💠 Daft'
       || matrix.engine == 'lakesail_iceberg' && '⛵ LakeSail'
       || matrix.engine == 'pyspark_iceberg' && '✨ Spark-OSS'
       || matrix.engine == 'pyspark_gluten_iceberg' && '🚀 Gluten/Velox'
@@ -156,7 +157,7 @@ jobs:
       - name: Install ${{ matrix.engine }}
         run: |
           pip install -r "requirements/etl_${BENCH_ENGINE}.txt"
-          pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pandas|pysail|pyspark|pyiceberg|pyarrow)=' || true
+          pip list --format=freeze | grep -Ei '^(duckdb|chdb|polars|pandas|daft|pysail|pyspark|pyiceberg|pyarrow)=' || true
 
       # DuckDB is the nightly CLI, not a wheel: bench/duckdb_cli.py says why, and
       # .github/scripts/duckdb_nightly.py which nightly.
