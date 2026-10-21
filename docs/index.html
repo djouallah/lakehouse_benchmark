@@ -493,7 +493,8 @@ main .tiles > a { color: inherit; }
     <p>When a job fails, runs out of memory or returns a wrong answer, the bug is filed upstream: one issue per bug,
       with a script that reproduces it on a clean machine. The maintainers write the fix; the bench picks it up from
       main or the next release, and the result here changes (<a href="#reports">Bug reports</a>).</p>
-    <p>The timings are there because a slow query is a bug too. They are not a ranking.</p>
+    <p>The timings are not a ranking, and a slow query is not a bug. Running out of memory is: the free runner
+      has 100 GB of free disk to spill to, so there is no technical reason for an OOM.</p>
     <p>The SQL, the workflows and every run's logs are in the
       <a href="https://github.com/djouallah/lakehouse_benchmark">repo</a>.</p>
   </section>
