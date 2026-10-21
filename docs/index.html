@@ -749,9 +749,6 @@ function clusterFact(items) {
 // One cell per operation and engine.
 const WORD = { supported: "yes", no: "no", "no-op": "accepted, not applied", na: "no such operation",
                skipped: "not probed", broken: "the probe could not ask" };
-// How an engine is asked when it is not SQL: Polars' cells are its Python API (sink_iceberg,
-// delete_iceberg, scan_iceberg).
-const VIA = { polars_iceberg: "Python API, not SQL" };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function renderCapability() {
@@ -778,7 +775,6 @@ function renderCapability() {
         return `<th scope="col" style="--c: var(--${e}, var(--ink-3))"><div class="eng">
           <span class="nm"><i class="sw"></i>${esc(LABEL[e] ?? e)}</span>
           <span class="ver" title="${esc(v)}">${esc(v)}</span>
-          ${VIA[e] ? `<span class="ver">${esc(VIA[e])}</span>` : ""}
           <span class="score" aria-hidden="true"><i style="width:${(100 * yes / Math.max(of, 1)).toFixed(0)}%"></i></span>
           <span class="ct">${yes} of ${of}</span></div></th>`;
       }).join("")}</tr></thead>
