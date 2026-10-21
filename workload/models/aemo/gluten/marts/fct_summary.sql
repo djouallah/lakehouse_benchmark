@@ -36,9 +36,7 @@
     cannot compare a UTC timestamp key ("Unsupported data type in sort merge join comparator:
     Timestamp(us, \"UTC\")", run 39690013877; apache/datafusion#26003). AEMO's intervals are whole
     seconds, so the match is the same. #}
-{%- macro interval_key(alias) -%}
-{%- if target.name == 'sail' -%}CAST({{ alias }}.SETTLEMENTDATE AS BIGINT){%- else -%}{{ alias }}.SETTLEMENTDATE{%- endif -%}
-{%- endmacro %}
+{%- set interval_key = 'CAST({}.SETTLEMENTDATE AS BIGINT)' if target.name == 'sail' else '{}.SETTLEMENTDATE' %}
 
 WITH
 -- The unit universe the DAILY branch can reproduce. Deliberately UNBOUNDED, not a trailing
@@ -89,7 +87,7 @@ daily_summary AS (
   -- INNER joins: `WHERE p.INTERVENTION = 0` always discarded null-price rows anyway.
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price') }} p
-    ON {{ interval_key('s') }} = {{ interval_key('p') }} AND d.Region = p.REGIONID
+    ON {{ interval_key.format('s') }} = {{ interval_key.format('p') }} AND d.Region = p.REGIONID
   WHERE
     s.INTERVENTION = 0
     AND s.INITIALMW <> 0
@@ -112,7 +110,7 @@ daily_summary AS (
   FROM {{ ref('fct_scada_today') }} s
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price_today') }} p
-    ON {{ interval_key('s') }} = {{ interval_key('p') }} AND d.Region = p.REGIONID
+    ON {{ interval_key.format('s') }} = {{ interval_key.format('p') }} AND d.Region = p.REGIONID
   WHERE
     s.INITIALMW <> 0
     AND p.INTERVENTION = 0
