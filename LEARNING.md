@@ -444,7 +444,7 @@ Largest scale each engine completes, cold, every statement answered:
     ([#29968](https://github.com/pola-rs/polars/issues/29968)) was fixed on main by
     [PR #30087](https://github.com/pola-rs/polars/pull/30087),
     `sink_iceberg(create_namespace_if_not_exists=True)`: the Create namespace cell is a yes. Polars
-    has no way to drop one ([#30212](https://github.com/pola-rs/polars/issues/30212)), so Drop namespace is a no, as for chDB.
+    has no way to drop one ([#30212](https://github.com/pola-rs/polars/issues/30212), closed, see below), so Drop namespace is a no, as for chDB.
   - Fixed on main: the `bucket` partition transform ([#29844](https://github.com/pola-rs/polars/issues/29844),
     [PR #30091](https://github.com/pola-rs/polars/pull/30091)).
   - Fixed on main 2026-10-20, not yet released: delete rows by predicate ([#29843](https://github.com/pola-rs/polars/issues/29843)),
@@ -455,7 +455,12 @@ Largest scale each engine completes, cold, every statement answered:
     (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE). Reading a catalog in SQL is on main
     (`SQLContext.register_catalog`, [PR #30113](https://github.com/pola-rs/polars/pull/30113)). On
     main, `CREATE TABLE` on a catalog name reports success and writes nothing (comment on #29892).
-  - Filed 2026-10-22 on main `fd703335f7`, one issue each, all open. Operations Polars has no API
+  - **Closed by Polars, too many at once.** On 2026-10-22 we filed 19 AI-generated issues, one per
+    gap, in about 3 minutes (main `fd703335f7`). A maintainer closed them all the same day under
+    [AI_POLICY.md](https://github.com/pola-rs/polars/blob/main/AI_POLICY.md): "You also opened
+    dozens of closely related issues at a time, this is not welcome"
+    ([#30222](https://github.com/pola-rs/polars/issues/30222)). The volume is the likely trigger.
+    The dashboard no longer lists them, and the gaps are still there. The issues were: operations Polars has no API
     for (pyiceberg needed today): drop table [#30211](https://github.com/pola-rs/polars/issues/30211), drop namespace [#30212](https://github.com/pola-rs/polars/issues/30212), update rows
     [#30213](https://github.com/pola-rs/polars/issues/30213), drop column [#30214](https://github.com/pola-rs/polars/issues/30214), rename column [#30215](https://github.com/pola-rs/polars/issues/30215), partition evolution [#30216](https://github.com/pola-rs/polars/issues/30216),
     table property [#30217](https://github.com/pola-rs/polars/issues/30217), sort order [#30218](https://github.com/pola-rs/polars/issues/30218), metadata tables [#30219](https://github.com/pola-rs/polars/issues/30219), branch [#30220](https://github.com/pola-rs/polars/issues/30220),
