@@ -1,7 +1,7 @@
 """Run the dbt workload on ONE engine and write its part: `python workload_run_engine.py parts`.
 
-The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, gluten or trino --
-or `sail`, the probe target, run only by workload_sail_probe.yml.
+The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, gluten, trino or
+sail.
 
     1. mint the OneLake bearer and hand it to the profile through the environment
     2. gluten only: start bench's Gluten/Velox SparkSession (the ETL's writing variant, so the
@@ -44,7 +44,6 @@ from bench.workload.config import (
     BENCH_ENGINE,
     DEFAULT_PROCESS_LIMIT,
     ENGINES,
-    PROBE_ENGINES,
     WorkloadConfig,
 )
 
@@ -324,8 +323,8 @@ def process_limit(engine: str) -> int:
 def main(parts: Path) -> int:
     cfg = WorkloadConfig.from_env()
     engine = cfg.engine
-    if engine not in ENGINES + PROBE_ENGINES:
-        raise SystemExit(f"BENCH_ENGINE must be one of {ENGINES + PROBE_ENGINES}, not {engine!r}")
+    if engine not in ENGINES:
+        raise SystemExit(f"BENCH_ENGINE must be one of {ENGINES}, not {engine!r}")
     parts.mkdir(parents=True, exist_ok=True)
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     part = {

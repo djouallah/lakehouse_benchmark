@@ -75,9 +75,9 @@ aemo_electricity:
       schema: mart
       threads: 1
 
-    # A PROBE, not a leg of workload.yml (workload_sail_probe.yml): the gluten tree on Sail's
-    # in-process Spark Connect server, which workload_run_engine.py starts before dbt; SPARK_REMOTE
-    # points `method: session`'s getOrCreate() at it.
+    # Sail's in-process Spark Connect server, which workload_run_engine.py starts before dbt (bench's
+    # Sail session, the OneLake catalog its default); SPARK_REMOTE points `method: session`'s
+    # getOrCreate() at it.
     sail:
       type: spark
       method: session

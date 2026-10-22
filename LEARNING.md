@@ -810,11 +810,11 @@ so they share one history. First all-green run:
 - **dbt-polars tests need `azure/login`.** They read through pyiceberg's ADLS FileIO with no
   credential, which falls back to azure-identity's default chain.
 
-### dbt on Sail (probe)
+### dbt on Sail
 
-`workload_sail_probe.yml` runs the gluten tree through dbt-spark `method: session` on Sail's
-in-process Spark Connect server (pysail main 151a417d5d), into `dbt_sail_*`. It is not a leg:
-workload.yml, `ENGINES` and the page do not know it. First green run, 10 files a model:
+The fifth leg (2026-10-22), first run as a probe: dbt-spark `method: session` on Sail's in-process
+Spark Connect server (pysail main, a tmp_sail_main.yml build), its own tree copied from the gluten
+one, into `dbt_sail_*`, 10 files a run. First green run (probe, main 151a417d5d), 10 files a model:
 [39692966782](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39692966782),
 6/6 models and 39/39 tests (6 warns, the same ones the legs have), every merge incremental,
 283 s, 5.6 GB peak RSS, 9.1 GB spilled. What it took, each on the `sail` target only:

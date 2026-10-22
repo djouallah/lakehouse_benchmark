@@ -31,7 +31,7 @@
 {% endmacro %}
 
 
-{#-- The sail probe target only: the csv view's schema padded to 140 STRING columns, as the Trino
+{#-- The sail leg only: the csv view's schema padded to 140 STRING columns, as the Trino
      leg's external tables are (workload_run_engine.py, TRINO_CSV_TABLES) and the Sail ETL's read is
      (bench/etl/engines/_spark_df.py). Sail's csv reader refuses a row LONGER than the schema --
      "incorrect number of fields for line 291, expected 53 got 120" (run 39686575857) -- where
@@ -73,7 +73,7 @@
   {%- else -%}
     {%- set path = folder ~ '/{' ~ files | join(',') ~ '}' -%}
   {%- endif -%}
-  {#-- The sail probe target: Sail's csv reader refuses a row shorter than the schema ("Csv error:
+  {#-- The sail leg: Sail's csv reader refuses a row shorter than the schema ("Csv error:
        incorrect number of fields for line 1, expected 130 got 10", run 39685977867) unless told
        otherwise; Spark's PERMISSIVE pads it with nulls. bench/etl/engines/_spark_df.py, same option. --#}
   CREATE OR REPLACE TEMPORARY VIEW raw_{{ record }} ({{ spark_csv_view_schema(record) }})
@@ -123,7 +123,7 @@
   {%- set spec = aemo_spec(record) -%}
   {%- set parts = [] -%}
   {%- for col, val in spec['equals'] %}{% do parts.append(prefix ~ col ~ " = '" ~ val ~ "'") %}{% endfor -%}
-  {#-- TRY_CAST on the sail probe target: Sail's CAST raises on the files' own header row ("Cast error:
+  {#-- TRY_CAST on the sail leg: Sail's CAST raises on the files' own header row ("Cast error:
        Cannot cast string 'SCADAVALUE' to value of Float64 type", run 39687083463), where Spark's
        gives NULL and `I = 'D'` drops the row. --#}
   {%- set cast = 'TRY_CAST(' if target.name == 'sail' else 'CAST(' -%}

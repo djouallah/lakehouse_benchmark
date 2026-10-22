@@ -5,6 +5,7 @@
 #   polars   dbt-polars, pyiceberg REST catalog (+ an Azure storage catalog over the landing)
 #   gluten   dbt-spark `method: session` on Spark + Gluten/Velox, Iceberg (port of the Delta `spark`)
 #   trino    dbt-trino on bench's Trino container, Iceberg (ported from the gluten tree)
+#   sail     dbt-spark `method: session` on LakeSail over Spark Connect, Iceberg (from the gluten tree)
 #
 # ONE PROJECT, ONE TREE PER ENGINE: models/aemo/<engine>/<layer>/<model>.sql. Exactly one tree
 # is +enabled per run, keyed on target.name, so the same model names never collide. There is
@@ -60,9 +61,13 @@ models:
         +enabled: "{{ target.name == 'polars' }}"
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
-      # `sail` is the probe target (workload_sail_probe.yml): the same Spark SQL tree on Sail.
       gluten:
-        +enabled: "{{ target.name == 'gluten' or target.name == 'sail' }}"
+        +enabled: "{{ target.name == 'gluten' }}"
+        +file_format: iceberg
+        dimensions: {+schema: mart}
+        marts:      {+schema: landing}
+      sail:
+        +enabled: "{{ target.name == 'sail' }}"
         +file_format: iceberg
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
@@ -84,5 +89,6 @@ data_tests:
       # singular tests under tests/aemo/<engine>/ do have one, and are gated on it.
       duckdb: {+enabled: "{{ target.name == 'duckdb' }}"}
       polars: {+enabled: "{{ target.name == 'polars' }}"}
-      gluten: {+enabled: "{{ target.name == 'gluten' or target.name == 'sail' }}"}
+      gluten: {+enabled: "{{ target.name == 'gluten' }}"}
+      sail:   {+enabled: "{{ target.name == 'sail' }}"}
       trino:  {+enabled: "{{ target.name == 'trino' }}"}

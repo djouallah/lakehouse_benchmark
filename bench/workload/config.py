@@ -14,7 +14,7 @@ from bench.config import ICEBERG_ENDPOINT, Config
 
 # The dbt targets, in run order. Same names as workload/profiles.yml and the engine folders under
 # workload/models/aemo/.
-ENGINES = ("duckdb", "polars", "gluten", "trino")
+ENGINES = ("duckdb", "polars", "gluten", "trino", "sail")
 
 # bench's engine id for each target, so labels and colours match the rest of the page once it is
 # shown there.
@@ -25,10 +25,6 @@ BENCH_ENGINE = {
     "trino": "trino_iceberg",
     "sail": "lakesail_iceberg",
 }
-
-# Targets workload_run_engine.py also runs, but only from their own probe workflow
-# (workload_sail_probe.yml): never in workload.yml's matrix, never published.
-PROBE_ENGINES = ("sail",)
 
 
 # The landing zone, inside bench's lakehouse. Its own folder: the ETL's Files/csv holds only the
@@ -53,7 +49,7 @@ class WorkloadConfig(Config):
 
     @property
     def estimated_gib(self) -> float:
-        """What an engine sizes its memory against (bench's Sail engine, the sail probe: sort-merge
+        """What an engine sizes its memory against (bench's Sail engine, the sail leg: sort-merge
         joins past half its 10 GiB pool). Not an SF: the workload's tables only grow -- fct_scada is
         past 380M rows -- so this says "bigger than memory". With hash joins the runner died in
         fct_scada's merge (run 39690698607): a hash join's build side cannot spill."""

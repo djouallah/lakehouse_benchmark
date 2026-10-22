@@ -3,7 +3,7 @@ name: dbt workload
 # THE "MY WORKLOAD" TEST: the fabric-dbt-examples dbt project (workload/, see workload/SOURCE),
 # run by bench on its own engines and auth, Iceberg only.
 #
-#   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino; one at a time)  ->  grade
+#   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino, sail; one at a time)  ->  grade
 #
 # ON A SCHEDULE, EVERY 2 HOURS, NEVER RESET: new AEMO files land every run and each engine folds
 # process_limit of them into its own tables, which only grow. The Real workload tab shows how far
@@ -19,15 +19,15 @@ on:
   workflow_dispatch:
     inputs:
       engines:
-        description: Comma-separated dbt targets (duckdb, polars, gluten, trino).
+        description: Comma-separated dbt targets (duckdb, polars, gluten, trino, sail).
         type: string
-        default: duckdb,polars,gluten,trino
+        default: duckdb,polars,gluten,trino,sail
       process_limit:
         description: Files each fact model folds per run, newest first. A backlog converges over runs.
         type: string
         default: "50"
       process_limits:
-        description: Per-engine files a run, e.g. "gluten=100,trino=150"; empty uses each engine's proven batch (gluten=360,duckdb=360,trino=100,polars=50). Engines not named use process_limit.
+        description: Per-engine files a run, e.g. "gluten=100,trino=150"; empty uses each engine's proven batch (gluten=360,duckdb=360,trino=100,polars=50,sail=10). Engines not named use process_limit.
         type: string
         default: ""
       daily_download_limit:
@@ -82,7 +82,7 @@ jobs:
 
       - id: plan
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb,polars,gluten,trino' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb,polars,gluten,trino,sail' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
@@ -125,6 +125,7 @@ jobs:
       || matrix.engine == 'polars' && '🐻‍❄️ dbt-polars'
       || matrix.engine == 'gluten' && '🚀 dbt-spark on Gluten/Velox'
       || matrix.engine == 'trino' && '🐰 dbt-trino'
+      || matrix.engine == 'sail' && '⛵ dbt-spark on LakeSail'
       || matrix.engine }}
     runs-on: ubuntu-latest
     # The OneLake bearer is baked into the profile (DuckDB's ATTACH, pyiceberg's catalog) and
@@ -144,8 +145,9 @@ jobs:
       process_limit: ${{ inputs.process_limit || '50' }}
       # Each engine's largest batch that holds on the schedule as its tables grow (2026-10-21):
       # Spark 360 (39403578519), DuckDB 360 with the TEMP VIEW batch (39427985965), Trino 100 (its
-      # 9 GB per-query cap failed 360), Polars 50: at 75 the runner died (39493139124).
-      PROCESS_LIMITS: ${{ inputs.process_limits || 'gluten=360,duckdb=360,trino=100,polars=50' }}
+      # 9 GB per-query cap failed 360), Polars 50: at 75 the runner died (39493139124). Sail 10, its
+      # only proven batch so far (probe run 39692966782: 5.6 GB peak RSS, 9.1 GB spilled).
+      PROCESS_LIMITS: ${{ inputs.process_limits || 'gluten=360,duckdb=360,trino=100,polars=50,sail=10' }}
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       DUCKDB_TEMP_DIR: /mnt/duckdb_spill
@@ -168,7 +170,7 @@ jobs:
       - name: Free disk
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          sudo mkdir -p /mnt/duckdb_spill /mnt/polars_spill /mnt/spark_spill && sudo chown "$USER" /mnt/duckdb_spill /mnt/polars_spill /mnt/spark_spill
+          sudo mkdir -p /mnt/duckdb_spill /mnt/polars_spill /mnt/spark_spill /mnt/sail_spill && sudo chown "$USER" /mnt/duckdb_spill /mnt/polars_spill /mnt/spark_spill /mnt/sail_spill
           df -h / /mnt
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -205,6 +207,13 @@ jobs:
             ~/.ivy2.5.2
             ~/.m2/repository
           key: ivy-spark41-iceberg111-v1
+
+      # Sail spills to the OS temp dir, and /tmp has a quota: fct_scada's merge failed "Disk quota
+      # exceeded (os error 122)" (run 39691469943). Sail's leg only: an empty TMPDIR elsewhere would
+      # not mean /tmp to every engine.
+      - name: Sail's spill on /mnt
+        if: matrix.engine == 'sail'
+        run: echo "TMPDIR=/mnt/sail_spill" >> "$GITHUB_ENV"
 
       # The official image bench/trino.py pins, pulled before the build.
       - name: Pull the Trino image

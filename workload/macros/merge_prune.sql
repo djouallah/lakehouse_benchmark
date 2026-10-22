@@ -21,7 +21,7 @@
   {%- set keys = [key] if key is string else (key or []) -%}
   {%- set col = (['file', 'date'] | select('in', keys) | list | first) -%}
   {%- if not col or not execute -%}{{ return([]) }}{%- endif -%}
-  {#-- The sail probe target casts the collected column: Sail returned `file` as Arrow string_view
+  {#-- The sail leg casts the collected column: Sail returned `file` as Arrow string_view
        here, which the Spark Connect client cannot read ("[UNSUPPORTED_DATA_TYPE_FOR_ARROW_CONVERSION]
        string_view is not supported in conversion to Arrow", runs 39687083463 and 39687830566, with
        pyspark-client 4.2.0 and 4.1.1): DISTINCT over substring_index, lakehq/sail#2835. --#}

@@ -28,15 +28,6 @@
 {# Closes with `%}`, NOT `-%}`: a right-strip swallows the newlines after this tag and
    glues WITH onto the `-- depends_on` comment line above, commenting the keyword out. #}
 {%- set scoped = is_incremental() %}
-{#- The sail probe target: Sail reads `GROUP BY ALL` as a column named ALL ("attribute
-    ObjectName([Identifier(\"ALL\")]) is missing from the schema", run 39688464508; lakehq/sail#2836); the ordinals
-    are what the Trino tree uses. #}
-{%- set group_by = '1, 2, 3' if target.name == 'sail' else 'ALL' %}
-{#- The sail probe target joins the interval on its epoch seconds: DataFusion's sort-merge join
-    cannot compare a UTC timestamp key ("Unsupported data type in sort merge join comparator:
-    Timestamp(us, \"UTC\")", run 39690013877; apache/datafusion#26003). AEMO's intervals are whole
-    seconds, so the match is the same. #}
-{%- set interval_key = 'CAST({}.SETTLEMENTDATE AS BIGINT)' if target.name == 'sail' else '{}.SETTLEMENTDATE' %}
 
 WITH
 -- The unit universe the DAILY branch can reproduce. Deliberately UNBOUNDED, not a trailing
@@ -87,7 +78,7 @@ daily_summary AS (
   -- INNER joins: `WHERE p.INTERVENTION = 0` always discarded null-price rows anyway.
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price') }} p
-    ON {{ interval_key.format('s') }} = {{ interval_key.format('p') }} AND d.Region = p.REGIONID
+    ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
   WHERE
     s.INTERVENTION = 0
     AND s.INITIALMW <> 0
@@ -95,7 +86,7 @@ daily_summary AS (
     {% if scoped %}
     AND s.DATE IN (SELECT date FROM rebuild_dates)
     {% endif %}
-  GROUP BY {{ group_by }}
+  GROUP BY ALL
 
   UNION ALL
 
@@ -110,14 +101,14 @@ daily_summary AS (
   FROM {{ ref('fct_scada_today') }} s
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price_today') }} p
-    ON {{ interval_key.format('s') }} = {{ interval_key.format('p') }} AND d.Region = p.REGIONID
+    ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
   WHERE
     s.INITIALMW <> 0
     AND p.INTERVENTION = 0
     -- Only units the daily branch will be able to reproduce once this date settles.
     AND s.DUID IN (SELECT DUID FROM dispatch_duids)
     AND s.SETTLEMENTDATE > (SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMP)) FROM {{ ref('fct_scada') }})
-  GROUP BY {{ group_by }}
+  GROUP BY ALL
 )
 
 SELECT

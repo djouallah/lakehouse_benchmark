@@ -1114,7 +1114,7 @@ function dagLayout(dag) {
 
 // The Real workload tab: engines by maturity, not speed. The Spark leg runs on Gluten/Velox, so it is named
 // that, not "Spark", which would read as vanilla Spark.
-const WORKLOAD_ORDER = [GLUTEN, "trino_iceberg", "duckdb_iceberg", "polars_iceberg"];
+const WORKLOAD_ORDER = [GLUTEN, "trino_iceberg", "duckdb_iceberg", "polars_iceberg", "lakesail_iceberg"];
 const wlName = e => LABEL[e] ?? e;
 
 function renderRealWorkload() {
