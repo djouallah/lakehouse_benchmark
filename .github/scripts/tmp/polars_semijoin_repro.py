@@ -69,6 +69,34 @@ def gen():
     pl.DataFrame({"date": [last - timedelta(days=k) for k in range(7)]}).write_parquet(f"{DATA}/rebuild.parquet")
 
 
+def lazy_api():
+    """The same filter_last/table query in the LazyFrame API (for the upstream issue)."""
+    import polars as pl
+
+    scada = pl.scan_parquet(f"{DATA}/scada_*.parquet").filter(pl.col("intervention") == 0)
+    dim = pl.scan_parquet(f"{DATA}/dim.parquet")
+    price = pl.scan_parquet(f"{DATA}/price.parquet").filter(pl.col("intervention") == 0)
+    rebuild = pl.scan_parquet(f"{DATA}/rebuild.parquet")
+    return (
+        scada.join(dim, on="duid")
+        .join(price, on=["ts", "region"])
+        .join(rebuild, on="date", how="semi")
+        .group_by("date", "ts", "duid")
+        .agg(pl.col("mw").max(), pl.col("rrp").max())
+    )
+
+
+def query(name):
+    import polars as pl
+
+    if name.startswith("lazy_api"):
+        lf = lazy_api()
+    else:
+        lf = ctx().execute(VARIANTS[name.removesuffix("/no_join_order")])
+    flags = pl.QueryOptFlags(join_order=False) if name.endswith("/no_join_order") else pl.QueryOptFlags()
+    return lf, flags
+
+
 def ctx():
     import polars as pl
 
@@ -82,7 +110,8 @@ def ctx():
 
 def run(name):
     t0 = time.time()
-    df = ctx().execute(VARIANTS[name]).collect()  # default engine, as dbt-polars collects
+    lf, flags = query(name)
+    df = lf.collect(optimizations=flags)  # default engine, as dbt-polars collects
     peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
     print(f"{name:26s} rows={df.height:>9,}  {time.time() - t0:6.1f} s  peak RSS {peak:8,.0f} MB", flush=True)
 
