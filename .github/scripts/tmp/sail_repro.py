@@ -43,6 +43,11 @@ case(
     ).collect(),
 )
 
+# 0. DESCRIBE without TABLE (lakehq/sail#2712), as gluten_create_table_as.sql runs it.
+spark.sql("CREATE OR REPLACE TEMPORARY VIEW dv AS SELECT 1 AS a, 'x' AS b")
+case("describe_table_keyword (control)", lambda: spark.sql("DESCRIBE TABLE dv").collect())
+case("describe_no_keyword", lambda: spark.sql("describe dv").collect())
+
 # 2. string_view: where a collected string column comes back as an Arrow view type.
 pq = os.path.join(work, "pq")
 spark.sql(
