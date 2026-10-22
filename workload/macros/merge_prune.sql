@@ -39,7 +39,23 @@
     {%- endif -%}
   {%- endfor -%}
   {%- if literals | length == 0 -%}{{ return([]) }}{%- endif -%}
-  {{ return(['DBT_INTERNAL_DEST.' ~ col ~ ' IN (' ~ literals | join(', ') ~ ')']) }}
+  {%- set predicates = ['DBT_INTERNAL_DEST.' ~ col ~ ' IN (' ~ literals | join(', ') ~ ')'] -%}
+  {#-- `file` CANNOT PRUNE: Iceberg keeps string bounds truncated to 16 characters by default
+       (write.metadata.metrics.default truncate(16); Sail's MetricsMode::Truncate(16)), and every
+       file name starts PUBLIC_DAILY_20..., so every data file "may match" every batch. Sail's merge
+       then full-joined and sorted all 79M fct_scada rows each run, spilled 64 GB and failed
+       "Resources exhausted" (run 39712751864). The facts' DATE is CAST(SETTLEMENTDATE AS DATE),
+       written by the same SQL into target and batch, and a matching target row has a batch row's
+       SETTLEMENTDATE -- so the batch's DATE range bounds it exactly, and a date's bounds are
+       never truncated. --#}
+  {%- if col == 'file' and 'settlementdate' in (keys | map('lower') | list) -%}
+    {%- set r = run_query('SELECT MIN(DATE), MAX(DATE) FROM ' ~ source).rows[0] -%}
+    {%- if r[0] is not none and r[1] is not none -%}
+      {%- do predicates.append("DBT_INTERNAL_DEST.DATE BETWEEN DATE '" ~ (r[0] | string)[:10]
+                               ~ "' AND DATE '" ~ (r[1] | string)[:10] ~ "'") -%}
+    {%- endif -%}
+  {%- endif -%}
+  {{ return(predicates) }}
 {% endmacro %}
 
 
