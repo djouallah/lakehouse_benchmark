@@ -1,7 +1,7 @@
 {
-  "run_id": "39703181069",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39703181069",
-  "finished": "2026-10-22T02:24:36Z",
+  "run_id": "39711280954",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39711280954",
+  "finished": "2026-10-22T02:49:37Z",
   "dag": {
     "csv_raw_archive_log": {
       "materialized": "source",
@@ -91,6 +91,132 @@
     }
   },
   "legs": {
+    "lakesail_iceberg": {
+      "target": "sail",
+      "status": "success",
+      "build_seconds": 1207.274,
+      "peak_rss_mb": 7952,
+      "peak_spill_mb": 57303,
+      "process_limit": 360,
+      "files_behind": 2647,
+      "models": 6,
+      "models_ok": 6,
+      "tests": 39,
+      "tests_ok": 39,
+      "versions": {
+        "dbt-core": "1.13.0b1",
+        "dbt-spark": "1.11.0",
+        "pysail": "0.7.2+mainacfa37959f",
+        "pyspark-client": "4.2.0"
+      },
+      "adapter": "dbt-spark 1.11.0",
+      "model_seconds": {
+        "dim_duid": 5.465,
+        "fct_price": 192.232,
+        "fct_price_today": 16.356,
+        "fct_scada": 723.348,
+        "fct_scada_today": 43.953,
+        "fct_summary": 96.587
+      },
+      "model_rows": {
+        "fct_price_today": 1620,
+        "fct_scada_today": 95478,
+        "fct_summary": 32193018,
+        "fct_price": 756000,
+        "fct_scada": 79436064,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 324,
+        "fct_scada_today": 324,
+        "fct_price": 525,
+        "fct_scada": 505
+      },
+      "model_config": {
+        "csv_raw_archive_log": {
+          "materialized": "source"
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_price_today.sql",
+          "sql_lines": 20
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_scada_today.sql",
+          "sql_lines": 18
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_summary.sql",
+          "sql_lines": 75
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_price.sql",
+          "sql_lines": 22
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_scada.sql",
+          "sql_lines": 22
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/dimensions/dim_duid.sql",
+          "sql_lines": 65
+        }
+      },
+      "error": "",
+      "last_ok": {
+        "run_id": "39711280954",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39711280954",
+        "finished": "2026-10-22T02:49:37Z"
+      }
+    },
     "duckdb_iceberg": {
       "target": "duckdb",
       "status": "success",
@@ -214,6 +340,132 @@
         "run_id": "39703181069",
         "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39703181069",
         "finished": "2026-10-22T01:25:14Z"
+      }
+    },
+    "polars_iceberg": {
+      "target": "polars",
+      "status": "died",
+      "build_seconds": 1024.121,
+      "peak_rss_mb": 14141,
+      "peak_spill_mb": 23400,
+      "process_limit": 50,
+      "files_behind": 1817,
+      "models": 6,
+      "models_ok": 6,
+      "tests": 39,
+      "tests_ok": 39,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-polars": "0.4.0",
+        "polars": "2.0.0",
+        "pyiceberg": "0.11.1"
+      },
+      "adapter": "dbt-polars 0.4.0",
+      "model_seconds": {
+        "dim_duid": 11.065,
+        "fct_price": 75.765,
+        "fct_price_today": 9.275,
+        "fct_scada": 203.052,
+        "fct_scada_today": 10.384,
+        "fct_summary": 169.91
+      },
+      "model_rows": {
+        "fct_price_today": 1500,
+        "fct_scada_today": 88142,
+        "fct_summary": 76903353,
+        "fct_price": 2976775,
+        "fct_scada": 194673371,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 300,
+        "fct_scada_today": 300,
+        "fct_price": 2055,
+        "fct_scada": 1335
+      },
+      "model_config": {
+        "csv_raw_archive_log": {
+          "materialized": "source"
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_price_today.sql",
+          "sql_lines": 24
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_scada_today.sql",
+          "sql_lines": 23
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_summary.sql",
+          "sql_lines": 78
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_price.sql",
+          "sql_lines": 27
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_scada.sql",
+          "sql_lines": 27
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/dimensions/dim_duid.sql",
+          "sql_lines": 73
+        }
+      },
+      "error": "runner died (likely out of memory)",
+      "last_ok": {
+        "run_id": "39687280009",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39687280009",
+        "finished": "2026-10-21T23:12:37Z"
       }
     },
     "pyspark_gluten_iceberg": {
@@ -342,132 +594,6 @@
         "finished": "2026-10-22T01:50:11Z"
       }
     },
-    "lakesail_iceberg": {
-      "target": "sail",
-      "status": "success",
-      "build_seconds": 525.717,
-      "peak_rss_mb": 5249,
-      "peak_spill_mb": 20881,
-      "process_limit": 50,
-      "files_behind": 3007,
-      "models": 6,
-      "models_ok": 6,
-      "tests": 39,
-      "tests_ok": 39,
-      "versions": {
-        "dbt-core": "1.13.0b1",
-        "dbt-spark": "1.11.0",
-        "pysail": "0.7.2+mainacfa37959f",
-        "pyspark-client": "4.2.0"
-      },
-      "adapter": "dbt-spark 1.11.0",
-      "model_seconds": {
-        "dim_duid": 7.713,
-        "fct_price": 57.592,
-        "fct_price_today": 27.041,
-        "fct_scada": 198.731,
-        "fct_scada_today": 55.963,
-        "fct_summary": 60.201
-      },
-      "model_rows": {
-        "fct_price_today": 825,
-        "fct_scada_today": 43524,
-        "fct_summary": 9226907,
-        "fct_price": 237600,
-        "fct_scada": 23700432,
-        "dim_duid": 690
-      },
-      "model_files": {
-        "fct_price_today": 165,
-        "fct_scada_today": 155,
-        "fct_price": 165,
-        "fct_scada": 145
-      },
-      "model_config": {
-        "csv_raw_archive_log": {
-          "materialized": "source"
-        },
-        "fct_price_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/sail/marts/fct_price_today.sql",
-          "sql_lines": 20
-        },
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/sail/marts/fct_scada_today.sql",
-          "sql_lines": 18
-        },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/sail/marts/fct_summary.sql",
-          "sql_lines": 75
-        },
-        "fct_price": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/sail/marts/fct_price.sql",
-          "sql_lines": 22
-        },
-        "fct_scada": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/sail/marts/fct_scada.sql",
-          "sql_lines": 22
-        },
-        "dim_duid": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/sail/dimensions/dim_duid.sql",
-          "sql_lines": 65
-        }
-      },
-      "error": "",
-      "last_ok": {
-        "run_id": "39703181069",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39703181069",
-        "finished": "2026-10-22T02:24:36Z"
-      }
-    },
     "trino_iceberg": {
       "target": "trino",
       "status": "success",
@@ -592,132 +718,6 @@
         "run_id": "39703181069",
         "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39703181069",
         "finished": "2026-10-22T02:12:28Z"
-      }
-    },
-    "polars_iceberg": {
-      "target": "polars",
-      "status": "died",
-      "build_seconds": 1024.121,
-      "peak_rss_mb": 14141,
-      "peak_spill_mb": 23400,
-      "process_limit": 50,
-      "files_behind": 1817,
-      "models": 6,
-      "models_ok": 6,
-      "tests": 39,
-      "tests_ok": 39,
-      "versions": {
-        "dbt-core": "1.12.6",
-        "dbt-polars": "0.4.0",
-        "polars": "2.0.0",
-        "pyiceberg": "0.11.1"
-      },
-      "adapter": "dbt-polars 0.4.0",
-      "model_seconds": {
-        "dim_duid": 11.065,
-        "fct_price": 75.765,
-        "fct_price_today": 9.275,
-        "fct_scada": 203.052,
-        "fct_scada_today": 10.384,
-        "fct_summary": 169.91
-      },
-      "model_rows": {
-        "fct_price_today": 1500,
-        "fct_scada_today": 88142,
-        "fct_summary": 76903353,
-        "fct_price": 2976775,
-        "fct_scada": 194673371,
-        "dim_duid": 690
-      },
-      "model_files": {
-        "fct_price_today": 300,
-        "fct_scada_today": 300,
-        "fct_price": 2055,
-        "fct_scada": 1335
-      },
-      "model_config": {
-        "csv_raw_archive_log": {
-          "materialized": "source"
-        },
-        "fct_price_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_price_today.sql",
-          "sql_lines": 24
-        },
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_scada_today.sql",
-          "sql_lines": 23
-        },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_summary.sql",
-          "sql_lines": 78
-        },
-        "fct_price": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_price.sql",
-          "sql_lines": 27
-        },
-        "fct_scada": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/marts/fct_scada.sql",
-          "sql_lines": 27
-        },
-        "dim_duid": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/polars/dimensions/dim_duid.sql",
-          "sql_lines": 73
-        }
-      },
-      "error": "runner died (likely out of memory)",
-      "last_ok": {
-        "run_id": "39687280009",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39687280009",
-        "finished": "2026-10-21T23:12:37Z"
       }
     }
   }
