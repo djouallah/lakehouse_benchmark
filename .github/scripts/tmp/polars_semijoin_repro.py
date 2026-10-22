@@ -126,8 +126,10 @@ if __name__ == "__main__":
     print(pl.__version__, pl.build_info().get("git", {}), flush=True)
     gen()
     print(f"scada rows: {pl.scan_parquet(f'{DATA}/scada_*.parquet').select(pl.len()).collect().item():,}", flush=True)
-    for name in VARIANTS:
-        print(f"\n===== explain {name}\n{ctx().execute(VARIANTS[name]).explain()}", flush=True)
+    names = [*VARIANTS, "filter_last/table/no_join_order", "lazy_api", "lazy_api/no_join_order"]
+    for name in names:
+        lf, flags = query(name)
+        print(f"\n===== explain {name}\n{lf.explain(optimizations=flags)}", flush=True)
     print(flush=True)
-    for name in VARIANTS:
+    for name in names:
         subprocess.run([sys.executable, __file__, name], timeout=900)
