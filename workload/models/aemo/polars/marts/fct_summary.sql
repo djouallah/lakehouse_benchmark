@@ -10,7 +10,10 @@
 --     Streaming equi-joins do not spill, and with the window applied only as a semi-join after
 --     them the join grew with the whole history: 14-15 GB peak, then the runner died
 --     (workload run 39703181069). Same rows: DATE is CAST(SETTLEMENTDATE AS DATE) in both
---     tables and the join is on SETTLEMENTDATE.
+--     tables and the join is on SETTLEMENTDATE. Polars' optimizer does not do this itself:
+--     the semi join stays above the joins (pola-rs/polars#30186), and join reordering starts
+--     with dim x price on Region, a near-cross join (#30185). Run 39717027666: fct_summary
+--     269 s -> 68 s, the build's peak RSS 15.0 -> 12.1 GB.
 --   * No trailing ORDER BY: this is a merge source, the order never reaches the table.
 {{ config(
     materialized='incremental',

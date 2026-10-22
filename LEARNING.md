@@ -377,6 +377,22 @@ Largest scale each engine completes, cold, every statement answered:
   memory: 15.5 GB at 75M rows, killed at 109M, with `POLARS_OOC_MEMORY_BUDGET_MB` or without
   (runs 39558133289, 39558143340). Main 4426a548fd finishes 109M rows at 14.2 GB peak in 214 s
   (run 39560656080).
+- **The workload's fct_summary hit 15 GB on two plan choices, not on missing spill.** Its daily
+  branch joins fct_scada to dim_duid and fct_price, cut to the rebuild dates by
+  `s.DATE IN (SELECT date FROM rebuild_dates)`. On main 4426a548fd the runner died in it
+  (39703181069) or passed at 14.98 GB (39712751864), on the same SQL. A synthetic repro of the
+  shape (`.github/scripts/tmp/`, main 34cc5185a9) found two causes:
+  - [#30185](https://github.com/pola-rs/polars/issues/30185): join reordering joins dim ⋈ price
+    on `region` (5 values) first, a near-cross join: 5,539 MB against 555 MB with
+    `QueryOptFlags(join_order=False)`.
+  - [#30186](https://github.com/pola-rs/polars/issues/30186): the semi join stays above the
+    inner joins, though its key is a fact column; pushed by hand, 764 MB against 391 MB. #29289
+    and #29443, which push semi joins below inner joins, are in the build and don't fire.
+
+  Filtering fct_scada and fct_price to the rebuild dates before the joins, in the model's SQL,
+  took fct_summary from 269 s to 68 s and the build's peak from 14.98 to 12.05 GB (run
+  39717027666, same rows, grade green). The workload tunes each engine's SQL this way; only
+  the merge is the same everywhere.
 - **2.0.0-rc.2 was fine at TPC-H SF=10 (82–106 s) and gone at SF=30.** It used the streaming
   engine with 4 threads and no memory limit. At SF=30 the runner was OOM-killed 75 s into Q7. At
   TPC-DS SF=10 the runner "lost communication with the server" 55 minutes in. See "Past memory"
