@@ -24,6 +24,8 @@ fact = pl.scan_parquet(f"{D}/fact_*.parquet")
 dim = pl.scan_parquet(f"{D}/dim.parquet")
 price = pl.scan_parquet(f"{D}/price.parquet")
 dates = pl.scan_parquet(f"{D}/dates.parquet")  # 7 rows
+# Join reordering off, so the only difference between the two plans is where the semi join runs.
+OPT = pl.QueryOptFlags(join_order=False)
 
 
 def semi_last():  # the semi join's key is a fact column, so it could run on fact alone
@@ -36,10 +38,10 @@ def semi_first():  # the same thing, by hand
 
 if len(sys.argv) == 1:
     print(pl.__version__)
-    print(semi_last().explain())
+    print(semi_last().explain(optimizations=OPT))
     for name in ("semi_last", "semi_first"):
         subprocess.run([sys.executable, __file__, name])
 else:
-    n = globals()[sys.argv[1]]().select(pl.len()).collect().item()
+    n = globals()[sys.argv[1]]().select(pl.len()).collect(optimizations=OPT).item()
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
     print(f"{sys.argv[1]:10s} rows={n:,} peak RSS {rss:,} MB", flush=True)
