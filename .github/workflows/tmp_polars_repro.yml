@@ -34,7 +34,7 @@ jobs:
           python-version: "3.12"
       - run: |
           base=https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-${{ inputs.sha }}
-          pip install numpy pyarrow "polars @ $base/polars-2.0.0-py3-none-any.whl" \
+          pip install numpy pyarrow "pyiceberg[sql-sqlite]" "polars @ $base/polars-2.0.0-py3-none-any.whl" \
             "polars-runtime-32 @ $base/polars_runtime_32-2.0.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
       - run: python .github/scripts/tmp/${{ inputs.script }}
         env:
