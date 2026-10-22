@@ -8,9 +8,12 @@ import glob
 import inspect
 import os
 import tempfile
+from datetime import date
 
 import polars as pl
+import pyiceberg
 from pyiceberg.catalog.sql import SqlCatalog
+from pyiceberg.transforms import DayTransform, IdentityTransform
 
 print("polars", pl.__version__, pl.build_info().get("git", {}))
 
@@ -39,6 +42,73 @@ print("sink_iceberg", inspect.signature(pl.LazyFrame.sink_iceberg))
 print("write_iceberg", inspect.signature(pl.DataFrame.write_iceberg))
 print("scan_iceberg", inspect.signature(pl.scan_iceberg))
 print("pl.Catalog methods:", [n for n in dir(pl.Catalog) if not n.startswith("_")])
+
+print("\n== A2. The same operations through pyiceberg, today's workaround")
+sink(
+    "sales.wk",
+    pl.DataFrame({"id": [1, 2], "v": [10, 20], "ts": [date(2026, 1, 1), date(2026, 1, 2)]}),
+    create_if_not_exists=True,
+)
+wk = cat.load_table("sales.wk")
+print("pyiceberg", pyiceberg.__version__)
+print("Table methods:", [n for n in dir(wk) if not n.startswith("_")])
+for sub in ("inspect", "maintenance"):
+    if hasattr(wk, sub):
+        print(f"Table.{sub}:", [n for n in dir(getattr(wk, sub)) if not n.startswith("_")])
+
+
+def ddl(label, fn):
+    try:
+        fn()
+        print("OK  ", label)
+    except Exception as e:
+        print("ERR ", label, f"{type(e).__name__}: {e}")
+
+
+def _rename():
+    with wk.update_schema() as u:
+        u.rename_column("v", "value")
+
+
+def _drop_col():
+    with wk.update_schema() as u:
+        u.delete_column("value")
+
+
+def _spec():
+    with wk.update_spec() as s:
+        s.add_field("ts", DayTransform(), "ts_day")
+
+
+def _sort():
+    with wk.update_sort_order() as s:
+        s.asc("id", IdentityTransform())
+
+
+def _props():
+    with wk.transaction() as tx:
+        tx.set_properties({"owner": "bench"})
+
+
+sid = wk.current_snapshot().snapshot_id
+ddl("rename column", _rename)
+ddl("drop column", _drop_col)
+ddl("partition evolution", _spec)
+ddl("sort order", _sort)
+ddl("set property", _props)
+ddl("create branch", lambda: wk.manage_snapshots().create_branch(sid, "dev").commit())
+ddl("create tag", lambda: wk.manage_snapshots().create_tag(sid, "v1").commit())
+for m in ("snapshots", "history", "files", "manifests"):
+    ddl(f"inspect.{m}", lambda m=m: print("     ", getattr(wk.inspect, m)().num_rows, "rows"))
+ddl("drop namespace (non-empty)", lambda: cat.drop_namespace("sales"))
+sink(
+    "tmpns.t",
+    pl.DataFrame({"id": [1]}),
+    create_if_not_exists=True,
+    create_namespace_if_not_exists=True,
+)
+ddl("purge table", lambda: cat.purge_table("tmpns.t"))
+ddl("drop namespace (empty)", lambda: cat.drop_namespace("tmpns"))
 
 print("\n== B. MAX / MIN / COUNT with every data file deleted")
 sink("sales.stats", pl.DataFrame({"id": [1, 2, 3, 4]}), create_if_not_exists=True)
