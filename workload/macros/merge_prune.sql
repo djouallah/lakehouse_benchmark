@@ -46,13 +46,17 @@
        then full-joined and sorted all 79M fct_scada rows each run, spilled 64 GB and failed
        "Resources exhausted" (run 39712751864). The facts' DATE is CAST(SETTLEMENTDATE AS DATE),
        written by the same SQL into target and batch, and a matching target row has a batch row's
-       SETTLEMENTDATE -- so the batch's DATE range bounds it exactly, and a date's bounds are
-       never truncated. --#}
+       SETTLEMENTDATE -- so the batch's own DATEs bound it exactly, and a date's bounds are
+       never truncated. The DISTINCT dates, not MIN..MAX: a batch is the newest unfolded files,
+       i.e. today's file plus the backfill's oldest edge, so its range spans every date already
+       folded and pruned almost nothing (run 39728758589: fct_scada still 725 s, 47.7 GB spilled). --#}
   {%- if col == 'file' and 'settlementdate' in (keys | map('lower') | list) -%}
-    {%- set r = run_query('SELECT MIN(DATE), MAX(DATE) FROM ' ~ source).rows[0] -%}
-    {%- if r[0] is not none and r[1] is not none -%}
-      {%- do predicates.append("DBT_INTERNAL_DEST.DATE BETWEEN DATE '" ~ (r[0] | string)[:10]
-                               ~ "' AND DATE '" ~ (r[1] | string)[:10] ~ "'") -%}
+    {%- set dates = [] -%}
+    {%- for v in run_query('SELECT DISTINCT DATE FROM ' ~ source).columns[0].values() if v is not none -%}
+      {%- do dates.append("DATE '" ~ (v | string)[:10] ~ "'") -%}
+    {%- endfor -%}
+    {%- if dates -%}
+      {%- do predicates.append('DBT_INTERNAL_DEST.DATE IN (' ~ dates | join(', ') ~ ')') -%}
     {%- endif -%}
   {%- endif -%}
   {{ return(predicates) }}

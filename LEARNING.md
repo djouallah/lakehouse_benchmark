@@ -790,7 +790,10 @@ engine on the page as "died", with its last good run.
     20.9, 57.3 GB, then 64.1 GB on a 50-file batch over 79M rows. That run failed with
     "Resources exhausted … ExternalSorterMerge" (39712751864). The others paid in time, unseen.
   - **The fix prunes on a column whose bounds are exact.** `merge_prune` now adds
-    `DEST.DATE BETWEEN <batch MIN(DATE)> AND <batch MAX(DATE)>`. Date bounds are never truncated.
+    `DEST.DATE IN (<the batch's distinct DATEs>)`. Date bounds are never truncated. A
+    `BETWEEN MIN AND MAX` came first and only half-worked: fct_scada still took 725 s and
+    spilled 47.7 GB (39728758589). A batch is the newest unfolded files, today's file plus the
+    backfill's oldest edge, so its range spans every date already folded.
     It changes no result: `DATE` is `CAST(SETTLEMENTDATE AS DATE)`, `SETTLEMENTDATE` is a key
     column, and the same SQL writes target and batch, so any target row that can match has a batch
     row's `DATE`. The range comes from the batch's rows, not the file names, so a file holding a
