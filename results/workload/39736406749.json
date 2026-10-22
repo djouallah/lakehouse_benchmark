@@ -1,0 +1,2376 @@
+{
+  "run_id": "39736406749",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39736406749",
+  "started": "2026-10-22T06:53:18Z",
+  "legs": {
+    "duckdb": {
+      "suite": "workload",
+      "engine": "duckdb",
+      "bench_engine": "duckdb_iceberg",
+      "run_id": "39736406749",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39736406749",
+      "git_sha": "73898a8",
+      "started": "2026-10-22T06:55:26Z",
+      "process_limit": 360,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-duckdb": "1.11.0",
+        "duckdb": "2.0.0"
+      },
+      "status": "success",
+      "build_seconds": 383.785,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.014,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.004,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 5.212,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 1.483,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 3.33,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 4.784,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 2.926,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 209.327,
+          "message": "OK"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.006,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 1.18,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 0.582,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "pass",
+          "seconds": 0.558,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "pass",
+          "seconds": 3.492,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.393,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 0.601,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 0.743,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.347,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 100.57,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 1.759,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 8.956,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 11.349,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 1.845,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.278,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 0.553,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.539,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.314,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.62b009ed3d",
+          "status": "pass",
+          "seconds": 0.356,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.568,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.287,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.d307df93cd",
+          "status": "pass",
+          "seconds": 0.415,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.297,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.376,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.6a5cecd737",
+          "status": "pass",
+          "seconds": 0.244,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.454,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.38,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.7a6c47cbc3",
+          "status": "pass",
+          "seconds": 0.288,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.309,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.312,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.277,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.314,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 5.011,
+          "message": "Got 97378393 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.787,
+          "message": "Got 15845 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 1.467,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_accepted_values_landing_csv_raw_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.b820aaf7e5",
+          "status": "pass",
+          "seconds": 0.071,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_csv_filename.50caf03dc6",
+          "status": "pass",
+          "seconds": 0.036,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_filename.790b4bce50",
+          "status": "pass",
+          "seconds": 0.039,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_type.5ff44768a1",
+          "status": "pass",
+          "seconds": 0.035,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.394,
+          "message": ""
+        }
+      ],
+      "peak_rss_mb": 9364,
+      "peak_spill_mb": 19841,
+      "dag": {
+        "csv_raw_archive_log": {
+          "materialized": "source",
+          "parents": [],
+          "description": "One row per source file landed by download_aemo, the parquet beside the CSVs. Every engine reads the SAME file, which is what makes the fact models' file selection identical across engines.",
+          "differences": [
+            "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_price_today.sql",
+          "sql_lines": 39,
+          "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_scada_today.sql",
+          "sql_lines": 38,
+          "description": "Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino.",
+            "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_summary.sql",
+          "sql_lines": 74,
+          "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
+          "differences": [
+            "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
+            "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
+            "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
+            "Merge on (date, time, DUID) on every engine."
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_price.sql",
+          "sql_lines": 42,
+          "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_scada.sql",
+          "sql_lines": 42,
+          "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/dimensions/dim_duid.sql",
+          "sql_lines": 71,
+          "description": "Dispatchable units: the NEM registration list plus the WA facilities list, with fuel/technology, participant and geo attributes.",
+          "differences": [
+            "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`).",
+            "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino.",
+            "A `merge` on `DUID` on every engine: new units insert, changed attributes update."
+          ]
+        }
+      },
+      "model_rows": {
+        "fct_price_today": 1800,
+        "fct_scada_today": 107201,
+        "fct_summary": 149968439,
+        "fct_price": 4769765,
+        "fct_scada": 386235073,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 360,
+        "fct_scada_today": 360,
+        "fct_price": 3152,
+        "fct_scada": 3152
+      },
+      "finished": "2026-10-22T07:01:59Z"
+    },
+    "gluten": {
+      "suite": "workload",
+      "engine": "gluten",
+      "bench_engine": "pyspark_gluten_iceberg",
+      "run_id": "39736406749",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39736406749",
+      "git_sha": "73898a8",
+      "started": "2026-10-22T07:24:24Z",
+      "process_limit": 360,
+      "versions": {
+        "dbt-core": "1.13.0b1",
+        "dbt-spark": "1.11.0",
+        "pyspark": "4.1.1",
+        "spark": "4.1.1 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)"
+      },
+      "status": "success",
+      "build_seconds": 604.054,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.013,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 3.702,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 14.049,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 35.231,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 17.457,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 29.432,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 12.932,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 320.687,
+          "message": "OK"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.005,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.275,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 1.72,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 1.995,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "pass",
+          "seconds": 0.961,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "pass",
+          "seconds": 3.606,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.454,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 0.568,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 2.313,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.569,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 91.263,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 1.269,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 27.744,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 7.66,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 5.081,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.127,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 0.097,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.152,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.117,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.e74c09e1fc",
+          "status": "pass",
+          "seconds": 0.11,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.116,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.118,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.09f72e757a",
+          "status": "pass",
+          "seconds": 0.117,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.103,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.104,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.ec24672ecd",
+          "status": "pass",
+          "seconds": 0.106,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.114,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.122,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.ebf0c27c96",
+          "status": "pass",
+          "seconds": 0.118,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.085,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.087,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.088,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.092,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 7.745,
+          "message": "Got 97378393 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.401,
+          "message": "Got 15845 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 2.524,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_accepted_values_landing_csv_raw_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.b820aaf7e5",
+          "status": "pass",
+          "seconds": 1.554,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_csv_filename.50caf03dc6",
+          "status": "pass",
+          "seconds": 0.138,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_filename.790b4bce50",
+          "status": "pass",
+          "seconds": 0.137,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_type.5ff44768a1",
+          "status": "pass",
+          "seconds": 0.134,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.216,
+          "message": ""
+        }
+      ],
+      "peak_rss_mb": 7892,
+      "peak_spill_mb": 13105,
+      "dag": {
+        "csv_raw_archive_log": {
+          "materialized": "source",
+          "parents": [],
+          "description": "One row per source file landed by download_aemo, the parquet beside the CSVs. Every engine reads the SAME file, which is what makes the fact models' file selection identical across engines.",
+          "differences": [
+            "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_price_today.sql",
+          "sql_lines": 20,
+          "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_scada_today.sql",
+          "sql_lines": 18,
+          "description": "Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino.",
+            "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_summary.sql",
+          "sql_lines": 75,
+          "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
+          "differences": [
+            "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
+            "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
+            "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
+            "Merge on (date, time, DUID) on every engine."
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_price.sql",
+          "sql_lines": 22,
+          "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/marts/fct_scada.sql",
+          "sql_lines": 22,
+          "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/gluten/dimensions/dim_duid.sql",
+          "sql_lines": 65,
+          "description": "Dispatchable units: the NEM registration list plus the WA facilities list, with fuel/technology, participant and geo attributes.",
+          "differences": [
+            "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`).",
+            "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino.",
+            "A `merge` on `DUID` on every engine: new units insert, changed attributes update."
+          ]
+        }
+      },
+      "model_rows": {
+        "fct_price_today": 1800,
+        "fct_scada_today": 107201,
+        "fct_summary": 149968439,
+        "fct_price": 4769765,
+        "fct_scada": 386235073,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 360,
+        "fct_scada_today": 360,
+        "fct_price": 3152,
+        "fct_scada": 3152
+      },
+      "finished": "2026-10-22T07:34:58Z"
+    },
+    "polars": {
+      "suite": "workload",
+      "engine": "polars",
+      "bench_engine": "polars_iceberg",
+      "run_id": "39736406749",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39736406749",
+      "git_sha": "73898a8",
+      "started": "2026-10-22T07:03:49Z",
+      "process_limit": 50,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-polars": "0.4.0",
+        "polars": "2.0.0",
+        "pyiceberg": "0.11.1"
+      },
+      "status": "success",
+      "build_seconds": 1114.95,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.012,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 6.318,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 39.964,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 3.149,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 218.421,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 5.956,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 42.124,
+          "message": "OK"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.004,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 1.923,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 0.495,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 0.305,
+          "message": "Got 847 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 2.368,
+          "message": "Got 1567 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.159,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 1.493,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 0.644,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.132,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 745.07,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 12.206,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 10.223,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 5.592,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 3.223,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.075,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 0.606,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.104,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.076,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.62b009ed3d",
+          "status": "pass",
+          "seconds": 0.076,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.083,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.064,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.d307df93cd",
+          "status": "pass",
+          "seconds": 0.068,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.099,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.097,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.6a5cecd737",
+          "status": "pass",
+          "seconds": 0.123,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.058,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.058,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.7a6c47cbc3",
+          "status": "pass",
+          "seconds": 0.059,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.069,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.087,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.071,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.069,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 2.235,
+          "message": "Got 62019443 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.18,
+          "message": "Got 15845 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 0.915,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_accepted_values_landing_csv_raw_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.b820aaf7e5",
+          "status": "pass",
+          "seconds": 0.447,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_csv_filename.50caf03dc6",
+          "status": "pass",
+          "seconds": 0.04,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_filename.790b4bce50",
+          "status": "pass",
+          "seconds": 0.042,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_type.5ff44768a1",
+          "status": "pass",
+          "seconds": 0.039,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.086,
+          "message": ""
+        }
+      ],
+      "peak_rss_mb": 11897,
+      "peak_spill_mb": 32010,
+      "dag": {
+        "csv_raw_archive_log": {
+          "materialized": "source",
+          "parents": [],
+          "description": "One row per source file landed by download_aemo, the parquet beside the CSVs. Every engine reads the SAME file, which is what makes the fact models' file selection identical across engines.",
+          "differences": [
+            "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_price_today.sql",
+          "sql_lines": 24,
+          "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_scada_today.sql",
+          "sql_lines": 23,
+          "description": "Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino.",
+            "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_summary.sql",
+          "sql_lines": 90,
+          "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
+          "differences": [
+            "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
+            "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
+            "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
+            "Merge on (date, time, DUID) on every engine."
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_price.sql",
+          "sql_lines": 27,
+          "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/marts/fct_scada.sql",
+          "sql_lines": 27,
+          "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/polars/dimensions/dim_duid.sql",
+          "sql_lines": 73,
+          "description": "Dispatchable units: the NEM registration list plus the WA facilities list, with fuel/technology, participant and geo attributes.",
+          "differences": [
+            "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`).",
+            "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino.",
+            "A `merge` on `DUID` on every engine: new units insert, changed attributes update."
+          ]
+        }
+      },
+      "model_rows": {
+        "fct_price_today": 1800,
+        "fct_scada_today": 107201,
+        "fct_summary": 89228952,
+        "fct_price": 3336860,
+        "fct_scada": 226088909,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 360,
+        "fct_scada_today": 360,
+        "fct_price": 2305,
+        "fct_scada": 1585
+      },
+      "finished": "2026-10-22T07:22:35Z"
+    },
+    "sail": {
+      "suite": "workload",
+      "engine": "sail",
+      "bench_engine": "lakesail_iceberg",
+      "run_id": "39736406749",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39736406749",
+      "git_sha": "73898a8",
+      "started": "2026-10-22T07:54:31Z",
+      "process_limit": 50,
+      "versions": {
+        "dbt-core": "1.13.0b1",
+        "dbt-spark": "1.11.0",
+        "pysail": "0.7.2+mainacfa37959f",
+        "pyspark-client": "4.2.0"
+      },
+      "status": "success",
+      "build_seconds": 759.759,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.008,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 1.597,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 7.624,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 67.633,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 16.678,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 218.868,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 23.213,
+          "message": "OK"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 245.004,
+          "message": "OK"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.123,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 6.394,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 3.575,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 2.884,
+          "message": "Got 2377 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 5.261,
+          "message": "Got 2497 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 3.422,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 3.116,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 2.779,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 3.128,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 46.932,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 5.026,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 4.661,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 10.914,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 6.882,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 1.785,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 2.485,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 2.202,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 3.272,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.e74c09e1fc",
+          "status": "pass",
+          "seconds": 2.768,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 1.977,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 2.102,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.09f72e757a",
+          "status": "pass",
+          "seconds": 2.108,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 2.2,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 1.96,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.ec24672ecd",
+          "status": "pass",
+          "seconds": 1.762,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 2.495,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 2.068,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.ebf0c27c96",
+          "status": "pass",
+          "seconds": 1.916,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 1.926,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 2.296,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 1.436,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 1.529,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 13.035,
+          "message": "Got 27474816 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 4.278,
+          "message": "Got 15845 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 7.298,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_accepted_values_landing_csv_raw_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.b820aaf7e5",
+          "status": "pass",
+          "seconds": 0.203,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_csv_filename.50caf03dc6",
+          "status": "pass",
+          "seconds": 0.021,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_filename.790b4bce50",
+          "status": "pass",
+          "seconds": 0.019,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_type.5ff44768a1",
+          "status": "pass",
+          "seconds": 0.02,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 2.276,
+          "message": ""
+        }
+      ],
+      "peak_rss_mb": 6918,
+      "peak_spill_mb": 14494,
+      "dag": {
+        "csv_raw_archive_log": {
+          "materialized": "source",
+          "parents": [],
+          "description": "One row per source file landed by download_aemo, the parquet beside the CSVs. Every engine reads the SAME file, which is what makes the fact models' file selection identical across engines.",
+          "differences": [
+            "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_price_today.sql",
+          "sql_lines": 20,
+          "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_scada_today.sql",
+          "sql_lines": 18,
+          "description": "Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino.",
+            "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_summary.sql",
+          "sql_lines": 75,
+          "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
+          "differences": [
+            "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
+            "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
+            "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
+            "Merge on (date, time, DUID) on every engine."
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_price.sql",
+          "sql_lines": 22,
+          "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/marts/fct_scada.sql",
+          "sql_lines": 22,
+          "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/sail/dimensions/dim_duid.sql",
+          "sql_lines": 65,
+          "description": "Dispatchable units: the NEM registration list plus the WA facilities list, with fuel/technology, participant and geo attributes.",
+          "differences": [
+            "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`).",
+            "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino.",
+            "A `merge` on `DUID` on every engine: new units insert, changed attributes update."
+          ]
+        }
+      },
+      "model_rows": {
+        "fct_price_today": 1800,
+        "fct_scada_today": 107201,
+        "fct_summary": 41435225,
+        "fct_price": 1116060,
+        "fct_scada": 101106576,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 360,
+        "fct_scada_today": 360,
+        "fct_price": 775,
+        "fct_scada": 655
+      },
+      "finished": "2026-10-22T08:07:43Z"
+    },
+    "trino": {
+      "suite": "workload",
+      "engine": "trino",
+      "bench_engine": "trino_iceberg",
+      "run_id": "39736406749",
+      "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39736406749",
+      "git_sha": "73898a8",
+      "started": "2026-10-22T07:36:52Z",
+      "process_limit": 100,
+      "versions": {
+        "dbt-core": "1.12.6",
+        "dbt-trino": "1.10.6",
+        "trino": "0.340.0",
+        "trino-server": "484 (trinodb/trino:484)"
+      },
+      "status": "success",
+      "build_seconds": 911.032,
+      "nodes": [
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.005,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.003,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "model.aemo_electricity.dim_duid",
+          "status": "success",
+          "seconds": 11.986,
+          "message": "MERGE (690 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price",
+          "status": "success",
+          "seconds": 98.465,
+          "message": "MERGE (144_000 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_price_today",
+          "status": "success",
+          "seconds": 7.008,
+          "message": "MERGE (90 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada",
+          "status": "success",
+          "seconds": 150.583,
+          "message": "MERGE (10_247_924 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_scada_today",
+          "status": "success",
+          "seconds": 8.188,
+          "message": "MERGE (5_961 rows)"
+        },
+        {
+          "node": "model.aemo_electricity.fct_summary",
+          "status": "success",
+          "seconds": 36.18,
+          "message": "MERGE (4_553_598 rows)"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-0",
+          "status": "success",
+          "seconds": 0.002,
+          "message": "aemo_electricity.on-run-start.0 passed"
+        },
+        {
+          "node": "operation.aemo_electricity.aemo_electricity-on-run-start-1",
+          "status": "success",
+          "seconds": 0.002,
+          "message": "aemo_electricity.on-run-start.1 passed"
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.5e3adbd90e",
+          "status": "pass",
+          "seconds": 0.265,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.accepted_values_fct_price_today_REGIONID__QLD1__NSW1__VIC1__SA1__TAS1__WA1.064032de1f",
+          "status": "pass",
+          "seconds": 0.212,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_price",
+          "status": "warn",
+          "seconds": 3.893,
+          "message": "Got 732 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_daily_files_processed_scada",
+          "status": "warn",
+          "seconds": 13.245,
+          "message": "Got 1092 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_price",
+          "status": "pass",
+          "seconds": 0.854,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_all_today_files_processed_scada",
+          "status": "pass",
+          "seconds": 0.837,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_grain",
+          "status": "pass",
+          "seconds": 1.108,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_price_today_grain",
+          "status": "pass",
+          "seconds": 0.168,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_grain",
+          "status": "pass",
+          "seconds": 493.837,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_scada_today_grain",
+          "status": "pass",
+          "seconds": 4.043,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_grain",
+          "status": "pass",
+          "seconds": 32.525,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_fct_summary_no_partial_dates",
+          "status": "pass",
+          "seconds": 6.001,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_covers_all_scada_days",
+          "status": "pass",
+          "seconds": 5.138,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.assert_summary_has_valid_joins",
+          "status": "pass",
+          "seconds": 0.254,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_dim_duid_DUID.5458effe5a",
+          "status": "pass",
+          "seconds": 0.265,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_REGIONID.eac52c204d",
+          "status": "pass",
+          "seconds": 0.29,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_SETTLEMENTDATE.4840320576",
+          "status": "pass",
+          "seconds": 0.19,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price__file_.62b009ed3d",
+          "status": "pass",
+          "seconds": 0.174,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_REGIONID.b4664b52c5",
+          "status": "pass",
+          "seconds": 0.205,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today_SETTLEMENTDATE.4dd56c94fe",
+          "status": "pass",
+          "seconds": 0.158,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_price_today__file_.d307df93cd",
+          "status": "pass",
+          "seconds": 0.16,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_DUID.75341e3137",
+          "status": "pass",
+          "seconds": 0.152,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_SETTLEMENTDATE.ab87e32308",
+          "status": "pass",
+          "seconds": 0.158,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada__file_.6a5cecd737",
+          "status": "pass",
+          "seconds": 0.14,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_DUID.69f1cc49f5",
+          "status": "pass",
+          "seconds": 0.202,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today_SETTLEMENTDATE.bcc6e53eb5",
+          "status": "pass",
+          "seconds": 0.167,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_scada_today__file_.7a6c47cbc3",
+          "status": "pass",
+          "seconds": 0.159,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_DUID.61417c7b19",
+          "status": "pass",
+          "seconds": 0.161,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_date.5991e42ae3",
+          "status": "pass",
+          "seconds": 0.158,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_mw.5b0429d032",
+          "status": "pass",
+          "seconds": 0.174,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.not_null_fct_summary_price.b5a47af7b3",
+          "status": "pass",
+          "seconds": 0.168,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_DUID__DUID__ref_dim_duid_.8e69d0b6b7",
+          "status": "warn",
+          "seconds": 7.708,
+          "message": "Got 74030848 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_scada_today_DUID__DUID__ref_dim_duid_.6b2b03ca41",
+          "status": "warn",
+          "seconds": 0.746,
+          "message": "Got 15845 results, configured to warn if != 0"
+        },
+        {
+          "node": "test.aemo_electricity.relationships_fct_summary_DUID__DUID__ref_dim_duid_.0aa312fefb",
+          "status": "pass",
+          "seconds": 4.227,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_accepted_values_landing_csv_raw_archive_log_source_type__daily__scada_today__price_today__duid_data__duid_facilities__duid_wa_energy__duid_geo_data.b820aaf7e5",
+          "status": "pass",
+          "seconds": 3.777,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_csv_filename.50caf03dc6",
+          "status": "pass",
+          "seconds": 2.193,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_filename.790b4bce50",
+          "status": "pass",
+          "seconds": 0.667,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.source_not_null_landing_csv_raw_archive_log_source_type.5ff44768a1",
+          "status": "pass",
+          "seconds": 0.6,
+          "message": ""
+        },
+        {
+          "node": "test.aemo_electricity.unique_dim_duid_DUID.aca8781a01",
+          "status": "pass",
+          "seconds": 0.695,
+          "message": ""
+        }
+      ],
+      "peak_rss_mb": 13945,
+      "peak_spill_mb": 23954,
+      "dag": {
+        "csv_raw_archive_log": {
+          "materialized": "source",
+          "parents": [],
+          "description": "One row per source file landed by download_aemo, the parquet beside the CSVs. Every engine reads the SAME file, which is what makes the fact models' file selection identical across engines.",
+          "differences": [
+            "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
+          ]
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_price_today.sql",
+          "sql_lines": 16,
+          "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_scada_today.sql",
+          "sql_lines": 15,
+          "description": "Intraday DISPATCHSCADA readings per unit, landed every 5 minutes.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino.",
+            "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
+          ]
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "parents": [
+            "dim_duid",
+            "fct_price",
+            "fct_price_today",
+            "fct_scada",
+            "fct_scada_today"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_summary.sql",
+          "sql_lines": 73,
+          "description": "THE GOLD TABLE, and the one every engine is compared on. One row per (date, time, DUID) joining generation (mw) to the matching regional price. Rebuilt from the daily facts when new daily files land, topped up from the intraday facts in between. parity.py compares this table across engines.",
+          "differences": [
+            "`GROUP BY ALL` on DuckDB, Polars and Spark; `GROUP BY 1, 2, 3` on Trino, where `GROUP BY ALL` means something else.",
+            "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`.",
+            "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark.",
+            "Merge on (date, time, DUID) on every engine."
+          ]
+        },
+        "fct_price": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_price.sql",
+          "sql_lines": 19,
+          "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "fct_scada": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/marts/fct_scada.sql",
+          "sql_lines": 19,
+          "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
+          "differences": [
+            "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+            "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+            "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+          ]
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "parents": [
+            "csv_raw_archive_log"
+          ],
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/dimensions/dim_duid.sql",
+          "sql_lines": 69,
+          "description": "Dispatchable units: the NEM registration list plus the WA facilities list, with fuel/technology, participant and geo attributes.",
+          "differences": [
+            "Four headered reference CSVs: `read_csv` by header name on DuckDB and Polars, csv temp views on Spark, one Hive table read by column position on Trino (each file picked on `\"$path\"`).",
+            "`first()` on DuckDB, Polars and Spark; `arbitrary()` on Trino.",
+            "A `merge` on `DUID` on every engine: new units insert, changed attributes update."
+          ]
+        }
+      },
+      "model_rows": {
+        "fct_price_today": 1800,
+        "fct_scada_today": 107201,
+        "fct_summary": 110174101,
+        "fct_price": 3502460,
+        "fct_scada": 278940517,
+        "dim_duid": 690
+      },
+      "model_files": {
+        "fct_price_today": 360,
+        "fct_scada_today": 360,
+        "fct_price": 2420,
+        "fct_scada": 2060
+      },
+      "finished": "2026-10-22T07:52:33Z"
+    }
+  }
+}
