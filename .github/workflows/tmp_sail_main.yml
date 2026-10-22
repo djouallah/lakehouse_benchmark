@@ -2,10 +2,11 @@ name: temporary sail main wheel
 
 # UNTIL THE NEXT PYSAIL RELEASE. lakehq/sail main has Iceberg writes 0.7.2 lacks: DELETE writes
 # position deletes (#2699), UPDATE on v2 tables (#2783), a full overwrite no longer drops a concurrent
-# append (#2770), procedures and metadata tables (#2504), catalog-aware DDL (#2682). Builds the pysail
-# wheel the way their release.yml does (maturin in the manylinux container, protoc installed inside),
-# but without LTO and with parallel codegen: the hosted runner has 4 cores, not their 8. Attaches it to
-# a prerelease of this repo so requirements/*sail*.txt can install it. Deleted then.
+# append (#2770), procedures and metadata tables (#2504), catalog-aware DDL (#2682), SQL branches
+# and tags (#2827). Builds the pysail wheel the way their release.yml does (maturin in the manylinux
+# container, protoc installed inside), but without LTO and with parallel codegen: the hosted runner
+# has 4 cores, not their 8. Attaches it to a prerelease of this repo so requirements/*sail*.txt can
+# install it. Deleted then.
 
 on:
   workflow_dispatch:
