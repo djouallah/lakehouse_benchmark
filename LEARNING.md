@@ -793,7 +793,9 @@ engine on the page as "died", with its last good run.
     `DEST.DATE IN (<the batch's distinct DATEs>)`. Date bounds are never truncated. A
     `BETWEEN MIN AND MAX` came first and only half-worked: fct_scada still took 725 s and
     spilled 47.7 GB (39728758589). A batch is the newest unfolded files, today's file plus the
-    backfill's oldest edge, so its range spans every date already folded.
+    backfill's oldest edge, so its range spans every date already folded. With the distinct
+    dates, Sail's fct_scada took 168 s, spilled 13.3 GB and peaked at 6.7 GB RSS
+    (39735439145), against a failure at 65.5 GB on `file` alone (39723305966).
     It changes no result: `DATE` is `CAST(SETTLEMENTDATE AS DATE)`, `SETTLEMENTDATE` is a key
     column, and the same SQL writes target and batch, so any target row that can match has a batch
     row's `DATE`. The range comes from the batch's rows, not the file names, so a file holding a
