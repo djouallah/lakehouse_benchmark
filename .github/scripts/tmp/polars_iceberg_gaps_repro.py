@@ -22,7 +22,7 @@ cat = SqlCatalog("lake", uri=f"sqlite:///{d}/c.db", warehouse=f"file://{d}")
 
 
 def sink(name, df, **kw):
-    df.lazy().sink_iceberg(name, catalog=cat, **kw)
+    df.lazy().sink_iceberg(name, catalog=cat, mode="append", **kw)
 
 
 sink(
