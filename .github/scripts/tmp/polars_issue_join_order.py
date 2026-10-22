@@ -1,5 +1,8 @@
-import os, resource, subprocess, sys
-from datetime import datetime, timedelta
+import os
+import resource
+import subprocess
+import sys
+from datetime import datetime
 
 import numpy as np
 import polars as pl
@@ -7,15 +10,21 @@ import polars as pl
 D = "/tmp/jo"
 if len(sys.argv) == 1:
     os.makedirs(D, exist_ok=True)
-    ts = pl.datetime_range(datetime(2024, 1, 1), datetime(2025, 2, 3, 23, 55), "5m", eager=True)  # 400 days
+    ts = pl.datetime_range(
+        datetime(2024, 1, 1), datetime(2025, 2, 3, 23, 55), "5m", eager=True
+    )  # 400 days
     duid = pl.DataFrame({"duid": [f"U{j:03d}" for j in range(400)]})
     for i in range(0, len(ts), 20 * 288):  # fact: 46M rows in 20 files
         f = pl.DataFrame({"ts": ts[i : i + 20 * 288]}).join(duid, how="cross")
-        f.with_columns(mw=pl.Series(np.random.default_rng(i).random(f.height))).write_parquet(f"{D}/fact_{i:06d}.parquet")
-    duid.with_columns(region=pl.format("R{}", pl.int_range(400) % 5)).write_parquet(f"{D}/dim.parquet")
-    pl.DataFrame({"ts": ts}).join(pl.DataFrame({"region": [f"R{j}" for j in range(5)]}), how="cross").with_columns(
-        rrp=pl.lit(50.0)
-    ).write_parquet(f"{D}/price.parquet")
+        f.with_columns(mw=pl.Series(np.random.default_rng(i).random(f.height))).write_parquet(
+            f"{D}/fact_{i:06d}.parquet"
+        )
+    duid.with_columns(region=pl.format("R{}", pl.int_range(400) % 5)).write_parquet(
+        f"{D}/dim.parquet"
+    )
+    pl.DataFrame({"ts": ts}).join(
+        pl.DataFrame({"region": [f"R{j}" for j in range(5)]}), how="cross"
+    ).with_columns(rrp=pl.lit(50.0)).write_parquet(f"{D}/price.parquet")
 
 ctx = pl.SQLContext(
     fact=pl.scan_parquet(f"{D}/fact_*.parquet"),

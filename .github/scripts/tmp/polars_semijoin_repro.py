@@ -5,12 +5,13 @@ fact (scada) JOIN dim ON duid JOIN price ON (ts, region), GROUP BY, filtered to 
 "rebuild" dates by `s.date IN (SELECT ...)`. Each variant runs in its own process and reports
 its peak RSS; `explain()` shows where the semi join lands.
 """
+
 import os
 import resource
 import subprocess
 import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 DATA = "/tmp/semijoin"
 DAYS, DUIDS, REGIONS = int(os.environ.get("DAYS", "400")), 400, 5
@@ -37,7 +38,8 @@ REBUILD = {
     # a small separate table of dates
     "table": "SELECT date FROM rebuild",
     # derived from the fact itself, as fct_summary's rebuild_dates window is
-    "derived": "SELECT DISTINCT date FROM scada WHERE date >= (SELECT MAX(date) - INTERVAL 6 DAY FROM scada)",
+    "derived": "SELECT DISTINCT date FROM scada"
+    " WHERE date >= (SELECT MAX(date) - INTERVAL 6 DAY FROM scada)",
 }
 VARIANTS = {
     f"{shape}/{src}": sql.format(rebuild=REBUILD[src])
@@ -52,21 +54,36 @@ def gen():
 
     os.makedirs(DATA, exist_ok=True)
     start = datetime(2024, 1, 1)
-    ts = pl.datetime_range(start, start + timedelta(days=DAYS) - timedelta(minutes=5), "5m", eager=True)
+    ts = pl.datetime_range(
+        start, start + timedelta(days=DAYS) - timedelta(minutes=5), "5m", eager=True
+    )
     for i in range(0, DAYS, 20):  # one file per 20 days, like many data files
         t = ts.slice(i * 288, 20 * 288)
-        f = pl.DataFrame({"ts": t}).join(pl.DataFrame({"duid": [f"U{j:04d}" for j in range(DUIDS)]}), how="cross")
+        f = pl.DataFrame({"ts": t}).join(
+            pl.DataFrame({"duid": [f"U{j:04d}" for j in range(DUIDS)]}), how="cross"
+        )
         rng = np.random.default_rng(i)
         f.with_columns(
             date=pl.col("ts").dt.date(),
             mw=pl.Series(rng.random(f.height) * 100),
             intervention=pl.lit(0, pl.Int32),
         ).write_parquet(f"{DATA}/scada_{i:05d}.parquet")
-    pl.DataFrame({"duid": [f"U{j:04d}" for j in range(DUIDS)], "region": [f"R{j % REGIONS}" for j in range(DUIDS)]}).write_parquet(f"{DATA}/dim.parquet")
-    p = pl.DataFrame({"ts": ts}).join(pl.DataFrame({"region": [f"R{j}" for j in range(REGIONS)]}), how="cross")
-    p.with_columns(date=pl.col("ts").dt.date(), rrp=pl.lit(50.0), intervention=pl.lit(0, pl.Int32)).write_parquet(f"{DATA}/price.parquet")
+    pl.DataFrame(
+        {
+            "duid": [f"U{j:04d}" for j in range(DUIDS)],
+            "region": [f"R{j % REGIONS}" for j in range(DUIDS)],
+        }
+    ).write_parquet(f"{DATA}/dim.parquet")
+    p = pl.DataFrame({"ts": ts}).join(
+        pl.DataFrame({"region": [f"R{j}" for j in range(REGIONS)]}), how="cross"
+    )
+    p.with_columns(
+        date=pl.col("ts").dt.date(), rrp=pl.lit(50.0), intervention=pl.lit(0, pl.Int32)
+    ).write_parquet(f"{DATA}/price.parquet")
     last = start.date() + timedelta(days=DAYS - 1)
-    pl.DataFrame({"date": [last - timedelta(days=k) for k in range(7)]}).write_parquet(f"{DATA}/rebuild.parquet")
+    pl.DataFrame({"date": [last - timedelta(days=k) for k in range(7)]}).write_parquet(
+        f"{DATA}/rebuild.parquet"
+    )
 
 
 def lazy_api():
@@ -93,7 +110,11 @@ def query(name):
         lf = lazy_api()
     else:
         lf = ctx().execute(VARIANTS[name.removesuffix("/no_join_order")])
-    flags = pl.QueryOptFlags(join_order=False) if name.endswith("/no_join_order") else pl.QueryOptFlags()
+    flags = (
+        pl.QueryOptFlags(join_order=False)
+        if name.endswith("/no_join_order")
+        else pl.QueryOptFlags()
+    )
     return lf, flags
 
 
@@ -113,7 +134,10 @@ def run(name):
     lf, flags = query(name)
     df = lf.collect(optimizations=flags)  # default engine, as dbt-polars collects
     peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-    print(f"{name:26s} rows={df.height:>9,}  {time.time() - t0:6.1f} s  peak RSS {peak:8,.0f} MB", flush=True)
+    print(
+        f"{name:26s} rows={df.height:>9,}  {time.time() - t0:6.1f} s  peak RSS {peak:8,.0f} MB",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":
@@ -125,7 +149,8 @@ if __name__ == "__main__":
 
     print(pl.__version__, pl.build_info().get("git", {}), flush=True)
     gen()
-    print(f"scada rows: {pl.scan_parquet(f'{DATA}/scada_*.parquet').select(pl.len()).collect().item():,}", flush=True)
+    scada_rows = pl.scan_parquet(f"{DATA}/scada_*.parquet").select(pl.len()).collect().item()
+    print(f"scada rows: {scada_rows:,}", flush=True)
     names = [*VARIANTS, "filter_last/table/no_join_order", "lazy_api", "lazy_api/no_join_order"]
     for name in names:
         lf, flags = query(name)

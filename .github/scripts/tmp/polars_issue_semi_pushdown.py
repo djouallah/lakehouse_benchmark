@@ -1,4 +1,7 @@
-import os, resource, subprocess, sys
+import os
+import resource
+import subprocess
+import sys
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -7,18 +10,24 @@ import polars as pl
 D = "/tmp/sp"
 if len(sys.argv) == 1:
     os.makedirs(D, exist_ok=True)
-    ts = pl.datetime_range(datetime(2024, 1, 1), datetime(2025, 2, 3, 23, 55), "5m", eager=True)  # 400 days
+    ts = pl.datetime_range(
+        datetime(2024, 1, 1), datetime(2025, 2, 3, 23, 55), "5m", eager=True
+    )  # 400 days
     duid = pl.DataFrame({"duid": [f"U{j:03d}" for j in range(400)]})
     for i in range(0, len(ts), 20 * 288):  # fact: 46M rows in 20 files
         f = pl.DataFrame({"ts": ts[i : i + 20 * 288]}).join(duid, how="cross")
-        f.with_columns(date=pl.col("ts").dt.date(), mw=pl.Series(np.random.default_rng(i).random(f.height))).write_parquet(
-            f"{D}/fact_{i:06d}.parquet"
-        )
-    duid.with_columns(region=pl.format("R{}", pl.int_range(400) % 5)).write_parquet(f"{D}/dim.parquet")
-    pl.DataFrame({"ts": ts}).join(pl.DataFrame({"region": [f"R{j}" for j in range(5)]}), how="cross").with_columns(
-        rrp=pl.lit(50.0)
-    ).write_parquet(f"{D}/price.parquet")
-    pl.DataFrame({"date": [date(2025, 2, 3) - timedelta(days=k) for k in range(7)]}).write_parquet(f"{D}/dates.parquet")
+        f.with_columns(
+            date=pl.col("ts").dt.date(), mw=pl.Series(np.random.default_rng(i).random(f.height))
+        ).write_parquet(f"{D}/fact_{i:06d}.parquet")
+    duid.with_columns(region=pl.format("R{}", pl.int_range(400) % 5)).write_parquet(
+        f"{D}/dim.parquet"
+    )
+    pl.DataFrame({"ts": ts}).join(
+        pl.DataFrame({"region": [f"R{j}" for j in range(5)]}), how="cross"
+    ).with_columns(rrp=pl.lit(50.0)).write_parquet(f"{D}/price.parquet")
+    pl.DataFrame({"date": [date(2025, 2, 3) - timedelta(days=k) for k in range(7)]}).write_parquet(
+        f"{D}/dates.parquet"
+    )
 
 fact = pl.scan_parquet(f"{D}/fact_*.parquet")
 dim = pl.scan_parquet(f"{D}/dim.parquet")
@@ -29,11 +38,19 @@ OPT = pl.QueryOptFlags(join_order=False)
 
 
 def semi_last():  # the semi join's key is a fact column, so it could run on fact alone
-    return fact.join(dim, on="duid").join(price, on=["ts", "region"]).join(dates, on="date", how="semi")
+    return (
+        fact.join(dim, on="duid")
+        .join(price, on=["ts", "region"])
+        .join(dates, on="date", how="semi")
+    )
 
 
 def semi_first():  # the same thing, by hand
-    return fact.join(dates, on="date", how="semi").join(dim, on="duid").join(price, on=["ts", "region"])
+    return (
+        fact.join(dates, on="date", how="semi")
+        .join(dim, on="duid")
+        .join(price, on=["ts", "region"])
+    )
 
 
 if len(sys.argv) == 1:

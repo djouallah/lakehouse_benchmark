@@ -29,7 +29,9 @@ def case(name, fn):
 
 
 def fresh(name, fmt):
-    spark.sql(f"CREATE TABLE {name} (id INT, v INT) USING {fmt} LOCATION '{os.path.join(work, name)}'")
+    spark.sql(
+        f"CREATE TABLE {name} (id INT, v INT) USING {fmt} LOCATION '{os.path.join(work, name)}'"
+    )
     spark.sql(f"INSERT INTO {name} VALUES (1, 10), (2, 20), (3, 30)")
 
 
