@@ -11,6 +11,10 @@ on:
         description: Short sha of a polars-main-<sha> prerelease of this repo.
         type: string
         required: true
+      script:
+        description: Script under .github/scripts/tmp/ to run.
+        type: string
+        default: polars_semijoin_repro.py
       days:
         description: Days of synthetic scada (400 duids x 288 intervals a day).
         type: string
@@ -32,6 +36,6 @@ jobs:
           base=https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-${{ inputs.sha }}
           pip install numpy pyarrow "polars @ $base/polars-2.0.0-py3-none-any.whl" \
             "polars-runtime-32 @ $base/polars_runtime_32-2.0.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-      - run: python .github/scripts/tmp/polars_semijoin_repro.py
+      - run: python .github/scripts/tmp/${{ inputs.script }}
         env:
           DAYS: ${{ inputs.days }}
