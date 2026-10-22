@@ -1131,7 +1131,8 @@ function renderRealWorkload() {
     return `<span class="chip${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
       <b class="v">${ok(e) ? "✓" : "✗"}</b><span class="nm">${esc(wlName(e))}</span>
       ${l.peak_rss_mb ? `<span class="track"><i style="width: ${Math.min(100, 100 * l.peak_rss_mb / 1024 / RUNNER_GB).toFixed(1)}%"></i></span>
-        <span class="gb">${gb(l.peak_rss_mb)} / ${RUNNER_GB} GB</span>` : ""}</span>`;
+        <span class="gb">${gb(l.peak_rss_mb)} / ${RUNNER_GB} GB</span>` : ""}
+      ${l.model_files?.fct_scada != null ? `<span class="gb">${l.model_files.fct_scada.toLocaleString()} files processed</span>` : ""}</span>`;
   }).join("");
 
   let dag = "";
