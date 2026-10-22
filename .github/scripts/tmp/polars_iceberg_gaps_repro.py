@@ -4,7 +4,6 @@ Local pyiceberg SqlCatalog in a temp dir, no secrets. Prints every error verbati
 upstream issues.
 """
 
-import glob
 import inspect
 import os
 import tempfile
@@ -113,7 +112,7 @@ ddl("drop namespace (empty)", lambda: cat.drop_namespace("tmpns"))
 print("\n== B. MAX / MIN / COUNT with every data file deleted")
 sink("sales.stats", pl.DataFrame({"id": [1, 2, 3, 4]}), create_if_not_exists=True)
 tbl = cat.load_table("sales.stats")
-files = glob.glob(f"{d}/sales.db/stats/data/*.parquet")
+files = [p.removeprefix("file://") for p in tbl.inspect.files()["file_path"].to_pylist()]
 for f in files:
     os.remove(f)
 print(f"deleted {len(files)} data files")
