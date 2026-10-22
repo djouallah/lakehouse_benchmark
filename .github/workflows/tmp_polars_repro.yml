@@ -1,0 +1,37 @@
+name: temporary polars repro
+
+# TEMPORARY: runs .github/scripts/tmp/polars_semijoin_repro.py against a Polars main build
+# (tmp_polars_main.yml), to confirm whether the optimizer pushes an IN-subquery filter below
+# inner joins before reporting it. No OneLake, no secrets. Deleted once the issue is filed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Short sha of a polars-main-<sha> prerelease of this repo.
+        type: string
+        required: true
+      days:
+        description: Days of synthetic scada (400 duids x 288 intervals a day).
+        type: string
+        default: "400"
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: |
+          base=https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-${{ inputs.sha }}
+          pip install numpy pyarrow "polars @ $base/polars-2.0.0-py3-none-any.whl" \
+            "polars-runtime-32 @ $base/polars_runtime_32-2.0.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+      - run: python .github/scripts/tmp/polars_semijoin_repro.py
+        env:
+          DAYS: ${{ inputs.days }}
