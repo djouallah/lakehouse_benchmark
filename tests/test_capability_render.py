@@ -176,8 +176,8 @@ def test_insert_select_reads_the_table_it_writes():
 def test_the_columns_go_from_most_to_least_usable():
     assert render_readme.ENGINES == (
         "spark",
-        "trino",
         "sail",
+        "trino",
         "duckdb",
         "chdb",
         "polars",
