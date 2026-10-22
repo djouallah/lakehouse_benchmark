@@ -827,13 +827,15 @@ one, into `dbt_sail_*`, 10 files a run. First green run (probe, main 151a417d5d)
   record's columns by name.
 - **`TRY_CAST` in the record filter.** Sail's CAST raises on the files' own header row
   ("Cannot cast string 'SCADAVALUE' to value of Float64 type"); Spark's gives NULL.
-- **Dialect:** `DESCRIBE TABLE x`, not `DESCRIBE x`; `GROUP BY 1, 2, 3`, not `GROUP BY ALL`,
+- **Dialect:** `GROUP BY 1, 2, 3`, not `GROUP BY ALL`,
   which Sail reads as a column named ALL (fct_summary and the five grain tests;
   [lakehq/sail#2836](https://github.com/lakehq/sail/issues/2836)).
 - **`string_view`.** `SELECT DISTINCT file` over dbt's temp view came back as Arrow string_view,
   which the Connect client cannot convert, with pyspark-client 4.2.0 and 4.1.1 alike; a
   `CAST(file AS STRING)` around it in merge_prune works. The trigger is `DISTINCT` over `substring_index`
   (parse_filename), on any source: [lakehq/sail#2835](https://github.com/lakehq/sail/issues/2835).
+- **`DESCRIBE x`** without `TABLE` failed on main 151a417d5d; fixed by lakehq/sail#2812, the
+  leg's main acfa37959f runs it (repro run 39698528654), so that branch is gone.
 - **Joins:** sort-merge, which spills (`WorkloadConfig.estimated_gib`). With hash joins the runner
   died in fct_scada's merge (39690698607). Sort-merge cannot key on a UTC timestamp
   ([apache/datafusion#26003](https://github.com/apache/datafusion/issues/26003)), so
