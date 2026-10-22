@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.2+main151a417d5d",
+ "version": "0.7.2+maine19e56e21c",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.2+main151a417d5d; _bench_capability listed"
+   "detail": "pysail 0.7.2+maine19e56e21c; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -251,15 +251,15 @@
    "key": "create_branch",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE BRANCH",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CREATE at 66:72 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'"
+   "outcome": "supported",
+   "detail": "refs now ['main', 'probe_branch']"
   },
   {
    "key": "create_tag",
    "group": "refs",
    "question": "ALTER TABLE ... CREATE TAG",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: invalid argument: found CREATE at 63:69 expected '.', 'SET', 'DROP', 'ADD', 'REPLACE', 'WRITE', 'RENAME', 'PARTITION', 'ALTER', 'CHANGE', 'UNSET', or 'RECOVER'"
+   "outcome": "supported",
+   "detail": "refs now ['main', 'probe_tag']"
   },
   {
    "key": "expire_snapshots",
@@ -281,6 +281,20 @@
    "question": "CALL system.rewrite_manifests",
    "outcome": "no",
    "detail": "UnsupportedOperationException: Iceberg system procedure 'rewrite_manifests' is recognized but not implemented"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "`sl_39754911920_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
   },
   {
    "key": "namespace_existing",
@@ -315,31 +329,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(3115456295333804325) but found Some(2033456160833088177)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6842835139061143048) but found Some(4659145304499213800)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1359566665501191390) but found Some(7059984582722880666)"
-  },
-  {
-   "key": "namespace_create",
-   "group": "catalog",
-   "question": "CREATE SCHEMA (namespace)",
-   "outcome": "supported",
-   "detail": "`sl_39594010650_1_ns` created; pyiceberg lists it"
-  },
-  {
-   "key": "namespace_drop",
-   "group": "catalog",
-   "question": "DROP SCHEMA (namespace)",
-   "outcome": "supported",
-   "detail": "the empty namespace is gone"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(9014701538585990344) but found Some(858976224895613871)"
   }
  ],
- "run": "39594010650",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
- "date": "2026-10-21"
+ "run": "39754911920",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39754911920",
+ "date": "2026-10-22"
 }
