@@ -616,8 +616,8 @@ const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
 const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
-// a lake table works, how an engine does less work, what it supports, and only then how fast it is; then
-// everything on one page, and how engines get better.
+// a lake table works, how an engine does less work, what it supports, and only then how fast it is; then how
+// engines get better from bug reports, and the real workload those fixes make possible.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, ENGINES] },  // the state is in the catalog
@@ -625,8 +625,8 @@ const GROUPS = [
   { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
   { id: "performance", title: "Benchmarks", subs: [...SUITES] },
   { id: "about", title: "About", subs: [ABOUT], bar: false },  // a header link, not a tab
-  { id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },
   { id: "bugs", title: "Bug reports", subs: [REPORTS] },
+  { id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
 const state = { suite: TIMELINE.id, sf: {}, group: null, last: {} };
