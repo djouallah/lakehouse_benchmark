@@ -1,6 +1,0 @@
-[
- [
-  "truncate via delete_iceberg",
-  "import tempfile\n\nimport polars as pl\nfrom pyiceberg.catalog.sql import SqlCatalog\n\nd = tempfile.mkdtemp()\ncat = SqlCatalog(\"lake\", uri=f\"sqlite:///{d}/c.db\", warehouse=f\"file://{d}\")\npl.LazyFrame({\"id\": [1, 2], \"v\": [10, 20]}).sink_iceberg(\n    \"sales.orders\",\n    catalog=cat,\n    mode=\"append\",\n    create_if_not_exists=True,\n    create_namespace_if_not_exists=True,\n)\ntbl = cat.load_table(\"sales.orders\")\npl.delete_iceberg(tbl, pl.lit(True))\nt = cat.load_table(\"sales.orders\")\nprint(pl.scan_iceberg(t).collect().height, t.current_snapshot().summary)"
- ]
-]

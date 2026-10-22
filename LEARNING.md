@@ -444,16 +444,25 @@ Largest scale each engine completes, cold, every statement answered:
     ([#29968](https://github.com/pola-rs/polars/issues/29968)) was fixed on main by
     [PR #30087](https://github.com/pola-rs/polars/pull/30087),
     `sink_iceberg(create_namespace_if_not_exists=True)`: the Create namespace cell is a yes. Polars
-    has no way to drop one, so Drop namespace is a no, as for chDB.
-  - Open: the `bucket` partition transform
-    ([#29844](https://github.com/pola-rs/polars/issues/29844)), which Polars refuses before the
-    catalog is asked.
-  - Fixed on main 2026-10-20, not yet released: overwrite by filter
-    ([#29842](https://github.com/pola-rs/polars/issues/29842)) and delete rows by predicate
-    ([#29843](https://github.com/pola-rs/polars/issues/29843)), both by `pl.delete_iceberg`
-    ([PR #30032](https://github.com/pola-rs/polars/pull/30032)).
+    has no way to drop one ([#30212](https://github.com/pola-rs/polars/issues/30212)), so Drop namespace is a no, as for chDB.
+  - Fixed on main: the `bucket` partition transform ([#29844](https://github.com/pola-rs/polars/issues/29844),
+    [PR #30091](https://github.com/pola-rs/polars/pull/30091)).
+  - Fixed on main 2026-10-20, not yet released: delete rows by predicate ([#29843](https://github.com/pola-rs/polars/issues/29843)),
+    `pl.delete_iceberg` ([PR #30032](https://github.com/pola-rs/polars/pull/30032)). PR #30032 also
+    closed overwrite by filter ([#29842](https://github.com/pola-rs/polars/issues/29842)) by mistake; its fix is
+    [PR #29909](https://github.com/pola-rs/polars/pull/29909), still open (reopen asked 2026-10-22).
   - Open: SQL writes to Iceberg, [#29892](https://github.com/pola-rs/polars/issues/29892)–[#29896](https://github.com/pola-rs/polars/issues/29896)
-    (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE).
+    (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE). Reading a catalog in SQL is on main
+    (`SQLContext.register_catalog`, [PR #30113](https://github.com/pola-rs/polars/pull/30113)). On
+    main, `CREATE TABLE` on a catalog name reports success and writes nothing (comment on #29892).
+  - Filed 2026-10-22 on main `fd703335f7`, one issue each, all open. Operations Polars has no API
+    for (pyiceberg needed today): drop table [#30211](https://github.com/pola-rs/polars/issues/30211), drop namespace [#30212](https://github.com/pola-rs/polars/issues/30212), update rows
+    [#30213](https://github.com/pola-rs/polars/issues/30213), drop column [#30214](https://github.com/pola-rs/polars/issues/30214), rename column [#30215](https://github.com/pola-rs/polars/issues/30215), partition evolution [#30216](https://github.com/pola-rs/polars/issues/30216),
+    table property [#30217](https://github.com/pola-rs/polars/issues/30217), sort order [#30218](https://github.com/pola-rs/polars/issues/30218), metadata tables [#30219](https://github.com/pola-rs/polars/issues/30219), branch [#30220](https://github.com/pola-rs/polars/issues/30220),
+    tag [#30221](https://github.com/pola-rs/polars/issues/30221), compaction [#30222](https://github.com/pola-rs/polars/issues/30222), rewrite manifests [#30223](https://github.com/pola-rs/polars/issues/30223); upsert is [#23197](https://github.com/pola-rs/polars/issues/23197).
+    `pl.len()` comes from the metadata but min/max open the data files: [#30224](https://github.com/pola-rs/polars/issues/30224). SQL parity
+    with the Python API: TRUNCATE [#30225](https://github.com/pola-rs/polars/issues/30225), INSERT OVERWRITE [#30226](https://github.com/pola-rs/polars/issues/30226), time travel
+    [#30227](https://github.com/pola-rs/polars/issues/30227), CREATE SCHEMA [#30228](https://github.com/pola-rs/polars/issues/30228), ALTER TABLE ADD COLUMN [#30229](https://github.com/pola-rs/polars/issues/30229); SQL MERGE is [#22185](https://github.com/pola-rs/polars/issues/22185).
 - **The dbt project runs on Polars** (fabric-dbt-examples [run 39257525479](https://github.com/djouallah/fabric-dbt-examples/actions/runs/39257525479),
   2026-10-19): 50 CSV files, `fct_summary` matches Spark row for row (3,078,798 rows; the sums
   differ only in float rounding). Two changes got it there: one SQL `read_csv()` over the file
