@@ -772,9 +772,36 @@ engine on the page as "died", with its last good run.
 | Trino | 100 (13.8 GB; 39396351158) | 360: `EXCEEDED_LOCAL_MEMORY_LIMIT`, its 9 GB per-query cap; the MERGE's `HashBuilderOperator` held 8.66 GB of the batch |
 | Polars | 75 (12.7 GB; 39396351158), now 50 after the runner died at 75 (39493139124) | 360: "spilled data exceeded the out-of-core disk budget" -- over 64 GB of spill (POLARS_OOC_DISK_BUDGET_MB, default 64 GB at the pinned commit; now 100 GB) |
 
-- **The batch is the cost, not the merge.** Each merge's `ON` clause carries
-  `DEST.file IN (<this batch's files>)` (`date` on `fct_summary`; `workload/macros/merge_prune.sql`),
-  so the target side stays the size of the batch. What grows with N is staging the batch.
+- **A prune predicate only prunes on a column whose manifest bounds are exact, and string bounds
+  are not.** Each merge's `ON` clause carried `DEST.file IN (<this batch's files>)`
+  (`workload/macros/merge_prune.sql`), meant to keep the target side the size of the batch. It
+  pruned nothing, on any engine, from the start:
+  - **How pruning works.** An engine picks the parquet files to read from the manifest: the min
+    and max of every column in every data file. It skips a file whose range can't hold the
+    predicate's values, before opening it.
+  - **Iceberg writers truncate string bounds to 16 characters.** `write.metadata.metrics.default`
+    is `truncate(16)` when unset: the Iceberg Java default (Spark, Gluten), and Sail's
+    `MetricsMode::Truncate(16)` (`sail-iceberg/src/operations/write/metrics.rs`). Every AEMO name
+    starts `PUBLIC_DAILY_20…`, so every data file's `file` range is
+    `PUBLIC_DAILY_202`…`PUBLIC_DAILY_203`. Every file "may match" every batch, so every merge read
+    the whole target.
+  - **How it showed.** Sail's MERGE full-joins every row of the candidate files against the batch,
+    then sorts them by data-file path. Its spill grew with the table, not the batch: 12.7, 14.2,
+    20.9, 57.3 GB, then 64.1 GB on a 50-file batch over 79M rows. That run failed with
+    "Resources exhausted … ExternalSorterMerge" (39712751864). The others paid in time, unseen.
+  - **The fix prunes on a column whose bounds are exact.** `merge_prune` now adds
+    `DEST.DATE BETWEEN <batch MIN(DATE)> AND <batch MAX(DATE)>`. Date bounds are never truncated.
+    It changes no result: `DATE` is `CAST(SETTLEMENTDATE AS DATE)`, `SETTLEMENTDATE` is a key
+    column, and the same SQL writes target and batch, so any target row that can match has a batch
+    row's `DATE`. The range comes from the batch's rows, not the file names, so a file holding a
+    full day plus the next day to 04:00 is covered. That overlap only means an adjacent batch's
+    files at the edge are read too. It works on the files already written, so no reset.
+  - **Rule:** a key prefix shared across all values (names, URLs, paths) makes a useless prune
+    column. Prune on a date, a number, or a partition column. Setting
+    `write.metadata.metrics.column.<col> = 'full'` fixes only files written afterwards.
+- **The batch was thought to be the cost.** With the target pruned, what grows with N is staging
+  the batch. Before the DATE prune the target side grew with the table, so the batch sizes in the
+  table above were measured against an unpruned merge.
 - **dbt stages the batch before the MERGE, and the adapters differ.** dbt-core's incremental recipe
   (dbt-duckdb, dbt-trino) runs the model into a temp relation, reads its columns, then merges from
   it. dbt-spark uses a temp VIEW (Spark SQL has no session temp tables), so its MERGE streams the
