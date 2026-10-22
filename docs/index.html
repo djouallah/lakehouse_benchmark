@@ -297,9 +297,6 @@ main .tiles > a { color: inherit; }
 .tiles span { color: var(--ink-2); font-size: 13px; }
 .rw .eng { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 14px 0 0; }
 .rw .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid color-mix(in srgb, var(--c) 40%, var(--grid)); border-radius: 999px; background: color-mix(in srgb, var(--c) 8%, var(--raised)); font-size: 14px; font-variant-numeric: tabular-nums; cursor: default; }
-.rw .chip .v { color: var(--yes); font-weight: 800; }
-.rw .chip.fail { opacity: .6; }
-.rw .chip.fail .v { color: var(--no); }
 .rw .chip .nm { font-weight: 700; }
 .rw .chip .track { width: 60px; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
 .rw .chip .track i { display: block; height: 100%; background: var(--c); }
@@ -1128,8 +1125,8 @@ function renderRealWorkload() {
   const gb = mb => (mb / 1024).toFixed(1);
   const chips = engines.map(e => {
     const l = w.legs[e];
-    return `<span class="chip${ok(e) ? "" : " fail"}" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
-      <b class="v">${ok(e) ? "✓" : "✗"}</b><span class="nm">${esc(wlName(e))}</span>
+    return `<span class="chip" style="--c: var(--${e}, var(--ink-3))" data-tip="${e}">
+      <span class="nm">${esc(wlName(e))}</span>
       ${l.peak_rss_mb ? `<span class="track"><i style="width: ${Math.min(100, 100 * l.peak_rss_mb / 1024 / RUNNER_GB).toFixed(1)}%"></i></span>
         <span class="gb">${gb(l.peak_rss_mb)} / ${RUNNER_GB} GB</span>` : ""}
       ${l.model_files?.fct_scada != null ? `<span class="gb">${l.model_files.fct_scada.toLocaleString()} files processed</span>` : ""}</span>`;
@@ -1170,15 +1167,13 @@ function renderRealWorkload() {
       if (e) {
         const l = w.legs[e];
         tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
-        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(wlName(e))} · ${ok(e) ? "runs" : l.status === "died" ? "died" : "fails"}</div>
+        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(wlName(e))}</div>
           <div class="k">Adapter</div><div>${esc(l.adapter ?? "")}</div>
           ${l.peak_rss_mb ? `<div class="k">Memory</div><div>peak RSS ${gb(l.peak_rss_mb)} GB of ${RUNNER_GB}${l.peak_spill_mb != null
             ? `; ${l.peak_spill_mb >= 100 ? `spilled ${gb(l.peak_spill_mb)} GB to disk` : "no spill to disk"}` : ""}</div>` : ""}
-          ${l.process_limit ? `<div class="k">Files</div><div>${l.process_limit} a run${ok(e) && l.model_files?.fct_scada != null
+          ${l.process_limit ? `<div class="k">Files</div><div>${l.process_limit} a run${l.model_files?.fct_scada != null
             ? `, ${l.model_files.fct_scada.toLocaleString()} daily files processed` : ""}</div>` : ""}
-          <div class="k">Stack</div><div>${Object.entries(l.versions).filter(([, v]) => v).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(", ")}</div>
-          <div class="k">dbt build</div><div>${l.models_ok}/${l.models} models, ${l.tests_ok}/${l.tests} tests</div>
-          ${l.error ? `<div class="k">Error</div><div>${esc(l.error)}${l.last_ok ? ` (last OK ${l.last_ok.finished.slice(0, 10)})` : ""}</div>` : ""}`;
+          <div class="k">Stack</div><div>${Object.entries(l.versions).filter(([, v]) => v).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(", ")}</div>`;
       } else {
         tip.style.setProperty("--c", "var(--ink-3)");
         tip.innerHTML = `<div class="t">${esc(m)}</div>` + runs.map(x => {
