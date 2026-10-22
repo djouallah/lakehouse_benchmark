@@ -1090,6 +1090,9 @@ const RUNNER_GB = 16;
 let loaded = false;  // the CSVs and JSON files have been fetched, or failed to
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");  // the ids in the list under Bug reports
 const WORKLOAD_CODE = "https://github.com/djouallah/lakehouse_benchmark/tree/main/workload";
+// The landing folder's size, measured once by listing Files/dbt/csv_raw on OneLake; not live. The intraday feeds
+// (another 760 small files) don't change the total at this precision.
+const LANDED = { files: 3152, gb: 185.1, date: "2026-10-22", run: "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39787221570" };
 
 // The DAG's layout: a column per depth (the longest path from a model with no parent), the models of a column
 // stacked in name order and centred, an edge from the right of a parent to the left of its child.
@@ -1154,7 +1157,8 @@ function renderRealWorkload() {
       return `<g class="node" data-model="${n}"><rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="10"/>
         <text class="nm" x="${x + 12}" y="${y + 20}">${esc(n)}</text>
         <text class="rc" x="${x + NW - 12}" y="${y + 20}" text-anchor="end">${r === null ? "" : `${compact(r)} rows`}</text>
-        <text class="mt" x="${x + 12}" y="${y + 42}">${esc(m.materialized)}</text>${dots}</g>`;
+        <text class="mt" x="${x + 12}" y="${y + 42}">${esc(m.materialized)}${m.materialized === "source"
+          ? ` · ${LANDED.files.toLocaleString()} daily CSVs, ${Math.round(LANDED.gb)} GB` : ""}</text>${dots}</g>`;
     }).join("");
     dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
@@ -1228,6 +1232,8 @@ function openModel(w, runs, n, at) {
     <div class="h"><b>${esc(n)}</b><span>${head}</span></div>
     ${m.description ? `<p class="d">${esc(m.description)}</p>` : ""}
     ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>
+      <p class="d">Landed: ${LANDED.files.toLocaleString()} daily CSV files, ${LANDED.gb} GB, plus the small intraday feeds;
+        measured ${LANDED.date} (<a href="${LANDED.run}">run</a>), not live.</p>
       <p class="d">One dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
         ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${w.legs[runs[0]]?.tests ?? ""} tests,
         Iceberg tables out. Every 2 hours, never reset: each engine folds the next batch into its own tables.
