@@ -1,11 +1,17 @@
 -- depends_on: {{ ref('fct_scada_today') }}
 -- depends_on: {{ ref('fct_price_today') }}
 
--- Determinism contract, rebuild window and dispatch_duids: the iceberg copy's, verbatim --
--- read that header for why each piece is there. Only what dbt-polars or Polars SQL forces
--- differs, each marked at its site:
+-- Determinism contract, rebuild window and dispatch_duids: the iceberg copy's logic -- read
+-- that header for why each piece is there. The SQL is shaped for Polars' streaming engine
+-- (filters before joins), each difference marked at its site:
 --   * dbt-polars' `merge` with no merge_clauses (it takes none): a matched key is UPDATED and
 --     a new one inserted, which is the merge every tree runs.
+--   * fct_scada and fct_price are cut to the rebuild dates BEFORE the joins (`scada`, `price`).
+--     Streaming equi-joins do not spill, and with the window applied only as a semi-join after
+--     them the join grew with the whole history: 14-15 GB peak, then the runner died
+--     (workload run 39703181069). Same rows: DATE is CAST(SETTLEMENTDATE AS DATE) in both
+--     tables and the join is on SETTLEMENTDATE.
+--   * No trailing ORDER BY: this is a merge source, the order never reaches the table.
 {{ config(
     materialized='incremental',
     incremental_strategy='merge',
@@ -37,10 +43,12 @@ dispatch_duids AS (
 -- is settled: its daily file has landed and been folded in, so recomputing it would
 -- reproduce it exactly. Shrinking this window silently reduces what can be repaired.
 rebuild_dates AS (
-  -- Never seen before: archive backfill, or a first build catching up.
-  SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s
-  WHERE s.INTERVENTION = 0
-    AND s.DATE NOT IN (SELECT DISTINCT date FROM {{ this }})
+  -- Never seen before: archive backfill, or a first build catching up. Distinct dates first,
+  -- then the anti-join: a few thousand dates, not every fct_scada row.
+  SELECT d.date FROM (
+    SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s WHERE s.INTERVENTION = 0
+  ) d
+  WHERE d.date NOT IN (SELECT DISTINCT date FROM {{ this }})
   UNION
   -- Recently settled: a date first written from the intraday feed is incomplete until
   -- its daily file lands, which is several days later if the pipeline missed a run — so
@@ -64,6 +72,29 @@ rebuild_dates AS (
 ),
 {% endif %}
 
+-- The daily branch's inputs, cut to the rebuild dates before any join (see the header). The
+-- range on DATE lets scan_iceberg prune files; the IN keeps exactly the rebuild dates.
+scada AS (
+  SELECT s.DATE, s.SETTLEMENTDATE, s.DUID, s.INITIALMW
+  FROM {{ ref('fct_scada') }} s
+  WHERE s.INTERVENTION = 0
+    AND s.INITIALMW <> 0
+    {% if scoped %}
+    AND s.DATE >= (SELECT MIN(date) FROM rebuild_dates)
+    AND s.DATE IN (SELECT date FROM rebuild_dates)
+    {% endif %}
+),
+
+price AS (
+  SELECT p.SETTLEMENTDATE, p.REGIONID, p.RRP
+  FROM {{ ref('fct_price') }} p
+  WHERE p.INTERVENTION = 0
+    {% if scoped %}
+    AND p.DATE >= (SELECT MIN(date) FROM rebuild_dates)
+    AND p.DATE IN (SELECT date FROM rebuild_dates)
+    {% endif %}
+),
+
 daily_summary AS (
   SELECT
     s.DATE as date,
@@ -71,19 +102,12 @@ daily_summary AS (
     s.DUID,
     MAX(s.INITIALMW) as mw,
     MAX(p.RRP) as price
-  FROM {{ ref('fct_scada') }} s
+  FROM scada s
   -- INNER joins: `WHERE p.INTERVENTION = 0` always discarded null-price rows anyway,
   -- so the old LEFT JOINs were inner joins in disguise — say what we do.
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
-  JOIN {{ ref('fct_price') }} p
+  JOIN price p
     ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
-  WHERE
-    s.INTERVENTION = 0
-    AND s.INITIALMW <> 0
-    AND p.INTERVENTION = 0
-    {% if scoped %}
-    AND s.DATE IN (SELECT date FROM rebuild_dates)
-    {% endif %}
   GROUP BY ALL
 
   UNION ALL
@@ -126,4 +150,3 @@ FROM daily_summary
 
 SELECT b.date, b.time, b.DUID, b.mw, b.price, b.cutoff
 FROM batch b
-ORDER BY b.date, b.time

@@ -5,6 +5,10 @@ Most benchmarks are big data using big compute. Here we are testing small to med
 
 **[Interactive results →](https://djouallah.github.io/lakehouse_benchmark/)**
 
+## Real workload
+
+The Real workload tab is not a benchmark. It simulates a data engineer's job: every two hours new AEMO files land, and each engine's dbt project folds them into its own Iceberg tables, which only grow. As in real life, each engine's SQL is tuned for that engine. The one fixed rule is that every engine writes with the same `merge` on the same key, so runs stay safe to run concurrently. Files processed is the indicator.
+
 ## Adding an engine
 
 A candidate engine must pass all three; the `candidate engine` workflow checks them:
