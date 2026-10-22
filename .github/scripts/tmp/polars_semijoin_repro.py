@@ -130,6 +130,24 @@ if __name__ == "__main__":
     for name in names:
         lf, flags = query(name)
         print(f"\n===== explain {name}\n{lf.explain(optimizations=flags)}", flush=True)
+    # Is the join order stable? Plan each variant PLANS times; a plan's signature is its
+    # sequence of join keys. "dim x price on region first" is the near-cross join.
+    import collections
+    import re
+
+    plans = int(os.environ.get("PLANS", "20"))
+    print(f"\n===== plan stability ({plans} plannings each)", flush=True)
+    for name in names:
+        seen = collections.Counter()
+        for _ in range(plans):
+            lf, flags = query(name)
+            text = lf.explain(optimizations=flags)
+            keys = re.findall(r"PLAN ON: (\[.*?\])", text)
+            sig = " | ".join(re.sub(r"__POLARS_JOIN_ORDER_\d+_", "", k) for k in keys)
+            seen[sig] += 1
+        for sig, n in seen.most_common():
+            print(f"{name:32s} {n:3d}x  {sig}", flush=True)
     print(flush=True)
     for name in names:
-        subprocess.run([sys.executable, __file__, name], timeout=900)
+        for _ in range(int(os.environ.get("RUNS", "3"))):
+            subprocess.run([sys.executable, __file__, name], timeout=900)
