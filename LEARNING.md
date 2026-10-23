@@ -473,7 +473,7 @@ Largest scale each engine completes, cold, every statement answered:
     [AI_POLICY.md](https://github.com/pola-rs/polars/blob/main/AI_POLICY.md): "You also opened
     dozens of closely related issues at a time, this is not welcome"
     ([#30222](https://github.com/pola-rs/polars/issues/30222)). The volume is the likely trigger.
-    The dashboard no longer lists them, and the gaps are still there. The issues were: operations Polars has no API
+    The dashboard lists them again (2026-10-23) as closed, not fixed, the way it shows every engine's: the gaps are still there. The issues were: operations Polars has no API
     for (pyiceberg needed today): drop table [#30211](https://github.com/pola-rs/polars/issues/30211), drop namespace [#30212](https://github.com/pola-rs/polars/issues/30212), update rows
     [#30213](https://github.com/pola-rs/polars/issues/30213), drop column [#30214](https://github.com/pola-rs/polars/issues/30214), rename column [#30215](https://github.com/pola-rs/polars/issues/30215), partition evolution [#30216](https://github.com/pola-rs/polars/issues/30216),
     table property [#30217](https://github.com/pola-rs/polars/issues/30217), sort order [#30218](https://github.com/pola-rs/polars/issues/30218), metadata tables [#30219](https://github.com/pola-rs/polars/issues/30219), branch [#30220](https://github.com/pola-rs/polars/issues/30220),
