@@ -195,11 +195,22 @@ Largest scale each engine completes, cold, every statement answered:
   38054455096), and at the spill ceiling, 90.8 GiB after 258 s, when Q64 is the only query (plans
   run 38057700184). Its own estimate for the last join is 5.5 quadrillion rows. Trino answers it in
   149 s, and no join in its plan makes more than ~300K rows.
+  **Fixed on main by duckdb/duckdb#27493** (merged 2026-10-20, not in v2.0.0, backport to
+  v2.0-cyanoptera pending): DuckDB used to estimate a `<>` join like a range join (cross product /
+  tdom^(2/3)), so `cd1.cd_marital_status != cd2.cd_marital_status` looked small (249M) and ran as an
+  early nested loop. Now it is estimated at nearly a cross product, and the `!=` becomes a second
+  condition on the `ss_customer_sk = c_customer_sk` hash join. Q64 at SF=100 on `v2.1.0-alpha49809`:
+  30.0 s, no spill, 9.1 GiB peak, no join above 1.9M rows (tmp_duckdb_main_plans run 39924692760).
+  This needed no Iceberg column statistics (duckdb-iceberg#1110 still open).
 - **TPC-DS Q19 is a cross product.** DuckDB joins customer × customer_address × store with a
   nested loop on `substring(ca_zip, 1, 5) != substring(s_zip, 1, 5)`, the only condition between
   them: 767M rows at SF=100 where it guessed 14.8M, 25 GiB spilled, ~200 s (plans run 38057700184).
   It does this before the month and the item filters have shrunk store_sales to 160K rows. Trino
   joins those first, and none of its joins makes more than 205K rows.
+  **Fixed on main by duckdb/duckdb#27493**, the same change as Q64: the nested loop is gone, the
+  `!=` is a second condition on the customer hash join, and store_sales is joined to store and item
+  first. Q19 at SF=100 on `v2.1.0-alpha49809`: 16.7 s (was 199.9 s), no spill, 3.0 GiB peak, no
+  join above 2M rows (run 39924692760).
 - **TPC-H SF=300 now completes on the nightly CLI** (run 37429290996, 2026-10-06,
   `v2.0.0-alpha44357`): 22/22 cold in 3,227 s, Q18 in 155 s, Q21 the slowest at 614 s.
   duckdb/duckdb#22474 is still open; the change is almost certainly duckdb/duckdb#26246 (merged
