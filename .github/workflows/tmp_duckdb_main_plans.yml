@@ -63,9 +63,14 @@ jobs:
         run: |
           dir="$RUNNER_TEMP/duckdb-cli"
           mkdir -p "$dir"
-          gh run download "$DUCKDB_RUN_ID" --repo duckdb/duckdb \
-            --name duckdb-cli-linux-amd64.tar.gz --dir "$dir"
-          tar -xzf "$dir/duckdb-cli-linux-amd64.tar.gz" -C "$dir"
+          # The artifact is uploaded unzipped (the raw .tar.gz), which `gh run download` can't read.
+          id=$(gh api "repos/duckdb/duckdb/actions/runs/$DUCKDB_RUN_ID/artifacts?name=duckdb-cli-linux-amd64.tar.gz" --jq '.artifacts[0].id')
+          gh api "repos/duckdb/duckdb/actions/artifacts/$id/zip" > "$dir/blob"
+          if [ "$(head -c 2 "$dir/blob")" = "PK" ]; then
+            unzip -o "$dir/blob" -d "$dir" && tar -xzf "$dir"/*.tar.gz -C "$dir"
+          else
+            tar -xzf "$dir/blob" -C "$dir"
+          fi
           chmod +x "$dir/duckdb"
           echo "$dir" >> "$GITHUB_PATH"
           "$dir/duckdb" --version
