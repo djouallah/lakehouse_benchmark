@@ -433,8 +433,16 @@ Largest scale each engine completes, cold, every statement answered:
   as a maintainer suggested on [#27776](https://github.com/pola-rs/polars/issues/27776): lazy,
   with the REST scan and manifest caches of #29790 / #29623. The registration loop stays, because
   Polars SQL has no catalog. There is no data-file disk cache to turn on: Polars 2.0 removed it.
+- **The capability grid asks Polars in SQL only, as every engine (2026-10-23).** Its column is
+  Polars' SQLContext with the REST catalog attached by `register_catalog`, sent the statements the
+  other SQL engines take; `sink_iceberg`, `pl.delete_iceberg` and `scan_iceberg` are no longer
+  credited. On main 34e7970e37 that is 2 cells of 39, file pruning and DROP TABLE ... PURGE
+  ([39902372275](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39902372275)):
+  CREATE TABLE, INSERT, DELETE, UPDATE, MERGE, TRUNCATE, ALTER and CREATE SCHEMA on a catalog table
+  are all refused, so the column sits last, after Databend. The Python API notes below are what
+  the grid used to read.
 - **Iceberg writes go through `sink_iceberg`, and Polars has no DDL.** What the capability grid
-  shows, and what was filed:
+  showed before, and what was filed:
   - Fixed: Polars now creates the table it sinks. [#29845](https://github.com/pola-rs/polars/issues/29845)
     was fixed on main by [PR #29908](https://github.com/pola-rs/polars/pull/29908),
     `sink_iceberg(create_if_not_exists=True)`, which makes an unpartitioned table from the frame's
