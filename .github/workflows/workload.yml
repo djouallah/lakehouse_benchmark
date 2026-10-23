@@ -45,6 +45,10 @@ on:
         description: Drop every dbt_<engine>_* table first, so all legs start from empty and share one history. Not a full refresh -- the builds stay incremental.
         type: boolean
         default: false
+      reset_tables:
+        description: With reset, drop only these tables, as engine.table (e.g. "duckdb.fct_summary,polars.fct_summary"); the next run rebuilds them from the facts. Empty drops every table.
+        type: string
+        default: ""
       publish:
         description: Commit results/workload/<run>.json and the Real workload tab's data (docs/data/workload.json). Off leaves the artifacts and touches nothing. Scheduled runs always publish.
         type: boolean
@@ -130,6 +134,8 @@ jobs:
           cache-dependency-path: requirements/catalog.txt
       - run: pip install -r requirements/catalog.txt
       - name: Drop the legs' tables
+        env:
+          RESET_TABLES: ${{ inputs.reset_tables }}
         run: python .github/scripts/workload_reset.py
 
   dbt-Iceberg:
