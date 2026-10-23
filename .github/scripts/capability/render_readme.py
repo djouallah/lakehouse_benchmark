@@ -231,10 +231,13 @@ GROUPS = {
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
     ],
-    "Tables & types": [
+    # Row-level writes beyond Core.
+    "Writes": [
         "MERGE with two actions (UPDATE + INSERT)",
         "TRUNCATE",
         "CREATE TABLE IF NOT EXISTS, existing table",
+    ],
+    "Partitions & types": [
         "Partitioned table",
         "Partition transform: bucket",
         "Partition transform: truncate",
@@ -252,11 +255,9 @@ GROUPS = {
         "Set table property",
         "Sort order evolution",
     ],
-    "Reading from metadata": [
+    "Reads & refs": [
         "File pruning from min/max in the metadata",
         "MAX from the metadata, no data file read",
-    ],
-    "Read & refs": [
         "Time travel",
         "Metadata tables",
         "Create branch",
