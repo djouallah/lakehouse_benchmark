@@ -413,6 +413,7 @@ def main(parts: Path) -> int:
                 counted = json.loads(found[-1])
                 part["model_rows"] = counted["model_rows"]
                 part["model_files"] = counted.get("model_files", {})
+                part["model_mw"] = counted.get("model_mw", {})
         return 0
     except Exception as exc:  # noqa: BLE001 - the part is written either way
         part["error"] = scrub.scrub_exc(exc)

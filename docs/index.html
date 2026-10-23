@@ -1243,7 +1243,6 @@ function renderRealWorkload() {
 // A DAG model, clicked: how each engine builds it (from each leg's own dbt manifest) and where their SQL
 // differs (the model's meta.differences in workload/models/aemo/_*.yml). Pinned until Esc, ✕ or a click
 // elsewhere; placed beside the node and kept inside the viewport.
-const WORKLOAD_BLOB = "https://github.com/djouallah/lakehouse_benchmark/blob/main/workload/";
 const mdLine = s => esc(s).replace(/\[([^\]]+)\]\((https:[^)\s]+)\)/g, '<a href="$2">$1</a>').replace(/`([^`]+)`/g, "<code>$1</code>");
 function strategyOf(c) {
   if (!c) return "";
@@ -1259,12 +1258,17 @@ function openModel(w, runs, n, at) {
   const head = rows[0] == null ? "" : same ? `${rows[0].toLocaleString()} rows on all ${runs.length} <b class="ok">✓</b>`
     : `<b class="bad">row counts differ</b>`;
   const isSource = m.materialized === "source";
-  const lines = isSource ? "" : runs.map(e => {
-    const l = w.legs[e], c = l.model_config?.[n], r = l.model_rows?.[n];
-    const sql = c?.path ? `<a href="${WORKLOAD_BLOB}${c.path}">${c.sql_lines} lines ↗</a>` : "";
+  // SUM(mw), where the run measured it (fct_summary): the same rows can sum to a different last
+  // digit, each engine breaking the DOUBLE -> DECIMAL tie its own way. Exact decimal text, so it
+  // is shown as published, grouped but never rounded through a JS number.
+  const hasMw = runs.some(e => w.legs[e].model_mw?.[n] != null);
+  const mwText = v => { const [i, f] = String(v).split("."); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (f ? "." + f : ""); };
+  const byRows = [...runs].sort((a, b) => (w.legs[b].model_rows?.[n] ?? -1) - (w.legs[a].model_rows?.[n] ?? -1));
+  const lines = isSource ? "" : byRows.map(e => {
+    const l = w.legs[e], c = l.model_config?.[n], r = l.model_rows?.[n], mw = l.model_mw?.[n];
     return `<tr style="--c: var(--${e}, var(--ink-3))"><td><i class="sw"></i>${esc(wlName(e))}</td>
       <td>${esc(strategyOf(c))}</td>
-      ${same ? "" : `<td class="n">${r == null ? "–" : r.toLocaleString()}</td>`}<td class="n">${sql}</td></tr>`;
+      <td class="n">${r == null ? "–" : r.toLocaleString()}</td>${hasMw ? `<td class="n">${mw == null ? "–" : mwText(mw)}</td>` : ""}</tr>`;
   }).join("");
   const diffs = m.differences?.length ? `<h4>Where the SQL differs</h4><ul>${m.differences.map(d => `<li>${mdLine(d)}</li>`).join("")}</ul>` : "";
   const p = document.createElement("div");
@@ -1279,7 +1283,7 @@ function openModel(w, runs, n, at) {
         ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${w.legs[runs[0]]?.tests ?? ""} tests,
         Iceberg tables out. Every 2 hours, never reset: each engine folds the next batch into its own tables.
         <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`
-      : `<table><thead><tr><th>Engine</th><th>Builds it by</th>${same ? "" : `<th class="n">Rows</th>`}<th class="n">SQL</th></tr></thead>
+      : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Rows</th>${hasMw ? `<th class="n">SUM(mw)</th>` : ""}</tr></thead>
     <tbody>${lines}</tbody></table>`}${diffs}`;
   document.body.append(p);
   const pw = p.offsetWidth, ph = p.offsetHeight, gap = 12;
