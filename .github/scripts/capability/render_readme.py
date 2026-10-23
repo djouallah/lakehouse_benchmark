@@ -19,24 +19,17 @@ from pathlib import Path
 
 # The column order, most usable first. Spark is the reference: the Iceberg Java library the others
 # are read against. Sail passes Trino with branches and tags (36 cells to 35, run 39754911920).
-# Polars has no SQL writes but supports more than Databend (16 cells to 10, run 39538881239).
+# Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
+# credited for a library call beside its SQL.
 ENGINES = ("spark", "sail", "trino", "duckdb", "chdb", "polars", "databend")
-# The ones with SQL, for the rows Polars has no operation for.
-SQL = ("spark", "trino", "sail", "duckdb", "chdb", "databend")
-# The SQL engines asked the DDL and row-level probes that chDB has no statement for.
-FULL_SQL = ("spark", "trino", "duckdb", "sail", "databend")
+SQL = ENGINES
+# The engines asked the DDL and row-level probes that chDB has no statement for.
+FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend")
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
-    # Polars' CREATE TABLE is sink_iceberg creating the table it writes: a CTAS too.
-    (
-        "CREATE TABLE",
-        {
-            "polars": ["sink_create"],
-            **{e: ["create_table"] for e in FULL_SQL},
-        },
-    ),
-    ("CREATE TABLE AS SELECT", {"polars": ["sink_create"], **{e: ["ctas"] for e in SQL}}),
+    ("CREATE TABLE", {e: ["create_table"] for e in FULL_SQL}),
+    ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in SQL}),
     ("CREATE TABLE IF NOT EXISTS, existing table", {e: ["create_if_not_exists"] for e in SQL}),
     (
         "INSERT / append",
@@ -44,13 +37,13 @@ ROWS = [
             "spark": ["insert_into"],
             "trino": ["insert_into"],
             "databend": ["insert_into"],
-            "polars": ["sink_append"],
+            "polars": ["insert_into"],
             "duckdb": ["insert_values"],
             "sail": ["insert_into"],
         },
     ),
     ("INSERT ... SELECT", {e: ["insert_select"] for e in FULL_SQL}),
-    ("DELETE", {"polars": ["delete_rows"], **{e: ["delete_from"] for e in FULL_SQL}}),
+    ("DELETE", {e: ["delete_from"] for e in FULL_SQL}),
     ("UPDATE", {e: ["update"] for e in FULL_SQL}),
     # The upsert. Spark and Sail ask it of a merge-on-read table; chDB has no MERGE statement.
     (
@@ -62,6 +55,7 @@ ROWS = [
             "duckdb": ["merge_upsert"],
             "sail": ["merge_mor"],
             "chdb": ["merge_into"],
+            "polars": ["merge_upsert"],
         },
     ),
     (
@@ -73,7 +67,7 @@ ROWS = [
             "duckdb": ["insert_overwrite"],
             "sail": ["insert_overwrite"],
             "chdb": ["insert_overwrite"],
-            "polars": ["sink_overwrite"],
+            "polars": ["insert_overwrite"],
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in FULL_SQL}),
@@ -101,7 +95,7 @@ ROWS = [
     ("Nested types: struct, list, map", {e: ["types_nested"] for e in ENGINES}),
     (
         "Add column",
-        {"polars": ["schema_merge_add_column"], **{e: ["add_column"] for e in SQL}},
+        {e: ["add_column"] for e in SQL},
     ),
     ("Drop column", {e: ["drop_column"] for e in SQL}),
     ("Rename column", {e: ["rename_column"] for e in SQL}),
@@ -120,6 +114,7 @@ ROWS = [
             "databend": ["sort_order"],
             "duckdb": ["create_sorted"],
             "sail": ["sort_order"],
+            "polars": ["sort_order"],
         },
     ),
     ("Time travel", {e: ["time_travel"] for e in ENGINES}),
@@ -131,6 +126,7 @@ ROWS = [
             "databend": ["metadata_tables"],
             "duckdb": ["metadata_snapshots", "metadata_files"],
             "sail": ["metadata_tables"],
+            "polars": ["metadata_tables"],
         },
     ),
     # pyiceberg writes four data files with known min/max bounds, then deletes some of them from
@@ -152,7 +148,6 @@ ROWS = [
             "polars": ["drop_purge"],
         },
     ),
-    # Polars creates a namespace with sink_iceberg; it, like chDB, has no way to drop one.
     (
         "Create namespace",
         {
@@ -184,7 +179,7 @@ ROWS = [
     ("Concurrent append: both kept", {e: ["race_append"] for e in ENGINES}),
     (
         "Concurrent writer: DELETE loses nothing",
-        {"polars": ["race_delete"], **{e: ["race_delete"] for e in SQL}},
+        {e: ["race_delete"] for e in SQL},
     ),
     ("Concurrent writer: UPDATE loses nothing", {e: ["race_update"] for e in SQL}),
 ]

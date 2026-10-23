@@ -43,7 +43,7 @@ DATA = {
         "run": "1",
         "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/1",
         "date": "2026-10-09",
-        "rows": [_row("sink_append")],
+        "rows": [_row("insert_into")],
     },
 }
 
@@ -57,7 +57,8 @@ def test_cell_takes_the_worst_outcome_and_keeps_the_reasons():
 
 def test_refusals_get_a_note_quoting_the_detail():
     cells = _cells(DATA, "MERGE with two actions (UPDATE + INSERT)")
-    assert cells["polars_iceberg"] == {"o": "na"}
+    # Polars is asked in SQL like every engine: no reading in the fixture is a skip, never an na.
+    assert cells["polars_iceberg"] == {"o": "skipped"}
     assert cells["duckdb_iceberg"]["o"] == "no"
     assert "400 Duplicate types: add-snapshot" in cells["duckdb_iceberg"]["n"]
 
@@ -81,7 +82,6 @@ def test_duckdb_isolation_rows_fill_the_duckdb_column():
     append = _cells(data, "Concurrent append: both kept")
     assert append == {"polars_iceberg": {"o": "skipped"}, "duckdb_iceberg": {"o": "supported"}}
     delete = _cells(data, "Concurrent writer: DELETE loses nothing", start=True)
-    # Polars is asked this row too now (delete_iceberg); the fixture has no reading for it.
     assert delete["polars_iceberg"] == {"o": "skipped"}
     assert delete["duckdb_iceberg"] == {"o": "no", "n": "lost: final [...]"}
 
@@ -98,7 +98,10 @@ def test_site_matrix_uses_the_site_engine_keys_and_each_runs_own_url():
         "https://github.com/djouallah/lakehouse_benchmark/"
     )
     update = next(r for r in site["rows"] if r["label"] == "UPDATE")
-    assert update["cells"] == {"polars_iceberg": {"o": "na"}, "duckdb_iceberg": {"o": "skipped"}}
+    assert update["cells"] == {
+        "polars_iceberg": {"o": "skipped"},
+        "duckdb_iceberg": {"o": "skipped"},
+    }
 
 
 def test_nothing_the_catalog_decides_is_probed_or_shown():
