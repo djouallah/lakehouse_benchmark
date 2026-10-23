@@ -17,20 +17,3 @@
   {{ return(dates | join(', ') if dates else 'CAST(NULL AS DATE)') }}
 {% endmacro %}
 
-
-{#-- DOUBLE -> DECIMAL(18,4) with Spark's last digit, on every engine.
-
-     A plain CAST breaks a tie at the fourth decimal each engine its own way (LEARNING.md, "Why
-     the decimals differ in the last place"): Spark and Trino HALF_UP, DuckDB multiplies first and
-     sometimes rounds down (duckdb#27503), Polars rounds ties to even (polars#30074). AEMO publishes
-     up to five decimals, so DECIMAL(28,10) holds the value exactly (an engine that multiplies by
-     10^10 and rounds is exact too below ~9e5; prices and MW are far below). Moved 1e-10 away from
-     zero it is no longer a tie, and every engine's nearest rounding then lands on HALF_UP.
-     28, not 38: Spark widens a (38,10) + (38,10) to precision 39 and cuts the scale to 9, which
-     drops the 1e-10. --#}
-{% macro decimal_18_4(col) -%}
-  CAST(CASE WHEN {{ col }} < 0
-            THEN CAST({{ col }} AS DECIMAL(28, 10)) - CAST('0.0000000001' AS DECIMAL(28, 10))
-            ELSE CAST({{ col }} AS DECIMAL(28, 10)) + CAST('0.0000000001' AS DECIMAL(28, 10)) END
-       AS DECIMAL(18, 4))
-{%- endmacro %}

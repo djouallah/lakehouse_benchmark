@@ -141,11 +141,10 @@ SELECT
   date,
   time,
   DUID,
-  -- Not a plain CAST: Polars rounds a fourth-decimal tie to even and lands 0.0001 off Spark on
-  -- some rows (polars#30074). macros/date_literals.sql, decimal_18_4; checked on main 4426a548fd
-  -- against Spark's rounding (run 39948740444).
-  {{ decimal_18_4('mw') }} AS mw,
-  {{ decimal_18_4('price') }} AS price,
+  -- (18,5): AEMO publishes five decimals, so the cast is exact and every engine stores the
+  -- published value. (18,4) forced a rounding that DuckDB and Polars break differently.
+  CAST(mw AS DECIMAL(18, 5)) AS mw,
+  CAST(price AS DECIMAL(18, 5)) AS price,
   -- Provenance column only (see the iceberg copy).
   (SELECT GREATEST(
     (SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMPTZ)) FROM {{ ref('fct_scada') }}),

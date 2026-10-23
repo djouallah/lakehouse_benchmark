@@ -138,10 +138,10 @@ SELECT
   date,
   time,
   DUID,
-  -- Not a plain CAST: DuckDB breaks a fourth-decimal tie by multiplying first, and lands 0.0001
-  -- off Spark on some rows (duckdb#27503). macros/date_literals.sql, decimal_18_4.
-  {{ decimal_18_4('mw') }} AS mw,
-  {{ decimal_18_4('price') }} AS price,
+  -- (18,5): AEMO publishes five decimals, so the cast is exact and every engine stores the
+  -- published value. (18,4) forced a rounding that DuckDB and Polars break differently.
+  CAST(mw AS DECIMAL(18, 5)) AS mw,
+  CAST(price AS DECIMAL(18, 5)) AS price,
   -- Provenance column only — no read path depends on it anymore. Kept (and kept
   -- populated) to avoid a schema change on the tables already written.
   (SELECT GREATEST(

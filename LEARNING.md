@@ -966,3 +966,8 @@ exactly, or round explicitly before the cast. Filed, both reproduced on the curr
 (Polars 2.0.0, DuckDB 1.5.6): [polars#30074](https://github.com/pola-rs/polars/issues/30074)
 and [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503). DuckDB's is related to
 #16563, which is closed as completed.
+
+**Fixed 2026-10-23 by the type, not the rounding:** `fct_summary`'s mw and price are
+`DECIMAL(18,5)` on every engine. AEMO's five decimals fit, so the cast from DOUBLE is exact and
+nothing rounds. `DECIMAL(18,4)` came with the vendored project and had no reason here. Each
+leg's `fct_summary` was dropped once to take the new type.

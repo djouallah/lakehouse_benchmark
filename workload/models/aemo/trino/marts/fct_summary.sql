@@ -77,10 +77,10 @@ SELECT
   "date",
   "time",
   DUID,
-  -- The one rounding rule of every tree (macros/date_literals.sql, decimal_18_4). Trino's own
-  -- CAST already rounds a tie HALF_UP, so this changes no value here.
-  {{ decimal_18_4('mw') }} AS mw,
-  {{ decimal_18_4('price') }} AS price,
+  -- (18,5): AEMO publishes five decimals, so the cast is exact and every engine stores the
+  -- published value. (18,4) forced a rounding that DuckDB and Polars break differently.
+  CAST(mw AS DECIMAL(18, 5)) AS mw,
+  CAST(price AS DECIMAL(18, 5)) AS price,
   greatest(
     (SELECT MAX(SETTLEMENTDATE) FROM {{ ref('fct_scada') }}),
     COALESCE((SELECT MAX(SETTLEMENTDATE) FROM {{ ref('fct_scada_today') }}), TIMESTAMP '1900-01-01 00:00:00')

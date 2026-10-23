@@ -129,11 +129,10 @@ SELECT
   date,
   time,
   DUID,
-  -- The one rounding rule of every tree (macros/date_literals.sql, decimal_18_4). Spark's own
-  -- CAST already rounds a tie HALF_UP; the macro makes that independent of the cast's
-  -- implementation (Velox on Gluten, DataFusion on Sail).
-  {{ decimal_18_4('mw') }} AS mw,
-  {{ decimal_18_4('price') }} AS price,
+  -- (18,5): AEMO publishes five decimals, so the cast is exact and every engine stores the
+  -- published value. (18,4) forced a rounding that DuckDB and Polars break differently.
+  CAST(mw AS DECIMAL(18, 5)) AS mw,
+  CAST(price AS DECIMAL(18, 5)) AS price,
   -- Provenance column only — no read path depends on it anymore. Kept to match the
   -- other engines' schema.
   greatest(

@@ -135,7 +135,7 @@ models:
         differences:
           - "`GROUP BY ALL` on DuckDB and Polars; `GROUP BY 1, 2, 3` on Spark, because Sail reads `GROUP BY ALL` as a column ([sail#2836](https://github.com/lakehq/sail/issues/2836)), and on Trino, where `GROUP BY ALL` means something else."
           - "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`."
-          - "`DOUBLE` to `DECIMAL(18,4)` through one macro on every engine (`decimal_18_4`): a plain `CAST` breaks a fourth-decimal tie differently on DuckDB and Polars ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)), so the value goes to `DECIMAL(28,10)`, exact for AEMO's five decimals, and 1e-10 away from zero, which every engine then rounds HALF_UP like Spark."
+          - "`DECIMAL(18,5)` for mw and price on every engine: AEMO publishes five decimals, so the cast from `DOUBLE` is exact. At `(18,4)` a tie at the fourth decimal rounded differently on DuckDB and Polars ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503))."
           - "Merge on (date, time, DUID) on every engine."
     description: >
       THE GOLD TABLE, and the one every engine is compared on. One row per
@@ -158,11 +158,11 @@ models:
                 to: ref('dim_duid')
                 field: DUID
       - name: mw
-        description: Generation for the interval (MW), DECIMAL(18,4)
+        description: Generation for the interval (MW), DECIMAL(18,5)
         tests:
           - not_null
       - name: price
-        description: Regional Reference Price matched via the unit's region ($/MWh), DECIMAL(18,4)
+        description: Regional Reference Price matched via the unit's region ($/MWh), DECIMAL(18,5)
         tests:
           - not_null
       - name: cutoff
