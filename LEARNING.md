@@ -202,6 +202,10 @@ Largest scale each engine completes, cold, every statement answered:
   condition on the `ss_customer_sk = c_customer_sk` hash join. Q64 at SF=100 on `v2.1.0-alpha49809`:
   30.0 s, no spill, 9.1 GiB peak, no join above 1.9M rows (tmp_duckdb_main_plans run 39924692760).
   This needed no Iceberg column statistics (duckdb-iceberg#1110 still open).
+  The bench moved to the main nightly for it: TPC-DS SF=100 on alpha49809 is 99/99 for the first
+  time (run 39925825256), Q64 124 s and Q19 37 s cold (222 s on 2.0.0.dev2610011535). The other 97
+  took 2,604 s; the two full 2.0 runs took 2,471 s and 1,128 s for the same 97, so that part is
+  run-to-run spread, not this change.
 - **TPC-DS Q19 is a cross product.** DuckDB joins customer × customer_address × store with a
   nested loop on `substring(ca_zip, 1, 5) != substring(s_zip, 1, 5)`, the only condition between
   them: 767M rows at SF=100 where it guessed 14.8M, 25 GiB spilled, ~200 s (plans run 38057700184).

@@ -1,0 +1,899 @@
+{
+ "engine": "duckdb_iceberg",
+ "version": "v2.0.0-alpha48520",
+ "suite": "tpcds",
+ "query": 64,
+ "sf": 100,
+ "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/38889706754",
+ "warmup": false,
+ "seconds": 246.56,
+ "status": "error",
+ "error": "RuntimeError: Out of Memory Error: failed to offload data block of size 96.0 KiB (90.1 GiB/90.1 GiB used).\nThis limit was set by the 'max_temp_directory_size' setting.\nBy default, this setting utilizes the available disk space on the drive where the 'temp_directory' is located.\nYou can adjust this setting, by using (for example) PRAGMA max_temp_directory_size='10GiB'\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads",
+ "spill_bytes": 96766496768,
+ "peak_memory_bytes": null,
+ "root": {
+  "kind": "other",
+  "op": "RESULT",
+  "label": "Result",
+  "detail": "",
+  "tables": [
+   "catalog_returns",
+   "catalog_sales",
+   "customer",
+   "customer_address",
+   "customer_demographics",
+   "date_dim",
+   "household_demographics",
+   "income_band",
+   "item",
+   "promotion",
+   "store",
+   "store_returns",
+   "store_sales"
+  ],
+  "rows": null,
+  "est": null,
+  "read": null,
+  "seconds": null,
+  "cross": false,
+  "children": [
+   {
+    "kind": "agg",
+    "op": "HASH_GROUP_BY",
+    "label": "Group by",
+    "detail": "#0 AND #1 AND #2 AND #3 AND #4 AND #5 AND #6 AND #7 AND #8 AND #9 AND #10 AND #11 AND #12 AND #13 AND #14",
+    "tables": [
+     "catalog_returns",
+     "catalog_sales",
+     "customer",
+     "customer_address",
+     "customer_demographics",
+     "date_dim",
+     "household_demographics",
+     "income_band",
+     "item",
+     "promotion",
+     "store",
+     "store_returns",
+     "store_sales"
+    ],
+    "rows": null,
+    "est": 3194739356641.0,
+    "read": null,
+    "seconds": null,
+    "cross": false,
+    "children": [
+     {
+      "kind": "join",
+      "op": "HASH_JOIN",
+      "label": "Hash join",
+      "detail": "INNER #0 = #0 AND #1 = #1",
+      "tables": [
+       "catalog_returns",
+       "catalog_sales",
+       "customer",
+       "customer_address",
+       "customer_demographics",
+       "date_dim",
+       "household_demographics",
+       "income_band",
+       "item",
+       "promotion",
+       "store",
+       "store_returns",
+       "store_sales"
+      ],
+      "rows": null,
+      "est": 1999999.0,
+      "read": null,
+      "seconds": null,
+      "cross": false,
+      "children": [
+       {
+        "kind": "agg",
+        "op": "HASH_GROUP_BY",
+        "label": "Group by",
+        "detail": "#0 AND #1 AND #2 AND #3 AND #4 AND #5 AND #6 AND #7 AND #8 AND #9 AND #10",
+        "tables": [
+         "catalog_returns",
+         "catalog_sales",
+         "customer_address",
+         "date_dim",
+         "household_demographics",
+         "income_band",
+         "item",
+         "promotion",
+         "store",
+         "store_returns",
+         "store_sales"
+        ],
+        "rows": null,
+        "est": 1999999.0,
+        "read": null,
+        "seconds": null,
+        "cross": false,
+        "children": [
+         {
+          "kind": "join",
+          "op": "HASH_JOIN",
+          "label": "Hash join",
+          "detail": "INNER sr_item_sk = cs_item_sk",
+          "tables": [
+           "catalog_returns",
+           "catalog_sales",
+           "customer_address",
+           "date_dim",
+           "household_demographics",
+           "income_band",
+           "item",
+           "promotion",
+           "store",
+           "store_returns",
+           "store_sales"
+          ],
+          "rows": null,
+          "est": 25700488778.0,
+          "read": null,
+          "seconds": null,
+          "cross": false,
+          "children": [
+           {
+            "kind": "join",
+            "op": "HASH_JOIN",
+            "label": "Hash join",
+            "detail": "INNER ss_hdemo_sk = hd_demo_sk",
+            "tables": [
+             "customer_address",
+             "date_dim",
+             "household_demographics",
+             "income_band",
+             "promotion",
+             "store",
+             "store_returns",
+             "store_sales"
+            ],
+            "rows": null,
+            "est": 287997023.0,
+            "read": null,
+            "seconds": null,
+            "cross": false,
+            "children": [
+             {
+              "kind": "join",
+              "op": "HASH_JOIN",
+              "label": "Hash join",
+              "detail": "INNER ss_addr_sk = ca_address_sk",
+              "tables": [
+               "customer_address",
+               "date_dim",
+               "promotion",
+               "store",
+               "store_returns",
+               "store_sales"
+              ],
+              "rows": null,
+              "est": 287997023.0,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "join",
+                "op": "HASH_JOIN",
+                "label": "Hash join",
+                "detail": "INNER ss_promo_sk = p_promo_sk",
+                "tables": [
+                 "date_dim",
+                 "promotion",
+                 "store",
+                 "store_returns",
+                 "store_sales"
+                ],
+                "rows": null,
+                "est": 287997024.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": [
+                 {
+                  "kind": "join",
+                  "op": "HASH_JOIN",
+                  "label": "Hash join",
+                  "detail": "INNER ss_store_sk = s_store_sk",
+                  "tables": [
+                   "date_dim",
+                   "store",
+                   "store_returns",
+                   "store_sales"
+                  ],
+                  "rows": null,
+                  "est": 287997024.0,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": [
+                   {
+                    "kind": "join",
+                    "op": "HASH_JOIN",
+                    "label": "Hash join",
+                    "detail": "INNER ss_sold_date_sk = d_date_sk",
+                    "tables": [
+                     "date_dim",
+                     "store_returns",
+                     "store_sales"
+                    ],
+                    "rows": null,
+                    "est": 287997024.0,
+                    "read": null,
+                    "seconds": null,
+                    "cross": false,
+                    "children": [
+                     {
+                      "kind": "join",
+                      "op": "HASH_JOIN",
+                      "label": "Hash join",
+                      "detail": "INNER ss_item_sk = sr_item_sk AND ss_ticket_number = sr_ticket_number",
+                      "tables": [
+                       "store_returns",
+                       "store_sales"
+                      ],
+                      "rows": null,
+                      "est": 287997024.0,
+                      "read": null,
+                      "seconds": null,
+                      "cross": false,
+                      "children": [
+                       {
+                        "kind": "scan",
+                        "op": "ICEBERG_SCAN",
+                        "label": "store_sales",
+                        "detail": "",
+                        "tables": [
+                         "store_sales"
+                        ],
+                        "rows": null,
+                        "est": 287997024.0,
+                        "read": null,
+                        "seconds": null,
+                        "cross": false,
+                        "children": []
+                       },
+                       {
+                        "kind": "scan",
+                        "op": "ICEBERG_SCAN",
+                        "label": "store_returns",
+                        "detail": "",
+                        "tables": [
+                         "store_returns"
+                        ],
+                        "rows": null,
+                        "est": 28795080.0,
+                        "read": null,
+                        "seconds": null,
+                        "cross": false,
+                        "children": []
+                       }
+                      ]
+                     },
+                     {
+                      "kind": "scan",
+                      "op": "ICEBERG_SCAN",
+                      "label": "date_dim",
+                      "detail": "((d_year >= 1999) AND (d_year <= 2000))",
+                      "tables": [
+                       "date_dim"
+                      ],
+                      "rows": null,
+                      "est": 14609.0,
+                      "read": null,
+                      "seconds": null,
+                      "cross": false,
+                      "children": []
+                     }
+                    ]
+                   },
+                   {
+                    "kind": "scan",
+                    "op": "ICEBERG_SCAN",
+                    "label": "store",
+                    "detail": "",
+                    "tables": [
+                     "store"
+                    ],
+                    "rows": null,
+                    "est": 402.0,
+                    "read": null,
+                    "seconds": null,
+                    "cross": false,
+                    "children": []
+                   }
+                  ]
+                 },
+                 {
+                  "kind": "scan",
+                  "op": "ICEBERG_SCAN",
+                  "label": "promotion",
+                  "detail": "",
+                  "tables": [
+                   "promotion"
+                  ],
+                  "rows": null,
+                  "est": 1000.0,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": []
+                 }
+                ]
+               },
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "customer_address",
+                "detail": "",
+                "tables": [
+                 "customer_address"
+                ],
+                "rows": null,
+                "est": 1000000.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               }
+              ]
+             },
+             {
+              "kind": "join",
+              "op": "HASH_JOIN",
+              "label": "Hash join",
+              "detail": "INNER hd_income_band_sk = ib_income_band_sk",
+              "tables": [
+               "household_demographics",
+               "income_band"
+              ],
+              "rows": null,
+              "est": 7200.0,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "household_demographics",
+                "detail": "",
+                "tables": [
+                 "household_demographics"
+                ],
+                "rows": null,
+                "est": 7200.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               },
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "income_band",
+                "detail": "",
+                "tables": [
+                 "income_band"
+                ],
+                "rows": null,
+                "est": 20.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               }
+              ]
+             }
+            ]
+           },
+           {
+            "kind": "join",
+            "op": "HASH_JOIN",
+            "label": "Hash join",
+            "detail": "INNER cs_item_sk = i_item_sk",
+            "tables": [
+             "catalog_returns",
+             "catalog_sales",
+             "item"
+            ],
+            "rows": null,
+            "est": 3640940.0,
+            "read": null,
+            "seconds": null,
+            "cross": false,
+            "children": [
+             {
+              "kind": "agg",
+              "op": "HASH_GROUP_BY",
+              "label": "Group by",
+              "detail": "#0",
+              "tables": [
+               "catalog_returns",
+               "catalog_sales"
+              ],
+              "rows": null,
+              "est": 91023505.0,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "join",
+                "op": "HASH_JOIN",
+                "label": "Hash join",
+                "detail": "INNER cs_item_sk = cr_item_sk AND cs_order_number = cr_order_number",
+                "tables": [
+                 "catalog_returns",
+                 "catalog_sales"
+                ],
+                "rows": null,
+                "est": 143997065.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": [
+                 {
+                  "kind": "scan",
+                  "op": "ICEBERG_SCAN",
+                  "label": "catalog_sales",
+                  "detail": "",
+                  "tables": [
+                   "catalog_sales"
+                  ],
+                  "rows": null,
+                  "est": 143997065.0,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": []
+                 },
+                 {
+                  "kind": "scan",
+                  "op": "ICEBERG_SCAN",
+                  "label": "catalog_returns",
+                  "detail": "",
+                  "tables": [
+                   "catalog_returns"
+                  ],
+                  "rows": null,
+                  "est": 14404374.0,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": []
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "kind": "join",
+              "op": "HASH_JOIN",
+              "label": "Hash join",
+              "detail": "MARK i_color = #0",
+              "tables": [
+               "item"
+              ],
+              "rows": null,
+              "est": 40800.0,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "item",
+                "detail": "optional: (i_color IN ('purple', 'burlywood', 'indian', 'spring', 'floral', 'medium')) AND ((i_current_price >= 65.00) AND (i_current_price <= 74.00))",
+                "tables": [
+                 "item"
+                ],
+                "rows": null,
+                "est": 40800.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "kind": "agg",
+        "op": "HASH_GROUP_BY",
+        "label": "Group by",
+        "detail": "#0 AND #1 AND #2 AND #3 AND #4 AND #5 AND #6 AND #7",
+        "tables": [
+         "customer",
+         "customer_address",
+         "customer_demographics",
+         "date_dim",
+         "household_demographics",
+         "income_band"
+        ],
+        "rows": null,
+        "est": 1999999.0,
+        "read": null,
+        "seconds": null,
+        "cross": false,
+        "children": [
+         {
+          "kind": "join",
+          "op": "NESTED_LOOP_JOIN",
+          "label": "Nested loop join",
+          "detail": "INNER cd_marital_status != cd_marital_status",
+          "tables": [
+           "customer",
+           "customer_address",
+           "customer_demographics",
+           "date_dim",
+           "household_demographics",
+           "income_band"
+          ],
+          "rows": null,
+          "est": 248613120.0,
+          "read": null,
+          "seconds": null,
+          "cross": true,
+          "children": [
+           {
+            "kind": "join",
+            "op": "HASH_JOIN",
+            "label": "Hash join",
+            "detail": "INNER c_current_hdemo_sk = hd_demo_sk",
+            "tables": [
+             "customer",
+             "customer_address",
+             "customer_demographics",
+             "date_dim",
+             "household_demographics",
+             "income_band"
+            ],
+            "rows": null,
+            "est": 2000000.0,
+            "read": null,
+            "seconds": null,
+            "cross": false,
+            "children": [
+             {
+              "kind": "join",
+              "op": "HASH_JOIN",
+              "label": "Hash join",
+              "detail": "INNER c_current_addr_sk = ca_address_sk",
+              "tables": [
+               "customer",
+               "customer_address",
+               "customer_demographics",
+               "date_dim"
+              ],
+              "rows": null,
+              "est": 2000000.0,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "join",
+                "op": "HASH_JOIN",
+                "label": "Hash join",
+                "detail": "INNER c_current_cdemo_sk = cd_demo_sk",
+                "tables": [
+                 "customer",
+                 "customer_demographics",
+                 "date_dim"
+                ],
+                "rows": null,
+                "est": 2000000.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": [
+                 {
+                  "kind": "join",
+                  "op": "HASH_JOIN",
+                  "label": "Hash join",
+                  "detail": "INNER c_first_shipto_date_sk = d_date_sk",
+                  "tables": [
+                   "customer",
+                   "date_dim"
+                  ],
+                  "rows": null,
+                  "est": 2000000.0,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": [
+                   {
+                    "kind": "join",
+                    "op": "HASH_JOIN",
+                    "label": "Hash join",
+                    "detail": "INNER c_first_sales_date_sk = d_date_sk",
+                    "tables": [
+                     "customer",
+                     "date_dim"
+                    ],
+                    "rows": null,
+                    "est": 2000000.0,
+                    "read": null,
+                    "seconds": null,
+                    "cross": false,
+                    "children": [
+                     {
+                      "kind": "scan",
+                      "op": "ICEBERG_SCAN",
+                      "label": "customer",
+                      "detail": "",
+                      "tables": [
+                       "customer"
+                      ],
+                      "rows": null,
+                      "est": 2000000.0,
+                      "read": null,
+                      "seconds": null,
+                      "cross": false,
+                      "children": []
+                     },
+                     {
+                      "kind": "scan",
+                      "op": "ICEBERG_SCAN",
+                      "label": "date_dim",
+                      "detail": "",
+                      "tables": [
+                       "date_dim"
+                      ],
+                      "rows": null,
+                      "est": 73049.0,
+                      "read": null,
+                      "seconds": null,
+                      "cross": false,
+                      "children": []
+                     }
+                    ]
+                   },
+                   {
+                    "kind": "scan",
+                    "op": "ICEBERG_SCAN",
+                    "label": "date_dim",
+                    "detail": "",
+                    "tables": [
+                     "date_dim"
+                    ],
+                    "rows": null,
+                    "est": 73049.0,
+                    "read": null,
+                    "seconds": null,
+                    "cross": false,
+                    "children": []
+                   }
+                  ]
+                 },
+                 {
+                  "kind": "scan",
+                  "op": "ICEBERG_SCAN",
+                  "label": "customer_demographics",
+                  "detail": "",
+                  "tables": [
+                   "customer_demographics"
+                  ],
+                  "rows": null,
+                  "est": 1920800.0,
+                  "read": null,
+                  "seconds": null,
+                  "cross": false,
+                  "children": []
+                 }
+                ]
+               },
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "customer_address",
+                "detail": "",
+                "tables": [
+                 "customer_address"
+                ],
+                "rows": null,
+                "est": 1000000.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               }
+              ]
+             },
+             {
+              "kind": "join",
+              "op": "HASH_JOIN",
+              "label": "Hash join",
+              "detail": "INNER hd_income_band_sk = ib_income_band_sk",
+              "tables": [
+               "household_demographics",
+               "income_band"
+              ],
+              "rows": null,
+              "est": 7200.0,
+              "read": null,
+              "seconds": null,
+              "cross": false,
+              "children": [
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "household_demographics",
+                "detail": "",
+                "tables": [
+                 "household_demographics"
+                ],
+                "rows": null,
+                "est": 7200.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               },
+               {
+                "kind": "scan",
+                "op": "ICEBERG_SCAN",
+                "label": "income_band",
+                "detail": "",
+                "tables": [
+                 "income_band"
+                ],
+                "rows": null,
+                "est": 20.0,
+                "read": null,
+                "seconds": null,
+                "cross": false,
+                "children": []
+               }
+              ]
+             }
+            ]
+           },
+           {
+            "kind": "scan",
+            "op": "ICEBERG_SCAN",
+            "label": "customer_demographics",
+            "detail": "",
+            "tables": [
+             "customer_demographics"
+            ],
+            "rows": null,
+            "est": 1920800.0,
+            "read": null,
+            "seconds": null,
+            "cross": false,
+            "children": []
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "sort",
+    "op": "ORDER_BY",
+    "label": "Sort",
+    "detail": "",
+    "tables": [
+     "catalog_returns",
+     "catalog_sales",
+     "customer",
+     "customer_address",
+     "customer_demographics",
+     "date_dim",
+     "household_demographics",
+     "income_band",
+     "item",
+     "promotion",
+     "store",
+     "store_returns",
+     "store_sales"
+    ],
+    "rows": null,
+    "est": 4.7052269508828536e+16,
+    "read": null,
+    "seconds": null,
+    "cross": false,
+    "children": [
+     {
+      "kind": "join",
+      "op": "HASH_JOIN",
+      "label": "Hash join",
+      "detail": "INNER item_sk = item_sk AND store_name = store_name AND store_zip = store_zip AND cnt >= cnt",
+      "tables": [
+       "catalog_returns",
+       "catalog_sales",
+       "customer",
+       "customer_address",
+       "customer_demographics",
+       "date_dim",
+       "household_demographics",
+       "income_band",
+       "item",
+       "promotion",
+       "store",
+       "store_returns",
+       "store_sales"
+      ],
+      "rows": null,
+      "est": 4.7052269508828536e+16,
+      "read": null,
+      "seconds": null,
+      "cross": false,
+      "children": [
+       {
+        "kind": "scan",
+        "op": "CTE_SCAN",
+        "label": "cross_sales (CTE)",
+        "detail": "(syear = 1999)",
+        "tables": [
+         "catalog_returns",
+         "catalog_sales",
+         "customer",
+         "customer_address",
+         "customer_demographics",
+         "date_dim",
+         "household_demographics",
+         "income_band",
+         "item",
+         "promotion",
+         "store",
+         "store_returns",
+         "store_sales"
+        ],
+        "rows": null,
+        "est": 3194739356641.0,
+        "read": null,
+        "seconds": null,
+        "cross": false,
+        "children": []
+       },
+       {
+        "kind": "scan",
+        "op": "CTE_SCAN",
+        "label": "cross_sales (CTE)",
+        "detail": "(syear = 2000)",
+        "tables": [
+         "catalog_returns",
+         "catalog_sales",
+         "customer",
+         "customer_address",
+         "customer_demographics",
+         "date_dim",
+         "household_demographics",
+         "income_band",
+         "item",
+         "promotion",
+         "store",
+         "store_returns",
+         "store_sales"
+        ],
+        "rows": null,
+        "est": 3194739356641.0,
+        "read": null,
+        "seconds": null,
+        "cross": false,
+        "children": []
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

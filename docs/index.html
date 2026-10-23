@@ -1356,11 +1356,14 @@ function renderReports() {
 // step made. data/plans/*.json come from .github/workflows/plans.yml through .github/scripts/plans_normalize.py,
 // in the shape bench/plans.py documents. Every number on the tab is read from those files; the words around them
 // are the only thing written here. tests/test_plans.py checks every file a story names exists.
+// A story may name each side (goodTitle, badTitle): the same engine before and after a fix.
+const planName = p => p.title ?? LABEL[p.engine] ?? p.engine;
 const STORIES = [
   { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
     lede: "Spark runs joins in the order the SQL lists them. Q72 lists inventory before the filters that make it small. Turning on its cost-based optimizer, off by default, made Q72 slower." },
-  { id: "q64", title: "Q64", good: "tpcds_q64_trino_iceberg_sf100", bad: "tpcds_q64_duckdb_iceberg_sf100",
-    lede: "DuckDB reads Iceberg row counts but not column statistics, so it guesses a ≠ join makes 249M rows; it makes about 3 trillion. On its own format, with full statistics, it runs Q64 in 12 GB (duckdb#21896). Reading those statistics from Iceberg is duckdb-iceberg#1110." },
+  { id: "q64", title: "Q64", good: "tpcds_q64_duckdb_iceberg_sf100", bad: "tpcds_q64_duckdb_2_0_iceberg_sf100",
+    goodTitle: "DuckDB nightly", badTitle: "DuckDB 2.0",
+    lede: "DuckDB 2.0 guessed a ≠ join makes 249M rows and ran it early, on its own; it makes about 3 trillion. duckdb#27493 now prices ≠ as nearly a cross product, so the nightly checks it inside a hash join instead." },
 ];
 const plans = {};  // file -> plan, or null when it could not be read
 const pl = { story: STORIES[0].id };
@@ -1402,7 +1405,9 @@ async function renderPlans() {
   const [good, bad] = await Promise.all([loadPlan(files.good), loadPlan(files.bad)]);
   if (state.suite !== PLANS.id) return;
   stopRace();
-  const name = p => LABEL[p.engine] ?? p.engine;
+  if (good) good.title = s.goodTitle;
+  if (bad) bad.title = s.badTitle;
+  const name = planName;
   const chips = STORIES.length < 2 ? "" : STORIES.map(x => `<button aria-pressed="${x.id === s.id}" data-story="${x.id}">${x.title}</button>`).join("");
   const intro = `<p class="intro">The <b>optimizer</b> picks the join order from <b>statistics</b>. A good order keeps every
     step small; a bad one spills or runs out of memory. Same query, data and 16 GB machine; only the plan differs.</p>`;
@@ -1447,7 +1452,7 @@ function peakStep(p) {
 }
 function card(p, side) {
   return `<div class="card" id="pl-${side}" style="--c: var(--${p.engine})">
-    <div class="head"><div class="eng"><i></i>${LABEL[p.engine] ?? p.engine}</div><div class="clock" id="pl-${side}-clock">${secs(p.seconds)}</div></div>
+    <div class="head"><div class="eng"><i></i>${esc(planName(p))}</div><div class="clock" id="pl-${side}-clock">${secs(p.seconds)}</div></div>
     <a class="meta" href="${esc(p.run_url || "#")}"><b>TPC-DS-like SF ${p.sf}</b>${p.peak_memory_bytes ? ` · peak memory <b>${gib(p.peak_memory_bytes)}</b>` : ""}${peakStep(p)}</a>
     <div class="badges" id="pl-${side}-badges"></div>
     <div class="tree" id="pl-${side}-tree"></div></div>`;
@@ -1535,7 +1540,7 @@ function pick(plan, n) {
     svg.classList.add("sel");
     for (const g of svg.querySelectorAll(".nd")) g.classList.toggle("hl", g.dataset.id === n._id || g.dataset.id === t?.node._id);
   }
-  const me = LABEL[plan.engine], them = LABEL[other.engine];
+  const me = planName(plan), them = planName(other);
   const what = n.kind === "scan" ? `Reading <b>${esc(n.label)}</b>` : `The step over <b>${esc(tableList(n.tables))}</b>`;
   const mine = `${me} makes <b>${n.rows != null ? nfmt(n.rows) : `~${nfmt(n.est)} (guess)`}</b> rows`;
   const theirs = !t ? `${them} has no such step.`
@@ -1557,7 +1562,7 @@ function clearPick() {
 
 // The steps write themselves from the two plans, so a new capture keeps them true.
 function writeSteps(good, bad) {
-  const g = LABEL[good.engine], b = LABEL[bad.engine], steps = [];
+  const g = planName(good), b = planName(bad), steps = [];
   const joinsOf = p => allNodes(p.root).filter(n => n.kind === "join");
   const biggest = p => joinsOf(p).sort((x, y) => flow(y) - flow(x))[0];
   const bb = biggest(bad), gb = biggest(good);
