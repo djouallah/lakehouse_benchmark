@@ -34,6 +34,12 @@ NOT_FIXED = {
     ),
     "ClickHouse/ClickHouse#126633": "closed: kept in ClickHouse Cloud only",
 }
+# Issues closed unfixed whose ask a later pull request delivered: the issue counts as fixed, on the
+# day that pull request merged.
+FIXED_BY = {
+    # drop a table (with purge): SQL DROP TABLE ... PURGE on a register_catalog catalog.
+    "pola-rs/polars#30211": "pola-rs/polars#30247",
+}
 LINK = re.compile(r'href="https://github\.com/([\w.-]+/[\w.-]+)/(issues|pull)/(\d+)"')
 
 
@@ -53,24 +59,31 @@ def parse(page: str) -> list[dict]:
     return out
 
 
-def fetch(item: dict, token: str | None) -> dict:
-    """The entry with what GitHub knows about it: title, author, state, dates."""
-    repo, number = item["id"].split("#")
-    path = f"repos/{repo}/issues/{number}"
+def _api(path: str, token: str | None) -> dict:
     if token:
         req = urllib.request.Request(f"https://api.github.com/{path}")
         req.add_header("Accept", "application/vnd.github+json")
         req.add_header("Authorization", f"Bearer {token}")
         with urllib.request.urlopen(req, timeout=30) as r:
-            gh = json.load(r)
-    else:  # by hand: the gh CLI's own login
-        gh = json.loads(subprocess.run(["gh", "api", path], capture_output=True, check=True).stdout)
+            return json.load(r)
+    # by hand: the gh CLI's own login
+    return json.loads(subprocess.run(["gh", "api", path], capture_output=True, check=True).stdout)
+
+
+def fetch(item: dict, token: str | None) -> dict:
+    """The entry with what GitHub knows about it: title, author, state, dates."""
+    repo, number = item["id"].split("#")
+    gh = _api(f"repos/{repo}/issues/{number}", token)
     merged = (gh.get("pull_request") or {}).get("merged_at")
     closed = gh.get("closed_at")
     if item["kind"] == "pr":
         fixed = merged is not None
     else:
         fixed = gh["state_reason"] == "completed" and item["id"] not in NOT_FIXED
+    if item["id"] in FIXED_BY:
+        pr_repo, pr_number = FIXED_BY[item["id"]].split("#")
+        merged = _api(f"repos/{pr_repo}/pulls/{pr_number}", token).get("merged_at")
+        fixed = merged is not None
     return {
         **item,
         "url": gh["html_url"],
