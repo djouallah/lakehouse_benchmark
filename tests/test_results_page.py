@@ -89,15 +89,15 @@ def test_the_iceberg_support_grid_opens_on_core():
     assert cap["groups"][0] == "Core"
     assert "Advanced" not in cap["groups"]
     assert [r["label"] for r in cap["rows"] if r["group"] == "Core"] == [
+        "Attach the REST catalog",
+        "SELECT a table by its catalog name",
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
-        "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
-        "TRUNCATE",
         "Drop table with purge",
         "Create namespace",
         "Drop namespace",

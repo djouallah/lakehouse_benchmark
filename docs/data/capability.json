@@ -54,6 +54,60 @@
  "rows": [
   {
    "group": "Core",
+   "label": "Attach the REST catalog",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "SELECT a table by its catalog name",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Core",
    "label": "CREATE TABLE",
    "cells": {
     "pyspark_iceberg": {
@@ -226,36 +280,6 @@
   },
   {
    "group": "Core",
-   "label": "MERGE with two actions (UPDATE + INSERT)",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
-    },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_39032752740_1_merge does not support MERGE.')"
-    },
-    "polars_iceberg": {
-     "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Locati…"
-    }
-   }
-  },
-  {
-   "group": "Core",
    "label": "INSERT OVERWRITE, whole table",
    "cells": {
     "pyspark_iceberg": {
@@ -283,38 +307,6 @@
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..L…"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "TRUNCATE",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes."
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
-    },
-    "databend_iceberg": {
-     "o": "no-op",
-     "n": "TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]"
-    },
-    "polars_iceberg": {
-     "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: TRUNCATE on a table of attached catalog 'lake' is not supported"
     }
    }
   },
@@ -514,6 +506,68 @@
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..L…"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "MERGE with two actions (UPDATE + INSERT)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_39032752740_1_merge does not support MERGE.')"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Locati…"
+    }
+   }
+  },
+  {
+   "group": "Tables & types",
+   "label": "TRUNCATE",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: found TRUNCATE at 0:8 expected something else, ';', statement, or end of input"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Runs, but not as a metadata operation. The data files stay, and a delete file is written for them: slower than dropping the files, and every reader then has to apply the deletes."
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
+    },
+    "databend_iceberg": {
+     "o": "no-op",
+     "n": "TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: TRUNCATE on a table of attached catalog 'lake' is not supported"
     }
    }
   },
@@ -1012,60 +1066,6 @@
     "polars_iceberg": {
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_399023…"
-    }
-   }
-  },
-  {
-   "group": "Read & refs",
-   "label": "Attach the REST catalog",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Read & refs",
-   "label": "SELECT a table by its catalog name",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },

@@ -214,15 +214,15 @@ for _label, _sources in ROWS:
 GROUPS = {
     # The grid opens on Core: the minimum an engine needs to be usable on Iceberg.
     "Core": [
+        "Attach the REST catalog",
+        "SELECT a table by its catalog name",
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
         "DELETE",
         "UPDATE",
-        "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
-        "TRUNCATE",
         "Drop table with purge",
         "Create namespace",
         "Drop namespace",
@@ -232,6 +232,8 @@ GROUPS = {
         "Concurrent writer: UPDATE loses nothing",
     ],
     "Tables & types": [
+        "MERGE with two actions (UPDATE + INSERT)",
+        "TRUNCATE",
         "CREATE TABLE IF NOT EXISTS, existing table",
         "Partitioned table",
         "Partition transform: bucket",
@@ -255,8 +257,6 @@ GROUPS = {
         "MAX from the metadata, no data file read",
     ],
     "Read & refs": [
-        "Attach the REST catalog",
-        "SELECT a table by its catalog name",
         "Time travel",
         "Metadata tables",
         "Create branch",
