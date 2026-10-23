@@ -6,15 +6,16 @@ OneLake, and the commit goes through a pyiceberg Transaction on the table it is 
 frame converted to Arrow, so it would only repeat pyiceberg's answers. Reads are `scan_iceberg`
 with Polars' native reader.
 
-POLARS HAS NO DDL. It cannot update, merge, evolve a spec, or touch refs and snapshots, so those
-rows are `na` in the readme. It deletes rows by predicate with `pl.delete_iceberg` (Polars main,
-pola-rs/polars#30032, unstable): the predicate becomes a pyiceberg delete filter and pyiceberg
-commits it. Its one create is `sink_iceberg(create_if_not_exists=True)`
-(Polars main, pola-rs/polars#29908): an unpartitioned table from the frame's schema. With
-`create_namespace_if_not_exists=True` (Polars main, #30087) it creates a missing namespace too; it
-has no way to drop one. Every other table here pyiceberg creates. What is asked here is everything
-Polars itself can send: create, append, overwrite, the schema changes `schema_mode` folds into a
-write, partitioned and typed writes, time travel.
+POLARS HAS ALMOST NO DDL. It cannot update, merge, evolve a spec, or touch refs and snapshots, so
+those rows are `na` in the readme. Its one statement is SQL `DROP TABLE ... PURGE` on a catalog
+attached with `SQLContext.register_catalog` (Polars main, pola-rs/polars#30247). It deletes rows by
+predicate with `pl.delete_iceberg` (Polars main, pola-rs/polars#30032, unstable): the predicate
+becomes a pyiceberg delete filter and pyiceberg commits it. Its one create is
+`sink_iceberg(create_if_not_exists=True)` (Polars main, pola-rs/polars#29908): an unpartitioned
+table from the frame's schema. With `create_namespace_if_not_exists=True` (Polars main, #30087) it
+creates a missing namespace too; it has no way to drop one. Every other table here pyiceberg
+creates. What is asked here is everything Polars itself can send: create, append, overwrite, the
+schema changes `schema_mode` folds into a write, partitioned and typed writes, time travel.
 
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says. Polars'
 own read is reported beside it. Every error Polars raises is a `no` carrying its full message, so
@@ -259,6 +260,32 @@ class PolarsCapability:
     def namespace_drop(self) -> str:
         raise Refused("Polars has no API to drop a catalog namespace")
 
+    def drop_purge(self) -> str:
+        """SQL `DROP TABLE ... PURGE` on a catalog attached with `SQLContext.register_catalog`
+        (Polars main, pola-rs/polars#30247)."""
+        import polars as pl
+
+        made = self.fresh("droppable")
+        table = self.name("droppable")
+        data = [task.file.file_path for task in self.load(made).scan().plan_files()]
+        try:
+            ctx = pl.SQLContext().register_catalog(
+                "lake", self.catalog, storage_options=self.storage
+            )
+            ctx.execute(f"DROP TABLE lake.{NAMESPACE}.{table} PURGE", eager=True)
+        except Exception as exc:  # noqa: BLE001 - every Polars error is an answer
+            message = f"{type(exc).__name__}: {scrub.scrub_exc(exc, 2000)}"
+            raise Refused(_one_line(message)) from None
+        if self.catalog.table_exists(self.identifier(table)):
+            raise NoOp("returned success and the catalog still has it")
+        self.created.remove(table)
+        try:
+            left = sum(1 for path in data if made.io.new_input(path).exists())
+            files = f"{left} of {len(data)} data file(s) still in storage"
+        except Exception as exc:  # noqa: BLE001 - informational
+            files = f"could not check storage: {_one_line(scrub.scrub_exc(exc, 200), 200)}"
+        return f"gone from the catalog; {files}"
+
     def sink_overwrite(self) -> str:
         table = self.fresh("overwrite")
         self.sink(table, rows([(7, 70), (8, 80)]), mode="overwrite")
@@ -499,6 +526,7 @@ PROBES = [
     ("write", "sink_iceberg(mode='append')", "sink_append"),
     ("catalog", "sink_iceberg into a new namespace, creating it", "namespace_create"),
     ("catalog", "drop a namespace (no API)", "namespace_drop"),
+    ("catalog", "SQL DROP TABLE ... PURGE through register_catalog", "drop_purge"),
     ("write", "sink_iceberg(mode='overwrite')", "sink_overwrite"),
     ("write", "pl.delete_iceberg(table, id == 1)", "delete_rows"),
     ("create", "write an identity-partitioned table", "partitioned"),

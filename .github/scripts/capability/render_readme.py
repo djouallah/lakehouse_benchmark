@@ -149,6 +149,7 @@ ROWS = [
             "databend": ["drop_purge"],
             "duckdb": ["drop_table"],
             "sail": ["drop_purge"],
+            "polars": ["drop_purge"],
         },
     ),
     # Polars creates a namespace with sink_iceberg; it, like chDB, has no way to drop one.
