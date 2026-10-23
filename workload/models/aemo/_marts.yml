@@ -135,7 +135,7 @@ models:
         differences:
           - "`GROUP BY ALL` on DuckDB and Polars; `GROUP BY 1, 2, 3` on Spark, because Sail reads `GROUP BY ALL` as a column ([sail#2836](https://github.com/lakehq/sail/issues/2836)), and on Trino, where `GROUP BY ALL` means something else."
           - "The interval's time: `strftime` on DuckDB and Polars, `date_format` on Spark, `format_datetime` on Trino; the 6-day window: `INTERVAL`, `date_sub`, `date_add`."
-          - "`DOUBLE` to `DECIMAL(18,4)` breaks ties differently: DuckDB and Polars land 0.0001 off Spark on some rows ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)); Trino matches Spark."
+          - "`DOUBLE` to `DECIMAL(18,4)` through one macro on every engine (`decimal_18_4`): a plain `CAST` breaks a fourth-decimal tie differently on DuckDB and Polars ([polars#30074](https://github.com/pola-rs/polars/issues/30074), [duckdb#27503](https://github.com/duckdb/duckdb/issues/27503)), so the value goes to `DECIMAL(28,10)`, exact for AEMO's five decimals, and 1e-10 away from zero, which every engine then rounds HALF_UP like Spark."
           - "Merge on (date, time, DUID) on every engine."
     description: >
       THE GOLD TABLE, and the one every engine is compared on. One row per

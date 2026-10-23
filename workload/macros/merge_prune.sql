@@ -21,13 +21,25 @@
   {%- set keys = [key] if key is string else (key or []) -%}
   {%- set col = (['file', 'date'] | select('in', keys) | list | first) -%}
   {%- if not col or not execute -%}{{ return([]) }}{%- endif -%}
-  {%- set values = run_query('SELECT DISTINCT ' ~ col ~ ' FROM ' ~ source).columns[0].values() -%}
+  {#-- ONE query for both columns: on DuckDB the batch is a TEMP VIEW over read_csv
+       (duckdb_temp_view.sql), so every query here reads every CSV of the batch again; a
+       second DISTINCT for DATE (below) was a third pass over the CSVs, counting the MERGE. --#}
+  {%- set with_date = col == 'file' and 'settlementdate' in (keys | map('lower') | list) -%}
+  {%- set rows = run_query('SELECT DISTINCT ' ~ col ~ (', DATE' if with_date else '') ~ ' FROM ' ~ source).rows -%}
   {%- set literals = [] -%}
-  {%- for v in values if v is not none -%}
-    {%- if v is string -%}
-      {%- do literals.append("'" ~ v | replace("'", "''") ~ "'") -%}
+  {%- set dates = [] -%}
+  {%- for row in rows -%}
+    {%- set v = row[0] -%}
+    {%- if v is none -%}
+    {%- elif v is string -%}
+      {%- set lit = "'" ~ v | replace("'", "''") ~ "'" -%}
+      {%- if lit not in literals %}{% do literals.append(lit) %}{% endif -%}
     {%- else -%}
       {%- do literals.append("DATE '" ~ (v | string)[:10] ~ "'") -%}
+    {%- endif -%}
+    {%- if with_date and row[1] is not none -%}
+      {%- set d = "DATE '" ~ (row[1] | string)[:10] ~ "'" -%}
+      {%- if d not in dates %}{% do dates.append(d) %}{% endif -%}
     {%- endif -%}
   {%- endfor -%}
   {%- if literals | length == 0 -%}{{ return([]) }}{%- endif -%}
@@ -42,14 +54,8 @@
        never truncated. The DISTINCT dates, not MIN..MAX: a batch is the newest unfolded files,
        i.e. today's file plus the backfill's oldest edge, so its range spans every date already
        folded and pruned almost nothing (run 39728758589: fct_scada still 725 s, 47.7 GB spilled). --#}
-  {%- if col == 'file' and 'settlementdate' in (keys | map('lower') | list) -%}
-    {%- set dates = [] -%}
-    {%- for v in run_query('SELECT DISTINCT DATE FROM ' ~ source).columns[0].values() if v is not none -%}
-      {%- do dates.append("DATE '" ~ (v | string)[:10] ~ "'") -%}
-    {%- endfor -%}
-    {%- if dates -%}
-      {%- do predicates.append('DBT_INTERNAL_DEST.DATE IN (' ~ dates | join(', ') ~ ')') -%}
-    {%- endif -%}
+  {%- if dates -%}
+    {%- do predicates.append('DBT_INTERNAL_DEST.DATE IN (' ~ dates | join(', ') ~ ')') -%}
   {%- endif -%}
   {{ return(predicates) }}
 {% endmacro %}

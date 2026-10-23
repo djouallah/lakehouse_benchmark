@@ -44,7 +44,9 @@ dispatch_duids AS (
 {% if scoped %}
 -- Dates whose stored content could differ from a clean recomputation; everything older
 -- is settled. Shrinking this window silently reduces what can be repaired.
-rebuild_dates AS (
+-- Run first and inlined as DATE literals (macros/date_literals.sql), so Iceberg skips every
+-- fct_scada and fct_price data file outside these dates instead of reading the whole history.
+{% set rebuild_q %}
   -- Never seen before: archive backfill, or a first build catching up. Distinct dates first, then
   -- EXCEPT: `s.DATE NOT IN (...)` was a hash anti join over every fct_scada row, which cannot spill
   -- and ran out of the 10 GB pool (HashJoinInput 4.8 GB, run 39865545715). date is never null.
@@ -72,7 +74,8 @@ rebuild_dates AS (
   -- assert_fct_summary_no_partial_dates. A date the SOURCE itself still lacks stays in this
   -- set and recomputes each run until its file lands -- a few dates' scan, nothing inserts.
   SELECT date FROM {{ this }} GROUP BY date HAVING COUNT(DISTINCT time) < 280
-),
+{% endset %}
+{% set rebuild_dates = date_literals(rebuild_q) %}
 {% endif %}
 
 daily_summary AS (
@@ -92,7 +95,10 @@ daily_summary AS (
     AND s.INITIALMW <> 0
     AND p.INTERVENTION = 0
     {% if scoped %}
-    AND s.DATE IN (SELECT date FROM rebuild_dates)
+    AND s.DATE IN ({{ rebuild_dates }})
+    -- The same dates on the price side: the join is on SETTLEMENTDATE and both facts derive DATE
+    -- from it with the same SQL, so this drops no matching row, and fct_price is pruned too.
+    AND p.DATE IN ({{ rebuild_dates }})
     {% endif %}
   GROUP BY 1, 2, 3
 
@@ -123,8 +129,11 @@ SELECT
   date,
   time,
   DUID,
-  CAST(mw AS DECIMAL(18, 4)) AS mw,
-  CAST(price AS DECIMAL(18, 4)) AS price,
+  -- The one rounding rule of every tree (macros/date_literals.sql, decimal_18_4). Spark's own
+  -- CAST already rounds a tie HALF_UP; the macro makes that independent of the cast's
+  -- implementation (Velox on Gluten, DataFusion on Sail).
+  {{ decimal_18_4('mw') }} AS mw,
+  {{ decimal_18_4('price') }} AS price,
   -- Provenance column only — no read path depends on it anymore. Kept to match the
   -- other engines' schema.
   greatest(
@@ -132,4 +141,4 @@ SELECT
     COALESCE((SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMP)) FROM {{ ref('fct_scada_today') }}), CAST('1900-01-01' AS TIMESTAMP))
   ) AS cutoff
 FROM daily_summary
-ORDER BY date, time
+-- No ORDER BY: this SQL is a merge source, and a sort here reaches nothing stored.

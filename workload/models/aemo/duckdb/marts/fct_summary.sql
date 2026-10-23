@@ -55,7 +55,9 @@ dispatch_duids AS (
 -- Dates whose stored content could differ from a clean recomputation. Everything older
 -- is settled: its daily file has landed and been folded in, so recomputing it would
 -- reproduce it exactly. Shrinking this window silently reduces what can be repaired.
-rebuild_dates AS (
+-- Run first and inlined as DATE literals (macros/date_literals.sql), so Iceberg skips every
+-- fct_scada and fct_price data file outside these dates instead of reading the whole history.
+{% set rebuild_q %}
   -- Never seen before: archive backfill, or a first build catching up.
   SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s
   WHERE s.INTERVENTION = 0
@@ -80,7 +82,8 @@ rebuild_dates AS (
   -- assert_fct_summary_no_partial_dates. A date the SOURCE itself still lacks stays in this
   -- set and recomputes each run until its file lands -- a few dates' scan, nothing inserts.
   SELECT date FROM {{ this }} GROUP BY date HAVING COUNT(DISTINCT time) < 280
-),
+{% endset %}
+{% set rebuild_dates = date_literals(rebuild_q) %}
 {% endif %}
 
 daily_summary AS (
@@ -101,7 +104,10 @@ daily_summary AS (
     AND s.INITIALMW <> 0
     AND p.INTERVENTION = 0
     {% if scoped %}
-    AND s.DATE IN (SELECT date FROM rebuild_dates)
+    AND s.DATE IN ({{ rebuild_dates }})
+    -- The same dates on the price side: the join is on SETTLEMENTDATE and both facts derive DATE
+    -- from it with the same SQL, so this drops no matching row, and fct_price is pruned too.
+    AND p.DATE IN ({{ rebuild_dates }})
     {% endif %}
   GROUP BY ALL
 
@@ -132,8 +138,10 @@ SELECT
   date,
   time,
   DUID,
-  CAST(mw AS DECIMAL(18, 4)) AS mw,
-  CAST(price AS DECIMAL(18, 4)) AS price,
+  -- Not a plain CAST: DuckDB breaks a fourth-decimal tie by multiplying first, and lands 0.0001
+  -- off Spark on some rows (duckdb#27503). macros/date_literals.sql, decimal_18_4.
+  {{ decimal_18_4('mw') }} AS mw,
+  {{ decimal_18_4('price') }} AS price,
   -- Provenance column only — no read path depends on it anymore. Kept (and kept
   -- populated) to avoid a schema change on the tables already written.
   (SELECT GREATEST(
@@ -141,7 +149,4 @@ SELECT
     COALESCE((SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMPTZ)) FROM {{ ref('fct_scada_today') }}), CAST('1900-01-01' AS TIMESTAMPTZ))
   )) AS cutoff
 FROM daily_summary
--- Parity with the spark copy, which ends with the same sort. It makes no claim about
--- physical layout: this SQL is a merge SOURCE, so nothing about the ordering reaches the
--- stored table. It is here so the legs pay the same cost.
-ORDER BY date, time
+-- No ORDER BY: this SQL is a merge source, and a sort here reaches nothing stored.
