@@ -257,3 +257,75 @@ def test_duckdb_stages_incremental_batches_as_views():
     assert "create temporary view" in macro
     assert "target.type == 'duckdb' and temporary and language == 'sql'" in macro
     assert macro.count("adapter.dispatch('create_table_as', 'dbt')") == 2
+
+
+def _maintain():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "workload_maintain", ROOT / ".github" / "scripts" / "workload_maintain.py"
+    )
+    maintain = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(maintain)
+    return maintain
+
+
+def test_table_maintenance_is_one_scheduled_job_in_the_workload_queue():
+    """Never concurrent with the data processing: the workload's own group, queued, never
+    cancelled."""
+    import yaml
+
+    workflows = ROOT / ".github" / "workflows"
+    wf = yaml.safe_load((workflows / "table_maintenance.yml").read_text("utf-8"))
+    workload = yaml.safe_load((workflows / "workload.yml").read_text("utf-8"))
+    group = workload["concurrency"]["group"]
+    assert wf["concurrency"] == {"group": group, "cancel-in-progress": False}
+    assert wf[True]["schedule"], "no schedule"
+    assert list(wf["jobs"]) == ["compact"]
+    assert wf["name"] in (workflows / "pages.yml").read_text("utf-8")
+
+
+def test_the_page_reads_what_maintenance_writes():
+    page = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    assert 'json: "data/maintenance.json"' in page
+    maintain = _maintain()
+    assert maintain.PAGE_DATA == ROOT / "docs" / "data" / "maintenance.json"
+    assert maintain.TARGET_MB == 128
+    workflow = (ROOT / ".github" / "workflows" / "table_maintenance.yml").read_text("utf-8")
+    assert "git add results/maintenance docs/data/maintenance.json" in workflow
+
+
+def test_maintenance_page_data_sums_each_engine_and_keeps_errors():
+    maintain = _maintain()
+    record = {
+        "run_id": "9", "run_url": "u", "started": "s", "finished": "f",
+        "settings": {"target_mb": 128, "min_input_files": 5, "expire_days": 1, "orphan_days": 3},
+        "versions": {},
+        "tables": [
+            {"engine": "duckdb", "table": "dbt_duckdb_landing.fct_scada",
+             "before": {"snapshots": 30, "data_files": 400, "bytes": 2_000_000, "rows": 9},
+             "after": {"snapshots": 13, "data_files": 12, "bytes": 1_900_000, "rows": 9},
+             "compact": {"rewritten": 390, "added": 2, "rewritten_bytes": 1_000_000},
+             "expired": 18, "orphans": {"deleted": 700, "failed": 1, "bytes": 5_000},
+             "seconds": 3.0},
+            {"engine": "duckdb", "table": "dbt_duckdb_mart.dim_duid",
+             "before": {"snapshots": 2, "data_files": 1, "bytes": None, "rows": None},
+             "after": {"snapshots": 2, "data_files": 1, "bytes": None, "rows": None},
+             "expired": 0, "error": {"compact": "IOException: boom"}, "seconds": 1.0},
+            {"engine": "trino", "table": "dbt_trino_mart.dim_duid", "skipped": "not attempted"},
+        ],
+    }
+    out = maintain.page_data(record)
+    assert set(out["engines"]) == {BENCH_ENGINE["duckdb"], BENCH_ENGINE["trino"]}
+    duck = out["engines"][BENCH_ENGINE["duckdb"]]
+    assert duck["totals"] == {
+        "tables": 2, "errors": 1, "skipped": 0,
+        "files_before": 401, "files_after": 13, "bytes_after": 1_900_000,
+        "snapshots_before": 32, "snapshots_after": 15,
+        "compacted": 390, "compacted_into": 2, "compacted_bytes": 1_000_000,
+        "expired": 18, "orphans_deleted": 700, "orphans_failed": 1, "orphan_bytes": 5_000,
+    }
+    assert duck["tables"]["dbt_duckdb_mart.dim_duid"]["error"] == {"compact": "IOException: boom"}
+    trino = out["engines"][BENCH_ENGINE["trino"]]["totals"]
+    assert trino["skipped"] == 1 and trino["files_before"] is None
+    assert "IOException: boom" in maintain.summary(record)

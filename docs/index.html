@@ -301,7 +301,13 @@ main .tiles > a { color: inherit; }
 .rw .chip .track { width: 60px; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
 .rw .chip .track i { display: block; height: 100%; background: var(--c); }
 .rw .chip .gb { color: var(--ink-2); font-size: 13px; }
-.rw svg.dag { display: block; width: 100%; height: auto; max-height: calc(100vh - 230px); margin: 18px 0 6px; }  /* the page: as big as fits */
+.rw svg.dag { display: block; width: 100%; height: auto; max-height: calc(100vh - 400px); margin: 18px 0 6px; }  /* the page: as big as fits, under it the maintenance row */
+.rw .mt-head { font-size: 13px; color: var(--ink-2); margin: 10px 0 0; }
+.rw .mt-head a { color: var(--accent); }
+.rw .mt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 10px; margin: 8px 0 0; }
+.rw .mcell { padding: 6px 12px; border: 1px solid color-mix(in srgb, var(--c) 40%, var(--grid)); border-left: 4px solid var(--c); border-radius: 8px; background: color-mix(in srgb, var(--c) 6%, var(--raised)); font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; cursor: default; }
+.rw .mcell b { color: var(--ink); font-size: 14px; }
+.rw .err, .tip .err { color: var(--no); overflow-wrap: anywhere; }
 .rw .dag .edge { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 6; animation: rwflow 1.4s linear infinite; }
 @keyframes rwflow { to { stroke-dashoffset: -22; } }
 @media (prefers-reduced-motion: reduce) { .rw .dag .edge { animation: none; } }
@@ -612,6 +618,7 @@ const ANATOMY = { id: "anatomy", title: "Anatomy" };
 const TIMELINE = { id: "timeline", title: "Timeline" };
 const OVERVIEW = { id: "overview", title: "Overview" };
 const REAL_WORKLOAD = { id: "workload", title: "Real workload", json: "data/workload.json" };
+const MAINTENANCE = { json: "data/maintenance.json" };  // table_maintenance.yml, shown on the Real workload tab
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
 const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
@@ -1163,7 +1170,42 @@ function renderRealWorkload() {
     dag = `<svg class="dag" viewBox="-4 -4 ${W + 8} ${H + 8}" role="img" aria-label="The dbt project's DAG">${edges}${nodes}</svg>`;
   }
 
-  sec.innerHTML = `<div class="eng">${chips}</div>${dag}`;
+  // The last table_maintenance.yml run: per engine, what compaction, expiry and orphan removal did.
+  const mt = data.maintenance;
+  let maint = "";
+  if (mt?.engines && Object.keys(mt.engines).length) {
+    const n = v => v == null ? "–" : v.toLocaleString();
+    const gbOf = b => (b / 1e9).toFixed(1);
+    const mEngines = Object.keys(mt.engines).sort((a, b) => rank(a) - rank(b));
+    const mChips = mEngines.map(e => {
+      const t = mt.engines[e].totals;
+      const avg = t.bytes_after && t.files_after ? ` · avg ${Math.round(t.bytes_after / t.files_after / 1048576)} MB` : "";
+      return `<div class="mcell" style="--c: var(--${e}, var(--ink-3))" data-mtip="${e}">
+        <div><b>${esc(wlName(e))}</b>${t.errors ? ` <span class="err">${t.errors} error${t.errors > 1 ? "s" : ""}</span>` : ""}</div>
+        <div>${n(t.files_before)} → ${n(t.files_after)} files${avg}</div>
+        <div>${n(t.expired)} snapshots expired · ${n(t.orphans_deleted)} orphans deleted, ${gbOf(t.orphan_bytes)} GB</div></div>`;
+    }).join("");
+    const s = mt.settings;
+    maint = `<div class="mt-head">Table maintenance, <a href="${esc(mt.run_url || "#")}">${esc((mt.finished || mt.started || "").slice(0, 10))}</a>:
+      compact to ${s.target_mb} MB files, expire snapshots older than ${s.expire_days} day${s.expire_days === 1 ? "" : "s"},
+      delete orphan files older than ${s.orphan_days} days</div><div class="mt-grid">${mChips}</div>`;
+  }
+
+  sec.innerHTML = `<div class="eng">${chips}</div>${dag}${maint}`;
+
+  for (const el of sec.querySelectorAll(".mcell[data-mtip]")) {
+    const e = el.dataset.mtip, rows = Object.entries(mt.engines[e].tables).map(([name, t]) => {
+      const c = t.compact, o = t.orphans, err = t.skipped || Object.entries(t.error || {}).map(([k, v]) => `${k}: ${v}`).join("; ");
+      const did = [
+        t.before && t.after ? `${t.before.data_files.toLocaleString()} → ${t.after.data_files.toLocaleString()} files` : "",
+        c ? `${c.rewritten.toLocaleString()} compacted into ${c.added.toLocaleString()}` : "",
+        t.expired != null ? `${t.expired} snapshots expired` : "",
+        o ? `${o.deleted.toLocaleString()} orphans deleted${o.failed ? `, ${o.failed} failed` : ""}` : "",
+      ].filter(Boolean).join(" · ");
+      return `<div class="k">${esc(name.split(".").pop())}</div><div>${esc(did)}${err ? `<div class="err">${esc(err)}</div>` : ""}</div>`;
+    }).join("");
+    noteTip(el, esc(wlName(e)), rows);
+  }
 
   for (const el of sec.querySelectorAll(".chip[data-tip], .node")) {
     el.onmouseenter = () => {
@@ -2188,6 +2230,8 @@ Promise.all([
     .then(j => { data.reports = j; }).catch(() => {}),
   fetch(REAL_WORKLOAD.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.workload = j; }).catch(() => {}),
+  fetch(MAINTENANCE.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { data.maintenance = j; }).catch(() => {}),
 ]).then(() => { loaded = true; render(); });
 </script>
 </body>
