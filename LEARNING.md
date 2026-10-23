@@ -857,8 +857,9 @@ engine on the page as "died", with its last good run.
 - **Grain test on a hash.** `assert_fct_scada_grain` groups 386M rows on a four-column key. On
   DuckDB, a GROUP BY on one 64-bit hash first, exact only for colliding hashes, took it from
   168 s to 23 s. Spark gained nothing and Trino got slower (705 to 971 s): kept on DuckDB only.
-- **A full fct_summary rebuild kills the Polars runner** (exit 143, run 39952876729, 296M fct_scada
-  rows). Its never-summarised dates now go in newest first, 120 a run (`summary_dates_per_run`).
+- **A full fct_summary rebuild killed the Polars runner** on main 4426a548fd (exit 143, run
+  39952876729, 296M fct_scada rows), which predates the #30185/#30186 join fixes. Moved to main
+  34e7970e37 to rebuild it whole.
 - **The batch was thought to be the cost.** With the target pruned, what grows with N is staging
   the batch. Before the DATE prune the target side grew with the table, so the batch sizes in the
   table above were measured against an unpruned merge.
