@@ -273,6 +273,36 @@ def test_spark_folds_filters_into_scans_and_drops_partial_aggregates():
     assert [j["rows"] for j in joins(root)] == [1_000_000]
 
 
+def test_polars_walks_the_physical_plan_and_reads_rows_sent_by_node_id():
+    def n(i, kind, inputs=(), **props):
+        return {"id": i, "input_ids": list(inputs), "properties": {"type": kind, **props}}
+
+    raw = {
+        "physical": [
+            n(1, "TopK", [2], by_exprs=["col(\"x\")"]),
+            n(2, "GroupBy", [3], key_per_input=[["d_year"]]),
+            n(3, "EquiJoin", [4, 6], how="Inner", left_on=["ws_sold_date_sk"], right_on=["d_date_sk"]),
+            n(4, "Filter", [5], predicate="col(\"ws_quantity\") > 0"),
+            n(5, "MultiScan", first_source="abfss://***/Tables/DS1/web_sales/data/0.parquet"),
+            n(6, "MultiScan", projected_file_columns=["d_date_sk", "d_year"]),
+        ],
+        "metrics": {"nodes": [
+            {"phys_node_key": 1, "rows_sent": 100}, {"phys_node_key": 2, "rows_sent": 7},
+            {"phys_node_key": 3, "rows_sent": 900}, {"phys_node_key": 4, "rows_sent": 950},
+            {"phys_node_key": 5, "rows_sent": 1000}, {"phys_node_key": 6, "rows_sent": 73},
+        ]},
+    }  # fmt: skip
+    root = normalize(record("polars_iceberg", raw))["root"]
+    assert root["kind"] == "sort" and root["rows"] == 100
+    join = root["children"][0]["children"][0]
+    assert join["label"] == "Hash join" and join["rows"] == 900 and not join["cross"]
+    assert join["detail"] == "INNER ws_sold_date_sk = d_date_sk"
+    sales, dates = join["children"]
+    assert sales["label"] == "web_sales" and sales["rows"] == 950 and sales["read"] == 1000
+    assert dates["label"] == "date_dim" and dates["est"] is None
+    assert join["tables"] == ["date_dim", "web_sales"]
+
+
 # --- the files the page reads ---------------------------------------------------------------------
 
 

@@ -14,7 +14,7 @@ on:
       engine:
         description: The engine whose plans to capture.
         type: choice
-        options: [duckdb_iceberg, trino_iceberg, pyspark_iceberg, pyspark_gluten_iceberg]
+        options: [duckdb_iceberg, polars_iceberg, trino_iceberg, pyspark_iceberg, pyspark_gluten_iceberg]
         default: duckdb_iceberg
       suite:
         type: choice
@@ -77,6 +77,9 @@ jobs:
           cache: pip
           cache-dependency-path: requirements/${{ inputs.engine }}.txt
       - run: pip install -r "requirements/${BENCH_ENGINE}.txt"
+      # Polars' plan comes back msgpack-encoded (.github/scripts/capture_plan.py, _polars).
+      - if: inputs.engine == 'polars_iceberg'
+        run: pip install "msgpack>=1"
 
       - name: Install the DuckDB CLI
         if: inputs.engine == 'duckdb_iceberg'

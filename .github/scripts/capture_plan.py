@@ -15,6 +15,8 @@ query runs once, cold, with the engine's own plan instrumentation on:
   rows per plan node from the operator summaries.
 * Spark: the executed physical plan after `collect()` -- the final plan when AQE re-planned --
   with each node's SQL metrics (`numOutputRows`, spill).
+* Polars: the streaming engine's physical plan and rows sent per node, from its query-monitoring
+  hook (see _polars). No estimates: Polars does not report any.
 
 PLAN_WARMUP=true runs each query once, untimed, before the captured run (see main).
 
@@ -147,8 +149,60 @@ def _spark(engine, sql: str) -> dict:
     return {"seconds": seconds, "error": error, "spill_bytes": None, "raw": tree}
 
 
+def _polars(engine, sql: str) -> dict:
+    """Polars reports its plan through its query-monitoring hook, made for Polars Cloud: when a
+    query is planned it hands an observer the physical plan (nodes with their input ids), and a
+    handle whose snapshot has every node's rows_sent, by the same ids. The observer class is looked
+    up in a `polars_cloud` module; a stand-in one here keeps both and sends nothing anywhere.
+    Only the streaming engine counts rows per node -- the engine the benchmark runs."""
+    import types
+
+    import msgpack
+    import polars as pl
+
+    seen: dict = {}
+
+    class Guard:
+        def __init__(self, handle):
+            self.handle = handle
+
+        def close(self):  # the query ended: the final counts
+            seen["metrics"] = msgpack.unpackb(self.handle.snapshot_query_metrics(), raw=False)
+
+    class Observer:
+        def __init__(self, **_):
+            pass
+
+        def on_query_started(self, query_id):
+            pass
+
+        def on_query_planned(self, query_id, handle, ir, physical):
+            seen["physical"] = msgpack.unpackb(physical, raw=False)
+            return Guard(handle)
+
+        def on_query_failed(self, query_id, error):
+            pass
+
+    cloud = types.ModuleType("polars_cloud")
+    cloud.__version__ = "0.13.0"
+    cloud.QueryCloudObserver = Observer
+    cloud.authenticate = lambda *a, **k: None
+    sys.modules["polars_cloud"] = cloud
+    pl.Config.enable_monitoring()
+    error, start = None, time.perf_counter()
+    try:
+        engine._ctx.execute(sql).collect(engine="streaming")
+    except Exception as exc:  # noqa: BLE001 - a failed query is a result here
+        error = scrub.scrub_exc(exc)
+    finally:
+        pl.Config.enable_monitoring(False)
+    seconds = time.perf_counter() - start
+    return {"seconds": seconds, "error": error, "spill_bytes": None, "raw": seen or None}
+
+
 CAPTURE = {
     "duckdb_iceberg": _duckdb,
+    "polars_iceberg": _polars,
     "trino_iceberg": _trino,
     "pyspark_iceberg": _spark,
     "pyspark_gluten_iceberg": _spark,

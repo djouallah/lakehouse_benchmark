@@ -434,8 +434,86 @@ def spark(raw: dict, suite: str) -> tuple[dict | None, dict]:
     }
 
 
+# --- Polars ---------------------------------------------------------------------------------------
+
+_POLARS_JOINS = {
+    "EquiJoin": "Hash join",
+    "InMemoryJoin": "In-memory join",
+    "MergeJoin": "Merge join",
+    "SemiAntiJoin": "Semi/anti join",
+    "InMemoryIEJoin": "Inequality join",
+    "RangeJoin": "Range join",
+    "CrossJoin": "Cross join",
+}
+
+
+def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
+    """The streaming engine's physical plan: a list of nodes with their input ids, and rows_sent
+    per node from the final metrics snapshot. A shared subplan (a CTE used twice, behind a
+    Multiplexer) is drawn under each of its consumers."""
+    nodes = {n["id"]: n for n in raw.get("physical") or []}
+    if not nodes:
+        return None, {}
+    sent = {m["phys_node_key"]: m for m in (raw.get("metrics") or {}).get("nodes", [])}
+
+    def rows(i):
+        m = sent.get(i)
+        return m.get("rows_sent") if m else None
+
+    def secs(i):
+        m = sent.get(i)
+        return (m.get("total_time_ns") or 0) / 1e9 if m else None
+
+    def walk(i):
+        n = nodes[i]
+        props = n.get("properties") or {}
+        kind = props.get("type", "Other")
+        kids = _flatten([walk(k) for k in n.get("input_ids", [])])
+        if kind == "MultiScan":
+            path = str(props.get("first_source") or "")
+            m = re.search(r"/Tables/[^/]+/([A-Za-z0-9_]+)", path)
+            table = m.group(1) if m else _table_from_columns(props.get("projected_file_columns") or [], suite)
+            return node(
+                "scan", kind, table or "scan", table=table, rows=rows(i), seconds=secs(i),
+                detail=_short(props.get("predicate") or ""),
+            )  # fmt: skip
+        if kind == "Filter" and len(kids) == 1 and kids[0]["kind"] == "scan":
+            scan = kids[0]
+            scan["read"], scan["rows"] = scan["rows"], rows(i)
+            scan["detail"] = _short(props.get("predicate") or "")
+            return scan
+        if kind in _POLARS_JOINS:
+            left, right = props.get("left_on") or [], props.get("right_on") or []
+            keys = [f"{a} = {b}" for a, b in zip(left, right)] if isinstance(left, list) else []
+            extra = props.get("fused_predicate") or []
+            detail = " AND ".join([*keys, *map(str, extra)])
+            how = str(props.get("how") or "").split("(")[0].strip()
+            return node(
+                "join", kind, _POLARS_JOINS[kind], rows=rows(i), seconds=secs(i),
+                detail=_short(f"{how.upper()} {detail}".strip()), cross=kind == "CrossJoin",
+                children=kids,
+            )  # fmt: skip
+        if kind in ("GroupBy", "SortedGroupBy", "Reduce"):
+            keys = props.get("key_per_input") or props.get("key") or ""
+            return node(
+                "agg", kind, "Group by", rows=rows(i), seconds=secs(i),
+                detail=_short(keys), children=kids,
+            )  # fmt: skip
+        if kind in ("Sort", "TopK"):
+            return node(
+                "sort", kind, "Top N" if kind == "TopK" or props.get("slice") else "Sort",
+                rows=rows(i), seconds=secs(i), children=kids,
+            )  # fmt: skip
+        return kids
+
+    inputs = {k for n in nodes.values() for k in n.get("input_ids", [])}
+    roots = [i for i in nodes if i not in inputs]
+    return _root([walk(i) for i in roots]), {}
+
+
 PARSERS = {
     "duckdb_iceberg": duckdb,
+    "polars_iceberg": polars,
     "trino_iceberg": trino,
     "pyspark_iceberg": spark,
     "pyspark_gluten_iceberg": spark,
