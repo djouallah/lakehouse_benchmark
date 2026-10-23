@@ -140,7 +140,7 @@ jobs:
         if: matrix.client == 'databend'
         run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
 
-      # DuckDB is the released CLI, not a wheel: bench/duckdb_cli.py says why.
+      # DuckDB is the main nightly CLI, not a wheel: bench/duckdb_cli.py says why.
       - name: DuckDB CLI
         if: matrix.client == 'duckdb' || matrix.client == 'duckdb_isolation'
         uses: ./.github/actions/duckdb-cli

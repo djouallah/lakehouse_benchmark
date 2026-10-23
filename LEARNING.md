@@ -271,9 +271,11 @@ Largest scale each engine completes, cold, every statement answered:
   `DUCKDB_EXTENSION_REPO`, and the CLI runs with `-unsigned` and `custom_extension_repository` /
   `autoinstall_extension_repository` pointing there. Deployed extensions still win for the same
   run; a newer run from artifacts beats an older deployed one.
-- **Since v2.0.0 (2026-10-21) the engine is the released CLI.** `.github/actions/duckdb-cli`
-  downloads the release's `duckdb-cli-linux-amd64.tar.gz` and installs the signed extensions from
-  extensions.duckdb.org. The nightly picker, and its unsigned-artifact path, are gone.
+- **v2.0.0 (2026-10-21) to 2026-10-23 the engine was the released CLI.** Since 2026-10-23
+  `.github/actions/duckdb-cli` takes the newest `Main (alphaN)` nightly on duckdb/duckdb `main`
+  whose "Deploy extensions" job succeeded (signed extensions on extensions.duckdb.org), because
+  main has duckdb/duckdb#27493 (TPC-DS Q19/Q64 below) and v2.0.0 does not. No unsigned-artifact
+  path: a nightly without deployed extensions is skipped.
 
 ## Spark-OSS
 

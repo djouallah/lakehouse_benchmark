@@ -1,18 +1,23 @@
 name: DuckDB CLI
 description: >-
-  Put a released DuckDB CLI on PATH (bench/duckdb_cli.py says why the CLI and not the wheel), and
-  check that the extensions the jobs load install from extensions.duckdb.org.
+  Put DuckDB's newest main nightly CLI on PATH (bench/duckdb_cli.py says why the CLI and not the
+  wheel), and check that the extensions the jobs load install from extensions.duckdb.org.
 
 inputs:
-  version:
-    description: A duckdb/duckdb release tag.
+  run-id:
+    description: >-
+      A duckdb/duckdb `Main (alphaN)` run on main to pin. Empty picks the newest one whose CLI
+      artifact is still there and whose "Deploy extensions" job succeeded.
     required: false
-    default: v2.0.0
+    default: ""
 
 outputs:
   version:
-    description: The CLI's version, e.g. v2.0.0.
+    description: The CLI's version, e.g. v2.1.0-alpha49809.
     value: ${{ steps.install.outputs.version }}
+  run-id:
+    description: The duckdb/duckdb run the CLI came from.
+    value: ${{ steps.install.outputs.run-id }}
 
 runs:
   using: composite
@@ -21,18 +26,41 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
-        VERSION: ${{ inputs.version }}
+        RUN_ID: ${{ inputs.run-id }}
       run: |
+        # WHY THE DEPLOY CHECK. The nightly builds the CLI every night, but its "Deploy extensions"
+        # job -- the one that publishes the signed extensions.duckdb.org/<version>/... -- is skipped
+        # whenever any extension build fails, and a CLI without them cannot ATTACH an Iceberg catalog.
+        usable() {
+          gh api "repos/duckdb/duckdb/actions/runs/$1/jobs?per_page=100" --paginate \
+            --jq '.jobs[] | select(.name == "Deploy extensions") | .conclusion' | grep -qx success \
+          && gh api "repos/duckdb/duckdb/actions/runs/$1/artifacts?name=duckdb-cli-linux-amd64.tar.gz" \
+            --jq '.artifacts[] | select(.expired | not) | .id' | grep -q .
+        }
+        if [ -z "$RUN_ID" ]; then
+          for id in $(gh api "repos/duckdb/duckdb/actions/runs?branch=main&status=success&per_page=100" \
+              --jq '.workflow_runs[] | select(.name | startswith("Main (alpha")) | .id'); do
+            if usable "$id"; then RUN_ID=$id; break; fi
+          done
+          [ -n "$RUN_ID" ] || { echo "no usable DuckDB main nightly among the last 100 successful runs"; exit 1; }
+        fi
         dir="$RUNNER_TEMP/duckdb-cli"
         mkdir -p "$dir"
-        gh release download "$VERSION" --repo duckdb/duckdb \
-          --pattern duckdb-cli-linux-amd64.tar.gz --dir "$dir" --clobber
-        tar -xzf "$dir/duckdb-cli-linux-amd64.tar.gz" -C "$dir"
+        # The artifact is uploaded unzipped (the raw .tar.gz), which `gh run download` can't read.
+        artifact=$(gh api "repos/duckdb/duckdb/actions/runs/$RUN_ID/artifacts?name=duckdb-cli-linux-amd64.tar.gz" --jq '.artifacts[0].id')
+        gh api "repos/duckdb/duckdb/actions/artifacts/$artifact/zip" > "$dir/blob"
+        if [ "$(head -c 2 "$dir/blob")" = "PK" ]; then
+          unzip -o "$dir/blob" -d "$dir" && tar -xzf "$dir"/*.tar.gz -C "$dir"
+        else
+          tar -xzf "$dir/blob" -C "$dir"
+        fi
         chmod +x "$dir/duckdb"
         echo "$dir" >> "$GITHUB_PATH"
         # What the DuckDB jobs load: the catalog (iceberg, which reads manifests with avro) and
         # storage (azure, httpfs for the REST calls). Failing here beats failing in a timed job.
         "$dir/duckdb" -batch -c "INSTALL iceberg; INSTALL avro; INSTALL azure; INSTALL httpfs;"
         echo "version=$("$dir/duckdb" --version | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+        echo "run-id=$RUN_ID" >> "$GITHUB_OUTPUT"
+        echo "DuckDB main nightly from https://github.com/duckdb/duckdb/actions/runs/$RUN_ID"
     - shell: bash
       run: duckdb --version

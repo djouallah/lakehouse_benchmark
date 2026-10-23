@@ -122,7 +122,7 @@ def main() -> int:
         It also reports WHICH transports work, because that is the fact worth knowing: if DuckDB
         ever fixes its default, this log says so.
 
-        Through the released CLI the bench runs (bench/duckdb_cli.py), not a wheel.
+        Through the nightly CLI the bench runs (bench/duckdb_cli.py), not a wheel.
         """
         from bench.duckdb_cli import DuckDBCli
 

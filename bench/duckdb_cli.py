@@ -1,8 +1,8 @@
 """DuckDB as its CLI binary: one long-lived `duckdb` process per session, SQL in on stdin.
 
 WHY THE CLI AND NOT THE WHEEL. Through the 2.0 alphas the PyPI dev wheel ran about a week behind
-the nightly CLI, so the bench ran the nightly CLI. Since v2.0.0 (2026-10-21) it runs the released
-CLI, which the duckdb-cli action (.github/actions/duckdb-cli) puts on PATH.
+the nightly CLI, so the bench ran the nightly CLI. It runs DuckDB's newest main nightly CLI, which
+the duckdb-cli action (.github/actions/duckdb-cli) puts on PATH.
 
 ONE PROCESS, NOT ONE PER STATEMENT. Secrets, the catalog ATTACH, the buffer pool and the external
 file cache all live in the process, exactly as they lived in one `duckdb.connect()`. A process per
