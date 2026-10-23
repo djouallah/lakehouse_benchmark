@@ -1359,8 +1359,6 @@ function renderReports() {
 // A story may name each side (goodTitle, badTitle): the same engine before and after a fix.
 const planName = p => p.title ?? LABEL[p.engine] ?? p.engine;
 const STORIES = [
-  { id: "q72", title: "Q72", good: "tpcds_q72_duckdb_iceberg_sf10", bad: "tpcds_q72_pyspark_iceberg_sf10",
-    lede: "Spark runs joins in the order the SQL lists them. Q72 lists inventory before the filters that make it small. Turning on its cost-based optimizer, off by default, made Q72 slower." },
   { id: "q64", title: "Q64", good: "tpcds_q64_duckdb_iceberg_sf100", bad: "tpcds_q64_duckdb_2_0_iceberg_sf100",
     goodTitle: "DuckDB nightly", badTitle: "DuckDB 2.0",
     lede: "DuckDB 2.0 guessed a ≠ join makes 249M rows and ran it early, on its own; it makes about 3 trillion. duckdb#27493 now prices ≠ as nearly a cross product, so the nightly checks it inside a hash join instead." },
@@ -2206,7 +2204,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
+// Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q64 for one story), #features,
 // #performance, #etl, #tpch, #tpcds, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
 // or one engine in that list (#datafusion).
 function fromHash() {
