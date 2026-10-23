@@ -497,7 +497,7 @@ main .tiles > a { color: inherit; }
     <p>This is not a benchmark. It is a way to find bugs in open-source engines and get them fixed.</p>
     <p>Every engine runs the same jobs on the same GitHub runner (16 GB RAM), against the same Iceberg tables in one
       OneLake REST catalog: load raw CSV files, TPC-H-like and TPC-DS-like (<a href="#performance">Benchmarks</a>), Iceberg
-      writes and table maintenance (<a href="#iceberg">Iceberg support</a>), and one dbt project every 2 hours on
+      writes and table maintenance (<a href="#iceberg">Iceberg support</a>), and one dbt project every hour on
       Spark, Trino, DuckDB and Polars (<a href="#workload">Real workload</a>).</p>
     <p>When a job fails, runs out of memory or returns a wrong answer, the bug is filed upstream: one issue per bug,
       with a script that reproduces it on a clean machine. The maintainers write the fix; the bench picks it up from
@@ -1278,7 +1278,7 @@ function openModel(w, runs, n, at) {
       <p class="d">Landed: ${LANDED.gb} GB of AEMO CSV files, measured ${LANDED.date} (<a href="${LANDED.run}">run</a>), not live.</p>
       <p class="d">One dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
         ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${w.legs[runs[0]]?.tests ?? ""} tests,
-        Iceberg tables out. Every 2 hours, never reset: each engine folds the next batch into its own tables.
+        Iceberg tables out. Every hour, never reset: each engine folds the next batch into its own tables.
         <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`
       : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Rows</th>${hasMw ? `<th class="n">SUM(mw)</th>` : ""}</tr></thead>
     <tbody>${lines}</tbody></table>`}${diffs}`;

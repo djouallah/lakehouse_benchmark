@@ -783,7 +783,7 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
 
 ## The dbt workload test (the Real workload tab)
 
-**Now (2026-10-20):** it runs every 2 hours on a schedule, never resets, lands up to 360 new daily
+**Now (2026-10-20):** it runs every 2 hours on a schedule (every hour since 2026-10-23, and only Polars and Sail until both catch up), never resets, lands up to 360 new daily
 AEMO files a run, and each engine folds its largest proven batch into its own tables, which only
 grow: Spark 360, DuckDB 360, Trino 100, Polars 50 files a run (`PROCESS_LIMITS` in workload.yml).
 The parity grade and the decimals job were removed once the last-decimal differences were
