@@ -542,6 +542,19 @@ class SailCapability:
         write_stats_files(self.iceberg(table))
         return table
 
+    def select_table(self) -> str:
+        """pyiceberg creates and seeds the table; the engine reads it by its catalog name."""
+        table = self.name("select")
+        self.pyiceberg().create_table((self.ns, table), schema=iceberg_schema())
+        self.created.append(table)
+        self.pyiceberg().load_table((self.ns, table)).append(rows(SEED))
+        found = sorted(
+            tuple(int(x) for x in r) for r in self.sql(f"SELECT id, v FROM {self.t(table)}")
+        )
+        if found != SEED:
+            raise NoOp(f"reads {found}, pyiceberg wrote {SEED}")
+        return f"SELECT id, v FROM the catalog table reads the {len(SEED)} rows pyiceberg wrote"
+
     def file_pruning(self) -> str:
         table = self._stats_table("prune")
         gone = remove_data_files(self.iceberg(table), keep_id=PRUNE_ID)
@@ -754,6 +767,7 @@ PROBES = [
     ("schema", "ALTER TABLE SET TBLPROPERTIES", "set_property"),
     ("read", "time travel, VERSION AS OF", "time_travel"),
     ("read", "metadata tables (t.snapshots)", "metadata_tables"),
+    ("read", "SELECT a table by its catalog name", "select_table"),
     ("read", "WHERE id = 22 with the other data files deleted (file pruning)", "file_pruning"),
     ("read", "max(id) with every data file deleted (min/max from metadata)", "max_from_metadata"),
     ("refs", "ALTER TABLE ... CREATE BRANCH", "create_branch"),

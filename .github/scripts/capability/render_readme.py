@@ -29,6 +29,11 @@ FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend")
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
+    # The session probe: the engine reaches the REST catalog, the way it attaches one (DuckDB's
+    # ATTACH, Trino's CREATE CATALOG, Spark's and Sail's catalog config, Polars' register_catalog).
+    ("Attach the REST catalog", {e: ["session"] for e in ENGINES}),
+    # pyiceberg creates and seeds the table; the engine reads it back by its catalog name.
+    ("SELECT a table by its catalog name", {e: ["select_table"] for e in ENGINES}),
     ("CREATE TABLE", {e: ["create_table"] for e in FULL_SQL}),
     ("CREATE TABLE AS SELECT", {e: ["ctas"] for e in SQL}),
     ("CREATE TABLE IF NOT EXISTS, existing table", {e: ["create_if_not_exists"] for e in SQL}),
@@ -209,6 +214,8 @@ for _label, _sources in ROWS:
 GROUPS = {
     # The grid opens on Core: the minimum an engine needs to be usable on Iceberg.
     "Core": [
+        "Attach the REST catalog",
+        "SELECT a table by its catalog name",
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
