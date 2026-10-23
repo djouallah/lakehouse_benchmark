@@ -894,8 +894,10 @@ one, into `dbt_sail_*`, 10 files a run. First green run (probe, main 151a417d5d)
   [lakehq/sail#2836](https://github.com/lakehq/sail/issues/2836)).
 - **`string_view`.** `SELECT DISTINCT file` over dbt's temp view came back as Arrow string_view,
   which the Connect client cannot convert, with pyspark-client 4.2.0 and 4.1.1 alike; a
-  `CAST(file AS STRING)` around it in merge_prune works. The trigger is `DISTINCT` over `substring_index`
+  `CAST(file AS STRING)` around it in merge_prune worked. The trigger is `DISTINCT` over `substring_index`
   (parse_filename), on any source: [lakehq/sail#2835](https://github.com/lakehq/sail/issues/2835).
+  Fixed by [lakehq/sail#2837](https://github.com/lakehq/sail/pull/2837) (2026-10-22); main
+  d219a98598 runs without the cast, which is gone.
 - **`DESCRIBE x`** without `TABLE` failed on main 151a417d5d; fixed by lakehq/sail#2812, the
   leg's main acfa37959f runs it (repro run 39698528654), so that branch is gone.
 - **Joins:** sort-merge, which spills (`WorkloadConfig.estimated_gib`). With hash joins the runner
