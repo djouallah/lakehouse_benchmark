@@ -54,7 +54,6 @@ IDENT_STYLE = {
     "pyspark_iceberg": "dotted",
     # Spark with a native executor underneath; the parser is still Spark's.
     "pyspark_gluten_iceberg": "dotted",
-    "pyspark_comet_iceberg": "dotted",
     "lakesail_iceberg": "dotted",
     # catalog.database.table, and `SET CATALOG onelake` makes `CH0010.lineitem` resolve.
     "starrocks_iceberg": "dotted",
