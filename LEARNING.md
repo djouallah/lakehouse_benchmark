@@ -858,8 +858,9 @@ engine on the page as "died", with its last good run.
   DuckDB, a GROUP BY on one 64-bit hash first, exact only for colliding hashes, took it from
   168 s to 23 s. Spark gained nothing and Trino got slower (705 to 971 s): kept on DuckDB only.
 - **A full fct_summary rebuild killed the Polars runner** on main 4426a548fd (exit 143, run
-  39952876729, 296M fct_scada rows), which predates the #30185/#30186 join fixes. Moved to main
-  34e7970e37 to rebuild it whole.
+  39952876729, 296M fct_scada rows), which predates the #30185/#30186 join fixes. On main
+  34e7970e37 the same full rebuild passed: 110 s, 127M rows from 320M fct_scada rows, 12.4 GB
+  peak for the build (run 39969240873). Both fixes are upstream; nothing new to report.
 - **The batch was thought to be the cost.** With the target pruned, what grows with N is staging
   the batch. Before the DATE prune the target side grew with the table, so the batch sizes in the
   table above were measured against an unpruned merge.
