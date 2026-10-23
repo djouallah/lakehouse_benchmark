@@ -903,6 +903,12 @@ one, into `dbt_sail_*`, 10 files a run. First green run (probe, main 151a417d5d)
   ([apache/datafusion#26003](https://github.com/apache/datafusion/issues/26003)), so
   fct_summary joins the interval on `CAST(SETTLEMENTDATE AS BIGINT)`.
 - **Spill on /mnt** (`TMPDIR`): `/tmp`'s quota stopped fct_scada's merge, as it did Spark and DuckDB.
+- **No `NOT IN` over a big table.** fct_summary's `s.DATE NOT IN (SELECT DISTINCT date FROM this)`
+  stayed a hash anti join with prefer_hash_join off, and its build side grew with fct_scada until
+  it ran out of the 10 GB pool: "Failed to allocate additional 18.8 MB for HashJoinInput with 4.8 GB
+  already allocated" ([39865545715](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39865545715),
+  2026-10-22, 50 files). Rewritten as the distinct dates `EXCEPT` the target's, so the join sees
+  a few thousand rows. The result is the same: date is never null.
 
 Not known yet: the batch it holds as the tables grow. 10 files spilled 9 GB.
 

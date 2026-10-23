@@ -45,10 +45,14 @@ dispatch_duids AS (
 -- Dates whose stored content could differ from a clean recomputation; everything older
 -- is settled. Shrinking this window silently reduces what can be repaired.
 rebuild_dates AS (
-  -- Never seen before: archive backfill, or a first build catching up.
-  SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s
-  WHERE s.INTERVENTION = 0
-    AND s.DATE NOT IN (SELECT DISTINCT date FROM {{ this }})
+  -- Never seen before: archive backfill, or a first build catching up. Distinct dates first, then
+  -- EXCEPT: `s.DATE NOT IN (...)` was a hash anti join over every fct_scada row, which cannot spill
+  -- and ran out of the 10 GB pool (HashJoinInput 4.8 GB, run 39865545715). date is never null.
+  SELECT date FROM (
+    SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s WHERE s.INTERVENTION = 0
+    EXCEPT
+    SELECT date FROM {{ this }}
+  ) AS new_dates
   UNION
   -- Recently settled: incomplete until the daily file lands, which is several days later
   -- if the pipeline missed a run — so a window, not just the newest daily date.
