@@ -281,7 +281,10 @@ def test_polars_walks_the_physical_plan_and_reads_rows_sent_by_node_id():
         "physical": [
             n(1, "TopK", [2], by_exprs=["col(\"x\")"]),
             n(2, "GroupBy", [3], key_per_input=[["d_year"]]),
-            n(3, "EquiJoin", [4, 6], how="Inner", left_on=["ws_sold_date_sk"], right_on=["d_date_sk"]),
+            n(
+                3, "EquiJoin", [4, 6], how="Inner",
+                left_on=["ws_sold_date_sk"], right_on=["d_date_sk"],
+            ),
             n(4, "Filter", [5], predicate="col(\"ws_quantity\") > 0"),
             n(5, "MultiScan", first_source="abfss://***/Tables/DS1/web_sales/data/0.parquet"),
             n(6, "MultiScan", projected_file_columns=["d_date_sk", "d_year"]),

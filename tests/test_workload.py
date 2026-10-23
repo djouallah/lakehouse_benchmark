@@ -301,20 +301,32 @@ def test_the_page_reads_what_maintenance_writes():
 def test_maintenance_page_data_sums_each_engine_and_keeps_errors():
     maintain = _maintain()
     record = {
-        "run_id": "9", "run_url": "u", "started": "s", "finished": "f",
+        "run_id": "9",
+        "run_url": "u",
+        "started": "s",
+        "finished": "f",
         "settings": {"target_mb": 128, "min_input_files": 5, "expire_days": 1, "orphan_days": 3},
         "versions": {},
         "tables": [
-            {"engine": "duckdb", "table": "dbt_duckdb_landing.fct_scada",
-             "before": {"snapshots": 30, "data_files": 400, "bytes": 2_000_000, "rows": 9},
-             "after": {"snapshots": 13, "data_files": 12, "bytes": 1_900_000, "rows": 9},
-             "compact": {"rewritten": 390, "added": 2, "rewritten_bytes": 1_000_000},
-             "expired": 18, "orphans": {"deleted": 700, "failed": 1, "bytes": 5_000},
-             "seconds": 3.0},
-            {"engine": "duckdb", "table": "dbt_duckdb_mart.dim_duid",
-             "before": {"snapshots": 2, "data_files": 1, "bytes": None, "rows": None},
-             "after": {"snapshots": 2, "data_files": 1, "bytes": None, "rows": None},
-             "expired": 0, "error": {"compact": "IOException: boom"}, "seconds": 1.0},
+            {
+                "engine": "duckdb",
+                "table": "dbt_duckdb_landing.fct_scada",
+                "before": {"snapshots": 30, "data_files": 400, "bytes": 2_000_000, "rows": 9},
+                "after": {"snapshots": 13, "data_files": 12, "bytes": 1_900_000, "rows": 9},
+                "compact": {"rewritten": 390, "added": 2, "rewritten_bytes": 1_000_000},
+                "expired": 18,
+                "orphans": {"deleted": 700, "failed": 1, "bytes": 5_000},
+                "seconds": 3.0,
+            },
+            {
+                "engine": "duckdb",
+                "table": "dbt_duckdb_mart.dim_duid",
+                "before": {"snapshots": 2, "data_files": 1, "bytes": None, "rows": None},
+                "after": {"snapshots": 2, "data_files": 1, "bytes": None, "rows": None},
+                "expired": 0,
+                "error": {"compact": "IOException: boom"},
+                "seconds": 1.0,
+            },
             {"engine": "trino", "table": "dbt_trino_mart.dim_duid", "skipped": "not attempted"},
         ],
     }
@@ -322,11 +334,21 @@ def test_maintenance_page_data_sums_each_engine_and_keeps_errors():
     assert set(out["engines"]) == {BENCH_ENGINE["duckdb"], BENCH_ENGINE["trino"]}
     duck = out["engines"][BENCH_ENGINE["duckdb"]]
     assert duck["totals"] == {
-        "tables": 2, "errors": 1, "skipped": 0,
-        "files_before": 401, "files_after": 13, "bytes_after": 1_900_000,
-        "snapshots_before": 32, "snapshots_after": 15,
-        "compacted": 390, "compacted_into": 2, "compacted_bytes": 1_000_000,
-        "expired": 18, "orphans_deleted": 700, "orphans_failed": 1, "orphan_bytes": 5_000,
+        "tables": 2,
+        "errors": 1,
+        "skipped": 0,
+        "files_before": 401,
+        "files_after": 13,
+        "bytes_after": 1_900_000,
+        "snapshots_before": 32,
+        "snapshots_after": 15,
+        "compacted": 390,
+        "compacted_into": 2,
+        "compacted_bytes": 1_000_000,
+        "expired": 18,
+        "orphans_deleted": 700,
+        "orphans_failed": 1,
+        "orphan_bytes": 5_000,
     }
     assert duck["tables"]["dbt_duckdb_mart.dim_duid"]["error"] == {"compact": "IOException: boom"}
     trino = out["engines"][BENCH_ENGINE["trino"]]["totals"]

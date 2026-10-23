@@ -484,7 +484,11 @@ def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
         if kind == "MultiScan":
             path = str(props.get("first_source") or "")
             m = re.search(r"/Tables/[^/]+/([A-Za-z0-9_]+)", path)
-            table = m.group(1) if m else _table_from_columns(props.get("projected_file_columns") or [], suite)
+            table = (
+                m.group(1)
+                if m
+                else _table_from_columns(props.get("projected_file_columns") or [], suite)
+            )
             return node(
                 "scan", kind, table or "scan", table=table, rows=rows(i), seconds=secs(i),
                 detail=short(props.get("predicate") or ""),
@@ -496,7 +500,11 @@ def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
             return scan
         if kind in _POLARS_JOINS:
             left, right = props.get("left_on") or [], props.get("right_on") or []
-            keys = [f"{a} = {b}" for a, b in zip(left, right)] if isinstance(left, list) else []
+            keys = (
+                [f"{a} = {b}" for a, b in zip(left, right, strict=False)]
+                if isinstance(left, list)
+                else []
+            )
             extra = props.get("fused_predicate") or []
             detail = " AND ".join([*keys, *map(str, extra)])
             how = str(props.get("how") or "").split("(")[0].strip()
