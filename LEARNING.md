@@ -848,6 +848,17 @@ engine on the page as "died", with its last good run.
   - **Rule:** a key prefix shared across all values (names, URLs, paths) makes a useless prune
     column. Prune on a date, a number, or a partition column. Setting
     `write.metadata.metrics.column.<col> = 'full'` fixes only files written afterwards.
+- **fct_summary pruned on literal dates, 2026-10-23.** Its rebuild dates were an `IN (subquery)`,
+  which Iceberg cannot plan with, so every run read all of fct_scada and fct_price: 332 s on
+  DuckDB, 300 s on Gluten, 459 s on Sail with nothing new to fold, against 43 s on Trino, whose
+  dynamic filtering prunes at run time. The dates now run first and go in as DATE literals
+  (`workload/macros/date_literals.sql`) on both facts. A full rebuild then took less than the old
+  incremental run (run 39952876729: DuckDB 194 s, Gluten 161 s, Sail 114 s).
+- **Grain test on a hash.** `assert_fct_scada_grain` groups 386M rows on a four-column key. On
+  DuckDB, a GROUP BY on one 64-bit hash first, exact only for colliding hashes, took it from
+  168 s to 23 s. Spark gained nothing and Trino got slower (705 to 971 s): kept on DuckDB only.
+- **A full fct_summary rebuild kills the Polars runner** (exit 143, run 39952876729, 296M fct_scada
+  rows). Its never-summarised dates now go in newest first, 120 a run (`summary_dates_per_run`).
 - **The batch was thought to be the cost.** With the target pruned, what grows with N is staging
   the batch. Before the DATE prune the target side grew with the table, so the batch sizes in the
   table above were measured against an unpruned merge.
