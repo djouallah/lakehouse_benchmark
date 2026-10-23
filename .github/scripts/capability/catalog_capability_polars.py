@@ -42,6 +42,7 @@ from harness import (
     SUPPORTED,
     TEMPORAL,
     TRANSFORM_ROWS,
+    Broken,
     NoOp,
     Refused,
     Report,
@@ -549,9 +550,22 @@ class PolarsCapability:
             )
         table = self._fresh(key)
         raced = self.t(table, catalog="race")
-        return race_probe(
-            key, self.catalog, self.proxy, table, lambda: self.sql(statement.format(t=raced))
-        )
+        refused: list[Refused] = []
+
+        def write() -> None:
+            try:
+                self.sql(statement.format(t=raced))
+            except Refused as exc:
+                refused.append(exc)
+                raise
+
+        try:
+            return race_probe(key, self.catalog, self.proxy, table, write)
+        except Broken:
+            # Refused before any commit was sent: nothing raced, the statement is the answer.
+            if refused and not self.proxy.commits.get((self.ns, table)):
+                raise refused[0] from None
+            raise
 
     def race_append(self) -> str:
         return self._race("race_append", "INSERT INTO {t} VALUES (5, 50)")
