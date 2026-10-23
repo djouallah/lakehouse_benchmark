@@ -2,7 +2,7 @@
 -- depends_on: {{ ref('fct_price_today') }}
 
 -- Power BI-facing summary at (date, time, DUID). Same logic as the DuckDB and Polars versions,
--- in Spark SQL: strftime -> date_format, TIMESTAMPTZ -> TIMESTAMP.
+-- in Spark SQL (Gluten and Sail both run this file): strftime -> date_format, TIMESTAMPTZ -> TIMESTAMP.
 --
 -- Determinism contract (see the duckdb version for the full story): the defect was in what
 -- the SOURCE emitted — only wholly-missing dates, so an incomplete date could never be
@@ -28,6 +28,10 @@
 {# Closes with `%}`, NOT `-%}`: a right-strip swallows the newlines after this tag and
    glues WITH onto the `-- depends_on` comment line above, commenting the keyword out. #}
 {%- set scoped = is_incremental() %}
+{#- For Sail, valid on Gluten too: GROUP BY ordinals, because Sail reads
+    GROUP BY ALL as a column named ALL (lakehq/sail#2836); and the interval joined on its epoch
+    seconds, because DataFusion's sort-merge join cannot compare a UTC timestamp key
+    (apache/datafusion#26003). AEMO's intervals are whole seconds, so the match is the same. #}
 
 WITH
 -- The unit universe the DAILY branch can reproduce. Deliberately UNBOUNDED, not a trailing
@@ -41,10 +45,14 @@ dispatch_duids AS (
 -- Dates whose stored content could differ from a clean recomputation; everything older
 -- is settled. Shrinking this window silently reduces what can be repaired.
 rebuild_dates AS (
-  -- Never seen before: archive backfill, or a first build catching up.
-  SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s
-  WHERE s.INTERVENTION = 0
-    AND s.DATE NOT IN (SELECT DISTINCT date FROM {{ this }})
+  -- Never seen before: archive backfill, or a first build catching up. Distinct dates first, then
+  -- EXCEPT: `s.DATE NOT IN (...)` was a hash anti join over every fct_scada row, which cannot spill
+  -- and ran out of the 10 GB pool (HashJoinInput 4.8 GB, run 39865545715). date is never null.
+  SELECT date FROM (
+    SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s WHERE s.INTERVENTION = 0
+    EXCEPT
+    SELECT date FROM {{ this }}
+  ) AS new_dates
   UNION
   -- Recently settled: incomplete until the daily file lands, which is several days later
   -- if the pipeline missed a run — so a window, not just the newest daily date.
@@ -78,7 +86,7 @@ daily_summary AS (
   -- INNER joins: `WHERE p.INTERVENTION = 0` always discarded null-price rows anyway.
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price') }} p
-    ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
+    ON CAST(s.SETTLEMENTDATE AS BIGINT) = CAST(p.SETTLEMENTDATE AS BIGINT) AND d.Region = p.REGIONID
   WHERE
     s.INTERVENTION = 0
     AND s.INITIALMW <> 0
@@ -86,7 +94,7 @@ daily_summary AS (
     {% if scoped %}
     AND s.DATE IN (SELECT date FROM rebuild_dates)
     {% endif %}
-  GROUP BY ALL
+  GROUP BY 1, 2, 3
 
   UNION ALL
 
@@ -101,14 +109,14 @@ daily_summary AS (
   FROM {{ ref('fct_scada_today') }} s
   JOIN {{ ref('dim_duid') }} d ON s.DUID = d.DUID
   JOIN {{ ref('fct_price_today') }} p
-    ON s.SETTLEMENTDATE = p.SETTLEMENTDATE AND d.Region = p.REGIONID
+    ON CAST(s.SETTLEMENTDATE AS BIGINT) = CAST(p.SETTLEMENTDATE AS BIGINT) AND d.Region = p.REGIONID
   WHERE
     s.INITIALMW <> 0
     AND p.INTERVENTION = 0
     -- Only units the daily branch will be able to reproduce once this date settles.
     AND s.DUID IN (SELECT DUID FROM dispatch_duids)
     AND s.SETTLEMENTDATE > (SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMP)) FROM {{ ref('fct_scada') }})
-  GROUP BY ALL
+  GROUP BY 1, 2, 3
 )
 
 SELECT

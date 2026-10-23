@@ -1,4 +1,4 @@
-{#-- How the gluten (Spark + Gluten/Velox) fact models read the landed CSVs. Ported from
+{#-- How the spark tree's fact models (gluten and sail) read the landed CSVs. Ported from
      fabric-dbt-examples' Delta spark leg (dbt1/macros/spark_read_csv.sql); the record rule and
      the file choice are unchanged.
 

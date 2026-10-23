@@ -4,12 +4,14 @@
 #   duckdb   dbt-duckdb, ATTACHed to the OneLake Iceberg REST catalog   (the source's `iceberg`)
 #   polars   dbt-polars, pyiceberg REST catalog (+ an Azure storage catalog over the landing)
 #   gluten   dbt-spark `method: session` on Spark + Gluten/Velox, Iceberg (port of the Delta `spark`)
-#   trino    dbt-trino on bench's Trino container, Iceberg (ported from the gluten tree)
-#   sail     dbt-spark `method: session` on LakeSail over Spark Connect, Iceberg (from the gluten tree)
+#   trino    dbt-trino on bench's Trino container, Iceberg (ported from the spark tree)
+#   sail     dbt-spark `method: session` on LakeSail over Spark Connect, Iceberg
 #
-# ONE PROJECT, ONE TREE PER ENGINE: models/aemo/<engine>/<layer>/<model>.sql. Exactly one tree
-# is +enabled per run, keyed on target.name, so the same model names never collide. There is
-# no --select anywhere. A target name that matches no folder disables everything and
+# ONE PROJECT, ONE TREE PER SQL DIALECT: models/aemo/<tree>/<layer>/<model>.sql, the tree named
+# after the engine, except gluten and sail, which share the `spark` tree (Spark SQL on both; the
+# few Sail differences are `target.name == 'sail'` branches in macros/spark_read_csv.sql). Exactly
+# one tree is +enabled per run, keyed on target.name, so the same model names never collide. There
+# is no --select anywhere. A target name that matches no tree disables everything and
 # `dbt build` exits 0 having built nothing -- workload_run_engine.py refuses a run with no models.
 #
 # ONE MATERIALIZATION PER MODEL, ON EVERY ENGINE: an incremental merge on the model's natural key,
@@ -61,13 +63,8 @@ models:
         +enabled: "{{ target.name == 'polars' }}"
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
-      gluten:
-        +enabled: "{{ target.name == 'gluten' }}"
-        +file_format: iceberg
-        dimensions: {+schema: mart}
-        marts:      {+schema: landing}
-      sail:
-        +enabled: "{{ target.name == 'sail' }}"
+      spark:
+        +enabled: "{{ target.name in ['gluten', 'sail'] }}"
         +file_format: iceberg
         dimensions: {+schema: mart}
         marts:      {+schema: landing}
@@ -89,6 +86,5 @@ data_tests:
       # singular tests under tests/aemo/<engine>/ do have one, and are gated on it.
       duckdb: {+enabled: "{{ target.name == 'duckdb' }}"}
       polars: {+enabled: "{{ target.name == 'polars' }}"}
-      gluten: {+enabled: "{{ target.name == 'gluten' }}"}
-      sail:   {+enabled: "{{ target.name == 'sail' }}"}
+      spark:  {+enabled: "{{ target.name in ['gluten', 'sail'] }}"}
       trino:  {+enabled: "{{ target.name == 'trino' }}"}

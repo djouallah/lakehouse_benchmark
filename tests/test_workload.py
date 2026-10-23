@@ -14,6 +14,9 @@ from bench.workload.config import BENCH_ENGINE, ENGINES
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "workload"
+# The model tree each engine runs: gluten and sail share the Spark SQL tree.
+TREE = {e: {"gluten": "spark", "sail": "spark"}.get(e, e) for e in ENGINES}
+TREES = sorted(set(TREE.values()))
 
 
 def test_every_engine_has_a_target_a_model_tree_and_a_gate():
@@ -21,23 +24,23 @@ def test_every_engine_has_a_target_a_model_tree_and_a_gate():
     project = (PROJECT / "dbt_project.yml").read_text(encoding="utf-8")
     for engine in ENGINES:
         assert re.search(rf"^    {engine}:\n", profiles, re.M), engine
-        assert f"target.name == '{engine}'" in project, engine
-        models = sorted(p.name for p in (PROJECT / "models" / "aemo" / engine).rglob("*.sql"))
+        assert re.search(rf"target\.name (== '{engine}'|in \[[^\]]*'{engine}')", project), engine
+        models = sorted(p.name for p in (PROJECT / "models" / "aemo" / TREE[engine]).rglob("*.sql"))
         assert len(models) == 6, (engine, models)
-        assert (PROJECT / "tests" / "aemo" / engine).is_dir(), engine
+        assert (PROJECT / "tests" / "aemo" / TREE[engine]).is_dir(), engine
         assert (ROOT / "requirements" / f"workload_{engine}.txt").exists(), engine
         assert engine in BENCH_ENGINE
 
 
 def test_the_same_models_in_every_tree():
     trees = {
-        e: sorted(p.name for p in (PROJECT / "models" / "aemo" / e).rglob("*.sql")) for e in ENGINES
+        t: sorted(p.name for p in (PROJECT / "models" / "aemo" / t).rglob("*.sql")) for t in TREES
     }
     assert len({tuple(v) for v in trees.values()}) == 1, trees
 
 
-def test_gluten_tree_writes_iceberg_not_delta():
-    for path in (PROJECT / "models" / "aemo" / "gluten").rglob("*.sql"):
+def test_spark_tree_writes_iceberg_not_delta():
+    for path in (PROJECT / "models" / "aemo" / "spark").rglob("*.sql"):
         text = path.read_text(encoding="utf-8")
         assert "file_format='delta'" not in text, path
         assert "USING DELTA" not in text.upper(), path
@@ -172,9 +175,9 @@ def test_every_engine_builds_every_model_the_same_way():
         }
 
     by_model: dict[str, dict] = {}
-    for engine in ENGINES:
-        for path in (PROJECT / "models" / "aemo" / engine).rglob("*.sql"):
-            by_model.setdefault(path.stem, {})[engine] = config(path)
+    for tree in TREES:
+        for path in (PROJECT / "models" / "aemo" / tree).rglob("*.sql"):
+            by_model.setdefault(path.stem, {})[tree] = config(path)
     for model, engines in by_model.items():
         for engine, c in engines.items():
             assert c == {
@@ -192,7 +195,7 @@ def test_the_archive_log_is_a_source_not_a_copy():
     """Nothing builds the landing log: it is a dbt source on every engine, and every model and
     test reads it through source()."""
     for engine in ENGINES:
-        tree = PROJECT / "models" / "aemo" / engine
+        tree = PROJECT / "models" / "aemo" / TREE[engine]
         assert not list(tree.rglob("stg_*.sql")), engine
         for path in tree.rglob("*.sql"):
             assert "ref('stg_csv_archive_log')" not in path.read_text(encoding="utf-8"), path
@@ -211,8 +214,8 @@ def test_merges_prune_the_target_on_a_key_column():
     macros = (PROJECT / "macros" / "merge_prune.sql").read_text(encoding="utf-8")
     for hook in ("duckdb__get_incremental_merge_sql", "macro get_merge_sql("):
         assert hook in macros, hook
-    for engine in ENGINES:
-        for path in (PROJECT / "models" / "aemo" / engine / "marts").glob("fct_*.sql"):
+    for tree in TREES:
+        for path in (PROJECT / "models" / "aemo" / tree / "marts").glob("fct_*.sql"):
             sql = path.read_text(encoding="utf-8")
             assert "'file'" in sql or "spec['unique_key']" in sql or "'date'" in sql, path
 

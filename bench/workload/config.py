@@ -12,8 +12,8 @@ from dataclasses import dataclass
 
 from bench.config import ICEBERG_ENDPOINT, Config
 
-# The dbt targets, in run order. Same names as workload/profiles.yml and the engine folders under
-# workload/models/aemo/.
+# The dbt targets, in run order. Same names as workload/profiles.yml and the model trees under
+# workload/models/aemo/, except gluten and sail, which share the `spark` tree.
 ENGINES = ("duckdb", "polars", "gluten", "trino", "sail")
 
 # bench's engine id for each target, so labels and colours match the rest of the page once it is
