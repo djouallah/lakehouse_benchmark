@@ -227,3 +227,9 @@ def test_a_catalog_no_gets_its_reason_and_goes_when_the_cell_is_a_yes():
 
     works = {"spark": {**spark, "rows": [_row("ctas")]}}
     assert _cells(works, "CREATE TABLE AS SELECT")["pyspark_iceberg"] == {"o": "supported"}
+
+
+def test_every_row_asks_every_engine():
+    """No "no such operation": a cell works, or is a no, or a no-op."""
+    for label, sources in render_readme.ROWS:
+        assert set(sources) == set(render_readme.ENGINES), label

@@ -17,7 +17,7 @@ from bench.charts import LABEL
 from bench.report import leak_check
 
 TARGET = Path("docs/data/capability.json")
-OUTCOMES = {"supported", "no", "no-op", "skipped", "broken", "na"}
+OUTCOMES = {"supported", "no", "no-op", "skipped", "broken"}
 
 
 def load(path: Path) -> dict:

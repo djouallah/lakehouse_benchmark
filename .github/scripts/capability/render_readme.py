@@ -214,8 +214,6 @@ for _label, _sources in ROWS:
 GROUPS = {
     # The grid opens on Core: the minimum an engine needs to be usable on Iceberg.
     "Core": [
-        "Attach the REST catalog",
-        "SELECT a table by its catalog name",
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
@@ -257,6 +255,8 @@ GROUPS = {
         "MAX from the metadata, no data file read",
     ],
     "Read & refs": [
+        "Attach the REST catalog",
+        "SELECT a table by its catalog name",
         "Time travel",
         "Metadata tables",
         "Create branch",
@@ -362,9 +362,9 @@ def site_matrix(data: dict) -> dict:
         for label in labels:
             cells = {}
             for e in engines:
+                # Every engine is asked every row: a cell either works, or is a no or a no-op.
                 if e not in sources[label]:
-                    cells[SITE_KEY[e]] = {"o": "na"}
-                    continue
+                    raise KeyError(f"row {label!r} names no probe for {e}")
                 outcome, why = cell(by_key[e], sources[label][e])
                 note = "; ".join(_one_line(r["detail"], 220) for r in why)
                 if outcome == "supported" and (
