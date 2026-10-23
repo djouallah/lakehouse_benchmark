@@ -32,8 +32,8 @@
   },
   "polars_iceberg": {
    "version": "2.0.0",
-   "run": "39899985235",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39899985235",
+   "run": "39902372275",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39902372275",
    "date": "2026-10-23"
   },
   "databend_iceberg": {
@@ -72,7 +72,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -100,7 +101,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -128,7 +130,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..L…"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -155,7 +158,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..L…"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -182,7 +186,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: DELETE on a table of attached catalog 'lake' is not supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -210,7 +215,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..L…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -239,7 +245,8 @@
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Locati…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -270,7 +277,8 @@
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..L…"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -301,7 +309,8 @@
      "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: TRUNCATE on a table of attached catalog 'lake' is not supported"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -356,7 +365,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: CreateSchema { schema_name: Simple(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,15)..Location(1,19)) }), I…"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -385,7 +395,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "Polars has no API to drop a catalog namespace"
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Drop { object_type: Schema, if_exists: false, names: [ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Lo…"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -413,7 +423,8 @@
      "n": "ClickHouse has no statement for a catalog namespace"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: CreateSchema { schema_name: Simple(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,29)..Location(1,33)) }), I…"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -440,7 +451,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "broken",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { …"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -467,7 +479,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "broken",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: SQLInterfaceError: SQLInterfaceError: DELETE on a table of attached catalog 'race' is not supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -495,7 +508,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "broken",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { …"
     },
     "databend_iceberg": {
      "o": "no",
@@ -523,7 +537,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -550,7 +565,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: Hive table distribution clauses are not supported"
     },
     "databend_iceberg": {
      "o": "no",
@@ -578,7 +594,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "works: none; refused: bucket: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108"
     },
     "databend_iceberg": {
      "o": "no",
@@ -606,7 +623,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "works: none; refused: truncate: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 113"
     },
     "databend_iceberg": {
      "o": "no",
@@ -634,7 +652,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "works: none; refused: year: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108; month: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at …"
     },
     "databend_iceberg": {
      "o": "no",
@@ -664,7 +683,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "works: none; refused: decimal: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; date: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached c…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -692,7 +712,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "works: none; refused: struct: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; list: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached ca…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -720,7 +741,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identi…"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -748,7 +770,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identi…"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -776,7 +799,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identi…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -804,7 +828,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identi…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -833,7 +858,8 @@
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: FIELD at Line: 1, Column: 75"
     },
     "databend_iceberg": {
      "o": "no",
@@ -861,7 +887,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..L…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -890,7 +917,8 @@
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identi…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -919,7 +947,8 @@
      "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: WRITE at Line: 1, Column: 60"
     },
     "databend_iceberg": {
      "o": "no",
@@ -978,7 +1007,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39899985235_1_max/data/…"
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_399023…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1006,7 +1035,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "supported"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: one of UPDATE or SHARE, found: VERSION at Line: 1, Column: 73"
     },
     "databend_iceberg": {
      "o": "no-op",
@@ -1034,7 +1064,8 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_39902372275_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_39902372275_1_inspect.snapshots' could not be loaded (NoSuchTableEx…"
     },
     "databend_iceberg": {
      "o": "supported"
@@ -1064,7 +1095,8 @@
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, …"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: CREATE at Line: 1, Column: 60"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1095,7 +1127,8 @@
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: CREATE at Line: 1, Column: 57"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1124,7 +1157,8 @@
      "n": "ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Call(Function { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,6)..Location(1,10)) }), Identifier(Iden…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1155,7 +1189,8 @@
      "n": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
     },
     "polars_iceberg": {
-     "o": "na"
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Call(Function { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,6)..Location(1,10)) }), Identifier(Iden…"
     },
     "databend_iceberg": {
      "o": "no",

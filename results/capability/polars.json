@@ -5,166 +5,285 @@
   {
    "key": "session",
    "group": "session",
-   "question": "Polars imports and the pyiceberg catalog attaches",
+   "question": "Polars attaches the REST catalog with register_catalog",
    "outcome": "supported",
-   "detail": "polars 2.0.0; pyiceberg catalog attached, _bench_capability exists"
+   "detail": "polars 2.0.0; the REST catalog attached as `lake`"
   },
   {
-   "key": "sink_create",
+   "key": "create_table",
    "group": "create",
-   "question": "sink_iceberg(create_if_not_exists=True) to a new table",
-   "outcome": "supported",
-   "detail": "sink_iceberg(create_if_not_exists=True): pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees; field ids [1, 2]"
-  },
-  {
-   "key": "sink_append",
-   "group": "write",
-   "question": "sink_iceberg(mode='append')",
-   "outcome": "supported",
-   "detail": "sink_iceberg(mode='append'), a append snapshot: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees"
-  },
-  {
-   "key": "namespace_create",
-   "group": "catalog",
-   "question": "sink_iceberg into a new namespace, creating it",
-   "outcome": "supported",
-   "detail": "`pl_39899985235_1_ns` created by sink_iceberg, with its table; pyiceberg lists it"
-  },
-  {
-   "key": "namespace_drop",
-   "group": "catalog",
-   "question": "drop a namespace (no API)",
+   "question": "CREATE TABLE",
    "outcome": "no",
-   "detail": "Polars has no API to drop a catalog namespace"
+   "detail": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
   },
   {
-   "key": "drop_purge",
-   "group": "catalog",
-   "question": "SQL DROP TABLE ... PURGE through register_catalog",
-   "outcome": "supported",
-   "detail": "gone from the catalog; 0 of 1 data file(s) still in storage"
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
   },
   {
-   "key": "sink_overwrite",
-   "group": "write",
-   "question": "sink_iceberg(mode='overwrite')",
-   "outcome": "supported",
-   "detail": "sink_iceberg(mode='overwrite'), a append snapshot: pyiceberg reads [(7, 70), (8, 80)]; Polars agrees"
-  },
-  {
-   "key": "delete_rows",
-   "group": "write",
-   "question": "pl.delete_iceberg(table, id == 1)",
-   "outcome": "supported",
-   "detail": "delete_iceberg(id == 1), a overwrite snapshot: pyiceberg reads [(2, 20), (3, 30)]; Polars agrees"
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
   },
   {
    "key": "partitioned",
    "group": "create",
-   "question": "write an identity-partitioned table",
-   "outcome": "supported",
-   "detail": "identity(id), 2 partitions: pyiceberg reads [(1, 10), (2, 20)]; Polars agrees"
+   "question": "PARTITIONED BY (p), then INSERT",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: Hive table distribution clauses are not supported"
+  },
+  {
+   "key": "sort_order",
+   "group": "create",
+   "question": "ALTER TABLE ... WRITE ORDERED BY (sort order)",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: WRITE at Line: 1, Column: 60"
   },
   {
    "key": "partition_bucket",
    "group": "create",
-   "question": "write a table partitioned by bucket(4, id)",
-   "outcome": "supported",
-   "detail": "all of bucket"
+   "question": "PARTITIONED BY (bucket(4, id)), then INSERT",
+   "outcome": "no",
+   "detail": "works: none; refused: bucket: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108"
   },
   {
    "key": "partition_truncate",
    "group": "create",
-   "question": "write a table partitioned by truncate(2, x)",
-   "outcome": "supported",
-   "detail": "all of truncate"
+   "question": "PARTITIONED BY (truncate(2, x)), then INSERT",
+   "outcome": "no",
+   "detail": "works: none; refused: truncate: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 113"
   },
   {
    "key": "partition_temporal",
    "group": "create",
-   "question": "write tables partitioned by year / month / day / hour",
-   "outcome": "supported",
-   "detail": "all of year, month, day, hour"
+   "question": "PARTITIONED BY years / months / days / hours, then INSERT",
+   "outcome": "no",
+   "detail": "works: none; refused: year: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108; month: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 110; day: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 106; hour: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108"
   },
   {
    "key": "types_scalar",
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
-   "outcome": "supported",
-   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
+   "outcome": "no",
+   "detail": "works: none; refused: decimal: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; date: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; timestamp: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; timestamptz: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; uuid: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; binary: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
   },
   {
    "key": "types_nested",
    "group": "create",
    "question": "nested types: struct, list, map",
-   "outcome": "supported",
-   "detail": "all of struct, list, map"
+   "outcome": "no",
+   "detail": "works: none; refused: struct: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; list: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; map: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: < at Line: 1, Column: 80"
   },
   {
-   "key": "schema_merge_add_column",
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_insert\", quote_style: None, span: Span(Location(1,36)..Location(1,59)) })])), table_alias: None, columns: [], overwrite\u2026"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_insertsel\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })])), table_alias: None, columns: [], overwr\u2026"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE FROM",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: DELETE on a table of attached catalog 'lake' is not supported"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_39902372275_1_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], version: N\u2026"
+  },
+  {
+   "key": "merge_upsert",
+   "group": "write",
+   "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Location(1,6)) }, optimizer_hints: [], into: true, table: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"pl_39902372275_1_merge\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) })]), alias: Some(TableAlias { explicit: false, name: Ident { value: \"t\", q\u2026"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE TABLE",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: TRUNCATE on a table of attached catalog 'lake' is not supported"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: false, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,24)..Location(1,28)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,29)..Location(1,46)) }), Identifier(Ident { value: \"pl_39902372275_1_overwrite\", quote_style: None, span: Span(Location(1,47)..Location(1,73)) })])), table_alias: None, columns: [], overw\u2026"
+  },
+  {
+   "key": "add_column",
    "group": "schema",
-   "question": "schema_mode='merge' adds a column",
-   "outcome": "supported",
-   "detail": "column `note` added: pyiceberg reads [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 'x')]; Polars agrees"
+   "question": "ALTER TABLE ADD COLUMN",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_addcol\", quote_style: None, span: Span(Location(1,36)..Location(1,59)) })]), if_exists: false, only: false, operations: [AddColumn { column_keyword: true, if_not_exists: false, column_def: ColumnDef { name: Ident { value: \"w\", quote_style: None, span: Span(Location(1,71)..Location(1,72)) }, data_type: BigInt(None), options: [] \u2026"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "ALTER TABLE DROP COLUMN",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_dropcol\", quote_style: None, span: Span(Location(1,36)..Location(1,60)) })]), if_exists: false, only: false, operations: [DropColumn { has_column_keyword: true, column_names: [Ident { value: \"v\", quote_style: None, span: Span(Location(1,73)..Location(1,74)) }], if_exists: false, drop_behavior: None }], location: None, on_cluste\u2026"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "ALTER TABLE RENAME COLUMN",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_renamecol\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })]), if_exists: false, only: false, operations: [RenameColumn { old_column_name: Ident { value: \"v\", quote_style: None, span: Span(Location(1,77)..Location(1,78)) }, new_column_name: Ident { value: \"v2\", quote_style: None, span: Span(Location(1,82)..Loca\u2026"
   },
   {
    "key": "type_promotion",
    "group": "schema",
-   "question": "schema_mode='merge' promotes int -> long",
-   "outcome": "supported",
-   "detail": "c promoted to long: pyiceberg reads [(1, 7), (2, 8)]; Polars agrees"
+   "question": "ALTER COLUMN c SET DATA TYPE BIGINT (int -> long)",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_promote\", quote_style: None, span: Span(Location(1,36)..Location(1,60)) })]), if_exists: false, only: false, operations: [AlterColumn { column_name: Ident { value: \"c\", quote_style: None, span: Span(Location(1,74)..Location(1,75)) }, op: SetDataType { data_type: BigInt(None), using: None, had_set: true } }], location: None, on_\u2026"
+  },
+  {
+   "key": "partition_evolution",
+   "group": "schema",
+   "question": "ALTER TABLE ADD PARTITION FIELD (partition evolution)",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: FIELD at Line: 1, Column: 75"
   },
   {
    "key": "write_after_evolution",
    "group": "schema",
-   "question": "write before and after partition evolution",
-   "outcome": "supported",
-   "detail": "data files on specs [0, 1]; all 8 rows read, by pyiceberg and the engine"
+   "question": "INSERT, pyiceberg adds bucket(4, id), INSERT",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_evowrite\", quote_style: None, span: Span(Location(1,36)..Location(1,61)) })])), table_alias: None, columns: [], overwri\u2026"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "ALTER TABLE SET TBLPROPERTIES",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_39902372275_1_props\", quote_style: None, span: Span(Location(1,36)..Location(1,58)) })]), if_exists: false, only: false, operations: [SetTblProperties { table_properties: [KeyValue { key: Ident { value: \"probed-at\", quote_style: Some('\\''), span: Span(Location(0,0)..Location(0,0)) }, value: Value(ValueWithSpan { value: SingleQuotedString(\"39\u2026"
   },
   {
    "key": "time_travel",
    "group": "read",
-   "question": "time travel, scan_iceberg(snapshot_id=)",
-   "outcome": "supported",
-   "detail": "scan_iceberg(snapshot_id=<first snapshot>) reads 3 rows (the head 4)"
+   "question": "time travel, FOR VERSION AS OF",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: one of UPDATE or SHARE, found: VERSION at Line: 1, Column: 73"
+  },
+  {
+   "key": "metadata_tables",
+   "group": "read",
+   "question": "metadata tables (t.snapshots)",
+   "outcome": "no",
+   "detail": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_39902372275_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_39902372275_1_inspect.snapshots' could not be loaded (NoSuchTableException: The given table does not exist); catalog identifiers are case-sensitive This error occurred with the following context stack: [1] 'python dataset scan'"
   },
   {
    "key": "file_pruning",
    "group": "read",
-   "question": "filter(id == 22) with the other data files deleted (file pruning)",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
    "outcome": "supported",
-   "detail": "filter(id == 22).select(v) returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+   "detail": "SELECT v WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
   },
   {
    "key": "max_from_metadata",
    "group": "read",
-   "question": "id.max() with every data file deleted (min/max from metadata)",
+   "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "select(id.max()) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39899985235_1_max/data/00000-0-dd8fd6f2-eb54-4f2c-8986-0c6326b278d5.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39899985235_1_max/data/0\u2026"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39902372275_1_max/data/00000-0-05e53165-5e73-49b0-b3ee-b8c1e32a0ccb.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_39902372275_1_max/data/00000-0-05e53165-5e73-49b0-b3ee-b8c1e32a0ccb.parquet in 26.254319ms - Server returned non-2xx status code: 404 Not Found: \ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist. RequestId:15c31e13-201e-00f4-7eaa-621d9600000\u2026"
   },
   {
-   "key": "stale_assertion",
-   "group": "commit",
-   "question": "is assert-ref-snapshot-id enforced on a Polars commit",
+   "key": "create_branch",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE BRANCH",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: CREATE at Line: 1, Column: 60"
+  },
+  {
+   "key": "create_tag",
+   "group": "refs",
+   "question": "ALTER TABLE ... CREATE TAG",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: CREATE at Line: 1, Column: 57"
+  },
+  {
+   "key": "rewrite_data_files",
+   "group": "maintenance",
+   "question": "CALL system.rewrite_data_files (compaction)",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Call(Function { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,6)..Location(1,10)) }), Identifier(Ident { value: \"system\", quote_style: None, span: Span(Location(1,11)..Location(1,17)) }), Identifier(Ident { value: \"rewrite_data_files\", quote_style: None, span: Span(Location(1,18)..Location(1,36)) })]), uses_odbc_syntax: false, parameters: None, args: List(FunctionArgumentList { duplicate_treatment: None, args: [Named { name: Ident { value: \"table\", quote_style: None, span: Span(Location(1,37)..Location(1,42)) }, arg: Expr(Value(ValueWithSpan { value: SingleQuotedString(\"_ben\u2026"
+  },
+  {
+   "key": "rewrite_manifests",
+   "group": "maintenance",
+   "question": "CALL system.rewrite_manifests",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Call(Function { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,6)..Location(1,10)) }), Identifier(Ident { value: \"system\", quote_style: None, span: Span(Location(1,11)..Location(1,17)) }), Identifier(Ident { value: \"rewrite_manifests\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) })]), uses_odbc_syntax: false, parameters: None, args: List(FunctionArgumentList { duplicate_treatment: None, args: [Named { name: Ident { value: \"table\", quote_style: None, span: Span(Location(1,36)..Location(1,41)) }, arg: Expr(Value(ValueWithSpan { value: SingleQuotedString(\"_benc\u2026"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: CreateSchema { schema_name: Simple(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,15)..Location(1,19)) }), Identifier(Ident { value: \"pl_39902372275_1_ns\", quote_style: None, span: Span(Location(1,20)..Location(1,39)) })])), if_not_exists: false, with: None, options: None, default_collate_spec: None, clone: None }"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Drop { object_type: Schema, if_exists: false, names: [ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"pl_39902372275_1_nsdrop\", quote_style: None, span: Span(Location(1,18)..Location(1,41)) })])], cascade: false, restrict: false, purge: false, temporary: false, table: None }"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: CreateSchema { schema_name: Simple(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,29)..Location(1,33)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,34)..Location(1,51)) })])), if_not_exists: true, with: None, options: None, default_collate_spec: None, clone: None }"
+  },
+  {
+   "key": "drop_purge",
+   "group": "catalog",
+   "question": "DROP TABLE ... PURGE",
    "outcome": "supported",
-   "detail": "enforced, declined with: CommitFailedException: CommitFailedException: CommitFailedException: One or more requirements failed. The client may retry."
+   "detail": "gone from the catalog; 0 of 1 data file(s) still in storage"
   },
   {
    "key": "race_append",
    "group": "concurrency",
-   "question": "sink append; B appends between Polars' read and commit",
-   "outcome": "supported",
-   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
+   "question": "INSERT INTO; B appends between Polars' read and commit",
+   "outcome": "broken",
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false,\u2026"
   },
   {
    "key": "race_delete",
    "group": "concurrency",
-   "question": "delete_iceberg(id == 1); B appends",
-   "outcome": "supported",
-   "detail": "retried: final [(2, 20), (3, 30), (4, 40)]; commits [409, 200]"
+   "question": "DELETE id 1; B appends",
+   "outcome": "broken",
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: SQLInterfaceError: SQLInterfaceError: DELETE on a table of attached catalog 'race' is not supported"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATE v = v + 1 on id 2; B appends",
+   "outcome": "broken",
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { \u2026"
   }
  ],
- "run": "39899985235",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39899985235",
+ "run": "39902372275",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39902372275",
  "date": "2026-10-23"
 }
