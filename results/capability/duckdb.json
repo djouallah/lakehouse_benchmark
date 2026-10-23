@@ -7,7 +7,7 @@
    "group": "session",
    "question": "DuckDB attaches the REST catalog",
    "outcome": "supported",
-   "detail": "DuckDB v2.0.0 (azure 906e92458c, httpfs 77392a7207, iceberg 4c0c0874c4); 32 namespace(s), _bench_capability listed"
+   "detail": "DuckDB v2.0.0 (azure 906e92458c, httpfs 77392a7207, iceberg 4c0c0874c4); 34 namespace(s), _bench_capability listed"
   },
   {
    "key": "namespace_existing",
@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_39612418050_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_39906543136_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -337,9 +337,16 @@
    "question": "DROP SCHEMA (namespace)",
    "outcome": "supported",
    "detail": "the empty namespace is gone"
+  },
+  {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   }
  ],
- "run": "39612418050",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39612418050",
- "date": "2026-10-21"
+ "run": "39906543136",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
+ "date": "2026-10-23"
 }

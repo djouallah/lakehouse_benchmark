@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.2+maine19e56e21c",
+ "version": "0.7.2+maind219a98598",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.2+maine19e56e21c; _bench_capability listed"
+   "detail": "pysail 0.7.2+maind219a98598; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -337,9 +337,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(9014701538585990344) but found Some(858976224895613871)"
+  },
+  {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   }
  ],
- "run": "39754911920",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39754911920",
- "date": "2026-10-22"
+ "run": "39906543136",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
+ "date": "2026-10-23"
 }

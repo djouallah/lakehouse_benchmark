@@ -7,7 +7,7 @@
    "group": "session",
    "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
    "outcome": "supported",
-   "detail": "chdb 4.4.0; 446 catalog table(s) listed"
+   "detail": "chdb 4.4.0; 483 catalog table(s) listed"
   },
   {
    "key": "create_table",
@@ -316,9 +316,16 @@
    "question": "drop a namespace (no namespace statement)",
    "outcome": "no",
    "detail": "ClickHouse has no statement to drop a catalog namespace"
+  },
+  {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   }
  ],
- "run": "39594010650",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39594010650",
- "date": "2026-10-21"
+ "run": "39906543136",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
+ "date": "2026-10-23"
 }
