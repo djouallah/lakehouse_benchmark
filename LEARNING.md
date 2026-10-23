@@ -449,10 +449,15 @@ Largest scale each engine completes, cold, every statement answered:
     [PR #30091](https://github.com/pola-rs/polars/pull/30091)).
   - Fixed on main 2026-10-20, not yet released: delete rows by predicate ([#29843](https://github.com/pola-rs/polars/issues/29843)),
     `pl.delete_iceberg` ([PR #30032](https://github.com/pola-rs/polars/pull/30032)). PR #30032 also
-    closed overwrite by filter ([#29842](https://github.com/pola-rs/polars/issues/29842)) by mistake; its fix is
-    [PR #29909](https://github.com/pola-rs/polars/pull/29909), still open (reopen asked 2026-10-22).
-  - Open: SQL writes to Iceberg, [#29892](https://github.com/pola-rs/polars/issues/29892)–[#29896](https://github.com/pola-rs/polars/issues/29896)
-    (CREATE TABLE, INSERT, DELETE, UPDATE, DROP TABLE). Reading a catalog in SQL is on main
+    closed overwrite by filter ([#29842](https://github.com/pola-rs/polars/issues/29842)) by mistake; its fix,
+    [PR #29909](https://github.com/pola-rs/polars/pull/29909), merged 2026-10-22 (no grid row).
+  - Fixed on main 2026-10-22: SQL `DROP TABLE [IF EXISTS] ... [PURGE]` on a `register_catalog`
+    catalog ([#29896](https://github.com/pola-rs/polars/issues/29896),
+    [PR #30247](https://github.com/pola-rs/polars/pull/30247)). Probed on main 34e7970e37: the
+    table leaves the catalog and its data files are deleted, so Drop table with purge is a yes
+    ([39899985235](https://github.com/djouallah/lakehouse_benchmark/actions/runs/39899985235)).
+  - Open: SQL writes to Iceberg, [#29892](https://github.com/pola-rs/polars/issues/29892)–[#29895](https://github.com/pola-rs/polars/issues/29895)
+    (CREATE TABLE, INSERT, DELETE, UPDATE). Reading a catalog in SQL is on main
     (`SQLContext.register_catalog`, [PR #30113](https://github.com/pola-rs/polars/pull/30113)). On
     main, `CREATE TABLE` on a catalog name reports success and writes nothing (comment on #29892).
   - **Closed by Polars, too many at once.** On 2026-10-22 we filed 19 AI-generated issues, one per
