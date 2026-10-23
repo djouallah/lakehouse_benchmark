@@ -38,11 +38,14 @@ runs:
             --jq '.artifacts[] | select(.expired | not) | .id' | grep -q .
         }
         if [ -z "$RUN_ID" ]; then
-          for id in $(gh api "repos/duckdb/duckdb/actions/runs?branch=main&status=success&per_page=100" \
+          # Main.yml's own runs: the repo-wide list is flooded by bot workflows ("Forward PR events
+          # to pr-tracker", 95 of the last 100 successful runs on 2026-10-23), which pushed every
+          # nightly out of the window.
+          for id in $(gh api "repos/duckdb/duckdb/actions/workflows/Main.yml/runs?branch=main&status=success&per_page=100" \
               --jq '.workflow_runs[] | select(.name | startswith("Main (alpha")) | .id'); do
             if usable "$id"; then RUN_ID=$id; break; fi
           done
-          [ -n "$RUN_ID" ] || { echo "no usable DuckDB main nightly among the last 100 successful runs"; exit 1; }
+          [ -n "$RUN_ID" ] || { echo "no usable DuckDB main nightly among the last 100 successful Main.yml runs"; exit 1; }
         fi
         dir="$RUNNER_TEMP/duckdb-cli"
         mkdir -p "$dir"
