@@ -28,6 +28,20 @@
    glues WITH onto the `-- depends_on` comment line above, commenting the keyword out
    (the compiled SQL then starts at `daily_summary AS (` and the parser errors there). #}
 {%- set scoped = is_incremental() %}
+{#- Dates never summarised yet, NEWEST FIRST and at most summary_dates_per_run of them a run,
+    the facts' process_limit for this model. The whole history in one go -- the first build, or
+    after a drop -- killed the runner (exit 143, run 39952876729, 296M fct_scada rows); like the
+    facts, the backlog now converges over runs. Run once as DATE literals (date_literals.sql). #}
+{%- set new_q %}
+SELECT d.date FROM (
+  SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s WHERE s.INTERVENTION = 0
+) d
+{%- if scoped %}
+WHERE d.date NOT IN (SELECT DISTINCT date FROM {{ this }})
+{%- endif %}
+ORDER BY d.date DESC LIMIT {{ env_var('summary_dates_per_run', '120') }}
+{% endset %}
+{%- set new_dates = date_literals(new_q) %}
 
 WITH
 -- The unit universe the DAILY branch can reproduce. Gates the intraday branch so it never
@@ -41,17 +55,15 @@ WITH
 dispatch_duids AS (
   SELECT DISTINCT DUID FROM {{ ref('fct_scada') }}
 ),
-{% if scoped %}
 -- Dates whose stored content could differ from a clean recomputation. Everything older
 -- is settled: its daily file has landed and been folded in, so recomputing it would
 -- reproduce it exactly. Shrinking this window silently reduces what can be repaired.
+-- On a first build only the newest never-seen dates: the rest need the table to exist.
 rebuild_dates AS (
-  -- Never seen before: archive backfill, or a first build catching up. Distinct dates first,
-  -- then the anti-join: a few thousand dates, not every fct_scada row.
-  SELECT d.date FROM (
-    SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s WHERE s.INTERVENTION = 0
-  ) d
-  WHERE d.date NOT IN (SELECT DISTINCT date FROM {{ this }})
+  -- Never seen before: archive backfill, or a first build catching up (new_dates, above).
+  SELECT DISTINCT s.DATE AS date FROM {{ ref('fct_scada') }} s
+  WHERE s.DATE IN ({{ new_dates }})
+  {% if scoped %}
   UNION
   -- Recently settled: a date first written from the intraday feed is incomplete until
   -- its daily file lands, which is several days later if the pipeline missed a run — so
@@ -72,8 +84,8 @@ rebuild_dates AS (
   -- assert_fct_summary_no_partial_dates. A date the SOURCE itself still lacks stays in this
   -- set and recomputes each run until its file lands -- a few dates' scan, nothing inserts.
   SELECT date FROM {{ this }} GROUP BY date HAVING COUNT(DISTINCT time) < 280
+  {% endif %}
 ),
-{% endif %}
 
 -- The daily branch's inputs, cut to the rebuild dates before any join (see the header). The
 -- range on DATE lets scan_iceberg prune files; the IN keeps exactly the rebuild dates.
@@ -82,20 +94,16 @@ scada AS (
   FROM {{ ref('fct_scada') }} s
   WHERE s.INTERVENTION = 0
     AND s.INITIALMW <> 0
-    {% if scoped %}
     AND s.DATE >= (SELECT MIN(date) FROM rebuild_dates)
     AND s.DATE IN (SELECT date FROM rebuild_dates)
-    {% endif %}
 ),
 
 price AS (
   SELECT p.SETTLEMENTDATE, p.REGIONID, p.RRP
   FROM {{ ref('fct_price') }} p
   WHERE p.INTERVENTION = 0
-    {% if scoped %}
     AND p.DATE >= (SELECT MIN(date) FROM rebuild_dates)
     AND p.DATE IN (SELECT date FROM rebuild_dates)
-    {% endif %}
 ),
 
 daily_summary AS (
