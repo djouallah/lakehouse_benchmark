@@ -450,7 +450,8 @@ _POLARS_JOINS = {
 def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
     """The streaming engine's physical plan: a list of nodes with their input ids, and rows_sent
     per node from the final metrics snapshot. A shared subplan (a CTE used twice, behind a
-    Multiplexer) is drawn under each of its consumers."""
+    Multiplexer) is drawn once, under its first consumer; the others get a leaf for it, as
+    DuckDB's CTE_SCAN."""
     nodes = {n["id"]: n for n in raw.get("physical") or []}
     if not nodes:
         return None, {}
@@ -460,14 +461,25 @@ def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
         m = sent.get(i)
         return m.get("rows_sent") if m else None
 
+    def short(text) -> str:  # `col("ws_item_sk")` -> `ws_item_sk`
+        if isinstance(text, list):
+            text = " AND ".join(map(str, text))
+        return _short(re.sub(r'col\("([^"]+)"\)', r"\1", str(text or "")))
+
     def secs(i):
         m = sent.get(i)
         return (m.get("total_time_ns") or 0) / 1e9 if m else None
+
+    shared = set()
 
     def walk(i):
         n = nodes[i]
         props = n.get("properties") or {}
         kind = props.get("type", "Other")
+        if kind == "Multiplexer":
+            if i in shared:
+                return node("scan", "CTE_SCAN", "reused (CTE)", rows=rows(i))
+            shared.add(i)
         kids = _flatten([walk(k) for k in n.get("input_ids", [])])
         if kind == "MultiScan":
             path = str(props.get("first_source") or "")
@@ -475,12 +487,12 @@ def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
             table = m.group(1) if m else _table_from_columns(props.get("projected_file_columns") or [], suite)
             return node(
                 "scan", kind, table or "scan", table=table, rows=rows(i), seconds=secs(i),
-                detail=_short(props.get("predicate") or ""),
+                detail=short(props.get("predicate") or ""),
             )  # fmt: skip
         if kind == "Filter" and len(kids) == 1 and kids[0]["kind"] == "scan":
             scan = kids[0]
             scan["read"], scan["rows"] = scan["rows"], rows(i)
-            scan["detail"] = _short(props.get("predicate") or "")
+            scan["detail"] = short(props.get("predicate") or "")
             return scan
         if kind in _POLARS_JOINS:
             left, right = props.get("left_on") or [], props.get("right_on") or []
@@ -490,14 +502,14 @@ def polars(raw: dict, suite: str) -> tuple[dict | None, dict]:
             how = str(props.get("how") or "").split("(")[0].strip()
             return node(
                 "join", kind, _POLARS_JOINS[kind], rows=rows(i), seconds=secs(i),
-                detail=_short(f"{how.upper()} {detail}".strip()), cross=kind == "CrossJoin",
+                detail=short(f"{how.upper()} {detail}".strip()), cross=kind == "CrossJoin",
                 children=kids,
             )  # fmt: skip
         if kind in ("GroupBy", "SortedGroupBy", "Reduce"):
             keys = props.get("key_per_input") or props.get("key") or ""
             return node(
                 "agg", kind, "Group by", rows=rows(i), seconds=secs(i),
-                detail=_short(keys), children=kids,
+                detail=short(keys), children=kids,
             )  # fmt: skip
         if kind in ("Sort", "TopK"):
             return node(
