@@ -6,7 +6,10 @@
          and a FIXED schema: the record's own columns, every one VARCHAR and named from the
          spec, with `missing_columns => 'insert'` padding a shorter row and
          `truncate_ragged_lines` cutting a wider one (another record type, which the WHERE drops
-         anyway) -- the DuckDB legs' all_varchar + null_padding + explicit `columns`. No
+         anyway) -- the DuckDB legs' all_varchar + null_padding + explicit `columns`. Since main
+         34e7970e37 a wider row also needs `extra_columns => 'ignore'`: without it fct_scada's
+         read stopped on the 130-field price rows, "CSV file contained column names not
+         specified in schema (n_extra = 77)" (every run from 39970923926 to 40047700842). No
          inference, one pass per file: polars_smoke run 38904749014 read 10 files in 5 s this
          way, against 42 s for the widest-row inference (`infer_schema_length => NULL`,
          pola-rs/polars#29917) it replaces. `missing_columns` is in SQL only since
@@ -77,7 +80,7 @@
   SELECT * FROM read_csv({{ source }},
     has_header => false, skip_rows => 1,
     schema => { {%- for name in aemo_columns(record) %}'{{ name }}': 'VARCHAR'{{ ", " if not loop.last }}{% endfor %} },
-    missing_columns => 'insert', truncate_ragged_lines => true,
+    missing_columns => 'insert', truncate_ragged_lines => true, extra_columns => 'ignore',
     include_file_paths => 'filename')
   WHERE {{ polars_record_filter(record) }}
 {% endmacro %}
