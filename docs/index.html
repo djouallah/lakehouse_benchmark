@@ -1176,10 +1176,10 @@ function renderRealWorkload() {
     const mEngines = Object.keys(mt.engines).sort((a, b) => rank(a) - rank(b));
     const mChips = mEngines.map(e => {
       const t = mt.engines[e].totals;
-      const avg = t.bytes_after && t.files_after ? ` · avg ${Math.round(t.bytes_after / t.files_after / 1048576)} MB` : "";
+      const avg = t.compacted_bytes && t.compacted_into ? ` · avg ${Math.round(t.compacted_bytes / t.compacted_into / 1048576)} MB` : "";
       return `<div class="mcell" style="--c: var(--${e}, var(--ink-3))" data-mtip="${e}">
         <div><b>${esc(wlName(e))}</b>${t.errors ? ` <span class="err">${t.errors} error${t.errors > 1 ? "s" : ""}</span>` : ""}</div>
-        <div>${n(t.files_before)} → ${n(t.files_after)} files${avg}</div>
+        <div>${n(t.compacted)} files compacted to ${n(t.compacted_into)}${avg}</div>
         <div>${n(t.expired)} snapshots expired · ${n(t.orphans_deleted)} orphans deleted, ${gbOf(t.orphan_bytes)} GB</div></div>`;
     }).join("");
     const s = mt.settings;
@@ -1194,8 +1194,7 @@ function renderRealWorkload() {
     const e = el.dataset.mtip, rows = Object.entries(mt.engines[e].tables).map(([name, t]) => {
       const c = t.compact, o = t.orphans, err = t.skipped || Object.entries(t.error || {}).map(([k, v]) => `${k}: ${v}`).join("; ");
       const did = [
-        t.before && t.after ? `${t.before.data_files.toLocaleString()} → ${t.after.data_files.toLocaleString()} files` : "",
-        c ? `${c.rewritten.toLocaleString()} compacted into ${c.added.toLocaleString()}` : "",
+        c?.rewritten ? `${c.rewritten.toLocaleString()} files compacted to ${c.added.toLocaleString()}` : "",
         t.expired != null ? `${t.expired} snapshots expired` : "",
         o ? `${o.deleted.toLocaleString()} orphans deleted${o.failed ? `, ${o.failed} failed` : ""}` : "",
       ].filter(Boolean).join(" · ");
