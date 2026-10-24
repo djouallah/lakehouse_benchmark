@@ -1,9 +1,0 @@
-# table_maintenance.yml: DuckDB compacts (iceberg_rewrite_data_files, the 2.0 release line, as
-# workload_duckdb.txt), pyiceberg expires snapshots and removes orphan files.
-duckdb>=2
-azure-identity>=1.19
-pyarrow>=17
-# remove_orphan_files is apache/iceberg-python PR #3361, not released yet: this is that PR's
-# commit on djouallah/iceberg-python, the pin analytics-as-code's table maintenance runs on.
-# Back to `pyiceberg[pyarrow,adlfs]>=<the release>` once it ships.
-pyiceberg[pyarrow,adlfs] @ git+https://github.com/djouallah/iceberg-python@4adf237c188a4ae8a77e4f0aa319fbbeb7d8bc79
