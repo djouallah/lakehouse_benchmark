@@ -23,7 +23,8 @@ concurrency:
 
 jobs:
   check:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # Any conclusion: a bench run with one failed leg still pushes the other legs' results, and
+    # a failure must not hold the page back. The tests below guard what goes live.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
