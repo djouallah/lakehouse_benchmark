@@ -233,10 +233,14 @@ jobs:
 
       # Sail spills to the OS temp dir, and /tmp has a quota: fct_scada's merge failed "Disk quota
       # exceeded (os error 122)" (run 39691469943). Sail's leg only: an empty TMPDIR elsewhere would
-      # not mean /tmp to every engine.
+      # not mean /tmp to every engine. The spill cap is Sail's runtime.temporary_files.max_size,
+      # 64 GiB by default: fct_scada's merge passed it (run 40066549002) with 106 GB free on the
+      # disk /mnt is on. 90 GiB leaves room for the rest.
       - name: Sail's spill on /mnt
         if: matrix.engine == 'sail'
-        run: echo "TMPDIR=/mnt/sail_spill" >> "$GITHUB_ENV"
+        run: |
+          echo "TMPDIR=/mnt/sail_spill" >> "$GITHUB_ENV"
+          echo "SAIL_RUNTIME__TEMPORARY_FILES__MAX_SIZE=$((90 * 1024 ** 3))" >> "$GITHUB_ENV"
 
       # The official image bench/trino.py pins, pulled before the build.
       - name: Pull the Trino image
