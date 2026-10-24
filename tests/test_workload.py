@@ -293,7 +293,8 @@ def test_the_page_reads_what_maintenance_writes():
     assert 'json: "data/maintenance.json"' in page
     maintain = _maintain()
     assert maintain.PAGE_DATA == ROOT / "docs" / "data" / "maintenance.json"
-    assert maintain.TARGET_MB == 128
+    job = (ROOT / ".github" / "scripts" / "maintain" / "main.go").read_text("utf-8")
+    assert re.search(r"targetMB\s+= 128\b", job)
     workflow = (ROOT / ".github" / "workflows" / "table_maintenance.yml").read_text("utf-8")
     assert "git add results/maintenance docs/data/maintenance.json" in workflow
 
