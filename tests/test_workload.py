@@ -284,7 +284,8 @@ def test_table_maintenance_is_one_scheduled_job_in_the_workload_queue():
     group = workload["concurrency"]["group"]
     assert wf["concurrency"] == {"group": group, "cancel-in-progress": False}
     assert wf[True]["schedule"], "no schedule"
-    assert list(wf["jobs"]) == ["compact"]
+    assert list(wf["jobs"]) == ["dbt_test", "compact"]
+    assert wf["jobs"]["compact"]["needs"] == "dbt_test"
     assert wf["name"] in (workflows / "pages.yml").read_text("utf-8")
 
 
@@ -355,3 +356,34 @@ def test_maintenance_page_data_sums_each_engine_and_keeps_errors():
     trino = out["engines"][BENCH_ENGINE["trino"]]["totals"]
     assert trino["skipped"] == 1 and trino["files_before"] is None
     assert "IOException: boom" in maintain.summary(record)
+
+
+def test_the_builds_do_not_test_and_maintenance_publishes_the_tests():
+    """The hourly builds only build; the dbt tests run once a day in table maintenance, DuckDB
+    against every leg's tables, and land in maintenance.json beside the compaction."""
+    runner = (ROOT / ".github" / "scripts" / "workload_run_engine.py").read_text("utf-8")
+    assert 'step("test")' not in runner
+    assert '"model_row_counts"' in runner  # rows, files and SUM(mw) stay hourly
+    assert '"files_behind"' in runner
+    schema = (PROJECT / "macros" / "generate_schema_name.sql").read_text("utf-8")
+    assert "env_var('WORKLOAD_LEG', target.name)" in schema
+    maintain = _maintain()
+    tests = {
+        "run_url": "u",
+        "finished": "f",
+        "legs": {
+            "trino_iceberg": {
+                "tests": 2,
+                "tests_ok": 1,
+                "seconds": 9.0,
+                "nodes": [
+                    {"node": "test.aemo_electricity.assert_fct_scada_grain", "status": "fail"},
+                    {"node": "test.aemo_electricity.not_null_x", "status": "pass"},
+                ],
+            }
+        },
+    }
+    got = maintain.test_results(tests)["legs"]["trino_iceberg"]
+    assert (got["tests"], got["tests_ok"]) == (2, 1)
+    assert got["not_passed"] == {"assert_fct_scada_grain": "fail"}
+    assert maintain.test_results(None) == {}

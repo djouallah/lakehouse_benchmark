@@ -84,6 +84,9 @@ data_tests:
       # NOT an asymmetry to "fix": the generic tests in models/aemo/_*.yml have no engine
       # segment in their fqn, so they must stay ungated here and run on every engine. The
       # singular tests under tests/aemo/<engine>/ do have one, and are gated on it.
+      # The builds run no tests: once a day table_maintenance.yml runs the duckdb target's tests
+      # against every leg's tables (.github/scripts/workload_test.py, WORKLOAD_LEG). The other
+      # trees' tests run only if a target of theirs is tested by hand.
       duckdb: {+enabled: "{{ target.name == 'duckdb' }}"}
       polars: {+enabled: "{{ target.name == 'polars' }}"}
       spark:  {+enabled: "{{ target.name in ['gluten', 'sail'] }}"}

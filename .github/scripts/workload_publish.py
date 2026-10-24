@@ -35,18 +35,16 @@ def load(parts: Path) -> dict[str, dict]:
 
 
 def counts(leg: dict) -> dict[str, int]:
-    """Models and tests, built and passed. A retry re-runs only what failed, so its results
-    override the build's, node by node."""
+    """Models, built and passed. A retry re-runs only what failed, so its results override the
+    build's, node by node. The tests are not here: they run once a day in table maintenance
+    (workload_test.py), and the page reads them from docs/data/maintenance.json."""
     merged = {n["node"]: n for n in leg.get("nodes") or []}
     merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
     nodes = list(merged.values())
     models = [n for n in nodes if n["node"].startswith("model.")]
-    tests = [n for n in nodes if n["node"].startswith("test.")]
     return {
         "models": len(models),
         "models_ok": sum(n["status"] == "success" for n in models),
-        "tests": len(tests),
-        "tests_ok": sum(n["status"] in ("pass", "warn") for n in tests),
     }
 
 
@@ -91,8 +89,11 @@ def model_seconds(leg: dict) -> dict[str, float]:
 
 
 def files_behind(leg: dict) -> int | None:
-    """Daily files the leg has not folded yet: its own assert_all_daily_files_processed_* tests
-    count them ("Got N results", a warning) and pass at zero. None when they did not run."""
+    """Daily files the leg has not folded yet: the part's own count (run-operation files_behind),
+    or, from a part written before the tests left the build, its assert_all_daily_files_processed_*
+    tests' count ("Got N results", a warning; a pass is zero). None when neither is there."""
+    if "files_behind" in leg:
+        return leg["files_behind"]
     merged = {n["node"]: n for n in leg.get("nodes") or []}
     merged |= {n["node"]: n for n in leg.get("retry_nodes") or []}
     found = None
@@ -170,8 +171,8 @@ def summary(legs: dict[str, dict]) -> str:
         "## dbt workload (Iceberg)",
         "",
         "| leg | status | files/run | build s | peak RSS MB | spill MB | files behind "
-        "| models ok | tests ok |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| models ok |",
+        "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
         c = counts(leg)
@@ -181,7 +182,7 @@ def summary(legs: dict[str, dict]) -> str:
             f"| {leg.get('build_seconds', '')} "
             f"| {leg.get('peak_rss_mb', '')} | {leg.get('peak_spill_mb', '')} "
             f"| {'' if behind is None else behind} "
-            f"| {c['models_ok']}/{c['models']} | {c['tests_ok']}/{c['tests']} |"
+            f"| {c['models_ok']}/{c['models']} |"
         )
     lines.append("")
     for engine, leg in legs.items():

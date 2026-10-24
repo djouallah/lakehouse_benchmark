@@ -1,9 +1,12 @@
-"""The table maintenance record, published: `workload_maintain.py publish <record> [--write]`.
+"""The table maintenance record, published:
+`workload_maintain.py publish <record> [--tests <tests record>] [--write]`.
 
 .github/scripts/maintain (apache/iceberg-go) does the maintenance and writes the record: per table,
-before/after counts and each step's result or its exact error. This prints the step summary, and
-with --write writes results/maintenance/<run_id>.json plus docs/data/maintenance.json, the Real
-workload tab's copy. table_maintenance.yml's commit loop re-runs it after every reset onto main.
+before/after counts and each step's result or its exact error. workload_test.py runs the dbt tests
+on every leg and writes the tests record; it goes into the same files under "tests". This prints
+the step summary, and with --write writes results/maintenance/<run_id>.json plus
+docs/data/maintenance.json, the Real workload tab's copy. table_maintenance.yml's commit loop
+re-runs it after every reset onto main.
 """
 
 from __future__ import annotations
@@ -48,6 +51,30 @@ def totals(entries: list[dict]) -> dict:
     }
 
 
+def test_results(tests: dict | None) -> dict:
+    """Each leg's daily tests as the page reads them: counts, and the tests that did not pass."""
+    if not tests:
+        return {}
+    return {
+        "run_url": tests.get("run_url", ""),
+        "finished": tests.get("finished", ""),
+        "legs": {
+            key: {
+                "tests": leg["tests"],
+                "tests_ok": leg["tests_ok"],
+                "seconds": leg.get("seconds"),
+                "not_passed": {
+                    n["node"].rsplit(".", 1)[-1]: n["status"]
+                    for n in leg.get("nodes", [])
+                    if n["status"] not in ("pass", "warn")
+                },
+                **({"error": leg["error"]} if leg.get("error") else {}),
+            }
+            for key, leg in tests.get("legs", {}).items()
+        },
+    }
+
+
 def page_data(record: dict) -> dict:
     """The latest run as the Real workload tab reads it, keyed by bench engine id."""
     engines = {}
@@ -69,6 +96,7 @@ def page_data(record: dict) -> dict:
         "settings": record["settings"],
         "versions": record["versions"],
         "engines": engines,
+        "tests": test_results(record.get("tests")),
     }
 
 
@@ -92,11 +120,19 @@ def summary(record: dict) -> str:
             f"| {o.get('deleted', '')} ({o.get('bytes', 0) / 1e9:.2f} GB) | {t.get('seconds', '')} "
             f"| {err.replace('|', '/')} |"
         )
+    tests = test_results(record.get("tests")).get("legs", {})
+    if tests:
+        lines += ["", "| leg | tests passed | s | not passed |", "|---|---:|---:|---|"]
+        for key, t in tests.items():
+            bad = ", ".join(f"{k} ({v})" for k, v in t["not_passed"].items()) or t.get("error", "")
+            lines.append(f"| {key} | {t['tests_ok']}/{t['tests']} | {t['seconds']} | {bad[:300]} |")
     return "\n".join(lines) + "\n"
 
 
-def publish(record_path: Path, write: bool) -> int:
+def publish(record_path: Path, write: bool, tests_path: Path | None = None) -> int:
     record = json.loads(record_path.read_text(encoding="utf-8"))
+    if tests_path is not None and tests_path.exists():
+        record["tests"] = json.loads(tests_path.read_text(encoding="utf-8"))
     text = summary(record)
     print(text)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -115,4 +151,5 @@ def publish(record_path: Path, write: bool) -> int:
 if __name__ == "__main__":
     if len(sys.argv) < 3 or sys.argv[1] != "publish":
         sys.exit(__doc__)
-    sys.exit(publish(Path(sys.argv[2]), "--write" in sys.argv))
+    tests = Path(sys.argv[sys.argv.index("--tests") + 1]) if "--tests" in sys.argv else None
+    sys.exit(publish(Path(sys.argv[2]), "--write" in sys.argv, tests))

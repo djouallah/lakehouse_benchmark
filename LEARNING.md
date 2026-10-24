@@ -860,6 +860,11 @@ engine on the page as "died", with its last good run.
   only `EXCEPT` the stored rows, fct_summary only rows unequal to the stored ones on (date, time,
   DUID, mw, price); same table, a fraction of the writes. The spark tree also resolved each fact's
   file list twice (one `NOT IN` over the whole fact per pre-hook); it is one hook now.
+- **The tests left the hourly build, 2026-10-24.** As in analytics-as-code, they run once a
+  day in table maintenance: DuckDB runs the duckdb tree's tests against every leg's tables
+  (`workload_test.py`, `WORKLOAD_LEG` in generate_schema_name). Rows, files processed and
+  SUM(mw) stay hourly; files behind, which the catch-up gate reads, is its own query now
+  (`macros/files_behind.sql`), no longer the files-processed tests' warning count.
 - **The leg's peak memory is often a test, not a merge.** Run 40050741886, caught-up legs:
   fct_scada's merge took 6.6 s on DuckDB, 30 s on Gluten, 67 s on Trino, while Trino's
   `assert_fct_scada_grain` (GROUP BY on four columns over 386M rows) took 1,053 s of its 1,431 s

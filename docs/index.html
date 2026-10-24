@@ -1174,17 +1174,19 @@ function renderRealWorkload() {
     const gbOf = b => (b / 1e9).toFixed(1);
     const mEngines = Object.keys(mt.engines).sort((a, b) => rank(a) - rank(b));
     const mChips = mEngines.map(e => {
-      const t = mt.engines[e].totals;
+      const t = mt.engines[e].totals, dq = mt.tests?.legs?.[e];
+      const bad = dq ? Object.keys(dq.not_passed ?? {}) : [];
       const avg = t.compacted_bytes && t.compacted_into ? ` · avg ${Math.round(t.compacted_bytes / t.compacted_into / 1048576)} MB` : "";
       return `<div class="mcell" style="--c: var(--${e}, var(--ink-3))" data-mtip="${e}">
         <div><b>${esc(wlName(e))}</b></div>
         <div>${n(t.compacted)} files compacted to ${n(t.compacted_into)}${avg}</div>
-        <div>${n(t.expired)} snapshots expired · ${n(t.orphans_deleted)} orphans deleted, ${gbOf(t.orphan_bytes)} GB</div></div>`;
+        <div>${n(t.expired)} snapshots expired · ${n(t.orphans_deleted)} orphans deleted, ${gbOf(t.orphan_bytes)} GB</div>
+        ${dq ? `<div>${dq.tests_ok}/${dq.tests} dbt tests passed${bad.length ? `: not ${esc(bad.join(", "))}` : ""}</div>` : ""}</div>`;
     }).join("");
     const s = mt.settings;
     maint = `<div class="mt-head">Table maintenance, <a href="${esc(mt.run_url || "#")}">${esc((mt.finished || mt.started || "").slice(0, 10))}</a>:
       compact to ${s.target_mb} MB files, expire snapshots older than ${s.expire_days} day${s.expire_days === 1 ? "" : "s"},
-      delete orphan files older than ${s.orphan_days} days</div><div class="mt-grid">${mChips}</div>`;
+      delete orphan files older than ${s.orphan_days} days${mt.tests?.legs ? ", and run the dbt tests on every engine's tables (DuckDB)" : ""}</div><div class="mt-grid">${mChips}</div>`;
   }
 
   sec.innerHTML = `<div class="eng">${chips}</div>${dag}${maint}`;
@@ -1276,7 +1278,7 @@ function openModel(w, runs, n, at) {
     ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>
       <p class="d">Landed: ${LANDED.gb} GB of AEMO CSV files, measured ${LANDED.date} (<a href="${LANDED.run}">run</a>), not live.</p>
       <p class="d">One dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
-        ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${Math.max(0, ...runs.map(e => w.legs[e].tests ?? 0)) || ""} tests,
+        ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${Math.max(0, ...Object.values(data.maintenance?.tests?.legs ?? {}).map(t => t.tests ?? 0)) || ""} tests once a day,
         Iceberg tables out. Every hour, never reset: each engine folds the next batch into its own tables.
         <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`
       : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Rows</th>${hasMw ? `<th class="n">SUM(mw)</th>` : ""}</tr></thead>

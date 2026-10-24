@@ -8,12 +8,13 @@ sail.
        SAS can create and delete), with the OneLake REST catalog as spark.sql.defaultCatalog --
        dbt-spark's `method: session` then getOrCreate()s it. sail: the same, on Sail's
        in-process Spark Connect server
-    3. `dbt run`, then `dbt test`, in-process through dbtRunner, timed; one `dbt retry` after
-       either if it failed after writing run_results.json, which heals a transient catalog error
-       on a single node
+    3. `dbt run`, in-process through dbtRunner, timed; one `dbt retry` if it failed after writing
+       run_results.json, which heals a transient catalog error on a single node. No `dbt test`:
+       the tests run once a day in table maintenance (workload_test.py), not on every build
     4. refuse a build that ran NO model: a target matching no folder disables every tree and
        dbt exits 0 having built nothing
-    5. `dbt run-operation model_row_counts`, rows per model for the page's DAG (best-effort)
+    5. `dbt run-operation model_row_counts`, rows per model for the page's DAG, and
+       `files_behind`, the daily files not folded yet (both best-effort)
     6. parts/workload_<engine>.json: status, timings per node, peak RSS -- scrubbed and
        leak-checked, and written on failure too (a runner that dies writes nothing: the publish
        job carries that engine forward as "died")
@@ -414,16 +415,16 @@ def main(parts: Path) -> int:
                 part["retry_nodes"] = part.get("retry_nodes", []) + node_timings(rss.nodes)
             return ok
 
-        # Every model, then every test -- not `dbt build`, which runs each test right after its
-        # model: assert_fct_scada_grain's GROUP BY over all of fct_scada then ran just before
-        # fct_summary, and the polars runner died in fct_summary (run 39564650603).
+        # The models only. The tests ran here after them until 2026-10-24 and cost more than the
+        # build: assert_fct_scada_grain alone, a GROUP BY over all of fct_scada, took 1,053 s of
+        # Trino's 1,431 s (run 40050741886), every hour, re-checking history no run had touched.
+        # They run once a day now, in table maintenance (workload_test.py).
         with PeakRss(engine) as rss:
-            ok = step("run") and step("test")
+            ok = step("run")
         part["peak_rss_mb"] = rss.mb
         part["peak_spill_mb"] = rss.spill_mb
         scrub.safe_print(
-            f"{engine}: peak RSS {rss.mb:,} MB, disk spill {rss.spill_mb:,} MB "
-            "during dbt run and test"
+            f"{engine}: peak RSS {rss.mb:,} MB, disk spill {rss.spill_mb:,} MB during dbt run"
         )
         models = [n for n in part["nodes"] if n["node"].startswith("model.")]
         if ok and not models:
@@ -448,6 +449,11 @@ def main(parts: Path) -> int:
                 part["model_rows"] = counted["model_rows"]
                 part["model_files"] = counted.get("model_files", {})
                 part["model_mw"] = counted.get("model_mw", {})
+        logged.clear()
+        if dbt.run("run-operation", "files_behind", callbacks=[keep_log])[0]:
+            found = [m for m in logged if m.lstrip().startswith('{"files_behind"')]
+            if found:
+                part["files_behind"] = json.loads(found[-1])["files_behind"]
         if not ok:
             part["error"] = error
             return 1
