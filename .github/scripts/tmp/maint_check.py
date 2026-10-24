@@ -41,10 +41,12 @@ def main() -> None:
         for s in tbl.metadata.snapshots or []:
             sm = s.summary or {}
             print(
-                f"  {s.snapshot_id} parent={s.parent_snapshot_id} op={sm.operation.value if sm else '?'} "
+                f"  {s.snapshot_id} parent={s.parent_snapshot_id} "
+                f"op={sm.operation.value if sm else '?'} "
                 f"added={sm.get('added-data-files')} deleted={sm.get('deleted-data-files')} "
                 f"total={sm.get('total-data-files')} size={sm.get('total-files-size')} "
-                f"records={sm.get('total-records')}{'  <- current' if cur and s.snapshot_id == cur.snapshot_id else ''}"
+                f"records={sm.get('total-records')}"
+                f"{'  <- current' if cur and s.snapshot_id == cur.snapshot_id else ''}"
             )
         if cur is None:
             continue
@@ -52,7 +54,8 @@ def main() -> None:
         for m in cur.manifests(tbl.io):
             print(
                 f"  {m.manifest_path.rsplit('/', 1)[-1]} {ManifestContent(m.content).name} "
-                f"added={m.added_files_count} existing={m.existing_files_count} deleted={m.deleted_files_count} "
+                f"added={m.added_files_count} existing={m.existing_files_count} "
+                f"deleted={m.deleted_files_count} "
                 f"snap={m.added_snapshot_id}"
             )
         files = tbl.inspect.files().to_pylist()
