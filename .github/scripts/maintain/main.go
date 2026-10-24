@@ -266,8 +266,16 @@ func compact(ctx context.Context, tbl *table.Table) (*compactResult, error) {
 	for i, g := range plan.Groups {
 		groups[i] = table.CompactionTaskGroup{PartitionKey: g.PartitionKey, Tasks: g.Tasks, TotalSizeBytes: g.TotalSizeBytes}
 	}
+	// The default read pipeline (GOMAXPROCS workers, each holding a whole task, 64 buffered
+	// batches) took all 16 GB of the runner in seconds on dbt_polars_landing.fct_scada, and the
+	// runner died. Bounded, a 128 MiB group peaks at about 3.7 GB (tmp_igo_diag, 2026-10-24).
 	tx := tbl.NewTransaction()
-	res, err := tx.RewriteDataFiles(ctx, groups, table.RewriteDataFilesOptions{})
+	res, err := tx.RewriteDataFiles(ctx, groups, table.RewriteDataFilesOptions{GroupOptions: []table.CompactionGroupOption{
+		table.WithCompactionTargetFileSize(targetMB << 20),
+		table.WithCompactionScanConcurrency(2),
+		table.WithCompactionArrowBatchSize(65536),
+		table.WithCompactionRecordBatchBufferSize(4),
+	}})
 	if err != nil {
 		return nil, err
 	}
