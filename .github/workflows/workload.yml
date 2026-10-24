@@ -26,11 +26,11 @@ on:
         type: string
         default: duckdb,polars,gluten,trino,sail
       process_limit:
-        description: Files each fact model folds per run, newest first. A backlog converges over runs.
+        description: Files each fact model folds per run, newest first, the same for every engine. A backlog converges over runs.
         type: string
-        default: "50"
+        default: "360"
       process_limits:
-        description: Per-engine files a run, e.g. "gluten=100,trino=150"; empty uses each engine's proven batch (gluten=360,duckdb=360,trino=100,polars=100,sail=100). Engines not named use process_limit.
+        description: Per-engine override of process_limit for a manual run, e.g. "gluten=100,trino=150". Empty (the schedule) gives every engine process_limit.
         type: string
         default: ""
       daily_download_limit:
@@ -155,15 +155,12 @@ jobs:
     env:
       BENCH_ENGINE: ${{ matrix.engine }}
       BENCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      process_limit: ${{ inputs.process_limit || '50' }}
-      # Each engine's largest batch that holds on the schedule as its tables grow (2026-10-21):
-      # Spark 360 (39403578519), DuckDB 360 with the TEMP VIEW batch (39427985965), Trino 100 (its
-      # 9 GB per-query cap failed 360). Polars 100 since 2026-10-24: at 50 its fct_scada merge peaked
-      # at 6.3 GB, and the build's 12.3 GB was the tests (40075560336), which no longer run here; the
-      # runner died at 75 (39493139124) before the DATE prune and the join fixes. Back to 50 if 100
-      # fails. Sail 100 since 2026-10-23: with the DATE IN prune, 50 files spilled 22.2 GB of the
-      # 64 GB cap (39849807698); 360 spilled 57.3 GB before the prune (39711280954).
-      PROCESS_LIMITS: ${{ inputs.process_limits || 'gluten=360,duckdb=360,trino=100,polars=100,sail=100' }}
+      process_limit: ${{ inputs.process_limit || '360' }}
+      # THE SAME BATCH FOR EVERY ENGINE since 2026-10-24: 360 files a run, once a day (~288 land
+      # a day). Before, each engine had its own proven batch: Spark and DuckDB 360, Trino, Polars and
+      # Sail 100 (Trino's 9 GB per-query cap failed 360, run 39403578519; Sail spilled 57.3 GB of
+      # its 64 GB cap at 360 before the DATE IN prune, 39711280954). Files behind shows who keeps up.
+      PROCESS_LIMITS: ${{ inputs.process_limits }}
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       DUCKDB_TEMP_DIR: /mnt/duckdb_spill
