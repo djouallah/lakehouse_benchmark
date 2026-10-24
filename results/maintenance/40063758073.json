@@ -1,0 +1,775 @@
+{
+  "run_id": "40063758073",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/40063758073",
+  "started": "2026-10-24T04:49:40Z",
+  "finished": "2026-10-24T05:05:12Z",
+  "settings": {
+    "expire_days": 1,
+    "min_input_files": 5,
+    "orphan_days": 3,
+    "target_mb": 128
+  },
+  "versions": {
+    "iceberg-go": "v0.7.1-0.20261023230220-b7792e9e8799"
+  },
+  "tables": [
+    {
+      "engine": "duckdb",
+      "table": "dbt_duckdb_landing.fct_price",
+      "before": {
+        "snapshots": 2,
+        "data_files": 13,
+        "delete_files": 0,
+        "bytes": 694786896,
+        "rows": 4772645
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 1,
+        "failed": 0,
+        "bytes": 2461
+      },
+      "after": {
+        "snapshots": 2,
+        "data_files": 13,
+        "delete_files": 0,
+        "bytes": 694786896,
+        "rows": 4772645
+      },
+      "seconds": 27.379
+    },
+    {
+      "engine": "duckdb",
+      "table": "dbt_duckdb_landing.fct_price_today",
+      "before": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 214305,
+        "rows": 2730
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 1,
+        "failed": 0,
+        "bytes": 2370
+      },
+      "after": {
+        "snapshots": 4,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 214305,
+        "rows": 2730
+      },
+      "seconds": 6.294
+    },
+    {
+      "engine": "duckdb",
+      "table": "dbt_duckdb_landing.fct_scada",
+      "before": {
+        "snapshots": 2,
+        "data_files": 27,
+        "delete_files": 0,
+        "bytes": 8761164077,
+        "rows": 386565697
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 1,
+        "failed": 0,
+        "bytes": 2452
+      },
+      "after": {
+        "snapshots": 2,
+        "data_files": 27,
+        "delete_files": 0,
+        "bytes": 8761164077,
+        "rows": 386565697
+      },
+      "seconds": 2.532
+    },
+    {
+      "engine": "duckdb",
+      "table": "dbt_duckdb_landing.fct_scada_today",
+      "before": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 948799,
+        "rows": 157935
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 1,
+        "failed": 0,
+        "bytes": 2404
+      },
+      "after": {
+        "snapshots": 4,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 948799,
+        "rows": 157935
+      },
+      "seconds": 6.301
+    },
+    {
+      "engine": "duckdb",
+      "table": "dbt_duckdb_mart.dim_duid",
+      "before": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 18167,
+        "rows": 690
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 1,
+        "failed": 0,
+        "bytes": 2988
+      },
+      "after": {
+        "snapshots": 4,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 18167,
+        "rows": 690
+      },
+      "seconds": 8.492
+    },
+    {
+      "engine": "duckdb",
+      "table": "dbt_duckdb_mart.fct_summary",
+      "before": {
+        "snapshots": 2,
+        "data_files": 6,
+        "delete_files": 4,
+        "bytes": 2079570591,
+        "rows": 150439911
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 2,
+        "data_files": 6,
+        "delete_files": 4,
+        "bytes": 2079570591,
+        "rows": 150439911
+      },
+      "seconds": 1.772
+    },
+    {
+      "engine": "gluten",
+      "table": "dbt_gluten_landing.fct_price",
+      "before": {
+        "snapshots": 6,
+        "data_files": 94,
+        "delete_files": 0,
+        "bytes": 642088742,
+        "rows": 4772645
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 94,
+        "delete_files": 0,
+        "bytes": 642088742,
+        "rows": 4772645
+      },
+      "error": {
+        "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
+      },
+      "seconds": 7.55
+    },
+    {
+      "engine": "gluten",
+      "table": "dbt_gluten_landing.fct_price_today",
+      "before": {
+        "snapshots": 6,
+        "data_files": 41,
+        "delete_files": 0,
+        "bytes": 1253295,
+        "rows": 2730
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 41,
+        "delete_files": 0,
+        "bytes": 1253295,
+        "rows": 2730
+      },
+      "error": {
+        "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
+      },
+      "seconds": 7.112
+    },
+    {
+      "engine": "gluten",
+      "table": "dbt_gluten_landing.fct_scada",
+      "before": {
+        "snapshots": 6,
+        "data_files": 524,
+        "delete_files": 0,
+        "bytes": 7197350541,
+        "rows": 386565697
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 524,
+        "delete_files": 0,
+        "bytes": 7197350541,
+        "rows": 386565697
+      },
+      "error": {
+        "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
+      },
+      "seconds": 6.677
+    },
+    {
+      "engine": "gluten",
+      "table": "dbt_gluten_landing.fct_scada_today",
+      "before": {
+        "snapshots": 6,
+        "data_files": 40,
+        "delete_files": 0,
+        "bytes": 1301211,
+        "rows": 157935
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 40,
+        "delete_files": 0,
+        "bytes": 1301211,
+        "rows": 157935
+      },
+      "error": {
+        "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
+      },
+      "seconds": 6.71
+    },
+    {
+      "engine": "gluten",
+      "table": "dbt_gluten_mart.dim_duid",
+      "before": {
+        "snapshots": 6,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 19862,
+        "rows": 690
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 19862,
+        "rows": 690
+      },
+      "seconds": 3.623
+    },
+    {
+      "engine": "gluten",
+      "table": "dbt_gluten_mart.fct_summary",
+      "before": {
+        "snapshots": 2,
+        "data_files": 64,
+        "delete_files": 0,
+        "bytes": 1690656365,
+        "rows": 150085918
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 2,
+        "data_files": 64,
+        "delete_files": 0,
+        "bytes": 1690656365,
+        "rows": 150085918
+      },
+      "error": {
+        "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
+      },
+      "seconds": 4.037
+    },
+    {
+      "engine": "polars",
+      "table": "dbt_polars_landing.fct_price",
+      "before": {
+        "snapshots": 9,
+        "data_files": 5,
+        "delete_files": 0,
+        "bytes": 510583844,
+        "rows": 4772645
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 9,
+        "data_files": 5,
+        "delete_files": 0,
+        "bytes": 510583844,
+        "rows": 4772645
+      },
+      "seconds": 2.316
+    },
+    {
+      "engine": "polars",
+      "table": "dbt_polars_landing.fct_price_today",
+      "before": {
+        "snapshots": 23,
+        "data_files": 2,
+        "delete_files": 0,
+        "bytes": 232468,
+        "rows": 2790
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 23,
+        "data_files": 2,
+        "delete_files": 0,
+        "bytes": 232468,
+        "rows": 2790
+      },
+      "seconds": 2.649
+    },
+    {
+      "engine": "polars",
+      "table": "dbt_polars_landing.fct_scada",
+      "before": {
+        "snapshots": 13,
+        "data_files": 324,
+        "delete_files": 0,
+        "bytes": 2696742181,
+        "rows": 330694442
+      },
+      "compact": {
+        "rewritten": 321,
+        "added": 20,
+        "rewritten_bytes": 2673363618
+      },
+      "expired": 3,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 4883
+      },
+      "after": {
+        "snapshots": 11,
+        "data_files": 23,
+        "delete_files": 0,
+        "bytes": 2298121771,
+        "rows": 330694442
+      },
+      "seconds": 608.346
+    },
+    {
+      "engine": "polars",
+      "table": "dbt_polars_landing.fct_scada_today",
+      "before": {
+        "snapshots": 25,
+        "data_files": 64,
+        "delete_files": 0,
+        "bytes": 1361569,
+        "rows": 161740
+      },
+      "compact": {
+        "rewritten": 64,
+        "added": 1,
+        "rewritten_bytes": 1361569
+      },
+      "expired": 3,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 5008
+      },
+      "after": {
+        "snapshots": 23,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 757682,
+        "rows": 161740
+      },
+      "seconds": 26.248
+    },
+    {
+      "engine": "polars",
+      "table": "dbt_polars_mart.dim_duid",
+      "before": {
+        "snapshots": 25,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 20643,
+        "rows": 690
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 4,
+      "orphans": {
+        "deleted": 9,
+        "failed": 0,
+        "bytes": 83782
+      },
+      "after": {
+        "snapshots": 21,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 20643,
+        "rows": 690
+      },
+      "seconds": 52.942
+    },
+    {
+      "engine": "polars",
+      "table": "dbt_polars_mart.fct_summary",
+      "before": {
+        "snapshots": 3,
+        "data_files": 18,
+        "delete_files": 0,
+        "bytes": 1019540855,
+        "rows": 130686435
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 3,
+        "data_files": 18,
+        "delete_files": 0,
+        "bytes": 1019540855,
+        "rows": 130686435
+      },
+      "seconds": 1.608
+    },
+    {
+      "engine": "sail",
+      "table": "dbt_sail_landing.fct_price",
+      "error": {
+        "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
+      },
+      "seconds": 0.415
+    },
+    {
+      "engine": "sail",
+      "table": "dbt_sail_landing.fct_price_today",
+      "error": {
+        "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
+      },
+      "seconds": 0.503
+    },
+    {
+      "engine": "sail",
+      "table": "dbt_sail_landing.fct_scada",
+      "error": {
+        "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
+      },
+      "seconds": 0.424
+    },
+    {
+      "engine": "sail",
+      "table": "dbt_sail_landing.fct_scada_today",
+      "error": {
+        "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
+      },
+      "seconds": 0.426
+    },
+    {
+      "engine": "sail",
+      "table": "dbt_sail_mart.dim_duid",
+      "error": {
+        "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
+      },
+      "seconds": 0.478
+    },
+    {
+      "engine": "sail",
+      "table": "dbt_sail_mart.fct_summary",
+      "error": {
+        "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
+      },
+      "seconds": 0.38
+    },
+    {
+      "engine": "trino",
+      "table": "dbt_trino_landing.fct_price",
+      "before": {
+        "snapshots": 2,
+        "data_files": 34,
+        "delete_files": 0,
+        "bytes": 522209975,
+        "rows": 4772645
+      },
+      "compact": {
+        "rewritten": 34,
+        "added": 4,
+        "rewritten_bytes": 522209975
+      },
+      "expired": 1,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 10205
+      },
+      "after": {
+        "snapshots": 2,
+        "data_files": 6,
+        "delete_files": 0,
+        "bytes": 814108337,
+        "rows": 7223690
+      },
+      "seconds": 48.16
+    },
+    {
+      "engine": "trino",
+      "table": "dbt_trino_landing.fct_price_today",
+      "before": {
+        "snapshots": 7,
+        "data_files": 39,
+        "delete_files": 0,
+        "bytes": 755494,
+        "rows": 2730
+      },
+      "compact": {
+        "rewritten": 39,
+        "added": 1,
+        "rewritten_bytes": 755494
+      },
+      "expired": 3,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 10194
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 234387,
+        "rows": 2730
+      },
+      "seconds": 19.898
+    },
+    {
+      "engine": "trino",
+      "table": "dbt_trino_landing.fct_scada",
+      "before": {
+        "snapshots": 5,
+        "data_files": 70,
+        "delete_files": 0,
+        "bytes": 12096169811,
+        "rows": 747443138
+      },
+      "compact": {
+        "rewritten": 6,
+        "added": 1,
+        "rewritten_bytes": 91617413
+      },
+      "expired": 3,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 10189
+      },
+      "after": {
+        "snapshots": 3,
+        "data_files": 65,
+        "delete_files": 0,
+        "bytes": 12094327903,
+        "rows": 747443138
+      },
+      "seconds": 28.277
+    },
+    {
+      "engine": "trino",
+      "table": "dbt_trino_landing.fct_scada_today",
+      "before": {
+        "snapshots": 7,
+        "data_files": 39,
+        "delete_files": 0,
+        "bytes": 1153760,
+        "rows": 157935
+      },
+      "compact": {
+        "rewritten": 39,
+        "added": 1,
+        "rewritten_bytes": 1153760
+      },
+      "expired": 3,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 10249
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 929317,
+        "rows": 157935
+      },
+      "seconds": 18.832
+    },
+    {
+      "engine": "trino",
+      "table": "dbt_trino_mart.dim_duid",
+      "before": {
+        "snapshots": 7,
+        "data_files": 39,
+        "delete_files": 38,
+        "bytes": 682231,
+        "rows": 26910
+      },
+      "compact": {
+        "rewritten": 39,
+        "added": 1,
+        "rewritten_bytes": 682231
+      },
+      "expired": 3,
+      "orphans": {
+        "deleted": 2,
+        "failed": 0,
+        "bytes": 10281
+      },
+      "after": {
+        "snapshots": 5,
+        "data_files": 1,
+        "delete_files": 0,
+        "bytes": 18951,
+        "rows": 690
+      },
+      "seconds": 27.281
+    },
+    {
+      "engine": "trino",
+      "table": "dbt_trino_mart.fct_summary",
+      "before": {
+        "snapshots": 2,
+        "data_files": 13,
+        "delete_files": 4,
+        "bytes": 3848011331,
+        "rows": 450495151
+      },
+      "compact": {
+        "rewritten": 0,
+        "added": 0,
+        "rewritten_bytes": 0
+      },
+      "expired": 0,
+      "orphans": {
+        "deleted": 0,
+        "failed": 0,
+        "bytes": 0
+      },
+      "after": {
+        "snapshots": 2,
+        "data_files": 13,
+        "delete_files": 4,
+        "bytes": 3848011331,
+        "rows": 450495151
+      },
+      "seconds": 2.112
+    }
+  ]
+}
