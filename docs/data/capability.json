@@ -38,9 +38,9 @@
   },
   "polars_iceberg": {
    "version": "2.0.0",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
+   "run": "40082022946",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/40082022946",
+   "date": "2026-10-24"
   }
  },
  "groups": [
@@ -129,8 +129,7 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
+     "o": "supported"
     }
    }
   },
@@ -160,7 +159,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
+     "n": "SQLInterfaceError: SQLInterfaceError: `CREATE TABLE ... AS SELECT` is not yet supported for catalog tables"
     }
    }
   },
@@ -594,8 +593,7 @@
      "o": "supported"
     },
     "polars_iceberg": {
-     "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported"
+     "o": "supported"
     }
    }
   },
@@ -624,7 +622,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: Hive table distribution clauses are not supported"
+     "n": "SQLInterfaceError: SQLInterfaceError: `PARTITIONED BY` is not yet supported for catalog tables; create the table unpartitioned, then add a partition spec with PyIceberg's update_spec"
     }
    }
   },
@@ -742,7 +740,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "works: none; refused: decimal: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; date: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached c…"
+     "n": "works: none; refused: decimal: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT …"
     }
    }
   },
@@ -771,7 +769,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "works: none; refused: struct: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached catalog 'lake' is not supported; list: SQLInterfaceError: SQLInterfaceError: CREATE TABLE on a table of attached ca…"
+     "n": "works: none; refused: struct: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }…"
     }
    }
   },
@@ -1065,7 +1063,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_399023…"
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_400820…"
     }
    }
   },
@@ -1122,7 +1120,7 @@
     },
     "polars_iceberg": {
      "o": "no",
-     "n": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_39902372275_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_39902372275_1_inspect.snapshots' could not be loaded (NoSuchTableEx…"
+     "n": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_40082022946_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_40082022946_1_inspect.snapshots' could not be loaded (NoSuchTableEx…"
     }
    }
   },
