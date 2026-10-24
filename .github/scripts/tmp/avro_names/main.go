@@ -104,8 +104,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	for _, e := range []string{"duckdb", "polars", "gluten", "trino", "sail"} {
-		name := "dbt_" + e + "_landing.fct_price"
+	for _, name := range []string{"dbt_duckdb_mart.fct_summary", "dbt_polars_mart.fct_summary", "dbt_trino_mart.fct_summary", "dbt_gluten_mart.fct_summary", "dbt_sail_mart.fct_summary"} {
 		tbl, err := cat.LoadTable(ctx, catalog.ToIdentifier(name))
 		if err != nil {
 			fmt.Printf("%s: load: %v\n", name, err)
