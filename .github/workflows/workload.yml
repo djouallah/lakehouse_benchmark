@@ -5,7 +5,7 @@ name: dbt workload
 #
 #   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino, sail; one at a time)  ->  grade
 #
-# ON A SCHEDULE, EVERY HOUR, NEVER RESET: new AEMO files land every run and each engine folds
+# ON A SCHEDULE, DAILY, NEVER RESET: new AEMO files land every run and each engine folds
 # process_limit of them into its own tables, which only grow. The Real workload tab shows how far
 # each engine has got -- files behind, peak RSS -- and an engine whose runner dies (out of memory)
 # stays on the page as "died", carried forward from the last run (workload_publish.py).
@@ -15,10 +15,10 @@ name: dbt workload
 
 on:
   schedule:
-    # Hourly since 2026-10-23: intraday files land every 5 minutes, so every run has work. A run
-    # that outlasts the hour queues behind the one in progress (the group keeps one pending);
-    # nothing is lost, the builds are incremental.
-    - cron: "23 * * * *"
+    # Daily since 2026-10-24 (hourly 2026-10-23..24). A run that is still going when another
+    # starts queues behind it (the group keeps one pending); nothing is lost, the builds are
+    # incremental.
+    - cron: "23 3 * * *"
   workflow_dispatch:
     inputs:
       engines:
