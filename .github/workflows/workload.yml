@@ -15,9 +15,9 @@ name: dbt workload
 
 on:
   schedule:
-    # Hourly since 2026-10-23, for Polars' and Sail's catch-up. A run that outlasts the hour queues
-    # behind the one in progress (the group keeps one pending); nothing is lost, the builds are
-    # incremental.
+    # Hourly since 2026-10-23: intraday files land every 5 minutes, so every run has work. A run
+    # that outlasts the hour queues behind the one in progress (the group keeps one pending);
+    # nothing is lost, the builds are incremental.
     - cron: "23 * * * *"
   workflow_dispatch:
     inputs:
@@ -87,21 +87,12 @@ jobs:
           cache-dependency-path: requirements/workload_land.txt
       - run: pip install -r requirements/workload_land.txt
 
-      # CATCH-UP: on the schedule, while Polars or Sail is behind (files_behind in the last published
-      # run), only those two run; duckdb, gluten and trino are already at 0 and resume once both
-      # are. A leg that does not run keeps its last result on the page (workload_publish.py).
-      # A manual dispatch runs exactly the engines it names.
+      # The schedule runs every engine; a leg still behind (Polars) catches up a batch a run
+      # alongside the others. A manual dispatch runs exactly the engines it names.
       - id: plan
         run: |
           ENGINES="${{ inputs.engines }}"
-          if [ -z "$ENGINES" ]; then
-            ENGINES=duckdb,polars,gluten,trino,sail
-            BEHIND=$(jq -r '[.legs.polars_iceberg.files_behind, .legs.lakesail_iceberg.files_behind] | map(. // 0) | add' docs/data/workload.json)
-            if [ "${BEHIND:-0}" -gt 0 ]; then
-              ENGINES=polars,sail
-              echo "catch-up: Polars and Sail are $BEHIND files behind together; duckdb, gluten and trino wait"
-            fi
-          fi
+          [ -n "$ENGINES" ] || ENGINES=duckdb,polars,gluten,trino,sail
           ENGINES=$(printf '%s' "$ENGINES" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"

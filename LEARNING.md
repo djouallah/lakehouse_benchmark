@@ -800,7 +800,7 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
 
 ## The dbt workload test (the Real workload tab)
 
-**Now (2026-10-20):** it runs every 2 hours on a schedule (every hour since 2026-10-23, and only Polars and Sail until both catch up), never resets, lands up to 360 new daily
+**Now (2026-10-20):** it runs every 2 hours on a schedule (every hour since 2026-10-23, all five engines), never resets, lands up to 360 new daily
 AEMO files a run, and each engine folds its largest proven batch into its own tables, which only
 grow: Spark 360, DuckDB 360, Trino 100, Polars 50 files a run (`PROCESS_LIMITS` in workload.yml).
 The parity grade and the decimals job were removed once the last-decimal differences were
@@ -863,7 +863,7 @@ engine on the page as "died", with its last good run.
 - **The tests left the hourly build, 2026-10-24.** As in analytics-as-code, they run once a
   day in table maintenance: DuckDB runs the duckdb tree's tests against every leg's tables
   (`workload_test.py`, `WORKLOAD_LEG` in generate_schema_name). Rows, files processed and
-  SUM(mw) stay hourly; files behind, which the catch-up gate reads, is its own query now
+  SUM(mw) stay hourly; files behind is its own query now
   (`macros/files_behind.sql`), no longer the files-processed tests' warning count.
 - **The leg's peak memory is often a test, not a merge.** Run 40050741886, caught-up legs:
   fct_scada's merge took 6.6 s on DuckDB, 30 s on Gluten, 67 s on Trino, while Trino's
