@@ -394,9 +394,7 @@ def main(parts: Path) -> int:
             ok = False
             dbt.last_error = f"dbt built no model for target {engine}: check +enabled gating"
         part["dag"] = model_dag()
-        if not ok:
-            part["error"] = dbt.last_error
-            return 1
+        error = dbt.last_error  # before the count below resets it
 
         logged: list[str] = []
 
@@ -404,9 +402,9 @@ def main(parts: Path) -> int:
             if event.info.name.startswith("JinjaLog"):
                 logged.append(event.info.msg)
 
-        part["status"] = "success"
         # Rows per model, for the Real workload tab's DAG. Best-effort: a count that fails is a
-        # missing number on the page, never a failed leg.
+        # missing number on the page, never a failed leg. Counted on a failed leg too: its tables
+        # are still there, and one failed model must not hide the others from the page.
         if dbt.run("run-operation", "model_row_counts", callbacks=[keep_log])[0]:
             found = [m for m in logged if m.lstrip().startswith('{"model_rows"')]
             if found:
@@ -414,6 +412,10 @@ def main(parts: Path) -> int:
                 part["model_rows"] = counted["model_rows"]
                 part["model_files"] = counted.get("model_files", {})
                 part["model_mw"] = counted.get("model_mw", {})
+        if not ok:
+            part["error"] = error
+            return 1
+        part["status"] = "success"
         return 0
     except Exception as exc:  # noqa: BLE001 - the part is written either way
         part["error"] = scrub.scrub_exc(exc)

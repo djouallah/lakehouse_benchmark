@@ -1125,10 +1125,10 @@ function renderRealWorkload() {
   const sec = $(REAL_WORKLOAD.id), w = data.workload;
   if (!loaded) { sec.innerHTML = `<div class="empty">Loading results…</div>`; return; }
   if (!w) { sec.innerHTML = `<div class="empty">No run yet.</div>`; return; }
-  const ok = e => w.legs[e].status === "success";
   const rank = e => { const i = WORKLOAD_ORDER.indexOf(e); return i < 0 ? 99 : i; };
   const engines = Object.keys(w.legs).sort((a, b) => rank(a) - rank(b));
-  const runs = engines.filter(ok);
+  // Every leg whose tables were counted, failed or not: one failed model hides nothing else.
+  const runs = engines.filter(e => Object.keys(w.legs[e].model_rows || {}).length);
   const gb = mb => (mb / 1024).toFixed(1);
   const chips = engines.map(e => {
     const l = w.legs[e];
@@ -1152,9 +1152,9 @@ function renderRealWorkload() {
     const nodes = Object.entries(w.dag).map(([n, m]) => {
       const { x, y } = pos[n];
       const r = rowsOf(n);
-      // A dot per engine, right-aligned: filled when that engine built the model.
+      // A dot per engine, right-aligned: filled when that engine has the model's table.
       const dots = m.materialized === "source" ? "" : engines.map((e, i) => {
-        const built = ok(e) && w.legs[e].model_rows?.[n] != null;
+        const built = w.legs[e].model_rows?.[n] != null;
         return `<circle class="dot" cx="${x + NW - 16 - (engines.length - 1 - i) * 14}" cy="${y + 38}" r="4.5"
           style="stroke: var(--${e}, var(--ink-3)); fill: ${built ? `var(--${e}, var(--ink-3))` : "none"}"/>`;
       }).join("");
@@ -1276,7 +1276,7 @@ function openModel(w, runs, n, at) {
     ${isSource ? `<p class="d">A dbt source: the landed file, read where it is. No engine builds or copies it.</p>
       <p class="d">Landed: ${LANDED.gb} GB of AEMO CSV files, measured ${LANDED.date} (<a href="${LANDED.run}">run</a>), not live.</p>
       <p class="d">One dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
-        ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${w.legs[runs[0]]?.tests ?? ""} tests,
+        ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${Math.max(0, ...runs.map(e => w.legs[e].tests ?? 0)) || ""} tests,
         Iceberg tables out. Every hour, never reset: each engine folds the next batch into its own tables.
         <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`
       : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Rows</th>${hasMw ? `<th class="n">SUM(mw)</th>` : ""}</tr></thead>
