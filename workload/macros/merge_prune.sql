@@ -22,12 +22,18 @@
      nothing. Once Sail's fct_scada had caught up (run 40047700842), every run did that over 386M
      rows and failed past 90 GB of spill (40050741886 to 40073150402). The macro returns `none`
      for an empty batch and the wrappers run a no-op instead. No rows to write means no commit,
-     so nothing a concurrent run could race. `[]` still means "no prune column" (dim_duid). --#}
+     so nothing a concurrent run could race. A model with no prune column (dim_duid) is checked for
+     an empty batch too, and otherwise gets `[]`: merged unbounded. --#}
 {% macro merge_prune_predicates(source) %}
   {%- set key = config.get('unique_key') -%}
   {%- set keys = [key] if key is string else (key or []) -%}
   {%- set col = (['file', 'date'] | select('in', keys) | list | first) -%}
-  {%- if not col or not execute -%}{{ return([]) }}{%- endif -%}
+  {%- if not execute -%}{{ return([]) }}{%- endif -%}
+  {%- if not col -%}
+    {#-- No prune column (dim_duid): nothing bounds the target, but an empty batch still skips. --#}
+    {%- if run_query('SELECT 1 FROM ' ~ source ~ ' LIMIT 1').rows | length == 0 -%}{{ return(none) }}{%- endif -%}
+    {{ return([]) }}
+  {%- endif -%}
   {#-- ONE query for both columns: on DuckDB the batch is a TEMP VIEW over read_csv
        (duckdb_temp_view.sql), so every query here reads every CSV of the batch again; a
        second DISTINCT for DATE (below) was a third pass over the CSVs, counting the MERGE. --#}

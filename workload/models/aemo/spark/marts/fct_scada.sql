@@ -3,7 +3,7 @@
 {#-- Column layout comes from macros/aemo_columns.sql, the single source of truth shared
      by every engine. --#}
 {%- set cast_cols = aemo_cast_columns('scada') -%}
-{#-- The CSV read happens in the two pre_hooks and lands in the <model>__stage table; this body only
+{#-- The CSV read happens in the pre_hook and lands in the <model>__stage table; this body only
      casts and parses. See macros/spark_read_csv.sql and the fct_price.sql header. --#}
 {#-- Merge on the natural key, not append -- a match only happens when two runs fold the same file. See the
      fct_price.sql header for why. --#}
@@ -12,7 +12,7 @@
     incremental_strategy='merge',
     file_format='iceberg',
     unique_key=['file', 'DUID', 'SETTLEMENTDATE', 'INTERVENTION'],
-    pre_hook=["{{ spark_stage_view('scada') }}", "{{ spark_stage_table('scada') }}"],
+    pre_hook="{{ spark_stage_table('scada') }}",
     post_hook="{{ spark_drop_stage() }}"
 ) }}
 

@@ -2,10 +2,10 @@
      fabric-dbt-examples' Delta spark leg (dbt1/macros/spark_read_csv.sql); the record rule and
      the file choice are unchanged.
 
-       pre_hook 1  spark_stage_view(record)   CREATE OR REPLACE TEMPORARY VIEW raw_<record>
+       pre_hook    spark_stage_table(record)  CREATE OR REPLACE TEMPORARY VIEW raw_<record>
                                               (<explicit STRING schema>) USING csv OPTIONS
-                                              (path '<folder>/{this run's files}', header, PERMISSIVE)
-       pre_hook 2  spark_stage_table(record)  DROP + CREATE TABLE <model>__stage_<run> USING iceberg,
+                                              (path '<folder>/{this run's files}', header, PERMISSIVE),
+                                              DROP + CREATE TABLE <model>__stage_<run> USING iceberg,
                                               then INSERT ... SELECT *, input_file_name()
                                               FROM raw_<record> WHERE <record filter>
        model body                             SELECT <casts> FROM <model>__stage_<run>
@@ -19,9 +19,11 @@
      CREATE TABLE and filled with INSERT -- not CREATE OR REPLACE ... AS, which Spark sends as a
      staged create and OneLake refuses (gluten_create_table_as.sql).
 
-     Both hooks resolve THIS RUN's file list at run time (spark_new_files, capped at
-     process_limit). With nothing new the stage stays an EMPTY table of the same columns, so the
-     body always has something to read; the merge source is zero rows. --#}
+     The hook resolves THIS RUN's file list at run time (spark_new_files, capped at
+     process_limit), ONCE: the list is a `NOT IN (SELECT DISTINCT file FROM <fact>)` over the whole
+     fact, and the csv view used to be a hook of its own that ran it a second time. With nothing
+     new the stage stays an EMPTY table of the same columns, so the body always has something to
+     read; the merge source is zero rows, and the merge is skipped (merge_prune.sql). --#}
 
 {#-- The backtick-quoted STRING schema both the temp view and the empty stage need. --#}
 {% macro spark_csv_schema(record) %}
@@ -62,10 +64,8 @@
 {% endmacro %}
 
 
-{#-- pre_hook 1: the csv temp view over an explicit brace glob of this run's files. --#}
-{% macro spark_stage_view(record) %}
-  {%- set files = spark_stage_files(record) -%}
-  {%- if files | length == 0 -%}{{ return('') }}{%- endif -%}
+{#-- The csv temp view over an explicit brace glob of this run's files (spark_stage_table runs it). --#}
+{% macro spark_stage_view(record, files) %}
   {%- set spec = aemo_spec(record) -%}
   {%- set folder = get_csv_archive_path() ~ '/' ~ spec['source_type'] -%}
   {%- if files | length == 1 -%}
@@ -82,13 +82,14 @@
 {% endmacro %}
 
 
-{#-- pre_hook 2: the record's rows into the stage table. The record filter runs HERE, on the raw
-     strings, so the stage holds only DREGION/DUNIT/PRICE/SCADA rows -- a PUBLIC_DAILY file is
+{#-- The pre_hook: the csv view, then the record's rows into the stage table. The record filter
+     runs HERE, on the raw strings, so the stage holds only DREGION/DUNIT/PRICE/SCADA rows -- a PUBLIC_DAILY file is
      mostly other report types. input_file_name() is captured now, on the csv scan: it is the only
      place the provenance exists, and the models' `file` column is parsed from it. The drop and the
      create run here, the INSERT is the hook's statement (empty, so skipped, with nothing new). --#}
 {% macro spark_stage_table(record) %}
   {%- set files = spark_stage_files(record) -%}
+  {%- if files | length > 0 %}{% do run_query(spark_stage_view(record, files)) %}{% endif -%}
   {%- set stage = spark_stage_relation() -%}
   {%- do run_query('DROP TABLE IF EXISTS ' ~ stage) -%}
   {%- do run_query('CREATE TABLE ' ~ stage ~ ' (' ~ spark_csv_schema(record) ~ ', `_fname` STRING) USING iceberg') -%}

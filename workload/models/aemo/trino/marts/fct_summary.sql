@@ -71,8 +71,9 @@ daily_summary AS (
     AND s.DUID IN (SELECT DUID FROM dispatch_duids)
     AND s.SETTLEMENTDATE > (SELECT MAX(SETTLEMENTDATE) FROM {{ ref('fct_scada') }})
   GROUP BY 1, 2, 3
-)
+),
 
+batch AS (
 SELECT
   "date",
   "time",
@@ -86,3 +87,17 @@ SELECT
     COALESCE((SELECT MAX(SETTLEMENTDATE) FROM {{ ref('fct_scada_today') }}), TIMESTAMP '1900-01-01 00:00:00')
   ) AS cutoff
 FROM daily_summary
+)
+
+-- Only the rows that differ from what is stored (see the duckdb copy).
+SELECT b."date", b."time", b.DUID, b.mw, b.price, b.cutoff
+FROM batch b
+{% if scoped %}
+LEFT JOIN (
+  SELECT "date", "time", DUID, mw, price FROM {{ this }}
+  WHERE "date" IN (SELECT "date" FROM rebuild_dates)
+) t
+  ON b."date" = t."date" AND b."time" = t."time" AND b.DUID = t.DUID
+ AND b.mw = t.mw AND b.price = t.price
+WHERE t.DUID IS NULL
+{% endif %}

@@ -132,8 +132,9 @@ daily_summary AS (
     AND s.DUID IN (SELECT DUID FROM dispatch_duids)
     AND s.SETTLEMENTDATE > (SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMPTZ)) FROM {{ ref('fct_scada') }})
   GROUP BY ALL
-)
+),
 
+batch AS (
 SELECT
   date,
   time,
@@ -149,4 +150,24 @@ SELECT
     COALESCE((SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMPTZ)) FROM {{ ref('fct_scada_today') }}), CAST('1900-01-01' AS TIMESTAMPTZ))
   )) AS cutoff
 FROM daily_summary
+)
+
+-- ONLY THE ROWS THAT DIFFER FROM WHAT IS STORED. The rebuild dates are recomputed every run, and
+-- most of their rows come out identical; as merge source every one of them was a matched key, an
+-- UPDATE that rewrote the same values: ~411,000 rows a run on Trino even with no new file folded
+-- (run 39913866873). Rows equal on (date, time, DUID, mw, price) are dropped here instead, so the
+-- merge writes only new and changed rows; the table ends the same. mw and price are DECIMAL on
+-- both sides and never null, so the equality is exact. `cutoff` is left out: it moves every run
+-- and nothing reads it, so an unchanged row keeps the cutoff of the run that wrote it. A LEFT
+-- JOIN anti pattern, the form every tree's dialect takes.
+SELECT b.date, b.time, b.DUID, b.mw, b.price, b.cutoff
+FROM batch b
+{% if scoped %}
+LEFT JOIN (
+  SELECT date, time, DUID, mw, price FROM {{ this }} WHERE date IN ({{ rebuild_dates }})
+) t
+  ON b.date = t.date AND b.time = t.time AND b.DUID = t.DUID
+ AND b.mw = t.mw AND b.price = t.price
+WHERE t.DUID IS NULL
+{% endif %}
 -- No ORDER BY: this SQL is a merge source, and a sort here reaches nothing stored.

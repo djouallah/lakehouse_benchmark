@@ -3,7 +3,7 @@
 {#-- Column layout comes from macros/aemo_columns.sql, the single source of truth shared
      by every engine. --#}
 {%- set cast_cols = aemo_cast_columns('price') -%}
-{#-- The CSV read happens in the two pre_hooks and lands in the <model>__stage table; this body only
+{#-- The CSV read happens in the pre_hook and lands in the <model>__stage table; this body only
      casts and parses. macros/spark_read_csv.sql explains the stage. Same shape on the first build and on every incremental run;
      the hooks resolve this run's files (oldest first, process_limit) at run time.
 
@@ -21,7 +21,7 @@
     incremental_strategy='merge',
     file_format='iceberg',
     unique_key=['file', 'REGIONID', 'SETTLEMENTDATE', 'INTERVENTION'],
-    pre_hook=["{{ spark_stage_view('price') }}", "{{ spark_stage_table('price') }}"],
+    pre_hook="{{ spark_stage_table('price') }}",
     post_hook="{{ spark_drop_stage() }}"
 ) }}
 

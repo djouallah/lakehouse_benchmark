@@ -854,6 +854,12 @@ engine on the page as "died", with its last good run.
   rows); every run after that failed it past 90 GB of spill (40050741886 to 40073150402). Gluten
   and Trino paid it in time (Trino: `MERGE (0 rows)` in 23–58 s). An empty batch now runs a
   no-op instead of the MERGE: nothing to write, no commit, nothing to race.
+- **Every run rewrote rows it did not change.** Trino's merge messages: dim_duid `MERGE (690
+  rows)` on every run, fct_summary ~411,000 rows even when no new file was folded (run
+  39913866873). Every matched row was an UPDATE to the values it already had. dim_duid now sends
+  only `EXCEPT` the stored rows, fct_summary only rows unequal to the stored ones on (date, time,
+  DUID, mw, price); same table, a fraction of the writes. The spark tree also resolved each fact's
+  file list twice (one `NOT IN` over the whole fact per pre-hook); it is one hook now.
 - **The leg's peak memory is often a test, not a merge.** Run 40050741886, caught-up legs:
   fct_scada's merge took 6.6 s on DuckDB, 30 s on Gluten, 67 s on Trino, while Trino's
   `assert_fct_scada_grain` (GROUP BY on four columns over 386M rows) took 1,053 s of its 1,431 s

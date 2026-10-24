@@ -90,3 +90,8 @@ WITH
   )
 
 SELECT * FROM batch
+{% if is_incremental() %}
+-- Only new or changed units (see the duckdb copy).
+EXCEPT
+SELECT DUID, Region, FuelSourceDescriptor, Participant, State, latitude, longitude FROM {{ this }}
+{% endif %}

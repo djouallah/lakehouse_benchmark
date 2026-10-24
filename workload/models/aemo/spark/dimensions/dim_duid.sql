@@ -79,3 +79,8 @@ FROM duid_all a
 JOIN states ON a.Region = states.RegionID
 LEFT JOIN geo ON a.duid = geo.duid
 GROUP BY a.DUID
+{% if is_incremental() %}
+-- Only new or changed units (see the duckdb copy).
+EXCEPT
+SELECT DUID, Region, FuelSourceDescriptor, Participant, State, latitude, longitude FROM {{ this }}
+{% endif %}

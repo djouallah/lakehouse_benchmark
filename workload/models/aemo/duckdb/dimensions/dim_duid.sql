@@ -99,3 +99,11 @@ FROM duid_all a
 JOIN states ON a.Region = states.RegionID
 LEFT JOIN geo ON a.duid = geo.duid
 GROUP BY a.DUID
+{% if is_incremental() %}
+-- Only new or changed units. Every unit used to go to the merge each run, all 690 matched and
+-- UPDATED to the values they already had (Trino: MERGE (690 rows) on every run). EXCEPT, not a
+-- join: State, latitude and longitude can be NULL, and EXCEPT compares NULLs as equal. With
+-- nothing changed the batch is empty and the merge is skipped (macros/merge_prune.sql).
+EXCEPT
+SELECT DUID, Region, FuelSourceDescriptor, Participant, State, latitude, longitude FROM {{ this }}
+{% endif %}

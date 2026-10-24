@@ -153,5 +153,17 @@ SELECT
 FROM daily_summary
 )
 
+-- Only the rows that differ from what is stored (see the duckdb copy): the target cut to the
+-- rebuild dates the same way as fct_scada and fct_price above.
 SELECT b.date, b.time, b.DUID, b.mw, b.price, b.cutoff
 FROM batch b
+{% if scoped %}
+LEFT JOIN (
+  SELECT date, time, DUID, mw, price FROM {{ this }}
+  WHERE date >= (SELECT MIN(date) FROM rebuild_dates)
+    AND date IN (SELECT date FROM rebuild_dates)
+) t
+  ON b.date = t.date AND b.time = t.time AND b.DUID = t.DUID
+ AND b.mw = t.mw AND b.price = t.price
+WHERE t.DUID IS NULL
+{% endif %}
