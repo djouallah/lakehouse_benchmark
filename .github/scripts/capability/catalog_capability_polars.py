@@ -6,13 +6,13 @@ what each engine's SQL can do. Polars' Python API (`sink_iceberg`, `pl.delete_ic
 `scan_iceberg`) is not asked, the way no other engine is credited for a library call beside its SQL.
 
 THE STATEMENTS ARE THE ONES THE OTHER SQL ENGINES TAKE, in the generic form: Polars' SQL has no
-DDL or DML for a catalog table beyond `DROP TABLE` (pola-rs/polars#30247), so where it has no
-statement of its own it is sent the common one (Spark's, for PARTITIONED BY, ALTER ... and CALL),
-and its error is the answer, quoted in full.
+DDL or DML for a catalog table beyond `CREATE TABLE` (pola-rs/polars#30260) and `DROP TABLE`
+(#30247), so where it has no statement of its own it is sent the common one (Spark's, for
+PARTITIONED BY, ALTER ... and CALL), and its error is the answer, quoted in full.
 
 THE TABLES A STATEMENT WRITES INTO ARE MADE BY PYICEBERG, created and seeded. Polars cannot
-CREATE a catalog table, and without this every write would only repeat CREATE's refusal: this way
-each statement is asked on its own. The create probes ask Polars' own CREATE TABLE.
+INSERT into a catalog table, so it cannot seed one: this way each statement is asked on its own.
+The create probes ask Polars' own CREATE TABLE (pola-rs/polars#30260).
 
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says. Accepted
 with no effect is a no-op, not a yes.
