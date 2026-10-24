@@ -2,7 +2,8 @@
 
 Every 2 hours each workload leg merges into its own dbt_<engine>_{landing,mart} tables, and
 nothing on that write path folds the small files back together or drops a snapshot. This is the
-daily job that does, one table at a time (table_maintenance.yml, in the `workload` queue so it
+daily job that does, in two passes -- DuckDB compacts every table and is closed, then pyiceberg
+expires and removes orphans table by table (table_maintenance.yml, in the `workload` queue so it
 never overlaps a dbt run -- iceberg_rewrite_data_files commits optimistically, and overlapping a
 merge would fail one side):
 
@@ -285,16 +286,31 @@ def run(record_path: Path) -> int:
         f"budget {BUDGET_MINUTES:g} min"
     )
     started = time.monotonic()
+
+    def fresh(con):
+        """Re-mint the bearer when it runs low: both handles hold it as a string."""
+        nonlocal token, catalog
+        if auth.token_expires_on() - time.time() >= REFRESH_SECONDS:
+            return con
+        token = auth.onelake_token(fresh=True)
+        catalog = iceberg_catalog(cfg, token)
+        if con is None:
+            return None
+        con.close()
+        return duckdb_connect(cfg, token)
+
+    # Pass 1, DuckDB compacts every table, then the connection is closed. As analytics-as-code
+    # runs it (compact_iceberg.py, then expire_snapshots.py in its own process): interleaving
+    # pyiceberg's expiry with the open DuckDB connection, table by table, lost every rewrite --
+    # DuckDB returned its counts and no replace snapshot ever reached the catalog.
+    entries: list[tuple[str, dict, dict, float]] = []
     for i, (engine, name) in enumerate(todo, 1):
         entry: dict = {"engine": engine, "table": name}
         record["tables"].append(entry)
         if (time.monotonic() - started) / 60 >= BUDGET_MINUTES:
             entry["skipped"] = f"not attempted ({BUDGET_MINUTES:g} min budget spent)"
             continue
-        if auth.token_expires_on() - time.time() < REFRESH_SECONDS:
-            token = auth.onelake_token(fresh=True)
-            con.close()
-            con, catalog = duckdb_connect(cfg, token), iceberg_catalog(cfg, token)
+        con = fresh(con)
         scrub.safe_print(f"[{i}/{len(todo)}] {name} ...")
         t0 = time.monotonic()
         try:
@@ -304,16 +320,25 @@ def run(record_path: Path) -> int:
             scrub.safe_print(f"  load: {entry['error']['load']}")
             save()
             continue
-        errors = {}
+        errors: dict = {}
+        try:
+            entry["compact"] = compact(con, name)
+        except Exception as exc:  # noqa: BLE001 - recorded, the next table still runs
+            errors["compact"] = oneline(exc)
+        scrub.safe_print(f"  compact: {errors.get('compact') or entry['compact']}")
+        entries.append((name, entry, errors, time.monotonic() - t0))
+        save()
+    con.close()
+
+    # Pass 2, pyiceberg: expire, remove orphans, and re-read what the table holds now.
+    for i, (name, entry, errors, seconds) in enumerate(entries, 1):
+        fresh(None)
+        scrub.safe_print(f"[{i}/{len(entries)}] {name} ...")
+        t0 = time.monotonic()
         cutoff = datetime.now(UTC) - timedelta(days=EXPIRE_DAYS)
-        steps = (
-            ("compact", compact, con),
-            ("expired", expire, catalog, cutoff),
-            ("orphans", remove_orphans, catalog),
-        )
-        for step, call, handle, *args in steps:
+        for step, call, *args in (("expired", expire, cutoff), ("orphans", remove_orphans)):
             try:
-                entry[step] = call(handle, name, *args)
+                entry[step] = call(catalog, name, *args)
             except Exception as exc:  # noqa: BLE001 - recorded, the next step still runs
                 errors[step] = oneline(exc)
             scrub.safe_print(f"  {step}: {errors.get(step) or entry[step]}")
@@ -323,11 +348,10 @@ def run(record_path: Path) -> int:
             errors["after"] = oneline(exc)
         if errors:
             entry["error"] = errors
-        entry["seconds"] = round(time.monotonic() - t0, 1)
+        entry["seconds"] = round(seconds + time.monotonic() - t0, 1)
         save()
     record["finished"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     save()
-    con.close()
     attempted = [t for t in record["tables"] if "skipped" not in t]
     if attempted and all("error" in t for t in attempted):
         print("::error::every table errored")
