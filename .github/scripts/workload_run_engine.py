@@ -161,13 +161,21 @@ class PeakRss:
     sampled twice a second, summed, the maximum kept. A leg the runner kills records nothing.
     The same tick keeps the runner disk's lowest free space: every engine spills there (DuckDB's
     temp dir, Spark's local dirs, Trino's container, Polars' streaming temp files), so the free
-    space lost at the peak is the leg's spill, plus any other temp files it wrote."""
+    space lost at the peak is the leg's spill, plus any other temp files it wrote.
+
+    The same two numbers per dbt node too (`node_start` / `node_end`, fed by dbt's NodeStart and
+    NodeFinished events): the leg's peak alone cannot say whether a merge, fct_summary or a test
+    over the whole fact took the memory. Exact because every profile runs one thread."""
 
     def __init__(self, engine: str):
         import threading
 
         self.peak = 0
         self._free0 = self._lowest_free = shutil.disk_usage("/").free
+        self.nodes: dict[str, dict] = {}  # unique_id -> {"peak_rss_mb", "spill_mb"}
+        self._node: str | None = None
+        self._node_peak = 0
+        self._node_free0 = self._node_lowest_free = self._free0
         self._stop = threading.Event()
         self._roots = [os.getpid()]
         if engine == "trino":
@@ -200,8 +208,33 @@ class PeakRss:
 
     def _sample(self) -> None:
         while not self._stop.wait(0.5):
-            self.peak = max(self.peak, self._rss())
-            self._lowest_free = min(self._lowest_free, shutil.disk_usage("/").free)
+            rss, free = self._rss(), shutil.disk_usage("/").free
+            self.peak = max(self.peak, rss)
+            self._lowest_free = min(self._lowest_free, free)
+            self._node_peak = max(self._node_peak, rss)
+            self._node_lowest_free = min(self._node_lowest_free, free)
+
+    def node_start(self, unique_id: str) -> None:
+        self._node = unique_id
+        self._node_peak = self._rss()
+        self._node_free0 = self._node_lowest_free = shutil.disk_usage("/").free
+
+    def node_end(self, unique_id: str) -> None:
+        if self._node != unique_id:
+            return
+        self._node_peak = max(self._node_peak, self._rss())
+        self.nodes[unique_id] = {
+            "peak_rss_mb": round(self._node_peak / 2**20),
+            "spill_mb": max(0, round((self._node_free0 - self._node_lowest_free) / 2**20)),
+        }
+        self._node = None
+
+    def on_event(self, event) -> None:
+        """A dbtRunner callback: opens and closes the per-node window."""
+        name = event.info.name
+        if name in ("NodeStart", "NodeFinished"):
+            uid = event.data.node_info.unique_id
+            (self.node_start if name == "NodeStart" else self.node_end)(uid)
 
     def __enter__(self) -> PeakRss:
         self.peak = self._rss()
@@ -242,7 +275,9 @@ class Dbt:
         return bool(res.success), elapsed
 
 
-def node_timings() -> list[dict]:
+def node_timings(memory: dict[str, dict] | None = None) -> list[dict]:
+    """Every node of the last dbt command: status, seconds, message, and its peak RSS and spill
+    when `memory` (PeakRss.nodes) measured it."""
     path = PROJECT / "target" / "run_results.json"
     if not path.exists():
         return []
@@ -253,6 +288,7 @@ def node_timings() -> list[dict]:
             "status": r["status"],
             "seconds": round(float(r.get("execution_time") or 0.0), 3),
             "message": scrub.scrub(r.get("message") or "")[:500],
+            **(memory or {}).get(r["unique_id"], {}),
         }
         for r in results
     ]
@@ -368,14 +404,14 @@ def main(parts: Path) -> int:
         part["nodes"] = []
 
         def step(command: str) -> bool:
-            ok, seconds = dbt.run(command)
+            ok, seconds = dbt.run(command, callbacks=[rss.on_event])
             part["build_seconds"] = round(part["build_seconds"] + seconds, 3)
-            part["nodes"] += node_timings()
+            part["nodes"] += node_timings(rss.nodes)
             if not ok and (PROJECT / "target" / "run_results.json").exists():
                 part.setdefault("first_error", dbt.last_error)
-                ok, retry_s = dbt.run("retry")
+                ok, retry_s = dbt.run("retry", callbacks=[rss.on_event])
                 part["retry_seconds"] = round(part.get("retry_seconds", 0.0) + retry_s, 3)
-                part["retry_nodes"] = part.get("retry_nodes", []) + node_timings()
+                part["retry_nodes"] = part.get("retry_nodes", []) + node_timings(rss.nodes)
             return ok
 
         # Every model, then every test -- not `dbt build`, which runs each test right after its

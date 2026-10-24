@@ -848,6 +848,16 @@ engine on the page as "died", with its last good run.
   - **Rule:** a key prefix shared across all values (names, URLs, paths) makes a useless prune
     column. Prune on a date, a number, or a partition column. Setting
     `write.metadata.metrics.column.<col> = 'full'` fixes only files written afterwards.
+- **An empty batch merged against the whole table, 2026-10-24.** With no batch rows, merge_prune
+  had no values and added no predicate, so a run with nothing to fold still joined the batch
+  against every target row. Sail's fct_scada caught up in run 40047700842 (3,154 files, 386M
+  rows); every run after that failed it past 90 GB of spill (40050741886 to 40073150402). Gluten
+  and Trino paid it in time (Trino: `MERGE (0 rows)` in 23–58 s). An empty batch now runs a
+  no-op instead of the MERGE: nothing to write, no commit, nothing to race.
+- **The leg's peak memory is often a test, not a merge.** Run 40050741886, caught-up legs:
+  fct_scada's merge took 6.6 s on DuckDB, 30 s on Gluten, 67 s on Trino, while Trino's
+  `assert_fct_scada_grain` (GROUP BY on four columns over 386M rows) took 1,053 s of its 1,431 s
+  build. The part JSON now records `peak_rss_mb` and `spill_mb` per dbt node.
 - **fct_summary pruned on literal dates, 2026-10-23.** Its rebuild dates were an `IN (subquery)`,
   which Iceberg cannot plan with, so every run read all of fct_scada and fct_price: 332 s on
   DuckDB, 300 s on Gluten, 459 s on Sail with nothing new to fold, against 43 s on Trino, whose

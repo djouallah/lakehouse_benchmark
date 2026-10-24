@@ -15,7 +15,14 @@
 
      Wired into each adapter's merge (below). Polars is not here: dbt-polars refuses
      incremental_predicates on Iceberg, and its merge already prunes data files on the key
-     values (one In() per key column) before it reads them. --#}
+     values (one In() per key column) before it reads them.
+
+     AN EMPTY BATCH SKIPS THE MERGE. With no batch rows there are no values to bound the target,
+     and the MERGE ran with no prune predicate at all: a join against the whole table to add
+     nothing. Once Sail's fct_scada had caught up (run 40047700842), every run did that over 386M
+     rows and failed past 90 GB of spill (40050741886 to 40073150402). The macro returns `none`
+     for an empty batch and the wrappers run a no-op instead. No rows to write means no commit,
+     so nothing a concurrent run could race. `[]` still means "no prune column" (dim_duid). --#}
 {% macro merge_prune_predicates(source) %}
   {%- set key = config.get('unique_key') -%}
   {%- set keys = [key] if key is string else (key or []) -%}
@@ -42,6 +49,7 @@
       {%- if d not in dates %}{% do dates.append(d) %}{% endif -%}
     {%- endif -%}
   {%- endfor -%}
+  {%- if rows | length == 0 -%}{{ return(none) }}{%- endif -%}
   {%- if literals | length == 0 -%}{{ return([]) }}{%- endif -%}
   {%- set predicates = ['DBT_INTERNAL_DEST.' ~ col ~ ' IN (' ~ literals | join(', ') ~ ')'] -%}
   {#-- `file` CANNOT PRUNE: Iceberg keeps string bounds truncated to 16 characters by default
@@ -64,8 +72,10 @@
 {#-- DuckDB: dbt-duckdb's merge strategy calls duckdb__get_merge_sql directly, not through
      get_merge_sql, so the predicates go in here; the body is dbt-duckdb's own. --#}
 {% macro duckdb__get_incremental_merge_sql(args_dict) %}
+  {%- set prune = merge_prune_predicates(args_dict['temp_relation']) -%}
+  {%- if prune is none %}{{ return(merge_skipped()) }}{% endif -%}
   {%- set predicates = (normalize_incremental_predicates(args_dict.get('incremental_predicates')) or [])
-                       + merge_prune_predicates(args_dict['temp_relation']) -%}
+                       + prune -%}
   {{ return(duckdb__get_merge_sql(args_dict['target_relation'], args_dict['temp_relation'],
                                   args_dict['unique_key'], args_dict['dest_columns'], predicates)) }}
 {% endmacro %}
@@ -75,6 +85,16 @@
      spark__get_merge_sql / trino__get_merge_sql unchanged. --#}
 {% macro get_merge_sql(target, source, unique_key, dest_columns, incremental_predicates=none) %}
   {%- set given = [incremental_predicates] if incremental_predicates is string else (incremental_predicates or []) -%}
-  {%- set predicates = given + merge_prune_predicates(source) -%}
+  {%- set prune = merge_prune_predicates(source) -%}
+  {%- if prune is none %}{{ return(merge_skipped()) }}{% endif -%}
+  {%- set predicates = given + prune -%}
   {{ return(adapter.dispatch('get_merge_sql', 'dbt')(target, source, unique_key, dest_columns, predicates)) }}
+{% endmacro %}
+
+
+{#-- The statement an empty batch runs in place of the MERGE: it reads nothing and writes nothing.
+     Valid on DuckDB, Spark (Gluten, Sail) and Trino. --#}
+{% macro merge_skipped() %}
+  {%- do log(this.identifier ~ ': empty batch, merge skipped', info=True) -%}
+  {{ return('select 1 where false') }}
 {% endmacro %}
