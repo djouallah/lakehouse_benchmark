@@ -2,11 +2,12 @@ name: table maintenance
 
 # THE WORKLOAD'S TABLE MAINTENANCE, once a day: every dbt_<engine>_{landing,mart} table the dbt
 # workload merges into is compacted to 128 MiB files, its snapshots older than a day are expired
-# and its orphan files older than 3 days deleted (workload_maintain.py). The Real workload tab
-# shows the counts (docs/data/maintenance.json).
+# and its orphan files older than 3 days deleted, all three by apache/iceberg-go
+# (.github/scripts/maintain). workload_maintain.py publish turns the record into the Real
+# workload tab's counts (docs/data/maintenance.json).
 #
 # NEVER CONCURRENT WITH THE DATA PROCESSING: the workload's own `workload` queue.
-# iceberg_rewrite_data_files commits optimistically, so overlapping a leg's merge would fail one
+# A rewrite commits optimistically, so overlapping a leg's merge would fail one
 # side. The group keeps ONE pending run: 22:05 normally starts between two workload runs and the
 # 22:23 one queues behind it; when the previous workload overruns, this run waits pending and the
 # 22:23 workload replaces it -- that day's maintenance is skipped, the next day's catches up.
@@ -46,38 +47,31 @@ jobs:
       COMPACT_BUDGET_MINUTES: "70"
       EXPIRE_OLDER_THAN_DAYS: "1"
       ORPHAN_OLDER_THAN_DAYS: "3"
-      AZURE_TRANSPORT_OPTION_TYPE: curl
-      CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
-      DUCKDB_TEMP_DIR: /mnt/duckdb_spill
       # Outside the checkout: the commit loop resets the tree onto main.
       RECORD: /tmp/maintenance.json
     steps:
-      - run: sudo mkdir -p /mnt/duckdb_spill && sudo chown "$USER" /mnt/duckdb_spill
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements/maintenance.txt
-      - run: |
-          pip install -r requirements/maintenance.txt
-          pip list --format=freeze | grep -Ei '^(duckdb|pyiceberg|adlfs)' || true
-
-      # The orphan pass lists the table folders through adlfs, whose credential falls back to
-      # azure-identity's default chain (the dbt-polars leg's reason in workload.yml).
-      - uses: azure/login@v3
+      - uses: actions/setup-go@v6
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          allow-no-subscriptions: true
+          go-version-file: .github/scripts/maintain/go.mod
+          cache-dependency-path: .github/scripts/maintain/go.mod
+      - name: Build the maintenance job (iceberg-go)
+        working-directory: .github/scripts/maintain
+        run: go mod tidy && go build -o "$RUNNER_TEMP/maintain" .
+      - run: pip install -r requirements/maintenance.txt
 
       # Its own timeout, under the job's, so the record of what was done still gets published.
-      # The ATTACH carries the bearer: redact JWT and SAS shapes on the way to the log.
+      # It mints its own bearer from the GitHub OIDC endpoint: redact JWT and SAS shapes anyway.
       - name: Maintain the workload tables
         timeout-minutes: 100
         shell: bash
         run: |
-          python .github/scripts/workload_maintain.py run "$RECORD" 2>&1 \
+          "$RUNNER_TEMP/maintain" "$RECORD" 2>&1 \
             | sed -uE 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/***REDACTED***/g; s/sig=[A-Za-z0-9%+\/=]+/sig=***REDACTED***/g'
 
       - name: Summarise
