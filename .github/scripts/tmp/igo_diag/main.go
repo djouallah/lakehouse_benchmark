@@ -136,13 +136,7 @@ func main() {
 	must("connect", err)
 	fmt.Printf("CPUs %d, machine available %d MB\n", runtime.NumCPU(), memAvailableMB())
 
-	fmt.Println("\n===== gluten: timestamp vs timestamptz")
-	for _, name := range []string{"dbt_gluten_landing.fct_price", "dbt_sail_landing.fct_price"} {
-		fmt.Println(name)
-		tbl, err := cat.LoadTable(ctx, catalog.ToIdentifier(name))
-		must("load", err)
-		parquetSchema(ctx, tbl)
-	}
+	_ = parquetSchema // answered: Velox writes isAdjustedToUTC=false into a timestamptz column
 
 	fmt.Println("\n===== dbt_polars_landing.fct_scada: memory per compaction group (no commit)")
 	tbl, err := cat.LoadTable(ctx, catalog.ToIdentifier("dbt_polars_landing.fct_scada"))
