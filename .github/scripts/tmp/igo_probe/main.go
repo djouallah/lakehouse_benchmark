@@ -20,6 +20,7 @@ import (
 	"github.com/apache/iceberg-go"
 	"github.com/apache/iceberg-go/catalog"
 	"github.com/apache/iceberg-go/catalog/rest"
+	_ "github.com/apache/iceberg-go/io/gocloud/azure"
 	"github.com/apache/iceberg-go/table"
 	"github.com/apache/iceberg-go/table/compaction"
 	"github.com/apache/iceberg-go/table/maintenance"
