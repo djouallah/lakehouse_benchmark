@@ -38,11 +38,11 @@ jobs:
           WAREHOUSE: ${{ secrets.FABRIC_WORKSPACE_ID }}/${{ secrets.FABRIC_LAKEHOUSE_ID }}
         shell: bash
         run: |
+          set +e +o pipefail
           TOK=$(az account get-access-token --resource https://storage.azure.com --query accessToken -o tsv)
           echo "::add-mask::$TOK"
           ice() { echo "+ iceberg $*"; "$RUNNER_TEMP/iceberg" --uri https://onelake.table.fabric.microsoft.com/iceberg \
             --token "$TOK" --warehouse "$WAREHOUSE" "$@" 2>&1 | head -25; echo; }
-          ice --help | head -5
           ice describe table dbt_trino_mart.fct_summary
           ice files dbt_trino_mart.fct_summary
           ice compact analyze dbt_trino_mart.fct_summary
