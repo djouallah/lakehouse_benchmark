@@ -40,8 +40,8 @@ class Engine(Protocol):
     def version(self) -> str:
         """The resolved package version, recorded with every result.
 
-        Not cosmetic: polars runs a main-branch build and sail a main build, so what
-        resolved differs run to run. A benchmark chart without the version that produced it is
+        Not cosmetic: some engines run a main build (sail), so what resolved differs run to
+        run. A benchmark chart without the version that produced it is
         an assertion rather than a result.
         """
         ...

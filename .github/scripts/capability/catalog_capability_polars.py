@@ -1,7 +1,7 @@
 """What the OneLake Iceberg REST catalog lets Polars do, asked in SQL.
 
 SQL ONLY, AS EVERY OTHER ENGINE. Each cell is a statement sent through Polars' SQLContext with the
-REST catalog attached by `register_catalog` (Polars main, pola-rs/polars#30113): the grid compares
+REST catalog attached by `register_catalog` (Polars 2.1.0, pola-rs/polars#30113): the grid compares
 what each engine's SQL can do. Polars' Python API (`sink_iceberg`, `pl.delete_iceberg`,
 `scan_iceberg`) is not asked, the way no other engine is credited for a library call beside its SQL.
 

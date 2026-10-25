@@ -85,7 +85,7 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
 | `capability.yml` (iceberg support) | `clients` spark/trino/polars/duckdb/sail/chdb/databend/duckdb_isolation (all), `keep` (false), `probes` (all), `publish` (false) |
 | `auth_smoke.yml` | none |
-| `tmp_polars_main.yml` | `ref` (main). Temporary: builds the Polars main wheel `requirements/polars_iceberg.txt` pins, until a release has the fixes |
+| `tmp_polars_main.yml` | `ref` (main). Builds a Polars main wheel, for repros and upstream issues (the bench itself runs the PyPI release, >=2.1.0) |
 
 `prepare` generates a namespace once and later runs reuse it. `ci.yml` (ruff check, ruff format
 and pytest) runs on every push; the smoke test's `sql` phase runs on a push that touches `bench/`,

@@ -13,7 +13,7 @@
          inference, one pass per file: polars_smoke run 38904749014 read 10 files in 5 s this
          way, against 42 s for the widest-row inference (`infer_schema_length => NULL`,
          pola-rs/polars#29917) it replaces. `missing_columns` is in SQL only since
-         pola-rs/polars#29975 (#29970), hence the Polars main pin. The credential is
+         pola-rs/polars#29975 (#29970), first released in 2.1.0. The credential is
          AZURE_STORAGE_TOKEN, which run_dbt.py sets: read_csv() takes none.
        * WHY A LIST, AND NEVER A GLOB OR A UNION. A glob over the folder reads EVERY file in it:
          Polars skips no file on a filename filter (polars_smoke runs 38733171553, 38735481756;

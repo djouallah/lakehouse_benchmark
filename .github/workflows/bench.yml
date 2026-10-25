@@ -173,8 +173,8 @@ jobs:
           cache: pip
           cache-dependency-path: requirements/${{ matrix.engine }}.txt
 
-      # One self-contained file per engine. Which line it tracks -- a main-branch build for
-      # polars, stable for the rest -- is a property of that file, not a workflow input. DuckDB's
+      # One self-contained file per engine. Which line it tracks -- a release or a main build --
+      # is a property of that file, not a workflow input. DuckDB's
       # file holds only its Python helpers; the engine is the main nightly CLI, next step.
       - name: Install ${{ matrix.engine }}
         env:

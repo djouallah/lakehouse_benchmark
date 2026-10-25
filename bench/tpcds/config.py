@@ -47,8 +47,8 @@ ENGINES = (
     # double-quoted aliases are backticked (bench/tpch/queries.py BACKTICK_ALIASES).
     "lakesail_iceberg",
     # Polars: back 2026-10-10. 2.0.0 OOM-killed the runner at SF=10 (Q72 over scan_iceberg,
-    # pola-rs/polars#29768; then Q4 on main, #29822). The main build pinned in
-    # requirements/polars_iceberg.txt answers 99/99 at SF=10 in 256 s cold (run 37943815509).
+    # pola-rs/polars#29768; then Q4 on main, #29822). A main build answered 99/99 at SF=10 in
+    # 256 s cold (run 37943815509); 2.1.0 is the first release with both fixes.
     "polars_iceberg",
     # Databend: added 2026-10-17 after a build of main passed candidate_engine.yml (22/22 TPC-H,
     # OneLake reads and writes; run 39015860524). The image is that build until a nightly carries
