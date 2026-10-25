@@ -1,6 +1,6 @@
 # The polars leg: dbt-polars over a pyiceberg REST catalog. fabric-dbt-examples'
 # requirements/polars.txt at the commit in workload/SOURCE:
-#   * dbt-polars main fb0bd9e955 (v0.5.0, not on PyPI yet; since 2026-10-25):
+#   * dbt-polars 0.5.0 from PyPI (since 2026-10-25; upstream main, and a fork before that, until then):
 #     its PR #49 prunes a key with more than 200 values on min/max (pyiceberg ignores a larger
 #     In(), so every data file was read) and reads a candidate file's key columns before the rest
 #   * Polars main 4426a548fd (one SQL read_csv() over a file list, pola-rs/polars#30047,
@@ -12,9 +12,9 @@
 #     buffered frames kept spillable while a streaming sort partitions (#30268)
 #   * since 2026-10-25 main d02c62175a: freed memory returned to the OS while data is spilled
 #     (#30280) and the streaming window node out of core (#30282)
-dbt-polars[iceberg] @ git+https://github.com/datamindedbe/incubator-dbt-polars@fb0bd9e955d9c6c69347871fa26d791cf952b0cb
-# Its Azure storage catalog, from the same commit: the landing files as dbt sources (external.location).
-dbt-polars-catalog-azure @ git+https://github.com/datamindedbe/incubator-dbt-polars@fb0bd9e955d9c6c69347871fa26d791cf952b0cb#subdirectory=catalogs/dbt-polars-catalog-azure
+dbt-polars[iceberg]==0.5.0
+# Its Azure storage catalog, at the same version (it pins dbt-polars==<version>): the landing files as dbt sources (external.location).
+dbt-polars-catalog-azure==0.5.0
 polars @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-d02c62175a/polars-2.0.0-py3-none-any.whl
 polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-d02c62175a/polars_runtime_32-2.0.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
