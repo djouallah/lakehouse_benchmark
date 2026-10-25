@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.2+mainb15c03d9c1",
+ "version": "0.7.2+mainc3bcbdcbe6",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.2+mainb15c03d9c1; _bench_capability listed"
+   "detail": "pysail 0.7.2+mainc3bcbdcbe6; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -160,8 +160,8 @@
    "key": "truncate",
    "group": "write",
    "question": "TRUNCATE TABLE",
-   "outcome": "no",
-   "detail": "AnalysisException: not supported: [CANNOT_TRUNCATE_EXTERNAL_TABLE] Operation not allowed: TRUNCATE TABLE on external tables: `sl_40149653455_1_truncate`."
+   "outcome": "supported",
+   "detail": "TRUNCATE: pyiceberg reads []; Sail agrees; metadata-only: delete snapshot, deleted-data-files 1, added-data-files 0, added-delete-files None"
   },
   {
    "key": "insert_overwrite",
@@ -294,7 +294,7 @@
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`sl_40149653455_1_ns` created; pyiceberg lists it"
+   "detail": "`sl_40168237020_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -336,17 +336,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(8796287776948044550) but found Some(3981762839214339045)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(9217246677603769249) but found Some(1298765864223268481)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(318673141408421326) but found Some(2782203853674474576)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(2603065032708788715) but found Some(1835593060843954008)"
   }
  ],
- "run": "40149653455",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/40149653455",
+ "run": "40168237020",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/40168237020",
  "date": "2026-10-25"
 }
