@@ -22,6 +22,7 @@ from __future__ import annotations
 import contextlib
 import threading
 import time
+from dataclasses import replace
 
 from bench import scrub
 from bench.store import EngineResult, Row
@@ -35,6 +36,16 @@ QUERY_TIMEOUT_S = 900
 
 class QueryTimeout(Exception):
     """A statement still running at QUERY_TIMEOUT_S. Recorded like any other failed query."""
+
+
+# What the part says about a statement while it runs. When the process dies inside it -- the
+# runner out of memory, exit 143 with no traceback (LEARNING.md) -- nothing else is ever
+# written, so this row is what `publish` reads, and the run counts as failed at that query
+# instead of vanishing. A statement that finishes, or fails on its own, overwrites it.
+KILLED = (
+    "Killed: the process died during this query with no error of its own"
+    " (on these runners, out of memory)"
+)
 
 
 def _time(fn, *args) -> tuple[float, object, Exception | None]:
@@ -82,10 +93,12 @@ def run_pass(
     run_type: str,
     hard_first: tuple[int, ...] = (),
     timeout: float | None = None,
+    checkpoint=None,
 ) -> list[Row]:
     """One pass over the statements, hard ones first (config.HARD_FIRST), ending at the first
     statement that fails or runs past `timeout` (default QUERY_TIMEOUT_S): a run is all of the
-    suite or nothing (run_engine.py)."""
+    suite or nothing (run_engine.py). `checkpoint(rows)`, when given, is called before each
+    statement with the rows so far and that statement as KILLED."""
     timeout = QUERY_TIMEOUT_S if timeout is None else timeout
     rows: list[Row] = []
     refresh = getattr(engine, "refresh", None)
@@ -96,6 +109,8 @@ def run_pass(
             # to surface as the statement's own error, with whatever credential is still in place.
             with contextlib.suppress(Exception):
                 refresh()
+        if checkpoint is not None:
+            checkpoint([*rows, Row(run_type, "query", number, None, status="error", error=KILLED)])
         duration, count, exc = _time_capped(engine.execute, sql, timeout=timeout)
         if exc is None:
             rows.append(Row(run_type, "query", number, round(duration, 4), rows=count))
@@ -110,12 +125,13 @@ def run_pass(
     return rows
 
 
-def benchmark(engine, cfg) -> EngineResult:
+def benchmark(engine, cfg, checkpoint=None) -> EngineResult:
     """Attach, run each of the suite's passes (one cold pass for both). Always closes the engine.
 
     A setup failure returns `status='setup_failed'` with the one setup row rather than raising:
     the caller writes the artifact either way, so a failed engine still appears in the results
-    with a reason instead of vanishing from the chart.
+    with a reason instead of vanishing from the chart. `checkpoint(result)`, when given, gets the
+    result as it would stand if the process died in the next statement (run_pass).
     """
     statements = load(engine.name, cfg.schema, cfg.sf, cfg.SQL_PATH, cfg.N_QUERIES)
     result = EngineResult(version="unknown")
@@ -144,7 +160,11 @@ def benchmark(engine, cfg) -> EngineResult:
         # chDB's filesystem cache, DuckDB's buffer pool, the OS page cache -- is what the warm
         # numbers measure. The suite's config says how many passes there are.
         for run_type in cfg.PASSES:
-            result.rows += run_pass(engine, statements, run_type, cfg.HARD_FIRST)
+            done = list(result.rows)
+            save = None
+            if checkpoint is not None:
+                save = lambda rows, done=done: checkpoint(replace(result, rows=done + rows))  # noqa: E731
+            result.rows += run_pass(engine, statements, run_type, cfg.HARD_FIRST, checkpoint=save)
             if any(r.status == "error" for r in result.rows):
                 timed_out = any(
                     (r.error or "").startswith(QueryTimeout.__name__) for r in result.rows
