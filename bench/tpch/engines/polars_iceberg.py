@@ -57,6 +57,9 @@ class PolarsIceberg:
         spill = os.path.join(os.environ.get("RUNNER_TEMP") or tempfile.gettempdir(), "polars_spill")
         os.makedirs(spill, exist_ok=True)
         os.environ.setdefault("POLARS_TEMP_DIR", spill)
+        # Each spilling node prints what it wrote and read back when it is done: the job log is
+        # the only place a TPC run shows whether Polars spilled at all.
+        os.environ.setdefault("POLARS_OOC_LOG_METRICS", "1")
         import polars as pl
 
         catalog = auth.catalog(self.cfg)
