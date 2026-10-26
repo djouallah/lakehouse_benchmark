@@ -24,6 +24,7 @@ standing in.
 from __future__ import annotations
 
 import os
+import tempfile
 
 from bench import auth, scrub
 from bench.config import Config
@@ -49,6 +50,13 @@ class PolarsIceberg:
         # across runner images rather than tracking whatever the host reports. So BEFORE the
         # import: set after it, as this line used to be, it was read by nothing.
         os.environ.setdefault("POLARS_MAX_THREADS", "4")
+        # A memory budget, as the dbt workload has: without one the streaming engine takes the
+        # 16 GB runner down instead of spilling (TPC-H SF=300 Q4 on 2.1.0, exit 143, run
+        # 40249009029). It spills to POLARS_TEMP_DIR past the budget.
+        os.environ.setdefault("POLARS_OOC_MEMORY_BUDGET_MB", "10000")
+        spill = os.path.join(os.environ.get("RUNNER_TEMP") or tempfile.gettempdir(), "polars_spill")
+        os.makedirs(spill, exist_ok=True)
+        os.environ.setdefault("POLARS_TEMP_DIR", spill)
         import polars as pl
 
         catalog = auth.catalog(self.cfg)
