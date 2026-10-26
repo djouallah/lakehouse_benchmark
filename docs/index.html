@@ -515,9 +515,9 @@ main .tiles > a { color: inherit; }
 // The only aggregation of the results: each engine's mean over its last RECENT_RUNS runs.
 // ALL-HISTORY AVERAGING IS A TRAP, and it bit this repo: every config change -- credential vending
 // on and off, the catalog cache, an engine that was failing outright -- stayed blended into the
-// published number forever, invisibly. A short window shows a fix within three runs while still
+// published number forever, invisibly. A short window shows a fix within two runs while still
 // smoothing the run-to-run noise of a shared runner, which a single run cannot do.
-const RECENT_RUNS = 3;
+const RECENT_RUNS = 2;
 const LABEL = {         // bench/charts.py LABEL
   duckdb_iceberg: "DuckDB", chdb_iceberg: "chDB", polars_iceberg: "Polars",
   lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",

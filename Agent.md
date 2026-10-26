@@ -13,8 +13,8 @@ each engine against it from GitHub-hosted runners, with no secret that can leak.
   gets 2 vCPU / 7 GB, and SF=10 is OOM-killed.
 - **Actions are off on a new fork.** Enable them in the fork's Actions tab.
 - **The fork inherits the owner's `results/` and `docs/`.** The results page averages each
-  engine's last 3 complete runs (`RECENT_RUNS` in [`docs/index.html`](docs/index.html)), so your
-  own numbers only show once 3 of your runs replace the owner's.
+  engine's last 2 complete runs (`RECENT_RUNS` in [`docs/index.html`](docs/index.html)), so your
+  own numbers only show once 2 of your runs replace the owner's.
 
 ## 2. Azure and Fabric setup
 
