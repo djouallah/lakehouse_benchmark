@@ -8,9 +8,7 @@ EXIT CODE, and the distinction matters more than it looks.
 
 ALL OR NOTHING (the owner's, 2026-10-09). The runner stops at the first failed query, or the first
 one past runner.QUERY_TIMEOUT_S, and exits 1 with the failing query in the log. It still WRITES its
-part (2026-10-10): the rows up to the failure, the failure itself as an error row. It writes it
-before every query too, with that query as killed, so a runner that dies of memory mid-query
-(exit 143, no traceback) still leaves a part that names the query. An incomplete run
+part (2026-10-10): the rows up to the failure, the failure itself as an error row. An incomplete run
 never counts toward a time -- the charts and the page average complete runs only -- but it is how
 the page knows the engine ran at that scale and reads `failed`, with no hand-kept list. A failing
 SETUP exits 1 too: an engine that could not attach has nothing to say.
@@ -46,18 +44,11 @@ if __name__ == "__main__":
     out_dir.mkdir(parents=True, exist_ok=True)
 
     scrub.safe_print(f"{cfg.engine} | {cfg.TITLE} SF={cfg.sf} | namespace {cfg.schema}")
+    result = benchmark(get_engine(cfg.engine, cfg), cfg)
+    failed = [row.query for row in result.rows if row.phase == "query" and row.status == "error"]
     # Captured HERE, on the runner that did the work -- not in publish, which is a different
     # machine and would stamp the results with its own hardware.
-    host = host_facts()
-
-    def checkpoint(partial):
-        # Before each query: the part as it stands if the runner dies in it (runner.KILLED).
-        partial.host = host
-        write_engine_part(out_dir, cfg.engine, partial)
-
-    result = benchmark(get_engine(cfg.engine, cfg), cfg, checkpoint=checkpoint)
-    failed = [row.query for row in result.rows if row.phase == "query" and row.status == "error"]
-    result.host = host
+    result.host = host_facts()
     path = write_engine_part(out_dir, cfg.engine, result)
     if failed:
         scrub.safe_print(
