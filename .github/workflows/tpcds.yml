@@ -278,6 +278,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      # The engine jobs' logs: a runner that died left only its log (killed_parts.py).
+      actions: read
       # No id-token: this job never talks to Azure.
     concurrency:
       group: tpcds-publish-${{ github.ref }}
@@ -299,6 +301,13 @@ jobs:
           pattern: tpcds-*
           merge-multiple: true
           path: parts
+
+      # An engine whose runner died (out of memory) uploaded no part; its log still says which
+      # queries finished and where it died, and that is published as a failed run.
+      - name: Record engines whose runner died
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/killed_parts.py parts
 
       - name: Merge and write the CSV
         run: python .github/scripts/publish.py parts
