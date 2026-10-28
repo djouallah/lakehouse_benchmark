@@ -1,0 +1,42 @@
+name: fabric notebook
+
+# Run a notebook from notebooks/ in Fabric (Python notebook, Fabric capacity) and fail if any
+# cell fails. See .github/scripts/fabric_notebook_run.py.
+#
+# Not in the `onelake` concurrency group: the notebook runs on Fabric compute and only touches its
+# own namespace, so it must not cancel a pending bench run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      notebook:
+        description: Notebook to run
+        default: notebooks/onelake_duckdb_polars.ipynb
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: fabric-notebook
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONUNBUFFERED: "1"
+      FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+      FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install azure-identity requests
+      - run: python .github/scripts/fabric_notebook_run.py "$NOTEBOOK"
+        env:
+          NOTEBOOK: ${{ inputs.notebook }}
