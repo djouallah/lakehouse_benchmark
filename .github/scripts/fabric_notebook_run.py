@@ -10,6 +10,10 @@ microsoft.language_group "jupyter_python"); without it Fabric makes a PySpark no
 The workspace and lakehouse GUIDs go in as job parameters, matched to the notebook's cell tagged
 `parameters`, so the notebook needs no default lakehouse.
 
+A failed job's failureReason only says "statement execution failures", so the uploaded copy gets one
+extra cell, right after the restartPython() cell, that writes any cell's traceback to OneLake Files.
+The runner prints it. The notebook in the repo stays clean.
+
     python .github/scripts/fabric_notebook_run.py notebooks/onelake_duckdb_polars.ipynb
 """
 
@@ -25,7 +29,7 @@ import uuid
 import requests
 
 from bench import auth
-from bench.config import Config
+from bench.config import ONELAKE_DFS, Config
 
 FABRIC_API = "https://api.fabric.microsoft.com/v1"
 POLL_SECONDS = 10
@@ -52,6 +56,40 @@ def _wait_operation(location: str) -> None:
             return
         if status in ("Failed", "Undetermined"):
             raise RuntimeError(f"notebook create failed: {r.text}")
+
+
+ERROR_HOOK = """import traceback, IPython
+def _bench_exc(shell, etype, evalue, tb, tb_offset=None):
+    notebookutils.fs.put({path!r}, "".join(traceback.format_exception(etype, evalue, tb)), True)
+    shell.showtraceback((etype, evalue, tb), tb_offset=tb_offset)
+IPython.get_ipython().set_custom_exc((BaseException,), _bench_exc)
+"""
+
+
+def with_error_hook(notebook: dict, path: str) -> dict:
+    """The notebook plus the error-hook cell, after the restart so the restart doesn't wipe it."""
+    cells = notebook["cells"]
+    after = next(
+        (i + 1 for i, c in enumerate(cells) if "restartPython" in "".join(c["source"])), 0
+    )
+    hook = {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {"microsoft": {"language": "python", "language_group": "jupyter_python"}},
+        "outputs": [],
+        "source": ERROR_HOOK.format(path=path).splitlines(keepends=True),
+    }
+    return {**notebook, "cells": cells[:after] + [hook] + cells[after:]}
+
+
+def read_error(url: str) -> str | None:
+    headers = {"Authorization": f"Bearer {auth.onelake_token()}", "x-ms-version": "2023-11-03"}
+    r = requests.get(url, headers=headers, timeout=60)
+    if r.status_code == 404:
+        return None
+    r.raise_for_status()
+    requests.delete(url, headers=headers, timeout=60)
+    return r.text
 
 
 def create(ws: str, name: str, notebook: dict) -> str:
@@ -114,7 +152,11 @@ def main(path: str) -> int:
         notebook = json.load(f)
     name = f"bench_{os.path.splitext(os.path.basename(path))[0]}_{os.environ.get('GITHUB_RUN_ID', 'local')}"
 
-    item = create(cfg.workspace_id, name, notebook)
+    error_path = f"Files/_bench_notebook/{name}.txt"
+    abfss = f"abfss://{cfg.workspace_id}@{ONELAKE_DFS}/{cfg.lakehouse_id}/{error_path}"
+    https = f"https://{ONELAKE_DFS}/{cfg.workspace_id}/{cfg.lakehouse_id}/{error_path}"
+
+    item = create(cfg.workspace_id, name, with_error_hook(notebook, abfss))
     print(f"created notebook {name} ({item})", flush=True)
     try:
         job = run(
@@ -127,6 +169,7 @@ def main(path: str) -> int:
 
     if job["status"] != "Completed":
         print(json.dumps(job.get("failureReason") or job, indent=2))
+        print(read_error(https) or "no traceback written: the job failed before or in the restart cell")
         return 1
     print("notebook ran clean")
     return 0
