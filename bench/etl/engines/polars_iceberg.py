@@ -29,6 +29,7 @@ from bench import auth, scrub
 from bench.etl import iceberg
 from bench.etl.config import TABLE, EtlConfig
 from bench.etl.schema import COLUMNS, TIMESTAMP_FORMAT, numeric_columns
+from bench.polars_build import polars_version
 
 # Batches waiting between Polars' worker and pyiceberg's writer. Small on purpose: back-pressure
 # is what keeps a 52 GB scan from turning into a 52 GB queue.
@@ -46,9 +47,7 @@ class PolarsIceberg:
 
     @property
     def version(self) -> str:
-        import polars as pl
-
-        return pl.__version__
+        return polars_version()
 
     def setup(self) -> None:
         os.environ.setdefault("POLARS_MAX_THREADS", "4")

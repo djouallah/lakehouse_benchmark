@@ -69,6 +69,7 @@ from isolation_duckdb import race_probe
 from bench import auth, scrub
 from bench.capability.race import RaceProxy
 from bench.config import Config
+from bench.polars_build import polars_version
 
 CATALOG = "lake"
 SEED = [(1, 10), (2, 20), (3, 30)]
@@ -223,7 +224,7 @@ class PolarsCapability:
         os.environ.setdefault("POLARS_MAX_THREADS", "4")
         import polars as pl
 
-        self.version = pl.__version__
+        self.version = polars_version()
         self.catalog = auth.catalog(self.cfg)
         self.storage = {"bearer_token": auth.onelake_token()}
         self.catalog.create_namespace_if_not_exists(self.ns)

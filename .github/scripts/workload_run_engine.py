@@ -40,6 +40,7 @@ from importlib import metadata
 from pathlib import Path
 
 from bench import auth, scrub
+from bench.polars_build import polars_version
 from bench.report import leak_check
 from bench.workload.config import (
     BENCH_ENGINE,
@@ -74,7 +75,7 @@ def versions(engine: str) -> dict[str, str]:
     out = {}
     for name in PACKAGES[engine]:
         try:
-            out[name] = metadata.version(name)
+            out[name] = polars_version() if name == "polars" else metadata.version(name)
         except metadata.PackageNotFoundError:
             out[name] = ""
     return out

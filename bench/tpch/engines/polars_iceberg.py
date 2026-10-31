@@ -28,6 +28,7 @@ import tempfile
 
 from bench import auth, scrub
 from bench.config import Config
+from bench.polars_build import polars_version
 from bench.tpch.engines.base import restart_on_fresh_token
 
 
@@ -41,9 +42,7 @@ class PolarsIceberg:
 
     @property
     def version(self) -> str:
-        import polars as pl
-
-        return pl.__version__
+        return polars_version()
 
     def setup(self) -> None:
         # Polars sizes its thread pool at import time; pinning it keeps the number reproducible
