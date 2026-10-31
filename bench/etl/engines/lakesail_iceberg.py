@@ -6,8 +6,7 @@ Port of the notebook's `sail_clean_csv`, the other engine there that already wro
 partitions; bench/etl/iceberg.py says why), plus a `DROP TABLE IF EXISTS` first so every run
 creates and fills a fresh table rather than appending to last run's.
 
-`filename` comes from `input_file_name()`, which Sail has from lakehq/sail#2571 (sail#1210), merged
-after 0.7.2: requirements/etl_lakesail_iceberg.txt runs a main build until a release has it.
+`filename` comes from `input_file_name()`, which Sail has from 0.7.3 (lakehq/sail#2571, sail#1210).
 
 The session is the TPC-H engine's:
 `bench.tpch.engines.lakesail_iceberg.LakesailIceberg.setup()` starts the in-process
