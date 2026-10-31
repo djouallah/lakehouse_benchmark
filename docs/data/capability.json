@@ -30,17 +30,17 @@
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
    "date": "2026-10-23"
   },
-  "databend_iceberg": {
-   "version": "8.0.90-v1.2.953-38d782fa13(rust-1.100.0-nightly-2026-10-21T01:22:19.764725488Z) (datafuselabs/databend:v1.2.953-nightly)",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
-  },
   "polars_iceberg": {
    "version": "2.1.0",
    "run": "41190026395",
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41190026395",
    "date": "2026-10-31"
+  },
+  "databend_iceberg": {
+   "version": "8.0.90-v1.2.953-38d782fa13(rust-1.100.0-nightly-2026-10-21T01:22:19.764725488Z) (datafuselabs/databend:v1.2.953-nightly)",
+   "run": "39906543136",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
+   "date": "2026-10-23"
   }
  },
  "groups": [
@@ -71,10 +71,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -98,10 +98,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -125,10 +125,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -153,12 +153,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, 'TokioError. Code: 1068, Text = Cannot join handle from context\\'s runtime, cause: task 648 panicked with message \"internal error: table_id_seq must have been set. CTAS(replace) of table\".')"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -181,10 +181,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -208,10 +208,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -235,13 +235,13 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_delete, engine type iceberg, does not support DELETE.')"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: DELETE on a table of attached catalog 'lake' is not supported"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_delete, engine type iceberg, does not support DELETE.')"
     }
    }
   },
@@ -264,13 +264,13 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_update, engine type iceberg, does not support UPDATE.')"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..L…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_update, engine type iceberg, does not support UPDATE.')"
     }
    }
   },
@@ -296,12 +296,12 @@
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no-op",
      "n": "INSERT OVERWRITE returned success; expected [(7, 70), (8, 80)], pyiceberg reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], Databend reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -324,10 +324,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -351,10 +351,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -379,10 +379,10 @@
      "o": "no",
      "n": "ClickHouse has no statement to drop a catalog namespace"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -407,10 +407,10 @@
      "o": "no",
      "n": "ClickHouse has no statement for a catalog namespace"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -434,10 +434,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -461,13 +461,13 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_delete, engine type iceberg, does not support DE…"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: DELETE on a table of attached catalog 'race' is not supported"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_delete, engine type iceberg, does not support DE…"
     }
    }
   },
@@ -490,13 +490,13 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_update, engine type iceberg, does not support UP…"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..L…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_update, engine type iceberg, does not support UP…"
     }
    }
   },
@@ -520,13 +520,13 @@
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_39032752740_1_merge does not support MERGE.')"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Locati…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_39032752740_1_merge does not support MERGE.')"
     }
    }
   },
@@ -551,13 +551,13 @@
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Truncate is not supported for data lake engine. (NOT_IMPLEMENTED)"
     },
-    "databend_iceberg": {
-     "o": "no-op",
-     "n": "TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: TRUNCATE on a table of attached catalog 'lake' is not supported"
+    },
+    "databend_iceberg": {
+     "o": "no-op",
+     "n": "TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]"
     }
    }
   },
@@ -580,10 +580,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -607,12 +607,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, \"Internal. Code: 1001, Text = Failed to commit transaction: DataInvalid => Found duplicate 'field.id' 0. Field ids must be unique.\\n.\")"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -635,12 +635,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "works: none; refused: bucket: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `bucket(4, id)`.')"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -663,12 +663,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "works: none; refused: truncate: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `truncate(2, x)`.')"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -691,12 +691,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "works: none; refused: year: OperationalError: (1105, 'BadArguments. Code: 1006, Text = Iceberg PARTITION BY only supports column identifiers, got `year(x)`.'); month: OperationalError: (1105, 'BadArguments. Code: 1006, …"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -721,12 +721,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "works: ['date', 'timestamp', 'binary']; refused: decimal: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_decimal failed: DataInvalid => Unsupported Ar…"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -749,13 +749,13 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "works: none; refused: struct: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_struct failed: DataInvalid => Field id not found in metadata\\n.'); list: …"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "works: ['list']; refused: struct: SQLInterfaceError: SQLInterfaceError: expression Struct { values: [Named { expr: Value(ValueWithSpan { value: Number(\"1\", false), span: Span(Location(1,34)..Location(1,35)) }), name: Id…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "works: none; refused: struct: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_struct failed: DataInvalid => Field id not found in metadata\\n.'); list: …"
     }
    }
   },
@@ -778,12 +778,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no-op",
      "n": "returned success and the schema is ['id', 'v']"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -806,12 +806,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no-op",
      "n": "returned success and the schema is still ['id', 'v']"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -834,12 +834,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_39032752740_1_renamecol engine is iceberg that doesn't support rename column name.\")"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -862,12 +862,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, 'Internal. Code: 1001, Text = [FUSE-TABLE] Expected FUSE engine table, but got iceberg.')"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -891,13 +891,13 @@
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 70 (PARTITION): PARTITION FIELD bucket(4, id). Expected one of: COLUMN, INDEX, STATISTICS, PROJECTION, CONSTRAINT, end of query. (SYNTAX_ERROR)"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'UnsupportedEngineParams. Code: 2703, Text = ALTER TABLE PARTITION BY is not supported for engine ICEBERG.')"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: FIELD at Line: 1, Column: 75"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'UnsupportedEngineParams. Code: 2703, Text = ALTER TABLE PARTITION BY is not supported for engine ICEBERG.')"
     }
    }
   },
@@ -920,12 +920,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, 'UnwindError. Code: 1104, Text = internal error: entered unreachable code.')"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -949,12 +949,12 @@
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     },
+    "polars_iceberg": {
+     "o": "supported"
+    },
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, 'TableOptionInvalid. Code: 1301, Text = table option probed_at is invalid for alter table statement.')"
-    },
-    "polars_iceberg": {
-     "o": "supported"
     }
    }
   },
@@ -978,13 +978,13 @@
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: Alter of type 'MODIFY_ORDER_BY' is not supported by Iceberg storage. (NOT_IMPLEMENTED)"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Internal. Code: 1001, Text = [FUSE-TABLE] Expected FUSE engine table, but got iceberg.')"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: WRITE at Line: 1, Column: 60"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Internal. Code: 1001, Text = [FUSE-TABLE] Expected FUSE engine table, but got iceberg.')"
     }
    }
   },
@@ -1007,10 +1007,10 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
+    "polars_iceberg": {
      "o": "supported"
     },
-    "polars_iceberg": {
+    "databend_iceberg": {
      "o": "supported"
     }
    }
@@ -1037,13 +1037,13 @@
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5…"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: OperationalError: (1105, 'StorageNotFound. Code: 3001, Text = NotFound (permanent) at read, context: { uri: https://onelake.dfs.fabric.microsoft.com…"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_411900…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: OperationalError: (1105, 'StorageNotFound. Code: 3001, Text = NotFound (permanent) at read, context: { uri: https://onelake.dfs.fabric.microsoft.com…"
     }
    }
   },
@@ -1066,13 +1066,13 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "no-op",
-     "n": "AT (SNAPSHOT => the seed's) reads 4 rows, not 3"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: one of UPDATE or SHARE, found: VERSION at Line: 1, Column: 73"
+    },
+    "databend_iceberg": {
+     "o": "no-op",
+     "n": "AT (SNAPSHOT => the seed's) reads 4 rows, not 3"
     }
    }
   },
@@ -1095,12 +1095,12 @@
     "chdb_iceberg": {
      "o": "supported"
     },
-    "databend_iceberg": {
-     "o": "supported"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_41190026395_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_41190026395_1_inspect.snapshots' could not be loaded (NoSuchTableEx…"
+    },
+    "databend_iceberg": {
+     "o": "supported"
     }
    }
   },
@@ -1126,13 +1126,13 @@
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 65 (CREATE): CREATE BRANCH probe_branch. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, …"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Legacy experimental table refs were removed: ALTER TABLE ... CREATE/DROP BRANCH. The remaining syntax is reserved for a future redesign and is intentionally re…"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: CREATE at Line: 1, Column: 60"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Legacy experimental table refs were removed: ALTER TABLE ... CREATE/DROP BRANCH. The remaining syntax is reserved for a future redesign and is intentionally re…"
     }
    }
   },
@@ -1158,13 +1158,13 @@
      "o": "no",
      "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 62 (CREATE): CREATE TAG probe_tag. Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP P…"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table ref is an experimental feature, `set enable_experimental_table_ref=1` to use this feature.')"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ADD, RENAME, PARTITION, SWAP, DROP, REPLICA IDENTITY, SET, or SET TBLPROPERTIES after ALTER TABLE, found: CREATE at Line: 1, Column: 57"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table ref is an experimental feature, `set enable_experimental_table_ref=1` to use this feature.')"
     }
    }
   },
@@ -1188,13 +1188,13 @@
      "o": "no",
      "n": "ChdbError: Code: 48. DB::Exception: OPTIMIZE is not supported for catalog-backed Iceberg tables in this build. (NOT_IMPLEMENTED)"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_39032752740_1_compact'. Table engine: 'iceberg'..\")"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Call(Function { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,6)..Location(1,10)) }), Identifier(Iden…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_39032752740_1_compact'. Table engine: 'iceberg'..\")"
     }
    }
   },
@@ -1220,13 +1220,13 @@
      "o": "no",
      "n": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
     },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_39032752740_1_manifests', which is using the 'iceberg' engine..\")"
-    },
     "polars_iceberg": {
      "o": "no",
      "n": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Call(Function { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,6)..Location(1,10)) }), Identifier(Iden…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_39032752740_1_manifests', which is using the 'iceberg' engine..\")"
     }
    }
   }
