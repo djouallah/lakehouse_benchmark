@@ -20,8 +20,8 @@ from pathlib import Path
 # The column order, most usable first. Spark is the reference: the Iceberg Java library the others
 # are read against. Sail passes Trino with branches and tags (36 cells to 35, run 39754911920).
 # Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
-# credited for a library call beside its SQL. On a main build Polars passes Databend (25 cells to 13,
-# run 41190026395): its SQL now creates, inserts and alters, and has no DELETE, UPDATE or MERGE.
+# credited for a library call beside its SQL. On a main build Polars passes Databend (25 cells to
+# 13, run 41190026395): its SQL now creates, inserts and alters, and has no DELETE, UPDATE or MERGE.
 ENGINES = ("spark", "sail", "trino", "duckdb", "chdb", "polars", "databend")
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
