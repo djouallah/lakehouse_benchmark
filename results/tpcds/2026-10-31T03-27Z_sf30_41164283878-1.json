@@ -1,0 +1,52 @@
+{
+  "run_id": "41164283878-1",
+  "run_started_at": "2026-10-31T03:27:33Z",
+  "sf": 30,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41164283878",
+  "git_sha": "44d15f8",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1017-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "lakesail_iceberg": {
+      "version": "0.7.3",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 1.375,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 181.3037,
+          "rows": 147,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "SparkRuntimeException: The used disk space during the spilling process has exceeded the allowable limit of 64.0 GB. Please try increasing the config: `datafusion.runtime.max_temp_directory_size`."
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1017-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
