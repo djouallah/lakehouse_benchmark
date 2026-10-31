@@ -1,0 +1,44 @@
+{
+  "run_id": "41165619373-1",
+  "run_started_at": "2026-10-31T03:46:33Z",
+  "sf": 100,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41165619373",
+  "git_sha": "7a95385",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1017-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "lakesail_iceberg": {
+      "version": "0.7.3",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 1.4815,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "SparkRuntimeException: Resources exhausted: Failed to allocate additional 10.0 MB for ExternalSorterMerge[1] with 0.0 B already allocated for this reservation - 2000.0 KB remain available for the total memory pool: fair(pool_size: 10.0 GB)"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1017-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
