@@ -27,15 +27,15 @@
    "key": "ctas",
    "group": "create",
    "question": "CREATE TABLE ... AS SELECT",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: `CREATE TABLE ... AS SELECT` is not yet supported for catalog tables"
+   "outcome": "supported",
+   "detail": "CTAS: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees"
   },
   {
    "key": "partitioned",
    "group": "create",
    "question": "PARTITIONED BY (p), then INSERT",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: `PARTITIONED BY` is not yet supported for catalog tables; create the table unpartitioned, then add a partition spec with PyIceberg's update_spec"
+   "outcome": "supported",
+   "detail": "spec ['identity']; 3 rows over 2 partitions wrote 2 data file(s)"
   },
   {
    "key": "sort_order",
@@ -48,50 +48,50 @@
    "key": "partition_bucket",
    "group": "create",
    "question": "PARTITIONED BY (bucket(4, id)), then INSERT",
-   "outcome": "no",
-   "detail": "works: none; refused: bucket: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108"
+   "outcome": "supported",
+   "detail": "all of bucket"
   },
   {
    "key": "partition_truncate",
    "group": "create",
    "question": "PARTITIONED BY (truncate(2, x)), then INSERT",
-   "outcome": "no",
-   "detail": "works: none; refused: truncate: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 113"
+   "outcome": "supported",
+   "detail": "all of truncate"
   },
   {
    "key": "partition_temporal",
    "group": "create",
    "question": "PARTITIONED BY years / months / days / hours, then INSERT",
-   "outcome": "no",
-   "detail": "works: none; refused: year: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108; month: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 110; day: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 106; hour: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: ), found: ( at Line: 1, Column: 108"
+   "outcome": "supported",
+   "detail": "all of year, month, day, hour"
   },
   {
    "key": "types_scalar",
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
-   "outcome": "no",
-   "detail": "works: none; refused: decimal: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_decimal\", quote_style: None, span: Span(Location(1,36)..Location(1,65)) })])), table_alias: None, columns: [], ove\u2026; date: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_date\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })])), table_alias: None, columns: [], overwr\u2026; timestamp: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_timestamp\", quote_style: None, span: Span(Location(1,36)..Location(1,67)) })])), table_alias: None, columns: [], o\u2026; timestamptz: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_timestamptz\", quote_style: None, span: Span(Location(1,36)..Location(1,69)) })])), table_alias: None, columns: [],\u2026; uuid: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_uuid\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })])), table_alias: None, columns: [], overwr\u2026; binary: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_binary\", quote_style: None, span: Span(Location(1,36)..Location(1,64)) })])), table_alias: None, columns: [], over\u2026"
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
   },
   {
    "key": "types_nested",
    "group": "create",
    "question": "nested types: struct, list, map",
    "outcome": "no",
-   "detail": "works: none; refused: struct: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_struct\", quote_style: None, span: Span(Location(1,36)..Location(1,64)) })])), table_alias: None, columns: [], over\u2026; list: SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_type_list\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })])), table_alias: None, columns: [], overwr\u2026; map: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: < at Line: 1, Column: 80"
+   "detail": "works: ['list']; refused: struct: SQLInterfaceError: SQLInterfaceError: expression Struct { values: [Named { expr: Value(ValueWithSpan { value: Number(\"1\", false), span: Span(Location(1,34)..Location(1,35)) }), name: Ident { value: \"a\", quote_style: None, span: Span(Location(1,39)..Location(1,40)) } }, Named { expr: Value(ValueWithSpan { value: SingleQuotedString(\"x\"), span: Span(Location(1,42)..Location(1,45)) }), name: Ident { value: \"b\", quote_style: None, span: Span(Location(1,49)..Location(1,50)) } }], fields: [] } is not currently supported Resolved plan until failure: ---> FAILED HERE RESOLVING THIS_NODE <--- DF []; PROJECT */0 COLUMNS; map: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: < at Line: 1, Column: 80"
   },
   {
    "key": "insert_into",
    "group": "write",
    "question": "INSERT INTO",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_insert\", quote_style: None, span: Span(Location(1,36)..Location(1,59)) })])), table_alias: None, columns: [], overwrite\u2026"
+   "outcome": "supported",
+   "detail": "INSERT INTO: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees"
   },
   {
    "key": "insert_select",
    "group": "write",
    "question": "INSERT INTO ... SELECT",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_insertsel\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })])), table_alias: None, columns: [], overwr\u2026"
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: pyiceberg reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; Polars agrees"
   },
   {
    "key": "delete_from",
@@ -105,14 +105,14 @@
    "group": "write",
    "question": "UPDATE",
    "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_40246131077_1_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], version: N\u2026"
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41190026395_1_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], version: N\u2026"
   },
   {
    "key": "merge_upsert",
    "group": "write",
    "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
    "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Location(1,6)) }, optimizer_hints: [], into: true, table: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"pl_40246131077_1_merge\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) })]), alias: Some(TableAlias { explicit: false, name: Ident { value: \"t\", q\u2026"
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Location(1,6)) }, optimizer_hints: [], into: true, table: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"pl_41190026395_1_merge\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) })]), alias: Some(TableAlias { explicit: false, name: Ident { value: \"t\", q\u2026"
   },
   {
    "key": "truncate",
@@ -125,36 +125,36 @@
    "key": "insert_overwrite",
    "group": "write",
    "question": "INSERT OVERWRITE, whole table",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: false, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,24)..Location(1,28)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,29)..Location(1,46)) }), Identifier(Ident { value: \"pl_40246131077_1_overwrite\", quote_style: None, span: Span(Location(1,47)..Location(1,73)) })])), table_alias: None, columns: [], overw\u2026"
+   "outcome": "supported",
+   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Polars agrees"
   },
   {
    "key": "add_column",
    "group": "schema",
    "question": "ALTER TABLE ADD COLUMN",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_addcol\", quote_style: None, span: Span(Location(1,36)..Location(1,59)) })]), if_exists: false, only: false, operations: [AddColumn { column_keyword: true, if_not_exists: false, column_def: ColumnDef { name: Ident { value: \"w\", quote_style: None, span: Span(Location(1,71)..Location(1,72)) }, data_type: BigInt(None), options: [] \u2026"
+   "outcome": "supported",
+   "detail": "schema ['id', 'v', 'w']"
   },
   {
    "key": "drop_column",
    "group": "schema",
    "question": "ALTER TABLE DROP COLUMN",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_dropcol\", quote_style: None, span: Span(Location(1,36)..Location(1,60)) })]), if_exists: false, only: false, operations: [DropColumn { has_column_keyword: true, column_names: [Ident { value: \"v\", quote_style: None, span: Span(Location(1,73)..Location(1,74)) }], if_exists: false, drop_behavior: None }], location: None, on_cluste\u2026"
+   "outcome": "supported",
+   "detail": "schema now ['id']"
   },
   {
    "key": "rename_column",
    "group": "schema",
    "question": "ALTER TABLE RENAME COLUMN",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_renamecol\", quote_style: None, span: Span(Location(1,36)..Location(1,62)) })]), if_exists: false, only: false, operations: [RenameColumn { old_column_name: Ident { value: \"v\", quote_style: None, span: Span(Location(1,77)..Location(1,78)) }, new_column_name: Ident { value: \"v2\", quote_style: None, span: Span(Location(1,82)..Loca\u2026"
+   "outcome": "supported",
+   "detail": "renamed, data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Polars agrees"
   },
   {
    "key": "type_promotion",
    "group": "schema",
    "question": "ALTER COLUMN c SET DATA TYPE BIGINT (int -> long)",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_promote\", quote_style: None, span: Span(Location(1,36)..Location(1,60)) })]), if_exists: false, only: false, operations: [AlterColumn { column_name: Ident { value: \"c\", quote_style: None, span: Span(Location(1,74)..Location(1,75)) }, op: SetDataType { data_type: BigInt(None), using: None, had_set: true } }], location: None, on_\u2026"
+   "outcome": "supported",
+   "detail": "c is long, and the row written as int reads 7"
   },
   {
    "key": "partition_evolution",
@@ -167,15 +167,15 @@
    "key": "write_after_evolution",
    "group": "schema",
    "question": "INSERT, pyiceberg adds bucket(4, id), INSERT",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_evowrite\", quote_style: None, span: Span(Location(1,36)..Location(1,61)) })])), table_alias: None, columns: [], overwri\u2026"
+   "outcome": "supported",
+   "detail": "data files on specs [0, 1]; all 8 rows read, by pyiceberg and the engine"
   },
   {
    "key": "set_property",
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: AlterTable(AlterTable { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_props\", quote_style: None, span: Span(Location(1,36)..Location(1,58)) })]), if_exists: false, only: false, operations: [SetTblProperties { table_properties: [KeyValue { key: Ident { value: \"probed-at\", quote_style: Some('\\''), span: Span(Location(0,0)..Location(0,0)) }, value: Value(ValueWithSpan { value: SingleQuotedString(\"40\u2026"
+   "outcome": "supported",
+   "detail": "the property is on the table"
   },
   {
    "key": "time_travel",
@@ -189,7 +189,7 @@
    "group": "read",
    "question": "metadata tables (t.snapshots)",
    "outcome": "no",
-   "detail": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_40246131077_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_40246131077_1_inspect.snapshots' could not be loaded (NoSuchTableException: The given table does not exist); catalog identifiers are case-sensitive This error occurred with the following context stack: [1] 'python dataset scan'"
+   "detail": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_41190026395_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_41190026395_1_inspect.snapshots' could not be loaded (NoSuchTableException: The given table does not exist); catalog identifiers are case-sensitive This error occurred with the following context stack: [1] 'python dataset scan'"
   },
   {
    "key": "select_table",
@@ -210,7 +210,7 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_40246131077_1_max/data/00000-0-a1471328-eb44-4387-b119-a92edfc34124.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_40246131077_1_max/data/00000-0-a1471328-eb44-4387-b119-a92edfc34124.parquet in 66.533004ms - Server returned non-2xx status code: 404 Not Found: <?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist. RequestId:82ccf270-b01e-00f0-47db-6466b3000000\u2026"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41190026395_1_max/data/00000-0-00cd4f83-4562-4ef7-a9b4-4ef05f9d3bc0.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41190026395_1_max/data/00000-0-00cd4f83-4562-4ef7-a9b4-4ef05f9d3bc0.parquet in 174.559849ms - Server returned non-2xx status code: 404 Not Found: <?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist. RequestId:5a7f210a-701e-00c6-051d-691de100000\u2026"
   },
   {
    "key": "create_branch",
@@ -244,22 +244,22 @@
    "key": "namespace_create",
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: CreateSchema { schema_name: Simple(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,15)..Location(1,19)) }), Identifier(Ident { value: \"pl_40246131077_1_ns\", quote_style: None, span: Span(Location(1,20)..Location(1,39)) })])), if_not_exists: false, with: None, options: None, default_collate_spec: None, clone: None }"
+   "outcome": "supported",
+   "detail": "`pl_41190026395_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
    "group": "catalog",
    "question": "DROP SCHEMA (namespace)",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Drop { object_type: Schema, if_exists: false, names: [ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"pl_40246131077_1_nsdrop\", quote_style: None, span: Span(Location(1,18)..Location(1,41)) })])], cascade: false, restrict: false, purge: false, temporary: false, table: None }"
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
   },
   {
    "key": "namespace_existing",
    "group": "catalog",
    "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: CreateSchema { schema_name: Simple(ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,29)..Location(1,33)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,34)..Location(1,51)) })])), if_not_exists: true, with: None, options: None, default_collate_spec: None, clone: None }"
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
   },
   {
    "key": "drop_purge",
@@ -272,8 +272,8 @@
    "key": "race_append",
    "group": "concurrency",
    "question": "INSERT INTO; B appends between Polars' read and commit",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Insert(Insert { insert_token: TokenWithSpan { token: Word(Word { value: \"INSERT\", quote_style: None, keyword: INSERT }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], or: None, ignore: false, into: true, table: TableName(ObjectName([Identifier(Ident { value: \"race\", quote_style: None, span: Span(Location(1,13)..Location(1,17)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,18)..Location(1,35)) }), Identifier(Ident { value: \"pl_40246131077_1_race_append\", quote_style: None, span: Span(Location(1,36)..Location(1,64)) })])), table_alias: None, columns: [], over\u2026"
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50)]; commits [409, 200]"
   },
   {
    "key": "race_delete",
@@ -287,10 +287,10 @@
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"race\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_40246131077_1_race_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], versi\u2026"
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"race\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41190026395_1_race_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], versi\u2026"
   }
  ],
- "run": "40246131077",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/40246131077",
- "date": "2026-10-25"
+ "run": "41190026395",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41190026395",
+ "date": "2026-10-31"
 }
