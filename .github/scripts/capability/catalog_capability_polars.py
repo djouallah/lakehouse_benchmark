@@ -5,14 +5,13 @@ REST catalog attached by `register_catalog` (Polars 2.1.0, pola-rs/polars#30113)
 what each engine's SQL can do. Polars' Python API (`sink_iceberg`, `pl.delete_iceberg`,
 `scan_iceberg`) is not asked, the way no other engine is credited for a library call beside its SQL.
 
-THE STATEMENTS ARE THE ONES THE OTHER SQL ENGINES TAKE, in the generic form: Polars' SQL has no
-DDL or DML for a catalog table beyond `CREATE TABLE` (pola-rs/polars#30260) and `DROP TABLE`
-(#30247), so where it has no statement of its own it is sent the common one (Spark's, for
-PARTITIONED BY, ALTER ... and CALL), and its error is the answer, quoted in full.
+THE STATEMENTS ARE THE ONES THE OTHER SQL ENGINES TAKE, in the generic form, except a partition
+transform, where Polars has its own `PARTITION BY (bucket(4, id))` (pola-rs/polars#30403). Where it
+has no statement of its own it is sent the common one (Spark's, for ALTER ... and CALL), and its
+error is the answer, quoted in full.
 
-THE TABLES A STATEMENT WRITES INTO ARE MADE BY PYICEBERG, created and seeded. Polars cannot
-INSERT into a catalog table, so it cannot seed one: this way each statement is asked on its own.
-The create probes ask Polars' own CREATE TABLE (pola-rs/polars#30260).
+THE TABLES A STATEMENT WRITES INTO ARE MADE BY PYICEBERG, created and seeded: this way each
+statement is asked on its own. The create probes ask Polars' own CREATE TABLE (#30260).
 
 EVERY PROBE CHECKS ITS EFFECT through pyiceberg, which reads what the CATALOG now says. Accepted
 with no effect is a no-op, not a yes.
@@ -110,7 +109,7 @@ def _transform_sql(kind: str) -> tuple[str, str, str]:
         values = ", ".join(f"({i}, '{v}')" for i, v in TRANSFORM_ROWS["truncate"])
         return "id BIGINT, x VARCHAR", "truncate(2, x)", values
     values = ", ".join(f"({i}, CAST('{v}' AS TIMESTAMP))" for i, v in TRANSFORM_ROWS["temporal"])
-    return "id BIGINT, x TIMESTAMP", f"{kind}s(x)", values
+    return "id BIGINT, x TIMESTAMP", f"{kind}(x)", values
 
 
 class PolarsCapability:
@@ -271,7 +270,7 @@ class PolarsCapability:
         columns, part, values = _transform_sql(kind)
         _, _, parts = transform_case(kind)
         try:
-            table = self._create(f"tr_{kind}", columns, f" PARTITIONED BY ({part})")
+            table = self._create(f"tr_{kind}", columns, f" PARTITION BY ({part})")
             self.sql(f"INSERT INTO {self.t(table)} VALUES {values}")
         except (Refused, NoOp) as exc:
             return kind, REFUSED, str(exc)

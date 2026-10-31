@@ -1,7 +1,10 @@
 # Polars writes with LazyFrame.sink_iceberg, first released in 2.0.0.
 # 2.1.0 (2026-10-25) is the first release with sink_iceberg's create_if_not_exists
 # (pola-rs/polars#29908), pl.delete_iceberg (#30032), bucket-partitioned sinks (#30091), and SQL
-# DROP TABLE ... PURGE (#30247) and CREATE TABLE (#30260) through register_catalog. Until then the
-# grid ran a main build (pola-rs/polars@294364c069), which 2.1.0 contains.
+# DROP TABLE ... PURGE (#30247) and CREATE TABLE (#30260) through register_catalog.
+# Polars main (pola-rs/polars@c8c0e7a2c4, 2026-10-31, tmp_polars_main.yml) until a release after
+# 2.1.0: SQL CTAS (#30267), PARTITION BY (#30403), CREATE and DROP SCHEMA (#30418), ALTER TABLE
+# (#30436), INSERT INTO and INSERT OVERWRITE (#30463). It reports the last release's version, 2.1.0.
 -r capability_catalog.txt
-polars[iceberg]>=2.1.0
+polars[iceberg] @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars-2.1.0-py3-none-any.whl
+polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars_runtime_32-2.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl

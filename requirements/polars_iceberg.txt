@@ -1,9 +1,9 @@
 azure-identity>=1.19
 psutil>=6
 pyiceberg[pyarrow,adlfs]>=0.12.0
-# 2.1.0 (2026-10-25) is the first release with the fixes 2.0.0 lacks: TPC-H Q11 (#29762),
-# TPC-DS Q72 (#29768) and the TPC-DS Q4 regression (#29822). Until then the bench ran a main
-# build (pola-rs/polars@769413ba3f), which 2.1.0 contains.
+# Polars main (pola-rs/polars@c8c0e7a2c4, 2026-10-31, tmp_polars_main.yml) until a release after
+# 2.1.0 has its Iceberg work. A main build reports the last release's version, 2.1.0.
 # The iceberg extra brings polars-iceberg, the native scan planner (pola-rs/polars#29753);
 # without it 2.1.0 plans every Iceberg scan with PyIceberg and warns.
-polars[iceberg]>=2.1.0
+polars[iceberg] @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars-2.1.0-py3-none-any.whl
+polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars_runtime_32-2.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl

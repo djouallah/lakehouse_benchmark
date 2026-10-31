@@ -14,10 +14,12 @@
 #     buffered frames kept spillable while a streaming sort partitions (#30268)
 #   * since 2026-10-25 main d02c62175a: freed memory returned to the OS while data is spilled
 #     (#30280) and the streaming window node out of core (#30282)
+#   * since 2026-10-31 main c8c0e7a2c4, as every Polars leg, until a release after 2.1.0
 dbt-polars[iceberg]==0.5.0
 # Its Azure storage catalog, at the same version (it pins dbt-polars==<version>): the landing files as dbt sources (external.location).
 dbt-polars-catalog-azure==0.5.0
-polars[iceberg]>=2.1.0
+polars[iceberg] @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars-2.1.0-py3-none-any.whl
+polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars_runtime_32-2.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
 azure-identity>=1.19
 # workload_run_engine.py's peak RSS sampler.

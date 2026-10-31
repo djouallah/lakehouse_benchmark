@@ -1,8 +1,9 @@
 # polars_iceberg.txt plus azure-storage-file-datalake (bench/etl/data.py lists Files/csv over
 # ADLS before the engine starts). `write_iceberg` is pyiceberg underneath, which the read
-# benchmark's file already carries. The same polars as there, 2.1.0 or later.
+# benchmark's file already carries. The same polars as there, a main build.
 azure-identity>=1.19
 azure-storage-file-datalake>=12.17
 psutil>=6
 pyiceberg[pyarrow,adlfs]>=0.12.0
-polars[iceberg]>=2.1.0
+polars[iceberg] @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars-2.1.0-py3-none-any.whl
+polars-runtime-32 @ https://github.com/djouallah/lakehouse_benchmark/releases/download/polars-main-c8c0e7a2c4/polars_runtime_32-2.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
