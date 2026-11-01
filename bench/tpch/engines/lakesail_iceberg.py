@@ -97,6 +97,10 @@ class LakesailIceberg:
         # (~2.7 GiB) keeps hash joins, SF=30 (~8 GiB) and up spill.
         spill_joins = self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2
         os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "false" if spill_joins else "true"
+        # Zstd spill files where joins spill: TPC-DS Q72 passes the 64 GiB cap uncompressed at SF=30
+        # (run 41164283878) and SF=60 (run 41162782690). The disk holds ~105 GB.
+        if spill_joins:
+            os.environ["SAIL_RUNTIME__TEMPORARY_FILES__COMPRESSION"] = "zstd"
         #
         # TRIED AND REVERTED: SAIL_PARQUET__PUSHDOWN_FILTERS=true (+ REORDER_FILTERS), Sail's
         # late-materialization switch, off by default. Run 35512613884 at SF=10: the queries it
