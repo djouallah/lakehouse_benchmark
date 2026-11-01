@@ -8,8 +8,7 @@
 #   sail     dbt-spark `method: session` on LakeSail over Spark Connect, Iceberg
 #
 # ONE PROJECT, ONE TREE PER SQL DIALECT: models/aemo/<tree>/<layer>/<model>.sql, the tree named
-# after the engine, except gluten and sail, which share the `spark` tree (Spark SQL on both; the
-# few Sail differences are `target.name == 'sail'` branches in macros/spark_read_csv.sql). Exactly
+# after the engine, except gluten and sail, which share the `spark` tree, the same Spark SQL on both. Exactly
 # one tree is +enabled per run, keyed on target.name, so the same model names never collide. There
 # is no --select anywhere. A target name that matches no tree disables everything and
 # `dbt build` exits 0 having built nothing -- workload_run_engine.py refuses a run with no models.

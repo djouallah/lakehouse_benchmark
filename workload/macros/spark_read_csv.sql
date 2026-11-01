@@ -6,7 +6,7 @@
                                               (<explicit STRING schema>) USING csv OPTIONS
                                               (path '<folder>/{this run's files}', header, PERMISSIVE),
                                               DROP + CREATE TABLE <model>__stage_<run> USING iceberg,
-                                              then INSERT ... SELECT *, input_file_name()
+                                              then INSERT ... SELECT <columns>, input_file_name()
                                               FROM raw_<record> WHERE <record filter>
        model body                             SELECT <casts> FROM <model>__stage_<run>
        post_hook   spark_drop_stage()         DROP TABLE IF EXISTS <model>__stage_<run> PURGE
@@ -33,18 +33,15 @@
 {% endmacro %}
 
 
-{#-- The sail leg only: the csv view's schema padded to 140 STRING columns, as the Trino
-     leg's external tables are (workload_run_engine.py, TRINO_CSV_TABLES) and the Sail ETL's read is
+{#-- The csv view's schema padded to 140 STRING columns, as the Trino leg's external tables are
+     (workload_run_engine.py, TRINO_CSV_TABLES) and the ETL's read is
      (bench/etl/engines/_spark_df.py). Sail's csv reader refuses a row LONGER than the schema --
-     "incorrect number of fields for line 291, expected 53 got 120" (run 39686575857) -- where
-     Spark's PERMISSIVE nulls it and the record filter drops it. The pad columns never leave the
-     view: the stage takes the record's own columns by name. --#}
+     "incorrect number of fields for line 291, expected 53 got 120" (run 39686575857). The pad
+     columns never leave the view: the stage takes the record's own columns by name. --#}
 {% macro spark_csv_view_schema(record) %}
-  {%- set schema = spark_csv_schema(record) -%}
-  {%- if target.name != 'sail' -%}{{ return(schema) }}{%- endif -%}
   {%- set pads = [] -%}
   {%- for i in range(aemo_columns(record) | length, 140) %}{% do pads.append('`_pad_' ~ i ~ '` STRING') %}{% endfor -%}
-  {{ return(([schema] + pads) | join(', ')) }}
+  {{ return(([spark_csv_schema(record)] + pads) | join(', ')) }}
 {% endmacro %}
 
 
@@ -91,7 +88,7 @@
   {%- do run_query('CREATE TABLE ' ~ stage ~ ' (' ~ spark_csv_schema(record) ~ ', `_fname` STRING) USING iceberg') -%}
   {%- if files | length > 0 -%}
   INSERT INTO {{ stage }}
-  SELECT {% if target.name == 'sail' %}{% for c in aemo_columns(record) %}`{{ c }}`, {% endfor %}{% else %}*, {% endif %}input_file_name() AS _fname
+  SELECT {% for c in aemo_columns(record) %}`{{ c }}`, {% endfor %}input_file_name() AS _fname
   FROM raw_{{ record }}
   WHERE {{ spark_record_filter(record) }}
   {%- endif -%}
@@ -120,10 +117,9 @@
   {%- set spec = aemo_spec(record) -%}
   {%- set parts = [] -%}
   {%- for col, val in spec['equals'] %}{% do parts.append(prefix ~ col ~ " = '" ~ val ~ "'") %}{% endfor -%}
-  {#-- TRY_CAST on the sail leg: Sail's CAST raises on the files' own header row ("Cast error:
-       Cannot cast string 'SCADAVALUE' to value of Float64 type", run 39687083463), where Spark's
-       gives NULL and `I = 'D'` drops the row. --#}
-  {%- set cast = 'TRY_CAST(' if target.name == 'sail' else 'CAST(' -%}
-  {%- if spec['nonzero'] %}{% do parts.append(cast ~ prefix ~ spec['nonzero'] ~ ' AS DOUBLE) != 0') %}{% endif -%}
+  {#-- TRY_CAST: Sail's CAST raises on the files' own header row ("Cast error: Cannot cast string
+       'SCADAVALUE' to value of Float64 type", run 39687083463). NULL there, and `I = 'D'` drops
+       the row. --#}
+  {%- if spec['nonzero'] %}{% do parts.append('TRY_CAST(' ~ prefix ~ spec['nonzero'] ~ ' AS DOUBLE) != 0') %}{% endif -%}
   {{ parts | join(' AND ') }}
 {% endmacro %}
