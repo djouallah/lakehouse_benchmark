@@ -2,6 +2,5 @@
 -- residual concurrent-writer race, and for an incremental strategy that stopped deduping.
 SELECT `file`, `DUID`, `SETTLEMENTDATE`, COUNT(*) AS n
 FROM {{ ref('fct_scada_today') }}
--- Ordinals, not GROUP BY ALL, which Sail reads as a column named ALL (lakehq/sail#2836).
-GROUP BY 1, 2, 3
+GROUP BY ALL
 HAVING COUNT(*) > 1

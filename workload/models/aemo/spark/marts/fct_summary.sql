@@ -28,8 +28,7 @@
 {# Closes with `%}`, NOT `-%}`: a right-strip swallows the newlines after this tag and
    glues WITH onto the `-- depends_on` comment line above, commenting the keyword out. #}
 {%- set scoped = is_incremental() %}
-{#- For Sail, valid on Gluten too: GROUP BY ordinals, because Sail reads
-    GROUP BY ALL as a column named ALL (lakehq/sail#2836); and the interval joined on its epoch
+{#- For Sail, valid on Gluten too: the interval joined on its epoch
     seconds, because DataFusion's sort-merge join cannot compare a UTC timestamp key
     (apache/datafusion#26003). AEMO's intervals are whole seconds, so the match is the same. #}
 
@@ -100,7 +99,7 @@ daily_summary AS (
     -- from it with the same SQL, so this drops no matching row, and fct_price is pruned too.
     AND p.DATE IN ({{ rebuild_dates }})
     {% endif %}
-  GROUP BY 1, 2, 3
+  GROUP BY ALL
 
   UNION ALL
 
@@ -122,7 +121,7 @@ daily_summary AS (
     -- Only units the daily branch will be able to reproduce once this date settles.
     AND s.DUID IN (SELECT DUID FROM dispatch_duids)
     AND s.SETTLEMENTDATE > (SELECT MAX(CAST(SETTLEMENTDATE AS TIMESTAMP)) FROM {{ ref('fct_scada') }})
-  GROUP BY 1, 2, 3
+  GROUP BY ALL
 ),
 
 batch AS (

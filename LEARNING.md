@@ -952,7 +952,9 @@ one, into `dbt_sail_*`, 10 files a run. First green run (probe, main 151a417d5d)
 - **The csv view.** Sail refuses a row shorter or longer than the schema ("incorrect number of
   fields for line 291, expected 53 got 120"); Spark's PERMISSIVE nulls it. `allowTruncatedRows`
   plus 140 padded STRING columns, as the Trino leg and the Sail ETL do; the stage takes the
-  record's columns by name.
+  record's columns by name. Since 0.7.3 a short row is PERMISSIVE by default
+  ([sail#2877](https://github.com/lakehq/sail/pull/2877)), and `allowTruncatedRows` is gone; the
+  padding stays for a long row.
 - **`TRY_CAST` in the record filter.** Sail's CAST raises on the files' own header row
   ("Cannot cast string 'SCADAVALUE' to value of Float64 type"); Spark's gives NULL.
 - **Dialect:** `GROUP BY 1, 2, 3`, not `GROUP BY ALL`,

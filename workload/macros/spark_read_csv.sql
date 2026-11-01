@@ -73,12 +73,8 @@
   {%- else -%}
     {%- set path = folder ~ '/{' ~ files | join(',') ~ '}' -%}
   {%- endif -%}
-  {#-- The sail leg: Sail's csv reader refuses a row shorter than the schema ("Csv error:
-       incorrect number of fields for line 1, expected 130 got 10", run 39685977867) unless told
-       otherwise; Spark's PERMISSIVE pads it with nulls. bench/etl/engines/_spark_df.py, same option. --#}
   CREATE OR REPLACE TEMPORARY VIEW raw_{{ record }} ({{ spark_csv_view_schema(record) }})
-  USING csv OPTIONS (path '{{ path }}', header 'true', mode 'PERMISSIVE'
-  {%- if target.name == 'sail' %}, allowTruncatedRows 'true'{% endif %})
+  USING csv OPTIONS (path '{{ path }}', header 'true', mode 'PERMISSIVE')
 {% endmacro %}
 
 

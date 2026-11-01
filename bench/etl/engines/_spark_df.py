@@ -31,9 +31,6 @@ def transform(session, uris: list[str], filename: bool = False):
     df = (
         session.read.format("csv")
         .option("header", "false")
-        # Sail's option; Spark ignores an option it does not know, and its PERMISSIVE default
-        # pads short rows with nulls on its own.
-        .option("allowTruncatedRows", "true")
         .schema(USER_SCHEMA)
         .load(uris)
     )
