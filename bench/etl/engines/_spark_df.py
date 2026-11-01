@@ -28,12 +28,7 @@ def transform(session, uris: list[str], filename: bool = False):
     """
     from pyspark.sql import functions as f
 
-    df = (
-        session.read.format("csv")
-        .option("header", "false")
-        .schema(USER_SCHEMA)
-        .load(uris)
-    )
+    df = session.read.format("csv").option("header", "false").schema(USER_SCHEMA).load(uris)
     if filename:
         df = df.withColumn("filename", f.input_file_name())
     df = (
