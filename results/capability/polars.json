@@ -1,13 +1,13 @@
 {
  "engine": "polars",
- "version": "main c8c0e7a2c4",
+ "version": "main 94901bca62",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Polars attaches the REST catalog with register_catalog",
    "outcome": "supported",
-   "detail": "polars main c8c0e7a2c4; the REST catalog attached as `lake`"
+   "detail": "polars main 94901bca62; the REST catalog attached as `lake`"
   },
   {
    "key": "create_table",
@@ -105,21 +105,21 @@
    "group": "write",
    "question": "UPDATE",
    "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41190026395_1_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], version: N\u2026"
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41310920597_1_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], version: N\u2026"
   },
   {
    "key": "merge_upsert",
    "group": "write",
    "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
    "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Location(1,6)) }, optimizer_hints: [], into: true, table: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"pl_41190026395_1_merge\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) })]), alias: Some(TableAlias { explicit: false, name: Ident { value: \"t\", q\u2026"
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Location(1,6)) }, optimizer_hints: [], into: true, table: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"pl_41310920597_1_merge\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) })]), alias: Some(TableAlias { explicit: false, name: Ident { value: \"t\", q\u2026"
   },
   {
    "key": "truncate",
    "group": "write",
    "question": "TRUNCATE TABLE",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: TRUNCATE on a table of attached catalog 'lake' is not supported"
+   "outcome": "supported",
+   "detail": "TRUNCATE: pyiceberg reads []; Polars agrees; metadata-only: delete snapshot, deleted-data-files 1, added-data-files None, added-delete-files None"
   },
   {
    "key": "insert_overwrite",
@@ -189,7 +189,7 @@
    "group": "read",
    "question": "metadata tables (t.snapshots)",
    "outcome": "no",
-   "detail": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_41190026395_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_41190026395_1_inspect.snapshots' could not be loaded (NoSuchTableException: The given table does not exist); catalog identifiers are case-sensitive This error occurred with the following context stack: [1] 'python dataset scan'"
+   "detail": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_41310920597_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_41310920597_1_inspect.snapshots' could not be loaded (NoSuchTableException: The given table does not exist); catalog identifiers are case-sensitive This error occurred with the following context stack: [1] 'python dataset scan'"
   },
   {
    "key": "select_table",
@@ -210,7 +210,7 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41190026395_1_max/data/00000-0-00cd4f83-4562-4ef7-a9b4-4ef05f9d3bc0.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41190026395_1_max/data/00000-0-00cd4f83-4562-4ef7-a9b4-4ef05f9d3bc0.parquet in 174.559849ms - Server returned non-2xx status code: 404 Not Found: <?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist. RequestId:5a7f210a-701e-00c6-051d-691de100000\u2026"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41310920597_1_max/data/00000-0-c70c8a0c-0eea-4654-a03d-8d01c6d78fd3.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41310920597_1_max/data/00000-0-c70c8a0c-0eea-4654-a03d-8d01c6d78fd3.parquet in 942.656742ms - Server returned non-2xx status code: 404 Not Found: <?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist. RequestId:0e50d3a4-101e-000e-5904-6a6d5500000\u2026"
   },
   {
    "key": "create_branch",
@@ -287,10 +287,10 @@
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"race\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41190026395_1_race_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], versi\u2026"
+   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"race\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41310920597_1_race_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], versi\u2026"
   }
  ],
- "run": "41190026395",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41190026395",
- "date": "2026-10-31"
+ "run": "41310920597",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41310920597",
+ "date": "2026-11-01"
 }
