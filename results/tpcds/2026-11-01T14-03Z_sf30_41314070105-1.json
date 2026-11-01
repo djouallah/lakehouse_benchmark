@@ -1,0 +1,52 @@
+{
+  "run_id": "41314070105-1",
+  "run_started_at": "2026-11-01T14:03:01Z",
+  "sf": 30,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41314070105",
+  "git_sha": "ea764a0",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1017-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.15",
+  "schema_version": 1,
+  "engines": {
+    "lakesail_iceberg": {
+      "version": "0.7.3",
+      "status": "timed_out",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 1.5942,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 204.2269,
+          "rows": 147,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "QueryTimeout: did not finish in 900 s"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1017-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.15"
+      }
+    }
+  }
+}
