@@ -35,6 +35,8 @@ PACKAGE = {
     "lakesail_iceberg": "pysail",
 }
 STAMP = r"^\S+Z "  # the timestamp GitHub puts on every log line
+# pip's line for a Polars main wheel; its freeze line says the last release (bench/polars_build.py).
+POLARS_MAIN = re.compile(r"Collecting polars(?:\[\w+\])? @ \S*/polars-main-([0-9a-f]+)/")
 ENGINE_LINE = re.compile(STAMP + r"(\w+) \| .+ SF=\d+ \| namespace ", re.M)
 SETUP_LINE = re.compile(STAMP + r"\s+setup ([\d.]+)s$", re.M)
 QUERY_LINE = re.compile(STAMP + r"\s+Q(\d+)\s+(cold|warm)\s+([\d.]+)s\s+(\d+) rows$", re.M)
@@ -55,6 +57,9 @@ def part_from_log(log: str, suite) -> tuple[str, EngineResult] | None:
     if engine in PACKAGE:
         pinned = re.search(STAMP + re.escape(PACKAGE[engine]) + r"==(\S+)$", log, re.M)
         version = pinned.group(1) if pinned else version
+    main = POLARS_MAIN.search(log) if engine == "polars_iceberg" else None
+    if main:
+        version = f"main {main.group(1)}"
     setup = SETUP_LINE.search(log)
     if not setup:
         rows = [Row("cold", "setup", 0, None, status="error", error=KILLED)]
