@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE ... PROPERTIES (location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_41602439955_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_41604119887_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -245,7 +245,7 @@
    "group": "maintenance",
    "question": "EXECUTE rewrite_data_files (compaction)",
    "outcome": "no",
-   "detail": "ProgrammingError: (1064, \"Getting analyzing error. Detail message: Failed to resolve table procedure args: BinaryPredicate{type=BOOLEAN}. msg: Getting analyzing error. Detail message: Argument 'rewrite_all' must be a constant, got cast(rewrite_all as double) = 1., expected const argument.\")"
+   "detail": "ProgrammingError: (1064, \"Getting analyzing error. Detail message: Failed to resolve table procedure args: BinaryPredicate{type=BOOLEAN}. msg: Getting analyzing error. Detail message: Argument 'rewrite_all' must be a constant, got cast(min_file_size_bytes as DECIMAL128(38,9)) = 1073741824.000000000., expected const argument.\")"
   },
   {
    "key": "rewrite_manifests",
@@ -300,11 +300,11 @@
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
-   "outcome": "broken",
-   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_41602439955_1_race_update does not support update')"
+   "outcome": "no",
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_41604119887_1_race_update does not support update')"
   }
  ],
- "run": "41602439955",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41602439955",
+ "run": "41604119887",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41604119887",
  "date": "2026-11-03"
 }
