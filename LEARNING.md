@@ -639,9 +639,9 @@ Storage stops it. In `CometScanRule.scala`:
 private val icebergReadableSchemes: Set[String] = Set("file", "s3", "s3a", "gs", "oss")
 ```
 
-- **No `abfss`, deliberately.** iceberg-rust's OpenDAL factory cannot build Azure storage, so
-  admitting it would turn a clean JVM fallback into a native error. OneLake scans would run on the
-  JVM exactly as without Comet, while Comet held off-heap memory out of 16 GB.
+- **No `abfss`, deliberately.** Comet's storage factory has no Azure arm, so admitting it would
+  turn a clean JVM fallback into a native error. OneLake scans would run on the JVM exactly as
+  without Comet, while Comet held off-heap memory out of 16 GB.
 - **It would also break the credential path.** Native scans bypass Hadoop's ABFS driver and
   rebuild auth in Rust from a fixed allowlist of `fs.azure.*` keys. The custom token provider
   (`WorkloadIdentityTokenProvider`) would never be called. The account is derived from the first
@@ -652,6 +652,11 @@ private val icebergReadableSchemes: Set[String] = Set("file", "s3", "s3a", "gs",
   loaded from `builtin_storage_schemes` in `native/core/src/execution/operators/iceberg_common.rs`.
   On 2026-10-11 the read list there is `file`, `gs`, `oss`, `s3`, `s3a`. PR #6059 (Azure auth
   through Hadoop) is for the native Parquet scan, not the Iceberg scan.
+- **Rechecked 2026-11-03, Comet 1.2.0 and main.** The read list is unchanged, and the test
+  `unlisted_schemes_are_rejected_for_both_modes` asserts `abfs`/`abfss` are rejected. Native
+  Iceberg writes are new, on `file`, `memory`, `gs`, `s3`, `s3a` only. The Azure backend itself
+  exists: Comet builds iceberg-rust's `OpenDalStorageFactory::Azdls` (feature `opendal-azdls`),
+  but `storage_factory_for` has no arm that uses it.
 
 ## DataFusion: no Iceberg in Python
 
