@@ -7,4 +7,6 @@ azure-identity>=1.19
 azure-storage-file-datalake>=12.17
 psutil>=6
 pyiceberg[pyarrow,adlfs]>=0.12.0
-daft[azure]>=0.7.25
+# The Daft nightly bffd83483 (2026-10-30), v0.8.0-rc.1 less its version bump, until 0.8.0 is on
+# PyPI: it reads OneLake's abfss:// paths (Eventual-Inc/Daft#7533).
+daft[azure] @ https://nightly.daft.ai/builds/nightly/daft-0.7.26.dev53%2Bgbffd83483-cp310-abi3-manylinux_2_24_x86_64.whl

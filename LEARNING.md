@@ -592,9 +592,11 @@ Largest scale each engine completes, cold, every statement answered:
 
   The maintainers asked for one issue per failure. Q1 and Q9 are
   [Eventual-Inc/Daft#7601](https://github.com/Eventual-Inc/Daft/issues/7601), Q8 and Q14 are
-  [Eventual-Inc/Daft#7602](https://github.com/Eventual-Inc/Daft/issues/7602). Q11 has a PR,
-  [Eventual-Inc/Daft#7573](https://github.com/Eventual-Inc/Daft/pull/7573). Q22 is fixed on main by
-  [Eventual-Inc/Daft#7577](https://github.com/Eventual-Inc/Daft/pull/7577), not yet in a release.
+  [Eventual-Inc/Daft#7602](https://github.com/Eventual-Inc/Daft/issues/7602). Q11 and Q22 are fixed by
+  [Eventual-Inc/Daft#7573](https://github.com/Eventual-Inc/Daft/pull/7573) (`CROSS JOIN`) and
+  [Eventual-Inc/Daft#7577](https://github.com/Eventual-Inc/Daft/pull/7577) (`SUBSTRING`), both in
+  v0.8.0-rc.1 (2026-11-03). #7601 and #7602 are still open, so 4 of 22 still fail and Daft stays
+  ETL-only.
 - **It rejects backticks outright**: "Daft only supports delimited identifiers with
   double-quotes". That failed all 22 queries at first and looked like a total dialect failure
   until the error was read. Hence the third `IDENT_STYLE`, `quoted`.
@@ -602,9 +604,9 @@ Largest scale each engine completes, cold, every statement answered:
   `container@host` when the host ends in `.dfs.core.windows.net`. On
   `onelake.dfs.fabric.microsoft.com` it takes the host as the container, and OneLake answers
   `400 FriendlyNameSupportDisabled`. The fix,
-  [Eventual-Inc/Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533), is merged but not in
-  a release yet (0.7.26 does not have it). Until a release has it, the ETL engine reads and writes
-  `az://` paths.
+  [Eventual-Inc/Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533), is in v0.8.0-rc.1, not
+  yet on PyPI. The ETL runs the Daft nightly bffd83483 (the rc less its version bump) and reads and
+  writes `abfss://` like every other engine; before, it went through `az://` paths.
 
 ## pandas: in the ETL only
 

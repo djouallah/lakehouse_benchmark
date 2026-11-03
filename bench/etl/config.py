@@ -92,12 +92,6 @@ class EtlConfig(Config):
         return f"{self.base_path}/{CSV_DIR}"
 
     @property
-    def csv_az(self) -> str:
-        """`az://<workspace>/<lakehouse>/Files/csv`: the same files in the one Azure URI form Daft
-        parses correctly on OneLake (see engines/daft_iceberg.py)."""
-        return f"az://{self.workspace_id}/{self.lakehouse_id}/{CSV_DIR}"
-
-    @property
     def csv_https(self) -> str:
         """Plain-HTTPS prefix of the same files, for chDB's `url()` (engines/chdb_iceberg.py)."""
         return f"https://{ONELAKE_BLOB}/{self.workspace_id}/{self.lakehouse_id}/{CSV_DIR}"
