@@ -597,7 +597,12 @@ class StarRocksCapability:
         table = self._fresh("compact")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
         before = len(list(self.iceberg(table).scan().plan_files()))
-        self.sql(f'ALTER TABLE {self.t(table)} EXECUTE rewrite_data_files("rewrite_all" = true)')
+        # The docs' form, a numeric key: every file under 1 GB is small. A boolean
+        # ("rewrite_all" = true) is read as a comparison (run 41602439955).
+        self.sql(
+            f"ALTER TABLE {self.t(table)} EXECUTE "
+            'rewrite_data_files("min_file_size_bytes" = 1073741824)'
+        )
         after = len(list(self.iceberg(table).scan().plan_files()))
         if after >= before:
             raise NoOp(f"returned success and data files went {before} -> {after}")
@@ -666,7 +671,14 @@ class StarRocksCapability:
         self.iceberg(table).append(rows(SEED))
         raced = self.t(table, catalog="race")
         write = lambda: self.sql(statement.format(t=raced))  # noqa: E731
-        return race_probe(key, self.pyiceberg(), self.proxy, table, write)
+        try:
+            return race_probe(key, self.pyiceberg(), self.proxy, table, write)
+        except Exception as exc:  # noqa: BLE001 - re-raised unless it is StarRocks' own no
+            # No commit was tried because the statement itself is refused on Iceberg tables:
+            # that is the engine's `no`, not a probe that could not ask.
+            if "commits [none]" in str(exc) and "does not support" in str(exc):
+                raise Refused(str(exc)) from None
+            raise
 
     def race_append(self) -> str:
         return self._race("race_append", "INSERT INTO {t} " + _select([(5, 50)]))

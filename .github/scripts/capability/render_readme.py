@@ -22,8 +22,9 @@ from pathlib import Path
 # Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
 # credited for a library call beside its SQL. On a main build Polars passes Databend (25 cells to
 # 13, run 41190026395): its SQL now creates, inserts and alters, and has no DELETE, UPDATE or MERGE.
-# StarRocks joined 2026-11-03, at the end until its first reading places it.
-ENGINES = ("spark", "sail", "trino", "duckdb", "chdb", "polars", "databend", "starrocks")
+# StarRocks (2026-11-03, run 41602439955) follows Trino: both are the Iceberg Java library, and it
+# lacks UPDATE, MERGE, timestamptz/uuid columns and sort order evolution.
+ENGINES = ("spark", "sail", "trino", "starrocks", "duckdb", "chdb", "polars", "databend")
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
 FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend", "starrocks")

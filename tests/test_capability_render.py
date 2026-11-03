@@ -181,11 +181,11 @@ def test_the_columns_go_from_most_to_least_usable():
         "spark",
         "sail",
         "trino",
+        "starrocks",
         "duckdb",
         "chdb",
         "polars",
         "databend",
-        "starrocks",
     )
 
 
