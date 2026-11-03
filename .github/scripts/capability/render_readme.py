@@ -22,10 +22,11 @@ from pathlib import Path
 # Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
 # credited for a library call beside its SQL. On a main build Polars passes Databend (25 cells to
 # 13, run 41190026395): its SQL now creates, inserts and alters, and has no DELETE, UPDATE or MERGE.
-ENGINES = ("spark", "sail", "trino", "duckdb", "chdb", "polars", "databend")
+# StarRocks joined 2026-11-03, at the end until its first reading places it.
+ENGINES = ("spark", "sail", "trino", "duckdb", "chdb", "polars", "databend", "starrocks")
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
-FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend")
+FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend", "starrocks")
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
@@ -43,6 +44,7 @@ ROWS = [
             "spark": ["insert_into"],
             "trino": ["insert_into"],
             "databend": ["insert_into"],
+            "starrocks": ["insert_into"],
             "polars": ["insert_into"],
             "duckdb": ["insert_values"],
             "sail": ["insert_into"],
@@ -58,6 +60,7 @@ ROWS = [
             "spark": ["merge_mor"],
             "trino": ["merge_upsert"],
             "databend": ["merge_upsert"],
+            "starrocks": ["merge_upsert"],
             "duckdb": ["merge_upsert"],
             "sail": ["merge_mor"],
             "chdb": ["merge_into"],
@@ -70,6 +73,7 @@ ROWS = [
             "spark": ["insert_overwrite"],
             "trino": ["insert_overwrite"],
             "databend": ["insert_overwrite"],
+            "starrocks": ["insert_overwrite"],
             "duckdb": ["insert_overwrite"],
             "sail": ["insert_overwrite"],
             "chdb": ["insert_overwrite"],
@@ -83,6 +87,7 @@ ROWS = [
             "spark": ["partitioned"],
             "trino": ["partitioned"],
             "databend": ["partitioned"],
+            "starrocks": ["partitioned"],
             "polars": ["partitioned"],
             "duckdb": ["create_partitioned"],
             "sail": ["partitioned"],
@@ -118,6 +123,7 @@ ROWS = [
             "spark": ["sort_order"],
             "trino": ["sort_order"],
             "databend": ["sort_order"],
+            "starrocks": ["sort_order"],
             "duckdb": ["create_sorted"],
             "sail": ["sort_order"],
             "polars": ["sort_order"],
@@ -130,6 +136,7 @@ ROWS = [
             "spark": ["metadata_tables"],
             "trino": ["metadata_tables"],
             "databend": ["metadata_tables"],
+            "starrocks": ["metadata_tables"],
             "duckdb": ["metadata_snapshots", "metadata_files"],
             "sail": ["metadata_tables"],
             "polars": ["metadata_tables"],
@@ -149,6 +156,7 @@ ROWS = [
             "spark": ["drop_purge"],
             "trino": ["drop_purge"],
             "databend": ["drop_purge"],
+            "starrocks": ["drop_purge"],
             "duckdb": ["drop_table"],
             "sail": ["drop_purge"],
             "polars": ["drop_purge"],
@@ -160,6 +168,7 @@ ROWS = [
             "spark": ["namespace_create"],
             "trino": ["namespace_create"],
             "databend": ["namespace_create"],
+            "starrocks": ["namespace_create"],
             "duckdb": ["create_schema"],
             "sail": ["namespace_create"],
             "chdb": ["namespace_create"],
@@ -172,6 +181,7 @@ ROWS = [
             "spark": ["namespace_drop"],
             "trino": ["namespace_drop"],
             "databend": ["namespace_drop"],
+            "starrocks": ["namespace_drop"],
             "duckdb": ["drop_schema"],
             "sail": ["namespace_drop"],
             "chdb": ["namespace_drop"],
@@ -271,6 +281,7 @@ SITE_KEY = {
     "spark": "pyspark_iceberg",
     "trino": "trino_iceberg",
     "databend": "databend_iceberg",
+    "starrocks": "starrocks_iceberg",
     "polars": "polars_iceberg",
     "duckdb": "duckdb_iceberg",
     "sail": "lakesail_iceberg",

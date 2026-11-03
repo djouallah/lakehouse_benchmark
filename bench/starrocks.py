@@ -106,6 +106,9 @@ def start(timeout_s: int = 300, mounts: dict[Path, str] | None = None) -> None:
                 "--name",
                 CONTAINER,
                 *[arg for host, inside in volumes.items() for arg in ("-v", f"{host}:{inside}:ro")],
+                # The capability probe's race proxy is on the runner (bench/capability/race.py).
+                "--add-host",
+                "host.docker.internal:host-gateway",
                 # A CEILING UNDER THE RUNNER'S RAM. Uncapped, the BE takes mem_limit 90% of the
                 # host and the FE's JVM may grow to its -Xmx8g on top: 16 GB overcommitted. The
                 # 1000-file ETL (run 36230293425) ran 20 minutes and then took the RUNNER down --
@@ -168,19 +171,30 @@ def storage_properties() -> str:
     )
 
 
-def attach(conn, cfg: Config, token: str) -> None:
-    """(Re)create the OneLake catalog on `token` and make it the session's current catalog."""
+def attach(
+    conn,
+    cfg: Config,
+    token: str,
+    name: str = CATALOG,
+    uri: str = ICEBERG_ENDPOINT,
+    use: bool = True,
+) -> None:
+    """(Re)create the catalog `name` on `token` and, with `use`, make it the session's current one.
+
+    `name` and `uri` are for the capability probe's second catalog, on its race proxy."""
     with conn.cursor() as cur:
-        cur.execute(f"DROP CATALOG IF EXISTS {CATALOG}")
+        cur.execute(f"DROP CATALOG IF EXISTS {name}")
         cur.execute(
-            f"CREATE EXTERNAL CATALOG {CATALOG} PROPERTIES ("
+            f"CREATE EXTERNAL CATALOG {name} PROPERTIES ("
             '"type"="iceberg", "iceberg.catalog.type"="rest", '
-            f'"iceberg.catalog.uri"="{ICEBERG_ENDPOINT}", '
+            f'"iceberg.catalog.uri"="{uri}", '
             f'"iceberg.catalog.warehouse"="{cfg.warehouse}", '
             f'"iceberg.catalog.security"="oauth2", "iceberg.catalog.oauth2.token"="{token}", '
             f'"iceberg.catalog.vended-credentials-enabled"="false", {storage_properties()})'
         )
-        cur.execute(f"SET CATALOG {CATALOG}")
+        if not use:
+            return
+        cur.execute(f"SET CATALOG {name}")
         # No per-statement ceiling: the job's own timeout is the bound, as for every engine.
         cur.execute("SET query_timeout = 86400")
         # NOR ON PLANNING: `new_planner_optimize_timeout` is 3000 ms by default, and the first

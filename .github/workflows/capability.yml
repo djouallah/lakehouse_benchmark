@@ -20,8 +20,8 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation
-          - spark,trino,polars,duckdb,sail,chdb,databend
+          - spark,trino,polars,duckdb,sail,chdb,databend,starrocks,duckdb_isolation
+          - spark,trino,polars,duckdb,sail,chdb,databend,starrocks
           - spark
           - trino
           - polars
@@ -29,8 +29,9 @@ on:
           - sail
           - chdb
           - databend
+          - starrocks
           - duckdb_isolation
-        default: spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation
+        default: spark,trino,polars,duckdb,sail,chdb,databend,starrocks,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -60,7 +61,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,duckdb_isolation' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,starrocks,duckdb_isolation' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -75,6 +76,7 @@ jobs:
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'chdb' && 'chDB'
       || matrix.client == 'databend' && 'Databend'
+      || matrix.client == 'starrocks' && 'StarRocks'
       || matrix.client == 'duckdb_isolation' && 'DuckDB isolation and transactions'
       || matrix.client }}
     runs-on: ubuntu-latest
@@ -139,6 +141,11 @@ jobs:
       - name: Pull the Databend image
         if: matrix.client == 'databend'
         run: docker pull "$(python -c 'from bench.databend import IMAGE; print(IMAGE)')"
+
+      # StarRocks too, the allin1 image (bench/starrocks.py).
+      - name: Pull the StarRocks image
+        if: matrix.client == 'starrocks'
+        run: docker pull "$(python -c 'from bench.starrocks import IMAGE; print(IMAGE)')"
 
       # DuckDB is the main nightly CLI, not a wheel: bench/duckdb_cli.py says why.
       - name: DuckDB CLI
