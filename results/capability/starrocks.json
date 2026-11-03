@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE ... PROPERTIES (location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_41604119887_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_41604704770_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -244,8 +244,8 @@
    "key": "rewrite_data_files",
    "group": "maintenance",
    "question": "EXECUTE rewrite_data_files (compaction)",
-   "outcome": "no",
-   "detail": "ProgrammingError: (1064, \"Getting analyzing error. Detail message: Failed to resolve table procedure args: BinaryPredicate{type=BOOLEAN}. msg: Getting analyzing error. Detail message: Argument 'rewrite_all' must be a constant, got cast(min_file_size_bytes as DECIMAL128(38,9)) = 1073741824.000000000., expected const argument.\")"
+   "outcome": "supported",
+   "detail": "2 -> 1 data file(s), data kept: pyiceberg reads [(1, 10), (2, 20), (3, 30), (4, 40)]; StarRocks agrees"
   },
   {
    "key": "rewrite_manifests",
@@ -304,7 +304,7 @@
    "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_41604119887_1_race_update does not support update')"
   }
  ],
- "run": "41604119887",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41604119887",
+ "run": "41604704770",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41604704770",
  "date": "2026-11-03"
 }
