@@ -82,7 +82,7 @@ Largest scale each engine completes, cold, every statement answered:
 | Gluten/Velox | SF=100 (1,008 s) | **SF=100** (4,768 s; 6,757 s on Iceberg 1.11) | TPC-H SF=300: disk. A shuffle write hits `No space left on device`; memory never fails |
 | Trino | SF=60 (827 s) | **SF=100** (4,018 s) | TPC-H SF=100 Q18: `EXCEEDED_LOCAL_MEMORY_LIMIT`, the 9 GB per-query cap |
 | DuckDB | **SF=300** (3,227 s) | SF=60 (1,367 s) | TPC-DS SF=100 Q64: a bad join plan; first out of spill (90.4 GiB), on the latest build out of memory (12.4 GiB) |
-| StarRocks | **SF=300** (3,943 s) | — | TPC-DS: Q49 is a StarRocks SQL bug (#79807) |
+| StarRocks | **SF=300** (3,943 s) | SF=10 (201 s) | TPC-DS SF=60 and SF=100 not re-run since the Q49 alias fix (cbe2fe3) |
 | LakeSail | SF=100 (2,476 s) | SF=10 (1,632 s) | TPC-DS SF=60 Q72: spill passes Sail's 64 GB cap; SF=100 Q64: the 10 GiB pool runs out |
 | Spark-OSS | SF=60 (2,318 s) | SF=60 (9,303 s) | TPC-H SF=100 Q21: `NOT IN` forces a broadcast of ~100M keys; not even a 13 GB heap holds it |
 | chDB | SF=60 (834 s) | — | TPC-H SF=100: Q4 would use 11.26 GiB in the Iceberg reader, past the 12 GB cap (run 36291516917); TPC-DS: 93/99 at SF=1 on the chdb-core main build; the other 6 are known ClickHouse issues |
@@ -762,10 +762,11 @@ StarRocks limitation until the error was read closely.
   which failed Q70 and Q86
   ([StarRocks#79806](https://github.com/StarRocks/starrocks/issues/79806)). Trino rejects it too,
   so the bench now writes it the standard way, by the select list's name (`portable()` in
-  `bench/tpcds/rewrite.py`, e2e0dda), and both queries run. A derived table aliased `catalog`
-  can't be referenced, which fails Q49
-  ([StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807)). That one stays a
-  failure: SF=60 is 98/99 (run 37179596387), and SF=100 stops at Q49 (run 38025112678).
+  `bench/tpcds/rewrite.py`, e2e0dda), and both queries run. Q49 was our SQL, not StarRocks
+  ([StarRocks#79807](https://github.com/StarRocks/starrocks/issues/79807) was filed in error):
+  the subquery was aliased `CATALOG` and referenced as `catalog`, and StarRocks, like ClickHouse,
+  keeps alias case. Fixed in cbe2fe3; SF=10 is 99/99 since (run 39345232960). SF=60 (98/99, run
+  37179596387) and SF=100 (stopped at Q49, run 38025112678) ran before the fix.
 - **Three defaults were costing it.** Spill is off (`enable_spill`), which lost TPC-H SF=100
   Q18/Q21. Parallelism is half the cores (`pipeline_dop` 0 means 2 on 4 vCPU; the Iceberg sink
   gets 1). Planning is capped at 3 s (`new_planner_optimize_timeout`), and the first query on a
