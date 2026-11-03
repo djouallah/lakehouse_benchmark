@@ -73,11 +73,6 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
   width: 28px !important; background: repeating-linear-gradient(135deg, var(--grid) 0 4px, transparent 4px 8px);
 }
 .failed .val { color: var(--ink-3); font-style: italic; }
-.speedup {
-  margin-top: 14px; padding: 10px 14px; border-radius: 12px; background: var(--track);
-  font-size: 14px; color: var(--ink-2);
-}
-.speedup b { color: var(--ink); font-size: 18px; }
 .tip {
   position: fixed; top: 0; left: 0; z-index: 10; pointer-events: none; opacity: 0; transition: opacity .12s;
   background: var(--raised); color: var(--ink); border: 1px solid var(--grid); border-radius: 10px;
@@ -459,7 +454,6 @@ main .tiles > a { color: inherit; }
   <div class="chips" id="chips"></div>
   <p class="caption" id="caption"></p>
   <div class="chart" id="chart"><div class="empty">Loading results…</div></div>
-  <div id="speedup"></div>
   <section class="pl" id="timeline" hidden></section>
   <section class="pl arch" id="overview" hidden></section>
   <section class="rw" id="workload" hidden></section>
@@ -524,7 +518,7 @@ const LABEL = {         // bench/charts.py LABEL
   pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
   pandas_iceberg: "Pandas", databend_iceberg: "Databend",
 };
-const SPARK = "pyspark_iceberg", GLUTEN = "pyspark_gluten_iceberg";
+const GLUTEN = "pyspark_gluten_iceberg";
 const SUITES = [
   { id: "etl", title: "Light ETL", csv: "data/etl_results.csv", headline: 1000,
     scale: n => `${n.toLocaleString()} files`,
@@ -664,7 +658,7 @@ function renderTabs() {
 function render() {
   renderTabs();
   const page = PAGES.find(p => p.id === state.suite);
-  for (const id of ["chips", "caption", "chart", "speedup"]) $(id).hidden = !!page;
+  for (const id of ["chips", "caption", "chart"]) $(id).hidden = !!page;
   for (const p of PAGES) $(p.id).hidden = p !== page;
   $("issues").hidden = page !== REPORTS;  // the list of reports, by engine, under the dots
   if (page !== PLANS) stopRace();
@@ -705,7 +699,6 @@ function render() {
 
   const chart = $("chart");
   chart.innerHTML = "";
-  $("speedup").innerHTML = "";
   if (!results) { chart.innerHTML = `<div class="empty">Could not load ${suite.csv}.</div>`; return; }
   const items = results[sf] || [];
   const ok = items.filter(i => !i.failed);
@@ -733,27 +726,6 @@ function render() {
     }
   });
   if (!items.length) chart.innerHTML = `<div class="empty">No runs at this scale yet.</div>`;
-
-  const spark = items.find(i => i.engine === SPARK && !i.failed), gluten = items.find(i => i.engine === GLUTEN && !i.failed);
-  if (spark && gluten) {
-    $("speedup").innerHTML = `<div class="speedup"><b>${ratio(spark.mean / gluten.mean)}</b>&nbsp;
-      the same Spark plan; only the engine underneath changes, from Spark's JVM to Velox
-      (${fmt(gluten.mean)} vs ${fmt(spark.mean)}).</div>`;
-  }
-  $("speedup").innerHTML += clusterFact(items);
-}
-
-// A CLUSTER ENGINE ON ONE MACHINE, at the scale on screen: the fastest engine that can run as a cluster
-// (ENGINE_ROWS machines) and the one-machine engines it finishes ahead of, from the same means as the bars, so it
-// follows every publish. Nothing when it is ahead of none.
-function clusterFact(items) {
-  const machines = e => ENGINE_ROWS.find(r => r.engine === e)?.machines;
-  const cluster = items.find(i => !i.failed && machines(i.engine) === "Cluster");
-  const behind = cluster ? items.filter(i => machines(i.engine) === "One" && (i.failed || fmt(i.mean) !== fmt(cluster.mean) && i.mean > cluster.mean)) : [];
-  if (!behind.length) return "";
-  return `<div class="speedup"><b>${esc(LABEL[cluster.engine])}</b>&nbsp; can run as a cluster; on this one machine
-    ${fmt(cluster.mean)}, ahead of ${behind.map(i => `${esc(LABEL[i.engine])} (${i.failed ? "failed" : fmt(i.mean)})`)
-    .join(", ")}, built for one machine only.</div>`;
 }
 
 // THE ICEBERG SUPPORT TAB: data/capability.json, written by .github/scripts/capability/render_readme.py
