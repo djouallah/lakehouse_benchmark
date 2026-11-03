@@ -597,12 +597,10 @@ class StarRocksCapability:
         table = self._fresh("compact")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
         before = len(list(self.iceberg(table).scan().plan_files()))
-        # The docs' form, a numeric key: every file under 1 GB is small. A boolean
-        # ("rewrite_all" = true) is read as a comparison (run 41602439955).
-        self.sql(
-            f"ALTER TABLE {self.t(table)} EXECUTE "
-            'rewrite_data_files("min_file_size_bytes" = 1073741824)'
-        )
+        # A named argument is a bare identifier (StarRocks.g4 `namedArgument`). The docs quote the
+        # key, which parses as a positional comparison bound to rewrite_all (runs 41602439955 and
+        # 41604119887).
+        self.sql(f"ALTER TABLE {self.t(table)} EXECUTE rewrite_data_files(rewrite_all = true)")
         after = len(list(self.iceberg(table).scan().plan_files()))
         if after >= before:
             raise NoOp(f"returned success and data files went {before} -> {after}")
