@@ -38,7 +38,8 @@ ENGINES = (
     # TpcdsConfig runs one pass.
     "pyspark_gluten_iceberg",
     # StarRocks: added 2026-09-26 after passing candidate_engine.yml (22/22 TPC-H, OneLake reads
-    # and writes). Q49 fails on a StarRocks bug (StarRocks#79807); everything else runs.
+    # and writes). 99/99 at SF=10 on 4.1.6 (run 39345232960). Q49 had failed on our SQL, not
+    # StarRocks: an alias written CATALOG and referenced as catalog (fixed in cbe2fe3).
     "starrocks_iceberg",
     # Trino: added 2026-09-28. 89/99 at SF=1 on its first smoke; the ten were query text, not
     # Trino, and read the same on every engine once written as standard SQL (sql/tpcds.sql).
