@@ -141,6 +141,16 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .rows tr.tier th { padding: 14px 0 6px; color: var(--ink); font-weight: 700; text-align: left; }
 .cap .note { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
+/* Iceberg support overview: one bar an engine, a segment per group, its shade of the engine colour. */
+.rank .legend .sw { width: 10px; height: 10px; border-radius: 3px; }
+.rank .stack {
+  display: flex; gap: 2px; height: 100%; width: 0;
+  transition: width .8s cubic-bezier(.2, .8, .2, 1);
+}
+.rank .stack i { flex: 0 1 0; min-width: 3px; }
+.rank .stack i:last-child { border-radius: 0 4px 4px 0; }
+.rank .stack i:hover, .rank .stack i:focus { filter: brightness(1.12); outline: none; }
+.rank .stack i:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
 .cap .excellent .m { background: var(--yes); }
 .cap .good .m { border: 2px solid var(--yes); background: linear-gradient(90deg, var(--yes) 50%, transparent 50%); }
@@ -441,7 +451,7 @@ main .tiles > a { color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .row { animation: none; opacity: 1; transform: none; }
-  .bar { transition: none; }
+  .bar, .rank .stack { transition: none; }
 }
 </style>
 </head>
@@ -484,6 +494,7 @@ main .tiles > a { color: inherit; }
       <li><b>pg_lake</b>: (tested on 3.5.3) runs TPC-H-like 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
     </ul>
   </section>
+  <section class="cap rank" id="iceberg-overview" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
@@ -601,7 +612,8 @@ const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const ABOUT = { id: "about", title: "About" };
-const CAPABILITY = { id: "iceberg", title: "Iceberg support", json: "data/capability.json" };
+const CAPABILITY = { id: "iceberg", title: "Grid", json: "data/capability.json" };
+const CAPABILITY_RANK = { id: "iceberg-overview", title: "Overview" };  // the grid's data, ranked
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
@@ -612,7 +624,7 @@ const REAL_WORKLOAD = { id: "workload", title: "Real workload", json: "data/work
 const MAINTENANCE = { json: "data/maintenance.json" };  // table_maintenance.yml, shown on the Real workload tab
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY_RANK, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works, how an engine does less work, what it supports, and only then how fast it is; then how
 // engines get better from bug reports, and the real workload those fixes make possible.
@@ -620,7 +632,7 @@ const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS,
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, ENGINES] },  // the state is in the catalog
   { id: "work", title: "Less work", subs: [PRUNING, PLANS] },  // skip files, then a good join order
-  { id: "features", title: "Iceberg support", subs: [CAPABILITY] },
+  { id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] },
   { id: "performance", title: "Benchmarks", subs: [...SUITES] },
   { id: "about", title: "About", subs: [ABOUT], bar: false },  // a header link, not a tab
   { id: "bugs", title: "Bug reports", subs: [REPORTS] },
@@ -680,6 +692,7 @@ function render() {
     return;
   }
   if (page === PLANS) { renderPlans(); return; }
+  if (page === CAPABILITY_RANK) { renderCapabilityRank(); return; }
   if (page === CAPABILITY) { renderCapability(); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
@@ -793,6 +806,57 @@ function renderCapability() {
     }
     body.append(tr);
   }
+}
+
+// THE ICEBERG SUPPORT OVERVIEW: the grid's data, one bar an engine ranked by the operations it supports (the
+// grid header's count), a segment per group in the grid's order. Ties go to Core, the minimum to be usable.
+const SHADE = [100, 90, 80, 70, 60, 50];  // a group's share of the engine colour, Core first
+function renderCapabilityRank() {
+  const cap = data.capability, sec = $(CAPABILITY_RANK.id);
+  if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${CAPABILITY.json}.</div>`; return; }
+  const groups = cap.groups, total = cap.rows.length, label = e => LABEL[e] ?? e;
+  const yes = (e, g) => cap.rows.filter(r => (!g || r.group === g) && r.cells[e].o === "supported").length;
+  const size = g => cap.rows.filter(r => r.group === g).length;
+  const shade = (c, i) => `color-mix(in srgb, ${c} ${SHADE[i] ?? SHADE.at(-1)}%, var(--surface))`;
+  const engines = Object.keys(cap.engines).sort((a, b) =>
+    yes(b) - yes(a) || yes(b, groups[0]) - yes(a, groups[0]) || label(a).localeCompare(label(b)));
+  sec.innerHTML = `
+    <p class="caption">Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group.</p>
+    <div class="legend">${groups.map((g, i) =>
+      `<span><i class="sw" style="background: ${shade("var(--ink)", i)}"></i>${esc(g)}</span>`).join("")}</div>
+    <div class="chart"></div>`;
+  const chart = sec.querySelector(".chart");
+  engines.forEach((e, idx) => {
+    const run = cap.engines[e], all = yes(e);
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.animationDelay = `${idx * 45}ms`;
+    row.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
+    row.innerHTML = `<div class="name">${esc(label(e))}</div>
+      <div class="lane"><div class="stack">${groups.map((g, i) => {
+        const n = yes(e, g);
+        return n ? `<i tabindex="0" data-g="${i}" style="flex-grow: ${n}; background: ${shade("var(--c)", i)}"
+          aria-label="${esc(label(e))}, ${esc(g)}: ${n} of ${size(g)}"></i>` : "";
+      }).join("")}</div><div class="val">${all} / ${total}</div></div>`;
+    for (const seg of row.querySelectorAll(".stack i")) {
+      const g = groups[seg.dataset.g];
+      seg.onmouseenter = seg.onfocus = () => {
+        tip.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
+        tip.innerHTML = `<div class="t"><span class="sw"></span>${esc(label(e))}</div>
+          <div class="k">${esc(g)}</div><div><b>${yes(e, g)} of ${size(g)}</b></div>
+          <div class="k">version ${esc(run.version)} · ${esc(run.date)}</div>`;
+        const r = seg.getBoundingClientRect();
+        moveTip(r.left + r.width / 2, r.top);
+        tip.classList.add("on");
+      };
+      seg.onmousemove = ev => moveTip(ev.clientX, ev.clientY);
+      seg.onmouseleave = seg.onblur = hideTip;
+    }
+    chart.append(row);
+    const stack = row.querySelector(".stack");
+    // Leave room for the count at the end of a full bar.
+    requestAnimationFrame(() => requestAnimationFrame(() => { stack.style.width = `calc((100% - 70px) * ${all / total})`; }));
+  });
 }
 
 // THE ENGINES TAB: what each engine is. Facts from each project's own repo and site, no ratings. `machines` is not
@@ -2180,7 +2244,7 @@ for (const li of $("issues").querySelectorAll("li")) {
   });
 }
 // Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
-// #performance, #etl, #tpch, #tpcds, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
+// #performance, #etl, #tpch, #tpcds, #iceberg-overview, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
 // or one engine in that list (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
