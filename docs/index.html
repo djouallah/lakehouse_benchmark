@@ -142,13 +142,22 @@ header { display: flex; justify-content: space-between; align-items: flex-start;
 .cap .note { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
 /* Iceberg support overview: one bar an engine, a segment per group, its shade of the engine colour. */
-.rank .legend .sw { width: 10px; height: 10px; border-radius: 3px; }
+.rank .legend { font-size: 14px; gap: 6px 22px; margin-bottom: 18px; }
+.rank .legend .sw { width: 14px; height: 14px; border-radius: 4px; }
+.rank .chart { gap: clamp(10px, 1.8vh, 18px); }
+.rank .row { grid-template-columns: 32px 150px 1fr; gap: 16px; }
+.rank .pos { font-size: 22px; font-weight: 700; color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+.rank .name { font-size: 18px; text-align: left; }
+.rank .name small { display: block; font-size: 12px; font-weight: 400; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; }
+.rank .lane { height: clamp(40px, 6.5vh, 68px); gap: 16px; }
+.rank .track { flex: 1; height: 100%; border-radius: 10px; overflow: hidden; background: var(--track); }
 .rank .stack {
   display: flex; gap: 2px; height: 100%; width: 0;
   transition: width .8s cubic-bezier(.2, .8, .2, 1);
 }
 .rank .stack i { flex: 0 1 0; min-width: 3px; }
-.rank .stack i:last-child { border-radius: 0 4px 4px 0; }
+.rank .val { flex: none; width: 84px; font-size: 15px; color: var(--ink-3); }
+.rank .val b { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
 .rank .stack i:hover, .rank .stack i:focus { filter: brightness(1.12); outline: none; }
 .rank .stack i:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
@@ -446,6 +455,13 @@ main .tiles > a { color: inherit; }
 }
 @media (max-width: 520px) {
   main { padding-top: 16px; }
+  .rank .row { grid-template-columns: 16px 76px 1fr; gap: 8px; }
+  .rank .pos { font-size: 14px; }
+  .rank .name { font-size: 14px; }
+  .rank .name small { display: none; }
+  .rank .lane { gap: 8px; }
+  .rank .val { width: 48px; font-size: 12px; }
+  .rank .val b { font-size: 20px; }
   .row { grid-template-columns: 84px 1fr; gap: 8px; }
   .name { font-size: 13px; }
 }
@@ -832,12 +848,13 @@ function renderCapabilityRank() {
     row.className = "row";
     row.style.animationDelay = `${idx * 45}ms`;
     row.style.setProperty("--c", `var(--${e}, var(--ink-3))`);
-    row.innerHTML = `<div class="name">${esc(label(e))}</div>
-      <div class="lane"><div class="stack">${groups.map((g, i) => {
+    row.innerHTML = `<div class="pos">${idx + 1}</div>
+      <div class="name">${esc(label(e))}<small title="${esc(run.version)}">${esc(run.version)}</small></div>
+      <div class="lane"><div class="track"><div class="stack">${groups.map((g, i) => {
         const n = yes(e, g);
         return n ? `<i tabindex="0" data-g="${i}" style="flex-grow: ${n}; background: ${shade("var(--c)", i)}"
           aria-label="${esc(label(e))}, ${esc(g)}: ${n} of ${size(g)}"></i>` : "";
-      }).join("")}</div><div class="val">${all} / ${total}</div></div>`;
+      }).join("")}</div></div><div class="val"><b>${all}</b> / ${total}</div></div>`;
     for (const seg of row.querySelectorAll(".stack i")) {
       const g = groups[seg.dataset.g];
       seg.onmouseenter = seg.onfocus = () => {
@@ -854,8 +871,8 @@ function renderCapabilityRank() {
     }
     chart.append(row);
     const stack = row.querySelector(".stack");
-    // Leave room for the count at the end of a full bar.
-    requestAnimationFrame(() => requestAnimationFrame(() => { stack.style.width = `calc((100% - 70px) * ${all / total})`; }));
+    // The track is all the operations; what is left of it is what the engine does not do.
+    requestAnimationFrame(() => requestAnimationFrame(() => { stack.style.width = `${100 * all / total}%`; }));
   });
 }
 
