@@ -1,7 +1,7 @@
 {
-  "run_id": "41767287226",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41767287226",
-  "finished": "2026-11-04T04:07:56Z",
+  "run_id": "41961836805",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41961836805",
+  "finished": "2026-11-05T04:03:49Z",
   "dag": {
     "csv_raw_archive_log": {
       "materialized": "source",
@@ -94,8 +94,8 @@
     "duckdb_iceberg": {
       "target": "duckdb",
       "status": "success",
-      "build_seconds": 133.407,
-      "peak_rss_mb": 4670,
+      "build_seconds": 92.178,
+      "peak_rss_mb": 4998,
       "peak_spill_mb": 136,
       "process_limit": 360,
       "files_behind": 0,
@@ -108,29 +108,29 @@
       },
       "adapter": "dbt-duckdb 1.11.1",
       "model_seconds": {
-        "dim_duid": 6.823,
-        "fct_price": 13.812,
-        "fct_price_today": 4.94,
-        "fct_scada": 12.783,
-        "fct_scada_today": 4.799,
-        "fct_summary": 76.857
+        "dim_duid": 5.679,
+        "fct_price": 11.768,
+        "fct_price_today": 4.015,
+        "fct_scada": 9.979,
+        "fct_scada_today": 3.97,
+        "fct_summary": 44.237
       },
       "model_rows": {
-        "fct_price": 4788485,
-        "fct_scada": 388384465,
-        "fct_scada_today": 204493,
-        "fct_price_today": 3510,
-        "fct_summary": 150763759,
+        "fct_price": 4789925,
+        "fct_scada": 388550065,
+        "fct_scada_today": 206242,
+        "fct_price_today": 3540,
+        "fct_summary": 150826594,
         "dim_duid": 690
       },
       "model_mw": {
-        "fct_summary": "18738001122.95279"
+        "fct_summary": "18743694258.57984"
       },
       "model_files": {
-        "fct_price": 3165,
-        "fct_scada": 3165,
-        "fct_scada_today": 702,
-        "fct_price_today": 702
+        "fct_price": 3166,
+        "fct_scada": 3166,
+        "fct_scada_today": 708,
+        "fct_price_today": 708
       },
       "model_config": {
         "csv_raw_archive_log": {
@@ -212,104 +212,56 @@
       },
       "error": "",
       "last_ok": {
-        "run_id": "41767287226",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41767287226",
-        "finished": "2026-11-04T03:35:35Z"
+        "run_id": "41961836805",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41961836805",
+        "finished": "2026-11-05T03:34:18Z"
       }
     },
     "pyspark_gluten_iceberg": {
       "target": "gluten",
       "status": "success",
-      "build_seconds": 326.88,
-      "peak_rss_mb": 4664,
-      "peak_spill_mb": 3289,
+      "build_seconds": 310.901,
+      "peak_rss_mb": 4628,
+      "peak_spill_mb": 3312,
       "process_limit": 360,
       "files_behind": 0,
       "models": 6,
       "models_ok": 6,
       "versions": {
-        "dbt-core": "1.13.0b1",
+        "dbt-core": "1.13.0rc1",
         "dbt-spark": "1.11.0",
         "pyspark": "4.1.1",
         "spark": "4.1.1 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)"
       },
       "adapter": "dbt-spark 1.11.0",
       "model_seconds": {
-        "dim_duid": 10.273,
-        "fct_price": 29.762,
-        "fct_price_today": 20.084,
-        "fct_scada": 51.289,
-        "fct_scada_today": 18.43,
-        "fct_summary": 185.194
+        "dim_duid": 13.75,
+        "fct_price": 28.479,
+        "fct_price_today": 18.595,
+        "fct_scada": 44.928,
+        "fct_scada_today": 21.44,
+        "fct_summary": 172.765
       },
       "model_rows": {
-        "dim_duid": 690,
-        "fct_price_today": 3510,
-        "fct_scada_today": 204493,
-        "fct_scada": 388384465,
-        "fct_price": 4788485,
-        "fct_summary": 150763759
+        "fct_price": 4789925,
+        "fct_scada": 388550065,
+        "fct_scada_today": 206242,
+        "fct_price_today": 3540,
+        "fct_summary": 150826594,
+        "dim_duid": 690
       },
       "model_mw": {
-        "fct_summary": "18738001122.95279"
+        "fct_summary": "18743694258.57984"
       },
       "model_files": {
-        "fct_price_today": 702,
-        "fct_scada_today": 702,
-        "fct_scada": 3165,
-        "fct_price": 3165
+        "fct_price": 3166,
+        "fct_scada": 3166,
+        "fct_scada_today": 708,
+        "fct_price_today": 708
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
-        },
-        "dim_duid": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/spark/dimensions/dim_duid.sql",
-          "sql_lines": 69
-        },
-        "fct_price_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/spark/marts/fct_price_today.sql",
-          "sql_lines": 20
-        },
-        "fct_scada_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/spark/marts/fct_scada_today.sql",
-          "sql_lines": 18
-        },
-        "fct_scada": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/spark/marts/fct_scada.sql",
-          "sql_lines": 22
         },
         "fct_price": {
           "materialized": "incremental",
@@ -324,6 +276,44 @@
           "path": "models/aemo/spark/marts/fct_price.sql",
           "sql_lines": 22
         },
+        "fct_scada": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/spark/marts/fct_scada.sql",
+          "sql_lines": 22
+        },
+        "fct_scada_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/spark/marts/fct_scada_today.sql",
+          "sql_lines": 18
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/spark/marts/fct_price_today.sql",
+          "sql_lines": 20
+        },
         "fct_summary": {
           "materialized": "incremental",
           "strategy": "merge",
@@ -335,20 +325,30 @@
           "merge_clauses": false,
           "path": "models/aemo/spark/marts/fct_summary.sql",
           "sql_lines": 90
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/spark/dimensions/dim_duid.sql",
+          "sql_lines": 69
         }
       },
       "error": "",
       "last_ok": {
-        "run_id": "41767287226",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41767287226",
-        "finished": "2026-11-04T03:51:59Z"
+        "run_id": "41961836805",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41961836805",
+        "finished": "2026-11-05T03:50:34Z"
       }
     },
     "polars_iceberg": {
       "target": "polars",
       "status": "success",
-      "build_seconds": 99.651,
-      "peak_rss_mb": 4649,
+      "build_seconds": 56.197,
+      "peak_rss_mb": 5139,
       "peak_spill_mb": 2,
       "process_limit": 360,
       "files_behind": 0,
@@ -362,29 +362,29 @@
       },
       "adapter": "dbt-polars 0.5.0",
       "model_seconds": {
-        "dim_duid": 11.066,
-        "fct_price": 11.032,
-        "fct_price_today": 8.793,
-        "fct_scada": 12.902,
-        "fct_scada_today": 5.759,
-        "fct_summary": 41.508
+        "dim_duid": 7.063,
+        "fct_price": 5.054,
+        "fct_price_today": 2.435,
+        "fct_scada": 7.329,
+        "fct_scada_today": 8.415,
+        "fct_summary": 18.213
       },
       "model_rows": {
-        "fct_price": 4788485,
-        "fct_scada": 388384465,
-        "fct_scada_today": 204493,
-        "fct_price_today": 3510,
-        "fct_summary": 150763759,
+        "fct_price": 4789925,
+        "fct_scada": 388550065,
+        "fct_scada_today": 206242,
+        "fct_price_today": 3540,
+        "fct_summary": 150826594,
         "dim_duid": 690
       },
       "model_mw": {
-        "fct_summary": "18738001122.95279"
+        "fct_summary": "18743694258.57984"
       },
       "model_files": {
-        "fct_price": 3165,
-        "fct_scada": 3165,
-        "fct_scada_today": 702,
-        "fct_price_today": 702
+        "fct_price": 3166,
+        "fct_scada": 3166,
+        "fct_scada_today": 708,
+        "fct_price_today": 708
       },
       "model_config": {
         "csv_raw_archive_log": {
@@ -466,69 +466,78 @@
       },
       "error": "",
       "last_ok": {
-        "run_id": "41767287226",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41767287226",
-        "finished": "2026-11-04T03:40:57Z"
+        "run_id": "41961836805",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41961836805",
+        "finished": "2026-11-05T03:38:19Z"
       }
     },
     "lakesail_iceberg": {
       "target": "sail",
       "status": "success",
-      "build_seconds": 203.167,
-      "peak_rss_mb": 7409,
-      "peak_spill_mb": 3149,
+      "build_seconds": 79.571,
+      "peak_rss_mb": 2127,
+      "peak_spill_mb": 2,
       "process_limit": 360,
       "files_behind": 0,
       "models": 6,
       "models_ok": 6,
       "versions": {
-        "dbt-core": "1.13.0b1",
+        "dbt-core": "1.13.0rc1",
         "dbt-spark": "1.11.0",
         "pysail": "0.7.3",
         "pyspark-client": "4.2.0"
       },
       "adapter": "dbt-spark 1.11.0",
       "model_seconds": {
-        "dim_duid": 6.75,
-        "fct_price": 12.146,
-        "fct_price_today": 10.403,
-        "fct_scada": 54.525,
-        "fct_scada_today": 9.886,
-        "fct_summary": 101.267
+        "dim_duid": 2.962,
+        "fct_price": 5.347,
+        "fct_price_today": 5.016,
+        "fct_scada": 12.299,
+        "fct_scada_today": 7.4,
+        "fct_summary": 40.573
       },
       "model_rows": {
-        "fct_price": 4788485,
-        "fct_scada": 388384465,
-        "fct_scada_today": 204493,
-        "fct_price_today": 3510,
-        "fct_summary": 150763759,
-        "dim_duid": 690
+        "dim_duid": 690,
+        "fct_summary": 150826594,
+        "fct_scada": 388550065,
+        "fct_scada_today": 206242,
+        "fct_price_today": 3540,
+        "fct_price": 4789925
       },
       "model_mw": {
-        "fct_summary": "18738001122.95279"
+        "fct_summary": "18743694258.57984"
       },
       "model_files": {
-        "fct_price": 3165,
-        "fct_scada": 3165,
-        "fct_scada_today": 702,
-        "fct_price_today": 702
+        "fct_scada": 3166,
+        "fct_scada_today": 708,
+        "fct_price_today": 708,
+        "fct_price": 3166
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
         },
-        "fct_price": {
+        "dim_duid": {
           "materialized": "incremental",
           "strategy": "merge",
           "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
+            "DUID"
           ],
           "merge_clauses": false,
-          "path": "models/aemo/spark/marts/fct_price.sql",
-          "sql_lines": 22
+          "path": "models/aemo/spark/dimensions/dim_duid.sql",
+          "sql_lines": 69
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/spark/marts/fct_summary.sql",
+          "sql_lines": 90
         },
         "fct_scada": {
           "materialized": "incremental",
@@ -568,42 +577,33 @@
           "path": "models/aemo/spark/marts/fct_price_today.sql",
           "sql_lines": 20
         },
-        "fct_summary": {
+        "fct_price": {
           "materialized": "incremental",
           "strategy": "merge",
           "unique_key": [
-            "date",
-            "time",
-            "DUID"
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
           ],
           "merge_clauses": false,
-          "path": "models/aemo/spark/marts/fct_summary.sql",
-          "sql_lines": 90
-        },
-        "dim_duid": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/spark/dimensions/dim_duid.sql",
-          "sql_lines": 69
+          "path": "models/aemo/spark/marts/fct_price.sql",
+          "sql_lines": 22
         }
       },
       "error": "",
       "last_ok": {
-        "run_id": "41767287226",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41767287226",
-        "finished": "2026-11-04T04:07:56Z"
+        "run_id": "41961836805",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41961836805",
+        "finished": "2026-11-05T04:03:49Z"
       }
     },
     "trino_iceberg": {
       "target": "trino",
       "status": "success",
-      "build_seconds": 202.112,
-      "peak_rss_mb": 5963,
-      "peak_spill_mb": 1218,
+      "build_seconds": 197.927,
+      "peak_rss_mb": 7975,
+      "peak_spill_mb": 1232,
       "process_limit": 360,
       "files_behind": 0,
       "models": 6,
@@ -616,55 +616,46 @@
       },
       "adapter": "dbt-trino 1.11.0",
       "model_seconds": {
-        "dim_duid": 8.6,
-        "fct_price": 37.049,
-        "fct_price_today": 9.615,
-        "fct_scada": 39.083,
-        "fct_scada_today": 7.347,
-        "fct_summary": 86.307
+        "dim_duid": 6.276,
+        "fct_price": 12.298,
+        "fct_price_today": 5.853,
+        "fct_scada": 64.95,
+        "fct_scada_today": 3.745,
+        "fct_summary": 97.086
       },
       "model_rows": {
-        "dim_duid": 690,
-        "fct_summary": 150763759,
-        "fct_scada": 388384465,
-        "fct_scada_today": 204493,
-        "fct_price_today": 3510,
-        "fct_price": 4788485
+        "fct_price": 4789925,
+        "fct_scada": 388550065,
+        "fct_scada_today": 206242,
+        "fct_price_today": 3540,
+        "fct_summary": 150826594,
+        "dim_duid": 690
       },
       "model_mw": {
-        "fct_summary": "18738001122.95279"
+        "fct_summary": "18743694258.57984"
       },
       "model_files": {
-        "fct_scada": 3165,
-        "fct_scada_today": 702,
-        "fct_price_today": 702,
-        "fct_price": 3165
+        "fct_price": 3166,
+        "fct_scada": 3166,
+        "fct_scada_today": 708,
+        "fct_price_today": 708
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
         },
-        "dim_duid": {
+        "fct_price": {
           "materialized": "incremental",
           "strategy": "merge",
           "unique_key": [
-            "DUID"
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
           ],
           "merge_clauses": false,
-          "path": "models/aemo/trino/dimensions/dim_duid.sql",
-          "sql_lines": 73
-        },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/trino/marts/fct_summary.sql",
-          "sql_lines": 86
+          "path": "models/aemo/trino/marts/fct_price.sql",
+          "sql_lines": 19
         },
         "fct_scada": {
           "materialized": "incremental",
@@ -704,25 +695,34 @@
           "path": "models/aemo/trino/marts/fct_price_today.sql",
           "sql_lines": 16
         },
-        "fct_price": {
+        "fct_summary": {
           "materialized": "incremental",
           "strategy": "merge",
           "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
+            "date",
+            "time",
+            "DUID"
           ],
           "merge_clauses": false,
-          "path": "models/aemo/trino/marts/fct_price.sql",
-          "sql_lines": 19
+          "path": "models/aemo/trino/marts/fct_summary.sql",
+          "sql_lines": 86
+        },
+        "dim_duid": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/trino/dimensions/dim_duid.sql",
+          "sql_lines": 73
         }
       },
       "error": "",
       "last_ok": {
-        "run_id": "41767287226",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41767287226",
-        "finished": "2026-11-04T04:00:11Z"
+        "run_id": "41961836805",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41961836805",
+        "finished": "2026-11-05T03:58:25Z"
       }
     }
   }
