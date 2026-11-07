@@ -1,13 +1,13 @@
 {
  "engine": "polars",
- "version": "main 77f42efffd",
+ "version": "main 581cd15994",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Polars attaches the REST catalog with register_catalog",
    "outcome": "supported",
-   "detail": "polars main 77f42efffd; the REST catalog attached as `lake`"
+   "detail": "polars main 581cd15994; the REST catalog attached as `lake`"
   },
   {
    "key": "create_table",
@@ -104,8 +104,8 @@
    "key": "update",
    "group": "write",
    "question": "UPDATE",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41613874983_1_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], version: N\u2026"
+   "outcome": "supported",
+   "detail": "UPDATE: pyiceberg reads [(1, 999), (2, 20), (3, 30)]; Polars agrees"
   },
   {
    "key": "merge_upsert",
@@ -286,11 +286,11 @@
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Update(Update { update_token: TokenWithSpan { token: Word(Word { value: \"UPDATE\", quote_style: None, keyword: UPDATE }), span: Span(Location(1,1)..Location(1,7)) }, optimizer_hints: [], table: TableWithJoins { relation: Table { name: ObjectName([Identifier(Ident { value: \"race\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) }), Identifier(Ident { value: \"pl_41613874983_1_race_update\", quote_style: None, span: Span(Location(1,8)..Location(1,12)) })]), alias: None, args: None, with_hints: [], versi\u2026"
+   "outcome": "supported",
+   "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "41613874983",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41613874983",
- "date": "2026-11-03"
+ "run": "42345500650",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/42345500650",
+ "date": "2026-11-07"
 }
