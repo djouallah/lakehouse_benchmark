@@ -371,30 +371,37 @@ main .tiles > a { color: inherit; }
 .rp a { color: var(--accent); }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
-/* Lakehouse timeline: the eras land one at a time on a rail that draws itself, ending on the open lakehouse.
-   --n eras, --k the last one landed: the fill stops on its dot (column k's left edge + 33px). */
-.eras { --gap: 16px; list-style: none; margin: 8px 0; padding: 44px 0 0; display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: var(--gap); align-items: start; position: relative; }
-.eras::before, .eras .fill { content: ""; position: absolute; left: 30px; right: 30px; top: 13px; height: 4px; border-radius: 2px; background: var(--grid); }
-.eras .fill { right: auto; width: calc((100% + var(--gap)) / var(--n, 5) * var(--k, 0) + 3px); background: linear-gradient(90deg, var(--ink-3), var(--accent)); transition: width .85s cubic-bezier(.4, 0, .2, 1); }
-.eras li { position: relative; padding: 16px 18px 20px; border: 1px solid var(--grid); border-radius: 20px; background: var(--raised); color: var(--ink-2); font-size: 15px; line-height: 1.45; opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s cubic-bezier(.2, .8, .2, 1), box-shadow .2s, border-color .2s; }
-.eras li.in { opacity: 1; transform: none; }
-.eras li::before { content: ""; position: absolute; top: -40px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink-3); border: 4px solid var(--surface); }
-.eras li.now { border: 2px solid var(--accent); background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--accent) 16%, var(--raised)), var(--raised) 65%); box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 22%, transparent); }
-.eras li.now.in { transform: scale(1.05); transform-origin: 100% 0; }  /* grow into the gap, not past the page edge */
-.eras li.now::before { background: var(--accent); --c: var(--accent); }
-.eras li.now.in::before { animation: ovping 1.6s ease-out infinite; }
-.eras li.in:hover, .eras li.in:focus-visible { border-color: color-mix(in srgb, var(--accent) 45%, var(--grid)); box-shadow: 0 12px 28px rgb(0 0 0 / .10); outline: none; }
-.eras .when { display: block; font-size: 48px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink-3); }
-.eras .now .when { color: var(--accent); }
-.eras h3 { margin: 12px 0 8px; font-size: 24px; font-weight: 800; line-height: 1.1; color: var(--ink); letter-spacing: -.02em; }
-.eras p { margin: 0; }
-@media (max-width: 1100px) {  /* five across gets too narrow: the rail turns vertical */
-  .eras { grid-template-columns: minmax(0, 1fr); padding: 0 0 0 36px; }
-  .eras::before, .eras .fill { left: 11px; right: auto; top: 8px; bottom: 8px; width: 4px; height: auto; }
-  .eras .fill { bottom: auto; height: calc((100% - 16px) * var(--p, 0)); background: linear-gradient(180deg, var(--ink-3), var(--accent)); transition-property: height; }
-  .eras li::before { top: 22px; left: -34px; }
-  .eras li.now.in { transform: none; }
-}
+/* Lakehouse timeline, as in the talk: three lines that run side by side to today, none replacing another.
+   Wide (.tl), the lines run across: --x a share of the width, --y the line's height. Narrow (.tlv), down, one era a row. */
+:is(.tl, .tlv) .wh { --c: var(--ink-3); --x: 10px; }
+:is(.tl, .tlv) .cl { --c: var(--noop); --x: 32px; }
+:is(.tl, .tlv) .op { --c: var(--accent); --x: 54px; }
+:is(.tl, .tlv) .dt { position: absolute; left: var(--x); top: 22px; width: 28px; height: 28px; margin: -14px 0 0 -14px; box-sizing: border-box; border-radius: 50%; background: var(--c); border: 4px solid var(--surface); }
+:is(.tl, .tlv) .dt.now { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+:is(.tl, .tlv) .when { display: block; font-size: 16px; font-weight: 700; color: var(--c); }
+:is(.tl, .tlv) h3 { margin: 2px 0 4px; font-size: 18px; line-height: 1.2; color: var(--ink); }
+:is(.tl, .tlv) .now h3 { font-size: 20px; }
+:is(.tl, .tlv) p { margin: 0; }
+:is(.tl, .tlv) .fk { position: absolute; overflow: visible; }
+:is(.tl, .tlv) .fk path { fill: none; stroke: var(--noop); stroke-width: 6; vector-effect: non-scaling-stroke; }
+.tl { position: relative; height: 480px; margin: 8px 14px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.4; }
+.tl .dt { top: var(--y); }
+.tl .era { position: absolute; left: calc(var(--x) - 14px); top: calc(var(--y) - 24px); width: var(--w); transform: translateY(-100%); }
+.tl .ln { position: absolute; left: var(--x); right: 0; top: calc(var(--y) - 3px); height: 6px; background: var(--c); transform-origin: left; }
+.tl .ln::after { content: ""; position: absolute; right: -14px; top: 50%; transform: translateY(-50%); border: 9px solid transparent; border-right: 0; border-left: 14px solid var(--c); }
+.tl [data-k], .tl-cap { transition: opacity .5s .3s; }
+:is(.tl, .tlv) [data-k]:not(.in), .tl-cap:not(.in) { opacity: 0; }
+.tl .ln { transition: transform .8s cubic-bezier(.4, 0, .2, 1); }
+.tl .ln.cl { transition-delay: .3s; }  /* after the fork */
+.tl .ln:not(.in) { opacity: 1; transform: scaleX(0); }
+.tlv { list-style: none; margin: 8px 0; padding: 0; color: var(--ink-2); font-size: 14px; line-height: 1.4; }
+.tlv li { position: relative; padding: 10px 0 20px 80px; transition: opacity .5s; }
+.tlv li:not(.in) { opacity: 0; }
+.tlv .ln { position: absolute; left: var(--x); top: 0; bottom: 0; width: 6px; margin-left: -3px; background: var(--c); }
+.tlv .ln.from { top: 22px; }  /* a line starts on its first era */
+.tlv li:last-child .ln { bottom: 12px; }
+.tlv li:last-child .ln::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 8px solid transparent; border-bottom: 0; border-top: 12px solid var(--c); }
+.tlv .fk { left: 32px; top: -24px; width: 22px; height: 46px; }
 /* Lakehouse overview: the open lakehouse as a stack with a live story, zoomed to fill the screen (ovFit). */
 .ov { --hot: var(--accent); width: 980px; max-width: 100%; margin: 8px auto 0; display: grid; }
 .ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
@@ -439,12 +446,12 @@ main .tiles > a { color: inherit; }
 .ov-files i.new { animation: ovdrop .55s cubic-bezier(.2, .8, .2, 1); }
 @keyframes ovdrop { from { transform: translateY(-16px) scale(.6); opacity: 0; } }
 @media (max-width: 720px) {
-  .eras .when { font-size: 40px; }
   .ov-wire span { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ov-wire::before, .ov-pill.on i, .eras li.now.in::before, .ov-band.state.flash, .ov-band.state.flash .ok, .ov-files i.new { animation: none; }
-  .ov-pill, .eras li, .eras .fill { transition: none; transform: none !important; }
+  .ov-wire::before, .ov-pill.on i, .ov-band.state.flash, .ov-band.state.flash .ok, .ov-files i.new { animation: none; }
+  .ov-pill { transition: none; transform: none !important; }
+  .tl [data-k], .tl-cap, .tlv li { transition: none; }
 }
 @media (max-width: 720px) {
   .pl .duo { grid-template-columns: minmax(0, 1fr); }
@@ -950,50 +957,62 @@ function renderEngines() {
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
-// THE LAKEHOUSE TAB'S TIMELINE: how we got here. The eras land one at a time on a rail that draws itself, and it
-// ends on the open lakehouse; Replay runs it again, reduced motion shows it still.
-// The eras as most histories tell them: warehouse, Hadoop, cloud warehouse, open table formats (Iceberg started at
-// Netflix in 2017; "lakehouse" was named in the CIDR 2021 paper), and now the REST catalog.
+// THE LAKEHOUSE TAB'S TIMELINE: how we got here, as in the talk. Three lines that run side by side to today, not
+// eras that replace each other: the warehouse, the open lake (Hadoop, the table formats, the open lakehouse), and the
+// closed lakehouse, which forks off the open line where it reaches today. One era a step, the closed fork last;
+// Replay runs it again, reduced motion shows it still. Wide, the lines run across (x a share of the width); narrow, down.
 const ERAS = [
-  { when: "1990s", title: "The warehouse",
-    text: "Storage and compute in one product. The engine owns the data; changing engine is a migration." },
-  { when: "2006", title: "Big data: Hadoop",
-    text: "Files spread over a cluster's disks. The data is open, but you need the cluster to read it." },
-  { when: "2010s", title: "The cloud warehouse",
-    text: "Elastic compute, but the tables live inside one vendor." },
-  { when: "2017", title: "Open table formats",
-    text: "Iceberg (Netflix), Hudi, Delta: tables in object storage, but writing one needed a Java cluster (Spark, Trino)." },
-  { when: "Now", title: "The open lakehouse", now: true,
-    text: "A REST catalog, and table libraries in Rust, C++ and Python: a library in a Python process writes the same tables as a cluster." },
+  { k: 1, lane: "wh", x: 2.5, when: "1990s", title: "The warehouse", text: "Storage and compute in one product. The engine owns the data." },
+  { k: 2, lane: "op", x: 18, when: "2006", title: "Big data: Hadoop", text: "Open files, but you need the cluster to read them." },
+  { k: 3, lane: "wh", x: 34.6, when: "2010s", title: "The cloud warehouse", text: "Elastic compute, but the tables live inside one vendor." },
+  { k: 4, lane: "op", x: 46, w: 21, when: "2017", title: "Open table formats", text: "Tables in object storage, but writing one needs a Java cluster." },
+  { k: 5, lane: "op", x: 74, tx: 78, w: 22, when: "Now", title: "The open lakehouse", now: true, text: "A REST catalog: any engine reads and writes, even a Python library." },
+  { k: 6, lane: "cl", x: 77, tx: 74, when: "", title: "The closed lakehouse", text: "An open table format, but no direct access to the storage." },
 ];
+const TL_Y = { wh: 140, cl: 290, op: 450 };  // wide: each line's height, px
+const TL_FIRST = Object.fromEntries(Object.keys(TL_Y).map(l => [l, ERAS.find(e => e.lane === l)]));  // where each line starts
+const TL_LAST = Math.max(...ERAS.map(e => e.k)), TL_CAPTION = 5;
+const TL_WIDE = matchMedia("(min-width: 900px)");
 const tl = { timers: [] };
 
+const eraText = e => `${e.when ? `<span class="when">${e.when}</span>` : ""}<h3>${e.title}</h3><p>${e.text}</p>`;
+function timelineAcross() {
+  const pos = (x, l) => `--x:${x}%;--y:${TL_Y[l]}px`, { op, cl } = TL_Y;
+  const fork = TL_FIRST.cl, x1 = ERAS.find(e => e.now).x;  // from the open lakehouse up to the closed one
+  return `<div class="tl">${Object.entries(TL_FIRST).map(([l, e]) => `<i class="ln ${l}" data-k="${e.k}" style="${pos(e.x, l)}"></i>`).join("")}
+    <svg class="fk" data-k="${fork.k}" style="left:${x1}%;width:${fork.x - x1}%;top:${cl}px;height:${op - cl}px" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 10C5 10 5 0 10 0"/></svg>
+    ${ERAS.map(e => `<b class="dt ${e.lane}${e.now ? " now" : ""}" data-k="${e.k}" style="${pos(e.x, e.lane)}"></b>
+    <div class="era ${e.lane}${e.now ? " now" : ""}" data-k="${e.k}" style="${pos(e.tx ?? e.x, e.lane)};--w:${e.w ?? 25}%">${eraText(e)}</div>`).join("")}</div>`;
+}
+// Narrow: one era a row, oldest first, the lines down the left; the closed lakehouse forks off the open line.
+function timelineDown() {
+  return `<ol class="tlv">${[...ERAS].sort((a, b) => a.k - b.k).map(e => `
+    <li class="${e.lane}${e.now ? " now" : ""}" data-k="${e.k}">${Object.entries(TL_FIRST).filter(([, f]) => f.k <= e.k).map(([l, f]) =>
+      `<i class="ln ${l}${f === e ? " from" : ""}"></i>`).join("")}${e === TL_FIRST.cl
+      ? `<svg class="fk" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M10 0C10 5 0 5 0 10"/></svg>` : ""}<b class="dt ${e.lane}${e.now ? " now" : ""}"></b>${eraText(e)}</li>`).join("")}
+  </ol>`;
+}
 function renderTimeline() {
   stopTimeline();
   $(TIMELINE.id).innerHTML = `
     <div class="ctl"><button class="play" id="tl-play">↺ Replay</button></div>
-    <ol class="eras" id="tl-eras"><span class="fill" aria-hidden="true"></span>${ERAS.map(r => `
-      <li class="${r.now ? "now" : ""}" tabindex="0"><span class="when">${r.when}</span><h3>${r.title}</h3><p>${r.text}</p></li>`).join("")}
-    </ol>`;
+    ${TL_WIDE.matches ? timelineAcross() : timelineDown()}
+    <p class="intro tl-cap" data-k="${TL_CAPTION}">Nothing replaced anything: three lines, all alive. This site is about the open lakehouse.</p>`;
   $("tl-play").onclick = playTimeline;
   playTimeline();
 }
-// One era every 900 ms, the rail filling up to each one as it lands.
+// One era every 1.1 s: its line draws, then the era lands on it.
 function playTimeline() {
   stopTimeline();
-  const ol = $("tl-eras"), items = [...ol.querySelectorAll("li")];
-  ol.style.setProperty("--n", items.length);
-  const show = k => {
-    items.forEach((li, j) => li.classList.toggle("in", j <= k));
-    ol.style.setProperty("--k", Math.max(0, k));  // across: the fill stops on era k's dot
-    ol.style.setProperty("--p", Math.max(0, k) / (items.length - 1));  // down: a share of the column
-  };
-  if (ovStill.matches) { show(items.length - 1); return; }
-  show(-1);
-  void ol.offsetWidth;  // start from empty, so a replay animates again
-  items.forEach((_, k) => tl.timers.push(setTimeout(() => show(k), 250 + k * 900)));
+  const els = [...$(TIMELINE.id).querySelectorAll("[data-k]")];
+  const show = k => els.forEach(el => el.classList.toggle("in", +el.dataset.k <= k));
+  if (ovStill.matches) { show(TL_LAST); return; }
+  show(0);
+  void $(TIMELINE.id).offsetWidth;  // start from empty, so a replay animates again
+  for (let k = 1; k <= TL_LAST; k++) tl.timers.push(setTimeout(() => show(k), 250 + (k - 1) * 1100));
 }
 function stopTimeline() { tl.timers.forEach(clearTimeout); tl.timers = []; }
+TL_WIDE.addEventListener("change", () => { if (state.suite === TIMELINE.id) renderTimeline(); });
 
 // THE LAKEHOUSE TAB'S OVERVIEW: the premise the rest of the page tests, the open lakehouse as a stack: who asks,
 // the engines (stateless), the catalog (the state), the object store.
