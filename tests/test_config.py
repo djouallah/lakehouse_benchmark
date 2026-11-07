@@ -122,7 +122,7 @@ def test_workflow_defaults_dispatch_only_engines_their_suite_lists():
     suite, and tpcds.yml lists its own exactly.
     """
     root = Path(__file__).resolve().parent.parent
-    for workflow, suite in (("tpcds.yml", TpcdsConfig), ("bench.yml", TpchConfig)):
+    for workflow, suite in (("tpcds.yml", TpcdsConfig), ("smoke.yml", TpcdsConfig)):
         text = (root / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
         listed = re.findall(r"(?:default: |inputs\.engines \|\| ')([a-z_,]*iceberg)", text)
         assert len(listed) == 2, workflow
