@@ -371,37 +371,37 @@ main .tiles > a { color: inherit; }
 .rp a { color: var(--accent); }
 .arch .lb.sm { font-size: 10px; }
 .pl .pick a, .pl .intro a { color: var(--accent); }
-/* Lakehouse timeline, as in the talk: three lines that run side by side to today, none replacing another.
-   Wide (.tl), the lines run across: --x a share of the width, --y the line's height. Narrow (.tlv), down, one era a row. */
-:is(.tl, .tlv) .wh { --c: var(--ink-3); --x: 10px; }
-:is(.tl, .tlv) .cl { --c: var(--noop); --x: 32px; }
-:is(.tl, .tlv) .op { --c: var(--accent); --x: 54px; }
-:is(.tl, .tlv) .dt { position: absolute; left: var(--x); top: 22px; width: 28px; height: 28px; margin: -14px 0 0 -14px; box-sizing: border-box; border-radius: 50%; background: var(--c); border: 4px solid var(--surface); }
+/* Lakehouse timeline, as in the talk: three lines that run side by side to today, none replacing another, and
+   the branches between them. Wide (.tl), the lines run across: --x a share of the width, --y the line's height.
+   Narrow (.tlv), down, one era a row: --x the line's left. */
+:is(.tl, .tlv) .wh { --c: var(--ink-3); }
+:is(.tl, .tlv) .op { --c: var(--accent); }
+:is(.tl, .tlv) .cl { --c: var(--noop); }
+:is(.tl, .tlv) .dt { position: absolute; left: var(--x); top: 22px; width: 28px; height: 28px; margin: -14px 0 0 -14px; box-sizing: border-box; border-radius: 50%; background: var(--c); border: 4px solid var(--surface); z-index: 1; }
 :is(.tl, .tlv) .dt.now { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
 :is(.tl, .tlv) .when { display: block; font-size: 16px; font-weight: 700; color: var(--c); }
 :is(.tl, .tlv) h3 { margin: 2px 0 4px; font-size: 18px; line-height: 1.2; color: var(--ink); }
 :is(.tl, .tlv) .now h3 { font-size: 20px; }
 :is(.tl, .tlv) p { margin: 0; }
 :is(.tl, .tlv) .fk { position: absolute; overflow: visible; }
-:is(.tl, .tlv) .fk path { fill: none; stroke: var(--noop); stroke-width: 6; vector-effect: non-scaling-stroke; }
+:is(.tl, .tlv) .fk path { fill: none; stroke: var(--c); stroke-width: 6; vector-effect: non-scaling-stroke; }
 .tl { position: relative; height: 480px; margin: 8px 14px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.4; }
 .tl .dt { top: var(--y); }
 .tl .era { position: absolute; left: calc(var(--x) - 14px); top: calc(var(--y) - 24px); width: var(--w); transform: translateY(-100%); }
 .tl .ln { position: absolute; left: var(--x); right: 0; top: calc(var(--y) - 3px); height: 6px; background: var(--c); transform-origin: left; }
 .tl .ln::after { content: ""; position: absolute; right: -14px; top: 50%; transform: translateY(-50%); border: 9px solid transparent; border-right: 0; border-left: 14px solid var(--c); }
-.tl [data-k], .tl-cap { transition: opacity .5s .3s; }
+.tl [data-k], .tl-cap, .tlv .fk { transition: opacity .5s .3s; }
 :is(.tl, .tlv) [data-k]:not(.in), .tl-cap:not(.in) { opacity: 0; }
 .tl .ln { transition: transform .8s cubic-bezier(.4, 0, .2, 1); }
 .tl .ln.cl { transition-delay: .3s; }  /* after the fork */
 .tl .ln:not(.in) { opacity: 1; transform: scaleX(0); }
 .tlv { list-style: none; margin: 8px 0; padding: 0; color: var(--ink-2); font-size: 14px; line-height: 1.4; }
 .tlv li { position: relative; padding: 10px 0 20px 80px; transition: opacity .5s; }
-.tlv li:not(.in) { opacity: 0; }
 .tlv .ln { position: absolute; left: var(--x); top: 0; bottom: 0; width: 6px; margin-left: -3px; background: var(--c); }
 .tlv .ln.from { top: 22px; }  /* a line starts on its first era */
 .tlv li:last-child .ln { bottom: 12px; }
 .tlv li:last-child .ln::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 8px solid transparent; border-bottom: 0; border-top: 12px solid var(--c); }
-.tlv .fk { left: 32px; top: -24px; width: 22px; height: 46px; }
+.tlv .fk { top: -24px; height: 46px; }
 /* Lakehouse overview: the open lakehouse as a stack with a live story, zoomed to fill the screen (ovFit). */
 .ov { --hot: var(--accent); width: 980px; max-width: 100%; margin: 8px auto 0; display: grid; }
 .ov-who { width: fit-content; max-width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: center; padding: 12px 18px; border: 1px solid var(--grid); border-radius: 18px; background: var(--raised); box-shadow: 0 8px 24px rgb(0 0 0 / .06); }
@@ -959,37 +959,47 @@ function renderEngines() {
 
 // THE LAKEHOUSE TAB'S TIMELINE: how we got here, as in the talk. Three lines that run side by side to today, not
 // eras that replace each other: the warehouse, the open lake (Hadoop, the table formats, the open lakehouse), and the
-// closed lakehouse, which forks off the open line where it reaches today. One era a step, the closed fork last;
-// Replay runs it again, reduced motion shows it still. Wide, the lines run across (x a share of the width); narrow, down.
+// closed lakehouse, which forks off the open line where it reaches today. The warehouse line also sends a branch into
+// the open lakehouse: warehouses now read and write Iceberg in a REST catalog. One era a step, the branches last;
+// Replay runs it again, reduced motion shows it still. Wide, the lines run across (x a share of the width); narrow,
+// down, one era a row in this order.
 const ERAS = [
   { k: 1, lane: "wh", x: 2.5, when: "1990s", title: "The warehouse", text: "Storage and compute in one product. The engine owns the data." },
   { k: 2, lane: "op", x: 18, when: "2006", title: "Big data: Hadoop", text: "Open files, but you need the cluster to read them." },
   { k: 3, lane: "wh", x: 34.6, when: "2010s", title: "The cloud warehouse", text: "Elastic compute, but the tables live inside one vendor." },
   { k: 4, lane: "op", x: 46, w: 21, when: "2017", title: "Open table formats", text: "Tables in object storage, but writing one needs a Java cluster." },
+  { k: 6, lane: "wh", x: 68, when: "2024", title: "The warehouse goes open", text: "Warehouses read and write Iceberg tables in a REST catalog." },
   { k: 5, lane: "op", x: 74, tx: 78, w: 22, when: "Now", title: "The open lakehouse", now: true, text: "A REST catalog: any engine reads and writes, even a Python library." },
-  { k: 6, lane: "cl", x: 77, tx: 74, when: "", title: "The closed lakehouse", text: "An open table format, but no direct access to the storage." },
+  { k: 7, lane: "cl", x: 77, tx: 80, w: 20, when: "", title: "The closed lakehouse", text: "An open table format, but no direct access to the storage." },
 ];
-const TL_Y = { wh: 140, cl: 290, op: 450 };  // wide: each line's height, px
+const era = title => ERAS.find(e => e.title === title);
+// The branches, each drawn with the era it carries: the warehouse joins the open lakehouse, the closed one leaves it.
+const TL_BRANCHES = [
+  { lane: "wh", from: era("The warehouse goes open"), to: era("The open lakehouse") },
+  { lane: "cl", from: era("The open lakehouse"), to: era("The closed lakehouse") },
+].map(b => ({ ...b, k: Math.max(b.from.k, b.to.k) }));
+const TL_Y = { wh: 140, op: 290, cl: 450 };  // wide: each line's height, px
+const TL_X = { wh: 10, op: 32, cl: 54 };  // narrow: each line's left, px
 const TL_FIRST = Object.fromEntries(Object.keys(TL_Y).map(l => [l, ERAS.find(e => e.lane === l)]));  // where each line starts
-const TL_LAST = Math.max(...ERAS.map(e => e.k)), TL_CAPTION = 5;
+const TL_LAST = Math.max(...ERAS.map(e => e.k));
 const TL_WIDE = matchMedia("(min-width: 900px)");
 const tl = { timers: [] };
 
 const eraText = e => `${e.when ? `<span class="when">${e.when}</span>` : ""}<h3>${e.title}</h3><p>${e.text}</p>`;
 function timelineAcross() {
-  const pos = (x, l) => `--x:${x}%;--y:${TL_Y[l]}px`, { op, cl } = TL_Y;
-  const fork = TL_FIRST.cl, x1 = ERAS.find(e => e.now).x;  // from the open lakehouse up to the closed one
+  const pos = (x, l) => `--x:${x}%;--y:${TL_Y[l]}px`;
   return `<div class="tl">${Object.entries(TL_FIRST).map(([l, e]) => `<i class="ln ${l}" data-k="${e.k}" style="${pos(e.x, l)}"></i>`).join("")}
-    <svg class="fk" data-k="${fork.k}" style="left:${x1}%;width:${fork.x - x1}%;top:${cl}px;height:${op - cl}px" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 10C5 10 5 0 10 0"/></svg>
+    ${TL_BRANCHES.map(({ lane, from, to, k }) => `<svg class="fk ${lane}" data-k="${k}" style="left:${from.x}%;width:${to.x - from.x}%;top:${TL_Y[from.lane]}px;height:${TL_Y[to.lane] - TL_Y[from.lane]}px" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0C5 0 5 10 10 10"/></svg>`).join("")}
     ${ERAS.map(e => `<b class="dt ${e.lane}${e.now ? " now" : ""}" data-k="${e.k}" style="${pos(e.x, e.lane)}"></b>
     <div class="era ${e.lane}${e.now ? " now" : ""}" data-k="${e.k}" style="${pos(e.tx ?? e.x, e.lane)};--w:${e.w ?? 25}%">${eraText(e)}</div>`).join("")}</div>`;
 }
-// Narrow: one era a row, oldest first, the lines down the left; the closed lakehouse forks off the open line.
+// Narrow: one era a row, the lines down the left; a branch bends into its row from the line it leaves.
 function timelineDown() {
-  return `<ol class="tlv">${[...ERAS].sort((a, b) => a.k - b.k).map(e => `
-    <li class="${e.lane}${e.now ? " now" : ""}" data-k="${e.k}">${Object.entries(TL_FIRST).filter(([, f]) => f.k <= e.k).map(([l, f]) =>
-      `<i class="ln ${l}${f === e ? " from" : ""}"></i>`).join("")}${e === TL_FIRST.cl
-      ? `<svg class="fk" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M10 0C10 5 0 5 0 10"/></svg>` : ""}<b class="dt ${e.lane}${e.now ? " now" : ""}"></b>${eraText(e)}</li>`).join("")}
+  const x = l => `--x:${TL_X[l]}px`;
+  return `<ol class="tlv">${ERAS.map((e, i) => `
+    <li class="${e.lane}${e.now ? " now" : ""}" data-k="${e.k}">${Object.entries(TL_FIRST).filter(([, f]) => ERAS.indexOf(f) <= i).map(([l, f]) =>
+      `<i class="ln ${l}${f === e ? " from" : ""}" style="${x(l)}"></i>`).join("")}${TL_BRANCHES.filter(b => b.to === e).map(({ lane, from, k }) =>
+      `<svg class="fk ${lane}" data-k="${k}" style="left:${TL_X[from.lane]}px;width:${TL_X[e.lane] - TL_X[from.lane]}px" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0C0 5 10 5 10 10"/></svg>`).join("")}<b class="dt ${e.lane}${e.now ? " now" : ""}" style="${x(e.lane)}"></b>${eraText(e)}</li>`).join("")}
   </ol>`;
 }
 function renderTimeline() {
@@ -997,7 +1007,7 @@ function renderTimeline() {
   $(TIMELINE.id).innerHTML = `
     <div class="ctl"><button class="play" id="tl-play">↺ Replay</button></div>
     ${TL_WIDE.matches ? timelineAcross() : timelineDown()}
-    <p class="intro tl-cap" data-k="${TL_CAPTION}">Nothing replaced anything: three lines, all alive. This site is about the open lakehouse.</p>`;
+    <p class="intro tl-cap" data-k="${TL_LAST}">Nothing replaced anything: every line runs to today, and the warehouse now writes to the open lakehouse too.</p>`;
   $("tl-play").onclick = playTimeline;
   playTimeline();
 }
