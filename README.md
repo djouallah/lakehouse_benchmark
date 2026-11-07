@@ -24,9 +24,9 @@ Bonus:
 
 In the bench, with gaps:
 
-- **Daft**: ETL only; 16/22 TPC-H queries, the rest fail on decimal precision, cross join and `SUBSTRING` ([Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), OneLake paths [Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533)).
-- **pandas**: ETL only; no SQL engine, so no TPC-H or TPC-DS.
-- **Databend**: runs a build of main until a nightly carries the decimal fix ([databend#20588](https://github.com/databendlabs/databend/issues/20588), fixed by [#20594](https://github.com/databendlabs/databend/pull/20594)); Azure reads ([databend#20590](https://github.com/databendlabs/databend/pull/20590)) are in the nightlies, not in a stable release. Iceberg reads take a SAS; the workload identity does not reach its Azure reader. TPC-DS stops at Q5 on a `UNION ALL` bug ([databend#20732](https://github.com/databendlabs/databend/issues/20732)) and TPC-H SF=100 at Q4, a semi join out of memory instead of spilling ([databend#20733](https://github.com/databendlabs/databend/issues/20733)).
+- **Daft**: ETL only; its SQL fails on decimal precision ([Daft#7532](https://github.com/Eventual-Inc/Daft/issues/7532), OneLake paths [Daft#7533](https://github.com/Eventual-Inc/Daft/pull/7533)).
+- **pandas**: ETL only; no SQL engine, so no TPC-DS.
+- **Databend**: runs a build of main until a nightly carries the decimal fix ([databend#20588](https://github.com/databendlabs/databend/issues/20588), fixed by [#20594](https://github.com/databendlabs/databend/pull/20594)); Azure reads ([databend#20590](https://github.com/databendlabs/databend/pull/20590)) are in the nightlies, not in a stable release. Iceberg reads take a SAS; the workload identity does not reach its Azure reader. TPC-DS stops at Q5 on a `UNION ALL` bug ([databend#20732](https://github.com/databendlabs/databend/issues/20732)).
 - **StarRocks**: TPC-DS complete up to SF=100 (99/99 on 4.1.7); SF=300 not run yet.
 - **chDB**: not in TPC-DS; 6 of 99 queries fail on ClickHouse issues: Q36 and Q66 ([ClickHouse#9715](https://github.com/ClickHouse/ClickHouse/issues/9715)), Q47 and Q57 ([ClickHouse#34697](https://github.com/ClickHouse/ClickHouse/issues/34697)), Q75 ([ClickHouse#106707](https://github.com/ClickHouse/ClickHouse/issues/106707)), Q18 (`CAST(NULL AS decimal)` is an error, not NULL).
 
@@ -36,4 +36,4 @@ Tried and not added:
 - **Firebolt Core**: attaches the catalog, but only reads data from `s3://`, `gs://` or `file://`. It rejects OneLake's `abfss://` paths, and its `azure://` location takes no Azure token (condition 2; [firebolt-core#90](https://github.com/firebolt-db/firebolt-core/issues/90)).
 - **DataFusion Comet**: its native Iceberg scan has no `abfss://`, so OneLake scans fall back to the JVM ([apache/datafusion-comet#6058](https://github.com/apache/datafusion-comet/issues/6058)) (condition 2).
 - **DataFusion**: its Python package has no Iceberg support: no catalog, no scan, no write ([apache/datafusion-python#1097](https://github.com/apache/datafusion-python/issues/1097)). The Iceberg table provider, [apache/datafusion-iceberg](https://github.com/apache/datafusion-iceberg), reads and writes, but it is Rust only and has no release yet (conditions 2 and 3).
-- **pg_lake** (3.5.3): runs TPC-H 22/22, but has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row `nation` takes 4-5s.
+- **pg_lake** (3.5.3): has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row `nation` takes 4-5s.

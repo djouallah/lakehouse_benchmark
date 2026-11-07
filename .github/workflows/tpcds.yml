@@ -1,19 +1,23 @@
 name: tpcds bench
 
-# THE SECOND QUERY SUITE: the same job graph as bench.yml, on TPC-DS's 24 tables and 99
-# statements and the same shared scripts (BENCH_SUITE=tpcds picks the suite, bench/suite.py).
-# It runs FEWER ENGINES than bench.yml -- two of TPC-H's engines cannot answer TPC-DS at SF=10
-# at all, and bench/tpcds/config.py's ENGINES says which and on what evidence.
+# THE QUERY BENCHMARK: TPC-DS's 24 tables and 99 statements, through the shared scripts
+# (BENCH_SUITE=tpcds picks the suite, bench/suite.py). TPC-H, its first suite, was retired on
+# 2026-11-07; its workflow (bench.yml) and results are in git history. bench/tpcds/config.py's
+# ENGINES says which engines run and on what evidence.
 #
 #   prepare  ->  bench (matrix, one engine at a time)  ->  publish
 #
-# `prepare` is the SINGLE WRITER of the TPC-DS Iceberg tables, for the reason bench.yml gives.
-# Same generator as TPC-H, tpcgen-cli (`tpcds parquet`), one table at a time in ~200 MB parts
-# that already carry the Iceberg field ids. Then the TPC-H landing exactly: upload the files
-# as-is to Tables/<ns>/<table>/, one pyiceberg add_files per table (bench/tpcds/generate.py).
+# `prepare` is the SINGLE WRITER of the TPC-DS Iceberg tables. Matrix jobs calling generate()
+# would race -- create_table_if_not_exists is check-then-act with a multi-minute window before the
+# add_files commit, so two jobs can both decide a table is missing and both register the same
+# files. That is a corrupt table, not a slow one. The generator is tpcgen-cli (`tpcds parquet`),
+# one table at a time in ~200 MB parts that already carry the Iceberg field ids; the files are
+# uploaded as-is to Tables/<ns>/<table>/, one pyiceberg add_files per table (bench/tpcds/generate.py).
 #
-# `publish` is the SINGLE WRITER of results, under results/tpcds/ and docs/data/ -- separate
-# trees so the two query suites' histories never mix. It needs NO Azure credentials at all.
+# `publish` is the SINGLE WRITER of results, under results/tpcds/ and docs/data/. The bench jobs
+# write local JSON artifacts and nothing else; publish merges them into one immutable file. One
+# file per run, never edited, so concurrent jobs and overlapping runs cannot produce a merge
+# conflict. It needs NO Azure credentials at all -- it reads JSON off disk.
 
 on:
   workflow_dispatch:
@@ -36,8 +40,8 @@ on:
         type: boolean
         default: true
 
-# QUEUE, NEVER CANCEL, and ONE GROUP FOR EVERY BENCHMARK -- the same string as bench.yml and
-# etl.yml. The workflows share one lakehouse and one OneLake pipe, and the engine under test must
+# QUEUE, NEVER CANCEL, and ONE GROUP FOR EVERY BENCHMARK -- the same string as etl.yml,
+# capability.yml and workload.yml. The workflows share one lakehouse and one OneLake pipe, and the engine under test must
 # have that pipe to itself. A run of any of them, at any SF or file count, queues behind whatever
 # is running. A cancelled `prepare` leaves a namespace half-written; the next run resumes it
 # (bench/tpcds/generate.py skips tables that already have data files), but that is never what
@@ -51,7 +55,7 @@ env:
   # NOT put on sys.path (it adds the SCRIPT's directory, not the working directory).
   PYTHONPATH: ${{ github.workspace }}
   PYTHONUNBUFFERED: "1"
-  # Which query suite the shared scripts run (bench/suite.py). bench.yml says tpch.
+  # Which query suite the shared scripts run (bench/suite.py).
   BENCH_SUITE: tpcds
   TPCDS_SF: ${{ inputs.sf || '60' }}
   TPCDS_REGENERATE: ${{ inputs.regenerate || 'false' }}
@@ -117,7 +121,9 @@ jobs:
 
   bench:
     needs: prepare
-    # Display only -- see bench.yml. The final `|| matrix.engine` covers a new engine.
+    # Display only -- the checks list reads "bench (duckdb_iceberg)" otherwise. Nothing depends on
+    # this string: `needs:` uses the job ID, artifacts and the results JSON use `matrix.engine`.
+    # Chained `&&`/`||` is GitHub's ternary; the final `|| matrix.engine` covers a new engine.
     name: >-
       ${{ matrix.engine == 'duckdb_iceberg' && '🦆 DuckDB'
       || matrix.engine == 'chdb_iceberg' && '⚡ chDB'
@@ -130,7 +136,7 @@ jobs:
       || matrix.engine == 'databend_iceberg' && '🦀 Databend'
       || matrix.engine }}
     runs-on: ubuntu-latest
-    # The same 355 as bench.yml, far above the 85 that cost run 35732997698 its Spark numbers:
+    # 355, far above the 85 that cost run 35732997698 its Spark numbers:
     # it was killed at Q97 of the then warm pass, 85 minutes in, with no part written, so the
     # engine vanished from the results. The job cap must sit clear of the slowest engine; the
     # runner's 15-minute query limit (bench/tpch/runner.py) now ends a stuck run long before it.
@@ -150,13 +156,24 @@ jobs:
     strategy:
       # MANDATORY. A LakeSail OOM must not delete DuckDB's results.
       fail-fast: false
-      # ONE ENGINE AT A TIME. See bench.yml for the measurements behind this.
+      # ONE ENGINE AT A TIME. The engines read the same lakehouse, and run in parallel they
+      # are N clients contending for the same OneLake throughput -- which is what the numbers
+      # measured: on unchanged code, full-matrix runs swung 20-50% between runs for every engine
+      # but DuckDB, while an engine run on its own came out a different number again. Serial jobs
+      # give each engine the lakehouse to itself, so a run is N measurements of one thing
+      # rather than one measurement of N things sharing a pipe. Costs wall clock, not money:
+      # the runner minutes are the same. Jobs start in the order the `engines` input lists them.
       max-parallel: 1
       matrix:
         engine: ${{ fromJSON(needs.prepare.outputs.engines) }}
     env:
       BENCH_ENGINE: ${{ matrix.engine }}
-      # See bench.yml: DuckDB's azure extension needs the curl transport on Linux.
+      # DuckDB's azure extension has its own HTTP stack, and its default transport fails the
+      # OneLake TLS handshake on Linux -- the Iceberg ATTACH succeeds (that is the iceberg
+      # extension making a plain HTTPS call) and then every data-file read dies with
+      # "AzureStorageFileSystem could not open file", which looks exactly like a credential
+      # problem and is not one. curl respects the system CA bundle, which is what the second
+      # variable points at. Same pair djouallah/dbt-fabric sets on its runner jobs.
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       # Local-mode Spark: the driver JVM IS the executor and its heap is fixed before Python
@@ -177,8 +194,8 @@ jobs:
           cache: pip
           cache-dependency-path: requirements/${{ matrix.engine }}.txt
 
-      # One self-contained file per engine, the same files bench.yml installs: both query suites
-      # measure one build of each engine.
+      # One self-contained file per engine. Which line it tracks -- a release or a main build --
+      # is a property of that file, not a workflow input.
       - name: Install ${{ matrix.engine }}
         run: |
           pip install -r "requirements/${BENCH_ENGINE}.txt"
@@ -316,8 +333,10 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         # A GITHUB_TOKEN push does not trigger workflows, so this cannot loop.
         #
-        # ON A REJECTED PUSH, REGENERATE -- NEVER REBASE. bench.yml has the run that paid for
-        # this rule. Nothing under results/ or docs/data/ is hand-written -- every byte is a function
+        # ON A REJECTED PUSH, REGENERATE -- NEVER REBASE. Run 35550043819 (TPC-H) lost six green
+        # engines to `git pull --rebase`: another publish had landed the same generated paths while
+        # it ran, so the rebase hit add/add conflicts and the step died with the measurements still
+        # in the artifact. Nothing under results/ or docs/data/ is hand-written -- every byte is a function
         # of results/**/*.json -- so: drop this attempt, reset onto origin/main and generate
         # again. parts/ is untracked, so the artifacts survive the reset.
         run: |

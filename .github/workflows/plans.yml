@@ -5,7 +5,7 @@ name: plans
 # says what each engine reports. The raw plans come back as an artifact; plans_normalize.py turns
 # them into docs/data/plans/*.json, which is committed by hand -- this workflow writes nothing.
 #
-# Same setup as the bench job in bench.yml / tpcds.yml for the same engine, and the same OneLake
+# Same setup as the bench job in tpcds.yml for the same engine, and the same OneLake
 # queue: a capture is a query against the lakehouse like any other.
 
 on:
@@ -16,12 +16,8 @@ on:
         type: choice
         options: [duckdb_iceberg, polars_iceberg, trino_iceberg, pyspark_iceberg, pyspark_gluten_iceberg]
         default: duckdb_iceberg
-      suite:
-        type: choice
-        options: [tpcds, tpch]
-        default: tpcds
       sf:
-        description: Scale factor; the suite's tables must already be in OneLake.
+        description: TPC-DS scale factor; its tables must already be in OneLake.
         type: choice
         options: ["1", "10", "30", "60", "100"]
         default: "100"
@@ -41,9 +37,8 @@ concurrency:
 env:
   PYTHONPATH: ${{ github.workspace }}
   PYTHONUNBUFFERED: "1"
-  BENCH_SUITE: ${{ inputs.suite }}
+  BENCH_SUITE: tpcds
   BENCH_ENGINE: ${{ inputs.engine }}
-  TPCH_SF: ${{ inputs.sf }}
   TPCDS_SF: ${{ inputs.sf }}
   PLAN_QUERIES: ${{ inputs.queries }}
   PLAN_WARMUP: ${{ inputs.warmup }}
@@ -52,7 +47,7 @@ env:
   FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
   AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  # bench.yml says why, for each.
+  # tpcds.yml says why, for each.
   AZURE_TRANSPORT_OPTION_TYPE: curl
   CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
   SPARK_DRIVER_MEMORY: 11g

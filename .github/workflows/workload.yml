@@ -179,7 +179,7 @@ jobs:
       POLARS_OOC_MEMORY_BUDGET_MB: "10000"
     steps:
       # Room for the engines' spill (DuckDB's temp dir, Spark's shuffle, Trino's spill) as the
-      # tables grow: the toolchains this job never uses, as bench.yml does at SF>=30.
+      # tables grow: the toolchains this job never uses, as tpcds.yml does at SF>=30.
       - name: Free disk
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost

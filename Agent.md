@@ -53,23 +53,17 @@ from logs. `publish` also refuses to commit anything JWT-shaped (`leak_check` in
 ## 4. Run order
 
 Each step fails cheaply and points at one of the settings above. All workflows run on
-`ubuntu-latest`. `bench.yml`, `tpcds.yml`, `etl.yml`, `candidate_engine.yml`, `capability.yml` and `plans.yml`
+`ubuntu-latest`. `tpcds.yml`, `etl.yml`, `candidate_engine.yml`, `capability.yml` and `plans.yml`
 share the concurrency group `onelake`, so a second dispatch queues and never runs alongside the
-first. In the three benchmarks `publish` defaults to **true** and commits results to
+first. In the two benchmarks `publish` defaults to **true** and commits results to
 `main`, so pass `-f publish=false` for trial runs. `capability.yml`'s `publish` defaults to **false**:
 a run is a check unless it is ticked.
 
 ```bash
 gh workflow run smoke.yml -f catalog=false                     # dialect only: SF=1 local parquet, no Azure
 gh workflow run auth_smoke.yml                                 # credential chain; probe 5 SKIPs on an empty lakehouse
-gh workflow run bench.yml -f sf=1 -f engines=duckdb_iceberg -f publish=false   # creates CH0001
-gh workflow run auth_smoke.yml                                 # again: probe 5 now reads real parquet
-gh workflow run smoke.yml                                      # catalog phase needs CH0001
-gh workflow run bench.yml -f sf=1 -f publish=false             # all nine engines
-gh workflow run bench.yml -f sf=10                             # then 30/60/100; docs are built at 100
-gh workflow run smoke.yml -f suite=tpcds -f catalog=false
 gh workflow run tpcds.yml -f sf=1 -f publish=false             # creates DS0001
-gh workflow run smoke.yml -f suite=tpcds
+gh workflow run smoke.yml                                      # catalog phase needs DS0001
 gh workflow run tpcds.yml -f sf=10                             # default sf is 60; docs are built at 100
 gh workflow run etl.yml -f files=10 -f publish=false           # lands Files/csv (idempotent)
 gh workflow run etl.yml -f files=1000                          # ETL headline
@@ -78,10 +72,9 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 
 | Workflow | Inputs (default) |
 |---|---|
-| `bench.yml` (tpch bench) | `sf` 1/10/30/60/100 (10), `engines` (9), `publish` (true), `override`: a wheel installed over each engine, for unreleased builds |
 | `tpcds.yml` | `sf` 1/10/30/60/100 (60), `engines` (8, no chdb), `regenerate` (false), `publish` |
 | `etl.yml` | `files` 10/100/1000 (100), `engines` (11, includes daft and pandas, both ETL only), `publish` |
-| `smoke.yml` | `suite` tpch/tpcds, `engines`, `catalog` (true), `queries` (e.g. `3,72`) |
+| `smoke.yml` | `engines`, `catalog` (true), `queries` (e.g. `3,72`); TPC-DS only |
 | `candidate_engine.yml` | `candidate`, `image`, `sf` (10) |
 | `capability.yml` (iceberg support) | `clients` spark/trino/polars/duckdb/sail/chdb/databend/duckdb_isolation (all), `keep` (false), `probes` (all), `publish` (false) |
 | `auth_smoke.yml` | none |
@@ -89,13 +82,14 @@ gh workflow run candidate_engine.yml -f candidate=starrocks    # needs CH0010 an
 
 `prepare` generates a namespace once and later runs reuse it. `ci.yml` (ruff check, ruff format
 and pytest) runs on every push; the smoke test's `sql` phase runs on a push that touches `bench/`,
-`sql/`, `requirements/` or the smoke scripts. A `schedule:` block is left commented out at the top
-of `bench.yml`.
+`sql/`, `requirements/` or the smoke scripts. TPC-H was retired on 2026-11-07: `bench.yml` and its
+results are in git history. `candidate_engine.yml` and `auth_smoke.yml` still read the TPC-H
+tables already in the lakehouse (`CH0010`).
 
 ## Cost
 
 OneLake storage, reads and Fabric CU are billed to **your** workspace, not to GitHub. The data sizes
-are TPC-H SF=100 ≈ 27 GiB, TPC-DS SF=60 ≈ 17.6 GiB, and ETL 1000 files ≈ 52 GB of CSV. Every
+are TPC-DS SF=60 ≈ 17.6 GiB, and ETL 1000 files ≈ 52 GB of CSV. Every
 engine reads the whole working set on every run. Start at SF=1.
 
 ## Failure signatures
@@ -112,8 +106,8 @@ only complete runs.
 - **401/403 that looks like a role problem.** A tenant setting is missing. Probes 2 and 3 tell them apart.
 - **pyiceberg dies inside `add_files` after the upload.** `adlfs` is missing: use
   `pyiceberg[pyarrow,adlfs]`. It imports lazily, so the install and table creation both succeed first.
-- **`namespace CH0001 is not in the catalog` from smoke's catalog phase.** The lakehouse is fresh.
-  Run `bench.yml -f sf=1` first.
+- **`namespace DS0001 is not in the catalog` from smoke's catalog phase.** The lakehouse is fresh.
+  Run `tpcds.yml -f sf=1` first.
 - **Gluten 401s about 55 minutes into a run.** The SAS expired. The engine restarts its JVM when
   less than 15 minutes remain (`TOKEN_MIN_LIFETIME_SECONDS`). If it 401s from the first query,
   the workspace SAS setting (step 2.4) is off.
@@ -176,7 +170,7 @@ wire it in. Engine lists are cross-checked by `tests/test_config.py`, `tests/tes
   in `.github/scripts/capability/render_readme.py`.
 
 Set its catalog cache from `CATALOG_CACHE_SECONDS` rather than a literal. Then run `smoke.yml`
-before `bench.yml`.
+before `tpcds.yml`.
 
 ## Engines tried and left out
 

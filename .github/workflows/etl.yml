@@ -1,6 +1,6 @@
 name: light etl bench
 
-# THE SECOND BENCHMARK: the Light ETL notebook, ported the way bench.yml ports the TPC-H one.
+# THE ETL BENCHMARK: the Light ETL notebook, ported the way tpcds.yml ports TPC-DS.
 # Read N AEMO daily CSVs from OneLake, filter and cast them, write one Iceberg table per engine.
 #
 #   land  ->  CSV-Transform-OneLake-Iceberg (matrix, one engine at a time)  ->  publish
@@ -10,12 +10,12 @@ name: light etl bench
 # costs one listing. N matrix jobs downloading the same files would be N times the work
 # and a race on every upload.
 #
-# Every engine job reads Files/csv and writes ITS OWN table, T{n}.<engine>, so unlike the TPC-H
+# Every engine job reads Files/csv and writes ITS OWN table, T{n}.<engine>, so unlike the TPC-DS
 # workflow there is no shared table to race on. max-parallel stays 1 anyway, for the reason
-# bench.yml gives: N clients sharing one OneLake pipe measure the pipe, not the engines.
+# tpcds.yml gives: N clients sharing one OneLake pipe measure the pipe, not the engines.
 #
 # `publish` is the SINGLE WRITER of results, under results/etl/ and docs/data/ -- separate from
-# the TPC-H trees so the two histories never mix. It needs no Azure credentials at all.
+# the TPC-DS trees so the two histories never mix. It needs no Azure credentials at all.
 
 on:
   workflow_dispatch:
@@ -34,10 +34,10 @@ on:
         type: boolean
         default: true
 
-# ONE GROUP FOR BOTH BENCHMARKS, and it is the same string in bench.yml. The two workflows share
+# ONE GROUP FOR EVERY BENCHMARK, and it is the same string in tpcds.yml. The workflows share
 # one lakehouse and one OneLake pipe, and every number here assumes the engine under test has
-# that pipe to itself -- a TPC-H run and an ETL run at the same time would be two measurements of
-# each other. So a run of either queues behind whatever is running, at any SF or file count.
+# that pipe to itself -- a TPC-DS run and an ETL run at the same time would be two measurements of
+# each other. So a run of any of them queues behind whatever is running, at any SF or file count.
 # QUEUE, NEVER CANCEL: a cancelled landing leaves a half-populated Files/csv, which the next run
 # completes -- correct, but a wasted download.
 concurrency:
@@ -105,7 +105,7 @@ jobs:
   # whole benchmark in one line for anyone who opens the run before the results.
   CSV-Transform-OneLake-Iceberg:
     needs: land
-    # Display only -- see bench.yml. The final `|| matrix.engine` covers a new engine.
+    # Display only -- see tpcds.yml. The final `|| matrix.engine` covers a new engine.
     name: >-
       ${{ matrix.engine == 'duckdb_iceberg' && '🦆 DuckDB'
       || matrix.engine == 'chdb_iceberg' && '⚡ chDB'
@@ -130,14 +130,14 @@ jobs:
     strategy:
       # MANDATORY. One engine's OOM must not delete another's results.
       fail-fast: false
-      # ONE ENGINE AT A TIME. See bench.yml for the measurements behind this.
+      # ONE ENGINE AT A TIME. See tpcds.yml for the measurements behind this.
       max-parallel: 1
       matrix:
         engine: ${{ fromJSON(needs.land.outputs.engines) }}
     env:
       BENCH_ENGINE: ${{ matrix.engine }}
       # DuckDB's azure extension: curl transport, or every OneLake read and write fails on Linux
-      # with an error that reads like a credential problem. See bench.yml and config.azure_transport.
+      # with an error that reads like a credential problem. See tpcds.yml and config.azure_transport.
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt
       # Local-mode Spark: the driver heap is fixed before Python starts it, so this must be env.
@@ -152,7 +152,7 @@ jobs:
 
       # requirements/etl_<engine>.txt is the engine's own file plus what the ETL adds (pyiceberg
       # for the engines that write through it, the ADLS client for the Files/csv listing), each
-      # self-contained like the rest of requirements/. Same engine specs as bench.yml.
+      # self-contained like the rest of requirements/. Same engine specs as tpcds.yml.
       - name: Install ${{ matrix.engine }}
         run: |
           pip install -r "requirements/etl_${BENCH_ENGINE}.txt"
@@ -169,7 +169,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Same cache as bench.yml: spark.jars.packages resolves the same two artifacts.
+      # Same cache as tpcds.yml: spark.jars.packages resolves the same two artifacts.
       - uses: actions/cache@v4
         if: startsWith(matrix.engine, 'pyspark')
         with:

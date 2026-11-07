@@ -10,7 +10,7 @@ name: smoke
 # job generate its own copy on different DuckDB builds -- 18 of 99 queries "disagreed" on data,
 # not on SQL. One generation, one cache key, one dataset.
 #
-# `sql` runs the suite's queries -- TPC-H's 22 or TPC-DS's 99 -- against that LOCAL parquet. No secrets, no Fabric, no id-token --
+# `sql` runs TPC-DS's 99 queries against that LOCAL parquet. No secrets, no Fabric, no id-token --
 # it answers "does this engine speak the dialect" in about a minute. `compare` then checks that
 # every engine returned the SAME row count for the same query, which is a correctness signal the
 # benchmark itself cannot produce.
@@ -20,7 +20,7 @@ name: smoke
 # SQL. Every expensive debugging session in this repo so far came from those two questions being
 # tangled together in one 15-minute log.
 #
-# This is the gate a new engine passes BEFORE it is added to bench.yml.
+# This is the gate a new engine passes BEFORE it is added to tpcds.yml.
 
 on:
   workflow_dispatch:
@@ -28,16 +28,11 @@ on:
       engines:
         description: Comma-separated engines to smoke.
         type: string
-        default: duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg
+        default: duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,lakesail_iceberg,polars_iceberg,databend_iceberg
       catalog:
         description: Also run phase 2 against OneLake. Off runs the local SQL phase only.
         type: boolean
         default: true
-      suite:
-        description: Which query suite. Both generate SF=1 with tpcgen-cli.
-        type: choice
-        options: ["tpch", "tpcds"]
-        default: "tpch"
       queries:
         description: Comma-separated query numbers for both phases, e.g. 3,7,16,42,55. Empty runs the whole suite locally and the two probes on OneLake.
         type: string
@@ -60,12 +55,12 @@ concurrency:
 env:
   PYTHONPATH: ${{ github.workspace }}
   PYTHONUNBUFFERED: "1"
-  # A push runs TPC-H (the default); TPC-DS is dispatch-only. See bench/suite.py.
-  BENCH_SUITE: ${{ inputs.suite || 'tpch' }}
+  # The one query suite (bench/suite.py); TPC-H was retired on 2026-11-07.
+  BENCH_SUITE: tpcds
   SMOKE_QUERIES: ${{ inputs.queries || '' }}
 
 jobs:
-  # The matrix needs a JSON array; the input is a human-friendly CSV. Same jq as bench.yml.
+  # The matrix needs a JSON array; the input is a human-friendly CSV. Same jq as tpcds.yml.
   # And the ONE generation of the suite's SF=1 parquet, saved to the cache the sql jobs read.
   plan:
     runs-on: ubuntu-latest
@@ -77,7 +72,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,chdb_iceberg,polars_iceberg,lakesail_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,databend_iceberg' }}" \
+          ENGINES=$(printf '%s' "${{ inputs.engines || 'duckdb_iceberg,pyspark_iceberg,pyspark_gluten_iceberg,starrocks_iceberg,trino_iceberg,lakesail_iceberg,polars_iceberg,databend_iceberg' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
           echo "engines: $ENGINES"
@@ -96,8 +91,8 @@ jobs:
       # the tpcgen-cli pin (v3 = tpcgen-cli 4.0.0).
       - uses: actions/cache@v4
         with:
-          path: ${{ inputs.suite || 'tpch' }}-local
-          key: ${{ inputs.suite || 'tpch' }}-local-sf1-v3
+          path: tpcds-local
+          key: tpcds-local-sf1-v3
 
       - name: Generate the suite's SF=1 parquet (skipped on a cache hit)
         run: python .github/scripts/smoke_sql.py --generate
@@ -118,7 +113,7 @@ jobs:
       # Local-mode Spark: the driver JVM IS the executor and its heap is fixed before Python
       # starts it. At the 1g default five TPC-DS queries died in "Not enough memory to build and
       # broadcast the table" at SF=1 -- a smoke artefact, not a dialect gap. Same value as the
-      # catalog job and bench.yml, so phase 1 runs the JVM the benchmark runs.
+      # catalog job and tpcds.yml, so phase 1 runs the JVM the benchmark runs.
       SPARK_DRIVER_MEMORY: 11g
     steps:
       - uses: actions/checkout@v5
@@ -147,8 +142,8 @@ jobs:
       # Restored, never generated here (see the header): `plan` ran first and saved this key.
       - uses: actions/cache@v4
         with:
-          path: ${{ inputs.suite || 'tpch' }}-local
-          key: ${{ inputs.suite || 'tpch' }}-local-sf1-v3
+          path: tpcds-local
+          key: tpcds-local-sf1-v3
           fail-on-cache-miss: true
 
       # StarRocks is a container, not a wheel (bench/starrocks.py). Pull it here, OUTSIDE the
@@ -237,13 +232,12 @@ jobs:
         engine: ${{ fromJSON(needs.plan.outputs.engines) }}
     env:
       BENCH_ENGINE: ${{ matrix.engine }}
-      TPCH_SF: "1"
       TPCDS_SF: "1"
       FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
       FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      # Same pair bench.yml sets. DuckDB's azure extension fails the OneLake TLS handshake on
+      # Same pair tpcds.yml sets. DuckDB's azure extension fails the OneLake TLS handshake on
       # its default transport, and the symptom is an unreadable data file, not an auth error.
       AZURE_TRANSPORT_OPTION_TYPE: curl
       CURL_CA_INFO: /etc/ssl/certs/ca-certificates.crt

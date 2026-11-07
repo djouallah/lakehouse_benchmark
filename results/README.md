@@ -1,6 +1,6 @@
 One JSON file per benchmark run lands here. Four jobs write them:
 
-- `*.json` (TPC-H) and `tpcds/` (TPC-DS): `.github/scripts/publish.py`.
+- `tpcds/`: `.github/scripts/publish.py`. TPC-H's `*.json`, retired 2026-11-07, are in git history.
 - `etl/`: `.github/scripts/etl_publish.py`.
 - `capability/`: the publish job of `.github/workflows/capability.yml`.
 - `workload/`: `.github/scripts/workload_publish.py`.
