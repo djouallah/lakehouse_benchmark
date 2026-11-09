@@ -1,8 +1,8 @@
 {
-  "run_id": "42529041846",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/42529041846",
-  "started": "2026-11-08T22:20:41Z",
-  "finished": "2026-11-08T22:23:45Z",
+  "run_id": "42709653667",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/42709653667",
+  "started": "2026-11-09T22:23:11Z",
+  "finished": "2026-11-09T22:24:51Z",
   "settings": {
     "expire_days": 1,
     "min_input_files": 5,
@@ -18,14 +18,14 @@
         "tables": 6,
         "errors": 0,
         "skipped": 0,
-        "files_before": 55,
-        "files_after": 51,
-        "bytes_after": 11333124653,
+        "files_before": 56,
+        "files_after": 44,
+        "bytes_after": 11337346355,
         "snapshots_before": 12,
-        "snapshots_after": 7,
-        "compacted": 5,
-        "compacted_into": 1,
-        "compacted_bytes": 115402699,
+        "snapshots_after": 9,
+        "compacted": 15,
+        "compacted_into": 3,
+        "compacted_bytes": 12952804,
         "expired": 6,
         "orphans_deleted": 0,
         "orphans_failed": 0,
@@ -34,11 +34,67 @@
       "tables": {
         "dbt_duckdb_landing.fct_price": {
           "before": {
-            "snapshots": 3,
-            "data_files": 8,
+            "snapshots": 2,
+            "data_files": 9,
             "delete_files": 0,
-            "bytes": 583556363,
-            "rows": 4794245
+            "bytes": 583784903,
+            "rows": 4795685
+          },
+          "compact": {
+            "rewritten": 0,
+            "added": 0,
+            "rewritten_bytes": 0
+          },
+          "expired": 1,
+          "orphans": {
+            "deleted": 0,
+            "failed": 0,
+            "bytes": 0
+          },
+          "after": {
+            "snapshots": 1,
+            "data_files": 9,
+            "delete_files": 0,
+            "bytes": 583784903,
+            "rows": 4795685
+          },
+          "seconds": 3.424
+        },
+        "dbt_duckdb_landing.fct_price_today": {
+          "before": {
+            "snapshots": 2,
+            "data_files": 5,
+            "delete_files": 0,
+            "bytes": 351782,
+            "rows": 3660
+          },
+          "compact": {
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 351782
+          },
+          "expired": 1,
+          "orphans": {
+            "deleted": 0,
+            "failed": 0,
+            "bytes": 0
+          },
+          "after": {
+            "snapshots": 2,
+            "data_files": 1,
+            "delete_files": 0,
+            "bytes": 289826,
+            "rows": 3660
+          },
+          "seconds": 4.002
+        },
+        "dbt_duckdb_landing.fct_scada": {
+          "before": {
+            "snapshots": 3,
+            "data_files": 27,
+            "delete_files": 0,
+            "bytes": 8665134593,
+            "rows": 389212465
           },
           "compact": {
             "rewritten": 0,
@@ -53,81 +109,25 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 8,
+            "data_files": 27,
             "delete_files": 0,
-            "bytes": 583556363,
-            "rows": 4794245
+            "bytes": 8665134593,
+            "rows": 389212465
           },
-          "seconds": 8.528
-        },
-        "dbt_duckdb_landing.fct_price_today": {
-          "before": {
-            "snapshots": 2,
-            "data_files": 4,
-            "delete_files": 0,
-            "bytes": 333800,
-            "rows": 3630
-          },
-          "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
-          },
-          "expired": 1,
-          "orphans": {
-            "deleted": 0,
-            "failed": 0,
-            "bytes": 0
-          },
-          "after": {
-            "snapshots": 1,
-            "data_files": 4,
-            "delete_files": 0,
-            "bytes": 333800,
-            "rows": 3630
-          },
-          "seconds": 2.614
-        },
-        "dbt_duckdb_landing.fct_scada": {
-          "before": {
-            "snapshots": 2,
-            "data_files": 30,
-            "delete_files": 0,
-            "bytes": 8707649267,
-            "rows": 389046865
-          },
-          "compact": {
-            "rewritten": 5,
-            "added": 1,
-            "rewritten_bytes": 115402699
-          },
-          "expired": 1,
-          "orphans": {
-            "deleted": 0,
-            "failed": 0,
-            "bytes": 0
-          },
-          "after": {
-            "snapshots": 2,
-            "data_files": 26,
-            "delete_files": 0,
-            "bytes": 8661369021,
-            "rows": 389046865
-          },
-          "seconds": 25.183
+          "seconds": 2.879
         },
         "dbt_duckdb_landing.fct_scada_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 4,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 1272723,
-            "rows": 211623
+            "bytes": 1292457,
+            "rows": 213561
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 1292457
           },
           "expired": 1,
           "orphans": {
@@ -136,13 +136,13 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 4,
+            "snapshots": 2,
+            "data_files": 1,
             "delete_files": 0,
-            "bytes": 1272723,
-            "rows": 211623
+            "bytes": 1260782,
+            "rows": 213561
           },
-          "seconds": 2.889
+          "seconds": 3.218
         },
         "dbt_duckdb_mart.dim_duid": {
           "before": {
@@ -170,20 +170,20 @@
             "bytes": 18167,
             "rows": 690
           },
-          "seconds": 1.903
+          "seconds": 1.472
         },
         "dbt_duckdb_mart.fct_summary": {
           "before": {
             "snapshots": 2,
-            "data_files": 8,
+            "data_files": 9,
             "delete_files": 4,
-            "bytes": 2086574579,
-            "rows": 151367052
+            "bytes": 2087104506,
+            "rows": 151427931
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 11308565
           },
           "expired": 1,
           "orphans": {
@@ -192,13 +192,13 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 8,
+            "snapshots": 2,
+            "data_files": 5,
             "delete_files": 4,
-            "bytes": 2086574579,
-            "rows": 151367052
+            "bytes": 2086858084,
+            "rows": 151427931
           },
-          "seconds": 3.445
+          "seconds": 4.428
         }
       }
     },
@@ -207,15 +207,15 @@
         "tables": 6,
         "errors": 0,
         "skipped": 0,
-        "files_before": 60,
-        "files_after": 60,
-        "bytes_after": 4301567555,
-        "snapshots_before": 12,
-        "snapshots_after": 6,
-        "compacted": 0,
-        "compacted_into": 0,
-        "compacted_bytes": 0,
-        "expired": 6,
+        "files_before": 65,
+        "files_after": 53,
+        "bytes_after": 4304276457,
+        "snapshots_before": 11,
+        "snapshots_after": 9,
+        "compacted": 15,
+        "compacted_into": 3,
+        "compacted_bytes": 99344902,
+        "expired": 5,
         "orphans_deleted": 0,
         "orphans_failed": 0,
         "orphan_bytes": 0
@@ -224,15 +224,15 @@
         "dbt_polars_landing.fct_price": {
           "before": {
             "snapshots": 2,
-            "data_files": 8,
+            "data_files": 9,
             "delete_files": 0,
-            "bytes": 506906679,
-            "rows": 4794245
+            "bytes": 507137923,
+            "rows": 4795685
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 97860523
           },
           "expired": 1,
           "orphans": {
@@ -241,21 +241,49 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 8,
+            "snapshots": 2,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 506906679,
-            "rows": 4794245
+            "bytes": 507963587,
+            "rows": 4795685
           },
-          "seconds": 3.061
+          "seconds": 11.688
         },
         "dbt_polars_landing.fct_price_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 4,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 335566,
-            "rows": 3630
+            "bytes": 365508,
+            "rows": 3660
+          },
+          "compact": {
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 365508
+          },
+          "expired": 1,
+          "orphans": {
+            "deleted": 0,
+            "failed": 0,
+            "bytes": 0
+          },
+          "after": {
+            "snapshots": 2,
+            "data_files": 1,
+            "delete_files": 0,
+            "bytes": 256458,
+            "rows": 3660
+          },
+          "seconds": 3.744
+        },
+        "dbt_polars_landing.fct_scada": {
+          "before": {
+            "snapshots": 2,
+            "data_files": 27,
+            "delete_files": 0,
+            "bytes": 2640256728,
+            "rows": 389212465
           },
           "compact": {
             "rewritten": 0,
@@ -270,53 +298,25 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 4,
+            "data_files": 27,
             "delete_files": 0,
-            "bytes": 335566,
-            "rows": 3630
+            "bytes": 2640256728,
+            "rows": 389212465
           },
-          "seconds": 2.682
-        },
-        "dbt_polars_landing.fct_scada": {
-          "before": {
-            "snapshots": 3,
-            "data_files": 26,
-            "delete_files": 0,
-            "bytes": 2638838760,
-            "rows": 389046865
-          },
-          "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
-          },
-          "expired": 2,
-          "orphans": {
-            "deleted": 0,
-            "failed": 0,
-            "bytes": 0
-          },
-          "after": {
-            "snapshots": 1,
-            "data_files": 26,
-            "delete_files": 0,
-            "bytes": 2638838760,
-            "rows": 389046865
-          },
-          "seconds": 2.967
+          "seconds": 1.949
         },
         "dbt_polars_landing.fct_scada_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 4,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 1100379,
-            "rows": 211623
+            "bytes": 1118871,
+            "rows": 213561
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 1118871
           },
           "expired": 1,
           "orphans": {
@@ -325,13 +325,13 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 4,
+            "snapshots": 2,
+            "data_files": 1,
             "delete_files": 0,
-            "bytes": 1100379,
-            "rows": 211623
+            "bytes": 1000837,
+            "rows": 213561
           },
-          "seconds": 2.684
+          "seconds": 3.072
         },
         "dbt_polars_mart.dim_duid": {
           "before": {
@@ -359,15 +359,15 @@
             "bytes": 20671,
             "rows": 690
           },
-          "seconds": 2.728
+          "seconds": 1.895
         },
         "dbt_polars_mart.fct_summary": {
           "before": {
             "snapshots": 2,
-            "data_files": 17,
+            "data_files": 18,
             "delete_files": 0,
-            "bytes": 1154365500,
-            "rows": 151013059
+            "bytes": 1154778176,
+            "rows": 151073938
           },
           "compact": {
             "rewritten": 0,
@@ -382,12 +382,12 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 17,
+            "data_files": 18,
             "delete_files": 0,
-            "bytes": 1154365500,
-            "rows": 151013059
+            "bytes": 1154778176,
+            "rows": 151073938
           },
-          "seconds": 3.297
+          "seconds": 2.171
         }
       }
     },
@@ -396,9 +396,9 @@
         "tables": 6,
         "errors": 5,
         "skipped": 0,
-        "files_before": 938,
-        "files_after": 938,
-        "bytes_after": 9588963225,
+        "files_before": 946,
+        "files_after": 946,
+        "bytes_after": 9592582457,
         "snapshots_before": 11,
         "snapshots_after": 6,
         "compacted": 0,
@@ -413,10 +413,10 @@
         "dbt_gluten_landing.fct_price": {
           "before": {
             "snapshots": 2,
-            "data_files": 109,
+            "data_files": 110,
             "delete_files": 0,
-            "bytes": 645539225,
-            "rows": 4794245
+            "bytes": 645770218,
+            "rows": 4795685
           },
           "expired": 1,
           "orphans": {
@@ -426,23 +426,23 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 109,
+            "data_files": 110,
             "delete_files": 0,
-            "bytes": 645539225,
-            "rows": 4794245
+            "bytes": 645770218,
+            "rows": 4795685
           },
           "error": {
             "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
           },
-          "seconds": 6.885
+          "seconds": 4.428
         },
         "dbt_gluten_landing.fct_price_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 64,
+            "data_files": 65,
             "delete_files": 0,
-            "bytes": 1904336,
-            "rows": 3630
+            "bytes": 1932425,
+            "rows": 3660
           },
           "expired": 1,
           "orphans": {
@@ -452,23 +452,23 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 64,
+            "data_files": 65,
             "delete_files": 0,
-            "bytes": 1904336,
-            "rows": 3630
+            "bytes": 1932425,
+            "rows": 3660
           },
           "error": {
             "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
           },
-          "seconds": 9.424
+          "seconds": 3.893
         },
         "dbt_gluten_landing.fct_scada": {
           "before": {
             "snapshots": 2,
-            "data_files": 584,
+            "data_files": 588,
             "delete_files": 0,
-            "bytes": 7241286602,
-            "rows": 389046865
+            "bytes": 7244154921,
+            "rows": 389212465
           },
           "expired": 1,
           "orphans": {
@@ -478,23 +478,23 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 584,
+            "data_files": 588,
             "delete_files": 0,
-            "bytes": 7241286602,
-            "rows": 389046865
+            "bytes": 7244154921,
+            "rows": 389212465
           },
           "error": {
             "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
           },
-          "seconds": 6.493
+          "seconds": 3.368
         },
         "dbt_gluten_landing.fct_scada_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 63,
+            "data_files": 64,
             "delete_files": 0,
-            "bytes": 1802210,
-            "rows": 211623
+            "bytes": 1821865,
+            "rows": 213561
           },
           "expired": 1,
           "orphans": {
@@ -504,15 +504,15 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 63,
+            "data_files": 64,
             "delete_files": 0,
-            "bytes": 1802210,
-            "rows": 211623
+            "bytes": 1821865,
+            "rows": 213561
           },
           "error": {
             "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
           },
-          "seconds": 8.592
+          "seconds": 3.804
         },
         "dbt_gluten_mart.dim_duid": {
           "before": {
@@ -540,15 +540,15 @@
             "bytes": 19862,
             "rows": 690
           },
-          "seconds": 1.97
+          "seconds": 1.555
         },
         "dbt_gluten_mart.fct_summary": {
           "before": {
             "snapshots": 2,
-            "data_files": 117,
+            "data_files": 118,
             "delete_files": 0,
-            "bytes": 1698410990,
-            "rows": 151013059
+            "bytes": 1698883166,
+            "rows": 151073938
           },
           "expired": 1,
           "orphans": {
@@ -558,15 +558,15 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 117,
+            "data_files": 118,
             "delete_files": 0,
-            "bytes": 1698410990,
-            "rows": 151013059
+            "bytes": 1698883166,
+            "rows": 151073938
           },
           "error": {
             "compact": "write compacted files for group \"0:_\": error encountered during schema visitor: cannot resolve type: cannot promote timestamp to timestamptz"
           },
-          "seconds": 5.623
+          "seconds": 3.081
         }
       }
     },
@@ -575,14 +575,14 @@
         "tables": 6,
         "errors": 0,
         "skipped": 0,
-        "files_before": 102,
-        "files_after": 102,
-        "bytes_after": 16801378600,
+        "files_before": 107,
+        "files_after": 95,
+        "bytes_after": 16804068043,
         "snapshots_before": 11,
-        "snapshots_after": 6,
-        "compacted": 0,
-        "compacted_into": 0,
-        "compacted_bytes": 0,
+        "snapshots_after": 9,
+        "compacted": 15,
+        "compacted_into": 3,
+        "compacted_bytes": 11150828,
         "expired": 5,
         "orphans_deleted": 0,
         "orphans_failed": 0,
@@ -592,10 +592,10 @@
         "dbt_trino_landing.fct_price": {
           "before": {
             "snapshots": 2,
-            "data_files": 9,
+            "data_files": 10,
             "delete_files": 0,
-            "bytes": 816579927,
-            "rows": 7245290
+            "bytes": 816768425,
+            "rows": 7246730
           },
           "compact": {
             "rewritten": 0,
@@ -610,25 +610,25 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 9,
+            "data_files": 10,
             "delete_files": 0,
-            "bytes": 816579927,
-            "rows": 7245290
+            "bytes": 816768425,
+            "rows": 7246730
           },
-          "seconds": 44.14
+          "seconds": 2.063
         },
         "dbt_trino_landing.fct_price_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 4,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 320939,
-            "rows": 3630
+            "bytes": 336996,
+            "rows": 3660
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 336996
           },
           "expired": 1,
           "orphans": {
@@ -637,21 +637,21 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 4,
+            "snapshots": 2,
+            "data_files": 1,
             "delete_files": 0,
-            "bytes": 320939,
-            "rows": 3630
+            "bytes": 286059,
+            "rows": 3660
           },
-          "seconds": 2.83
+          "seconds": 3.118
         },
         "dbt_trino_landing.fct_scada": {
           "before": {
             "snapshots": 2,
-            "data_files": 68,
+            "data_files": 69,
             "delete_files": 0,
-            "bytes": 12129003917,
-            "rows": 749924306
+            "bytes": 12131352655,
+            "rows": 750089906
           },
           "compact": {
             "rewritten": 0,
@@ -666,25 +666,25 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 68,
+            "data_files": 69,
             "delete_files": 0,
-            "bytes": 12129003917,
-            "rows": 749924306
+            "bytes": 12131352655,
+            "rows": 750089906
           },
-          "seconds": 5.97
+          "seconds": 2.887
         },
         "dbt_trino_landing.fct_scada_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 4,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 1273046,
-            "rows": 211623
+            "bytes": 1288540,
+            "rows": 213561
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 1288540
           },
           "expired": 1,
           "orphans": {
@@ -693,13 +693,13 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 4,
+            "snapshots": 2,
+            "data_files": 1,
             "delete_files": 0,
-            "bytes": 1273046,
-            "rows": 211623
+            "bytes": 1201108,
+            "rows": 213561
           },
-          "seconds": 2.755
+          "seconds": 3.487
         },
         "dbt_trino_mart.dim_duid": {
           "before": {
@@ -727,15 +727,64 @@
             "bytes": 18951,
             "rows": 690
           },
-          "seconds": 2.133
+          "seconds": 1.384
         },
         "dbt_trino_mart.fct_summary": {
           "before": {
             "snapshots": 2,
-            "data_files": 16,
+            "data_files": 17,
             "delete_files": 4,
-            "bytes": 3854181820,
-            "rows": 451422292
+            "bytes": 3854582113,
+            "rows": 451483171
+          },
+          "compact": {
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 9525292
+          },
+          "expired": 1,
+          "orphans": {
+            "deleted": 0,
+            "failed": 0,
+            "bytes": 0
+          },
+          "after": {
+            "snapshots": 2,
+            "data_files": 13,
+            "delete_files": 4,
+            "bytes": 3854440845,
+            "rows": 451483171
+          },
+          "seconds": 4.593
+        }
+      }
+    },
+    "lakesail_iceberg": {
+      "totals": {
+        "tables": 6,
+        "errors": 1,
+        "skipped": 0,
+        "files_before": 71,
+        "files_after": 59,
+        "bytes_after": 10252070762,
+        "snapshots_before": 11,
+        "snapshots_after": 8,
+        "compacted": 15,
+        "compacted_into": 3,
+        "compacted_bytes": 21648250,
+        "expired": 6,
+        "orphans_deleted": 0,
+        "orphans_failed": 0,
+        "orphan_bytes": 0
+      },
+      "tables": {
+        "dbt_sail_landing.fct_price": {
+          "before": {
+            "snapshots": 2,
+            "data_files": 8,
+            "delete_files": 0,
+            "bytes": 539553279,
+            "rows": 4795685
           },
           "compact": {
             "rewritten": 0,
@@ -750,41 +799,48 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 16,
-            "delete_files": 4,
-            "bytes": 3854181820,
-            "rows": 451422292
+            "data_files": 8,
+            "delete_files": 0,
+            "bytes": 539553279,
+            "rows": 4795685
           },
-          "seconds": 3.109
-        }
-      }
-    },
-    "lakesail_iceberg": {
-      "totals": {
-        "tables": 6,
-        "errors": 1,
-        "skipped": 0,
-        "files_before": 66,
-        "files_after": 66,
-        "bytes_after": 10250041414,
-        "snapshots_before": 12,
-        "snapshots_after": 6,
-        "compacted": 0,
-        "compacted_into": 0,
-        "compacted_bytes": 0,
-        "expired": 6,
-        "orphans_deleted": 0,
-        "orphans_failed": 0,
-        "orphan_bytes": 0
-      },
-      "tables": {
-        "dbt_sail_landing.fct_price": {
+          "seconds": 2.198
+        },
+        "dbt_sail_landing.fct_price_today": {
+          "before": {
+            "snapshots": 2,
+            "data_files": 5,
+            "delete_files": 0,
+            "bytes": 424851,
+            "rows": 3660
+          },
+          "compact": {
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 424851
+          },
+          "expired": 1,
+          "orphans": {
+            "deleted": 0,
+            "failed": 0,
+            "bytes": 0
+          },
+          "after": {
+            "snapshots": 2,
+            "data_files": 1,
+            "delete_files": 0,
+            "bytes": 312002,
+            "rows": 3660
+          },
+          "seconds": 3.527
+        },
+        "dbt_sail_landing.fct_scada": {
           "before": {
             "snapshots": 3,
-            "data_files": 7,
+            "data_files": 40,
             "delete_files": 0,
-            "bytes": 539319991,
-            "rows": 4794245
+            "bytes": 5686718357,
+            "rows": 612154993
           },
           "compact": {
             "rewritten": 0,
@@ -799,81 +855,25 @@
           },
           "after": {
             "snapshots": 1,
-            "data_files": 7,
+            "data_files": 40,
             "delete_files": 0,
-            "bytes": 539319991,
-            "rows": 4794245
+            "bytes": 5686718357,
+            "rows": 612154993
           },
-          "seconds": 4.079
-        },
-        "dbt_sail_landing.fct_price_today": {
-          "before": {
-            "snapshots": 2,
-            "data_files": 4,
-            "delete_files": 0,
-            "bytes": 394266,
-            "rows": 3630
-          },
-          "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
-          },
-          "expired": 1,
-          "orphans": {
-            "deleted": 0,
-            "failed": 0,
-            "bytes": 0
-          },
-          "after": {
-            "snapshots": 1,
-            "data_files": 4,
-            "delete_files": 0,
-            "bytes": 394266,
-            "rows": 3630
-          },
-          "seconds": 3.061
-        },
-        "dbt_sail_landing.fct_scada": {
-          "before": {
-            "snapshots": 3,
-            "data_files": 39,
-            "delete_files": 0,
-            "bytes": 5685199137,
-            "rows": 611989393
-          },
-          "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
-          },
-          "expired": 1,
-          "orphans": {
-            "deleted": 0,
-            "failed": 0,
-            "bytes": 0
-          },
-          "after": {
-            "snapshots": 2,
-            "data_files": 39,
-            "delete_files": 0,
-            "bytes": 5685199137,
-            "rows": 611989393
-          },
-          "seconds": 6.473
+          "seconds": 3.371
         },
         "dbt_sail_landing.fct_scada_today": {
           "before": {
             "snapshots": 2,
-            "data_files": 4,
+            "data_files": 5,
             "delete_files": 0,
-            "bytes": 1291477,
-            "rows": 211623
+            "bytes": 1310872,
+            "rows": 213561
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 1310872
           },
           "expired": 1,
           "orphans": {
@@ -882,32 +882,32 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 4,
+            "snapshots": 2,
+            "data_files": 1,
             "delete_files": 0,
-            "bytes": 1291477,
-            "rows": 211623
+            "bytes": 1280165,
+            "rows": 213561
           },
-          "seconds": 2.724
+          "seconds": 3.057
         },
         "dbt_sail_mart.dim_duid": {
           "error": {
             "load": "ocf: resolving reader schema: avro: incompatible at partitions.items: reader FieldSummary vs writer field_summary: record names do not match"
           },
-          "seconds": 0.376
+          "seconds": 0.395
         },
         "dbt_sail_mart.fct_summary": {
           "before": {
             "snapshots": 2,
-            "data_files": 12,
+            "data_files": 13,
             "delete_files": 0,
-            "bytes": 4023836543,
-            "rows": 595088512
+            "bytes": 4024217823,
+            "rows": 595149391
           },
           "compact": {
-            "rewritten": 0,
-            "added": 0,
-            "rewritten_bytes": 0
+            "rewritten": 5,
+            "added": 1,
+            "rewritten_bytes": 19912527
           },
           "expired": 1,
           "orphans": {
@@ -916,49 +916,49 @@
             "bytes": 0
           },
           "after": {
-            "snapshots": 1,
-            "data_files": 12,
+            "snapshots": 2,
+            "data_files": 9,
             "delete_files": 0,
-            "bytes": 4023836543,
-            "rows": 595088512
+            "bytes": 4024206959,
+            "rows": 595149391
           },
-          "seconds": 3.206
+          "seconds": 4.877
         }
       }
     }
   },
   "tests": {
-    "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/42529041846",
-    "finished": "2026-11-08T22:18:41Z",
+    "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/42709653667",
+    "finished": "2026-11-09T22:21:06Z",
     "legs": {
       "duckdb_iceberg": {
         "tests": 39,
         "tests_ok": 39,
-        "seconds": 85.191,
+        "seconds": 112.001,
         "not_passed": {}
       },
       "polars_iceberg": {
         "tests": 39,
         "tests_ok": 39,
-        "seconds": 57.118,
+        "seconds": 80.584,
         "not_passed": {}
       },
       "pyspark_gluten_iceberg": {
         "tests": 39,
         "tests_ok": 39,
-        "seconds": 85.733,
+        "seconds": 120.112,
         "not_passed": {}
       },
       "trino_iceberg": {
         "tests": 39,
         "tests_ok": 39,
-        "seconds": 57.409,
+        "seconds": 98.718,
         "not_passed": {}
       },
       "lakesail_iceberg": {
         "tests": 39,
         "tests_ok": 39,
-        "seconds": 58.224,
+        "seconds": 80.104,
         "not_passed": {}
       }
     }
