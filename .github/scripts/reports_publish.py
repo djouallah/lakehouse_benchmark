@@ -39,6 +39,8 @@ NOT_FIXED = {
 FIXED_BY = {
     # drop a table (with purge): SQL DROP TABLE ... PURGE on a register_catalog catalog.
     "pola-rs/polars#30211": "pola-rs/polars#30247",
+    # min/max from the manifest statistics, without opening the data files.
+    "pola-rs/polars#30224": "pola-rs/polars#30690",
 }
 LINK = re.compile(r'href="https://github\.com/([\w.-]+/[\w.-]+)/(issues|pull)/(\d+)"')
 

@@ -426,8 +426,8 @@ class PolarsCapability:
 
     def metadata_tables(self) -> str:
         table = self._fresh("inspect")
-        found = self.sql(f"SELECT count(*) FROM {self.t(table)}.snapshots")
-        return f"t.snapshots reads {found[0][0]} snapshot(s)"
+        found = self.sql(f"SELECT count(*) FROM {self.t(table)}$snapshots")
+        return f"t$snapshots reads {found[0][0]} snapshot(s)"
 
     def _stats_table(self, what: str) -> str:
         """harness.STATS_FILES, written by pyiceberg: four files with known min/max bounds."""

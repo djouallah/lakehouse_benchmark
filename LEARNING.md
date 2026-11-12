@@ -498,6 +498,8 @@ Largest scale each engine completes, cold, every statement answered:
     `pl.len()` comes from the metadata but min/max open the data files: [#30224](https://github.com/pola-rs/polars/issues/30224). SQL parity
     with the Python API: TRUNCATE [#30225](https://github.com/pola-rs/polars/issues/30225), INSERT OVERWRITE [#30226](https://github.com/pola-rs/polars/issues/30226), time travel
     [#30227](https://github.com/pola-rs/polars/issues/30227), CREATE SCHEMA [#30228](https://github.com/pola-rs/polars/issues/30228), ALTER TABLE ADD COLUMN [#30229](https://github.com/pola-rs/polars/issues/30229); SQL MERGE is [#22185](https://github.com/pola-rs/polars/issues/22185).
+    2026-11-12, main fad42ed7f0: SQL `MERGE INTO` ([#30633](https://github.com/pola-rs/polars/pull/30633)), min/max/count from the
+    manifest statistics ([#30690](https://github.com/pola-rs/polars/pull/30690)) and metadata tables `t$snapshots` ([#30697](https://github.com/pola-rs/polars/pull/30697)) merged.
 - **The dbt project runs on Polars** (fabric-dbt-examples [run 39257525479](https://github.com/djouallah/fabric-dbt-examples/actions/runs/39257525479),
   2026-10-19): 50 CSV files, `fct_summary` matches Spark row for row (3,078,798 rows; the sums
   differ only in float rounding). Two changes got it there: one SQL `read_csv()` over the file
