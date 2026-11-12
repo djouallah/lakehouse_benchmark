@@ -1,6 +1,7 @@
 """.github/scripts/capability/render_readme.py: the site grid, from readings."""
 
 import importlib.util
+import json
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -176,17 +177,12 @@ def test_insert_select_reads_the_table_it_writes():
         assert 'SELECT id + 10, v FROM {self.t(table)}"' in probe, engine
 
 
-def test_the_columns_go_from_most_to_least_usable():
-    assert render_readme.ENGINES == (
-        "spark",
-        "sail",
-        "trino",
-        "starrocks",
-        "duckdb",
-        "polars",
-        "chdb",
-        "databend",
-    )
+def test_the_columns_go_from_most_to_fewest_supported_cells():
+    site = json.loads((_ROOT / "docs" / "data" / "capability.json").read_text(encoding="utf-8"))
+    yes = [sum(r["cells"][e]["o"] == "supported" for r in site["rows"]) for e in site["engines"]]
+    assert yes == sorted(yes, reverse=True)
+    for r in site["rows"]:
+        assert list(r["cells"]) == list(site["engines"]), r["label"]
 
 
 def test_spark_sends_the_purge_to_the_catalog():
@@ -195,7 +191,6 @@ def test_spark_sends_the_purge_to_the_catalog():
         encoding="utf-8"
     )
     assert 'f"spark.sql.catalog.{name}.rest-catalog-purge"] = "true"' in text
-    assert render_readme.ENGINES[0] == "spark"
 
 
 def test_a_truncate_that_is_not_metadata_only_is_a_no():

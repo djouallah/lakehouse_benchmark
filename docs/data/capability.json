@@ -1,16 +1,16 @@
 {
  "engines": {
-  "pyspark_iceberg": {
-   "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
-  },
   "lakesail_iceberg": {
    "version": "0.7.3+main2280ea1928",
    "run": "43225837832",
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43225837832",
    "date": "2026-11-12"
+  },
+  "pyspark_iceberg": {
+   "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
+   "run": "39906543136",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
+   "date": "2026-10-23"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
@@ -62,10 +62,10 @@
    "group": "Core",
    "label": "Attach the REST catalog",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -92,10 +92,10 @@
    "group": "Core",
    "label": "SELECT a table by its catalog name",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -122,10 +122,10 @@
    "group": "Core",
    "label": "CREATE TABLE",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -152,12 +152,12 @@
    "group": "Core",
    "label": "CREATE TABLE AS SELECT",
    "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
     "pyspark_iceberg": {
      "o": "no",
      "n": "the OneLake catalog does not support staged create, which Spark's CTAS uses."
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
     },
     "trino_iceberg": {
      "o": "supported"
@@ -184,10 +184,10 @@
    "group": "Core",
    "label": "INSERT / append",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -214,10 +214,10 @@
    "group": "Core",
    "label": "INSERT ... SELECT",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -244,10 +244,10 @@
    "group": "Core",
    "label": "DELETE",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -275,10 +275,10 @@
    "group": "Core",
    "label": "UPDATE",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -307,10 +307,10 @@
    "group": "Core",
    "label": "INSERT OVERWRITE, whole table",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -341,10 +341,10 @@
    "group": "Core",
    "label": "Drop table with purge",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -371,10 +371,10 @@
    "group": "Core",
    "label": "Create namespace",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -401,10 +401,10 @@
    "group": "Core",
    "label": "Drop namespace",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -432,10 +432,10 @@
    "group": "Core",
    "label": "CREATE SCHEMA IF NOT EXISTS, existing schema",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -463,10 +463,10 @@
    "group": "Core",
    "label": "Concurrent append: both kept",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -493,10 +493,10 @@
    "group": "Core",
    "label": "Concurrent writer: DELETE loses nothing",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -524,10 +524,10 @@
    "group": "Core",
    "label": "Concurrent writer: UPDATE loses nothing",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -556,10 +556,10 @@
    "group": "Writes",
    "label": "MERGE with two actions (UPDATE + INSERT)",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -589,10 +589,10 @@
    "group": "Writes",
    "label": "TRUNCATE",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -622,10 +622,10 @@
    "group": "Writes",
    "label": "CREATE TABLE IF NOT EXISTS, existing table",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -652,10 +652,10 @@
    "group": "Partitions & types",
    "label": "Partitioned table",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -683,10 +683,10 @@
    "group": "Partitions & types",
    "label": "Partition transform: bucket",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -714,10 +714,10 @@
    "group": "Partitions & types",
    "label": "Partition transform: truncate",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -745,10 +745,10 @@
    "group": "Partitions & types",
    "label": "Partition transforms: year / month / day / hour",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -776,12 +776,12 @@
    "group": "Partitions & types",
    "label": "Types: decimal, date, timestamp, timestamptz, uuid, binary",
    "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
     "pyspark_iceberg": {
      "o": "no",
      "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` …"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
     },
     "trino_iceberg": {
      "o": "supported"
@@ -809,10 +809,10 @@
    "group": "Partitions & types",
    "label": "Nested types: struct, list, map",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -841,10 +841,10 @@
    "group": "Schema",
    "label": "Add column",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -872,10 +872,10 @@
    "group": "Schema",
    "label": "Drop column",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -903,10 +903,10 @@
    "group": "Schema",
    "label": "Rename column",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -934,10 +934,10 @@
    "group": "Schema",
    "label": "Type promotion (int → long)",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -965,10 +965,10 @@
    "group": "Schema",
    "label": "Partition evolution",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -998,10 +998,10 @@
    "group": "Schema",
    "label": "Write after partition evolution",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1029,10 +1029,10 @@
    "group": "Schema",
    "label": "Set table property",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1061,10 +1061,10 @@
    "group": "Schema",
    "label": "Sort order evolution",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1095,10 +1095,10 @@
    "group": "Reads & refs",
    "label": "File pruning from min/max in the metadata",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1125,10 +1125,10 @@
    "group": "Reads & refs",
    "label": "MAX from the metadata, no data file read",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1159,10 +1159,10 @@
    "group": "Reads & refs",
    "label": "Time travel",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1191,10 +1191,10 @@
    "group": "Reads & refs",
    "label": "Metadata tables",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1221,10 +1221,10 @@
    "group": "Reads & refs",
    "label": "Create branch",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1256,10 +1256,10 @@
    "group": "Reads & refs",
    "label": "Create tag",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1291,10 +1291,10 @@
    "group": "Maintenance",
    "label": "Compaction",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {
@@ -1324,10 +1324,10 @@
    "group": "Maintenance",
    "label": "Rewrite manifests",
    "cells": {
-    "pyspark_iceberg": {
+    "lakesail_iceberg": {
      "o": "supported"
     },
-    "lakesail_iceberg": {
+    "pyspark_iceberg": {
      "o": "supported"
     },
     "trino_iceberg": {

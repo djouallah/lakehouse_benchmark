@@ -17,16 +17,10 @@ import re
 import sys
 from pathlib import Path
 
-# The column order, most usable first. Spark is the reference: the Iceberg Java library the others
-# are read against. Sail passes Trino with branches and tags (36 cells to 35, run 39754911920).
+# Every engine with a probe. The site's columns are NOT this order: site_matrix sorts them by
+# supported cells, most first, and a tie keeps the order here.
 # Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
-# credited for a library call beside its SQL. On a main build Polars passes Databend (25 cells to
-# 13, run 41190026395): its SQL now creates, inserts and alters, and has no DELETE, UPDATE or MERGE.
-# StarRocks (2026-11-03, run 41602439955) follows Trino: both are the Iceberg Java library, and it
-# lacks UPDATE, MERGE, timestamptz/uuid columns and sort order evolution. Polars main 581cd15994
-# passes chDB with SQL UPDATE (30 cells to 28, run 42345500650).
-# Polars main fad42ed7f0 adds MERGE, metadata tables and max from the manifests (33, run
-# 43224769974). Sail main 2280ea1928 answers all 41 (run 43225837832); Spark stays first as the reference.
+# credited for a library call beside its SQL.
 ENGINES = ("spark", "sail", "trino", "starrocks", "duckdb", "polars", "chdb", "databend")
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
@@ -391,6 +385,13 @@ def site_matrix(data: dict) -> dict:
                     note = CATALOG_NO[(label, e)]
                 cells[SITE_KEY[e]] = {"o": outcome, **({"n": note} if note else {})}
             rows.append({"group": group, "label": label, "cells": cells})
+    # The columns by supported cells, most first; sorted() is stable, so a tie keeps ENGINES' order.
+    engines = sorted(
+        engines,
+        key=lambda e: -sum(r["cells"][SITE_KEY[e]]["o"] == "supported" for r in rows),
+    )
+    for r in rows:
+        r["cells"] = {SITE_KEY[e]: r["cells"][SITE_KEY[e]] for e in engines}
     return {
         "engines": {
             SITE_KEY[e]: {
