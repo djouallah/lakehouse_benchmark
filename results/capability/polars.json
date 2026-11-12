@@ -1,13 +1,13 @@
 {
  "engine": "polars",
- "version": "main 581cd15994",
+ "version": "main fad42ed7f0",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Polars attaches the REST catalog with register_catalog",
    "outcome": "supported",
-   "detail": "polars main 581cd15994; the REST catalog attached as `lake`"
+   "detail": "polars main fad42ed7f0; the REST catalog attached as `lake`"
   },
   {
    "key": "create_table",
@@ -111,8 +111,8 @@
    "key": "merge_upsert",
    "group": "write",
    "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: statement type is not supported: Merge(Merge { merge_token: TokenWithSpan { token: Word(Word { value: \"MERGE\", quote_style: None, keyword: MERGE }), span: Span(Location(1,1)..Location(1,6)) }, optimizer_hints: [], into: true, table: Table { name: ObjectName([Identifier(Ident { value: \"lake\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"_bench_capability\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) }), Identifier(Ident { value: \"pl_41613874983_1_merge\", quote_style: None, span: Span(Location(1,12)..Location(1,16)) })]), alias: Some(TableAlias { explicit: false, name: Ident { value: \"t\", q\u2026"
+   "outcome": "supported",
+   "detail": "MERGE, UPDATE + INSERT: pyiceberg reads [(1, 777), (2, 20), (3, 30), (9, 90)]; Polars agrees"
   },
   {
    "key": "truncate",
@@ -188,8 +188,8 @@
    "key": "metadata_tables",
    "group": "read",
    "question": "metadata tables (t.snapshots)",
-   "outcome": "no",
-   "detail": "NoSuchTableError: NoSuchTableError: relation 'lake._bench_capability.pl_41613874983_1_inspect.snapshots' not found: catalog table '_bench_capability.pl_41613874983_1_inspect.snapshots' could not be loaded (NoSuchTableException: The given table does not exist); catalog identifiers are case-sensitive This error occurred with the following context stack: [1] 'python dataset scan'"
+   "outcome": "supported",
+   "detail": "t$snapshots reads 1 snapshot(s)"
   },
   {
    "key": "select_table",
@@ -209,8 +209,8 @@
    "key": "max_from_metadata",
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
-   "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: object-store error: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41613874983_1_max/data/00000-0-83428174-9f2b-4672-a121-5811e02689ef.parquet not found: Error performing GET https://onelake.blob.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/pl_41613874983_1_max/data/00000-0-83428174-9f2b-4672-a121-5811e02689ef.parquet in 986.479554ms - Server returned non-2xx status code: 404 Not Found: <?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist. RequestId:f5060bc2-f01e-005b-0f79-6b7dde00000\u2026"
+   "outcome": "supported",
+   "detail": "SELECT max(id) returns [(33,)] with 4 of 4 data files deleted; a full scan fails, as it should"
   },
   {
    "key": "create_branch",
@@ -245,7 +245,7 @@
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`pl_41190026395_1_ns` created; pyiceberg lists it"
+   "detail": "`pl_43224769974_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -290,7 +290,7 @@
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "42345500650",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/42345500650",
- "date": "2026-11-07"
+ "run": "43224769974",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43224769974",
+ "date": "2026-11-12"
 }
