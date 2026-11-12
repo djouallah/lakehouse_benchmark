@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.3",
+ "version": "0.7.3+main2280ea1928",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.3; _bench_capability listed"
+   "detail": "pysail 0.7.3+main2280ea1928; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -69,8 +69,8 @@
    "key": "types_scalar",
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
-   "outcome": "no",
-   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: IllegalArgumentException: invalid argument: found UUID at 84:88 expected data type"
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, uuid, binary"
   },
   {
    "key": "types_nested",
@@ -286,15 +286,15 @@
    "key": "rewrite_manifests",
    "group": "maintenance",
    "question": "CALL system.rewrite_manifests",
-   "outcome": "no",
-   "detail": "UnsupportedOperationException: Iceberg system procedure 'rewrite_manifests' is recognized but not implemented"
+   "outcome": "supported",
+   "detail": "a new snapshot rewrote the manifests"
   },
   {
    "key": "namespace_create",
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`sl_40168237020_1_ns` created; pyiceberg lists it"
+   "detail": "`sl_43225837832_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -315,7 +315,7 @@
    "group": "catalog",
    "question": "ALTER TABLE ... RENAME TO, then read",
    "outcome": "no",
-   "detail": "AnalysisException: not supported: RENAME TABLE for catalog onelake"
+   "detail": "AnalysisException: external error: Failed to rename Iceberg table: unknown error: status code 406 Not Acceptable"
   },
   {
    "key": "drop_purge",
@@ -336,17 +336,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(9217246677603769249) but found Some(1298765864223268481)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6299779997698387171) but found Some(7206367413621069006)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(2603065032708788715) but found Some(1835593060843954008)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6716854403841054606) but found Some(2151524428006569356)"
   }
  ],
- "run": "41162268542",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41162268542",
- "date": "2026-10-31"
+ "run": "43225837832",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43225837832",
+ "date": "2026-11-12"
 }
