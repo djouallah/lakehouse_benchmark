@@ -25,6 +25,8 @@ from pathlib import Path
 # StarRocks (2026-11-03, run 41602439955) follows Trino: both are the Iceberg Java library, and it
 # lacks UPDATE, MERGE, timestamptz/uuid columns and sort order evolution. Polars main 581cd15994
 # passes chDB with SQL UPDATE (30 cells to 28, run 42345500650).
+# Polars main fad42ed7f0 adds MERGE, metadata tables and max from the manifests (33, run
+# 43224769974). Sail main 2280ea1928 answers all 41 (run 43225837832); Spark stays first as the reference.
 ENGINES = ("spark", "sail", "trino", "starrocks", "duckdb", "polars", "chdb", "databend")
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
