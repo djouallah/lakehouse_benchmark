@@ -1,5 +1,7 @@
 # Sail and the Spark Connect client it serves: pyspark-client, never pyspark.
 -r capability_catalog.txt
-pysail>=0.7.3
+# Sail main (lakehq/sail@2280ea1928, 2026-11-12, tmp_sail_main.yml) until a release after 0.7.3:
+# Iceberg rewrite_manifests (#2969), UUID columns (#2968), scans sized by the columns read (#2933).
+pysail @ https://github.com/djouallah/lakehouse_benchmark/releases/download/sail-main-2280ea1928/pysail-0.7.3%2Bmain2280ea1928-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
 # The client 0.7.3 tests against; it refuses 4.3.0 ("unsupported PySpark version").
 pyspark-client==4.2.0
