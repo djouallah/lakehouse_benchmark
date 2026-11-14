@@ -391,7 +391,7 @@ class PolarsCapability:
 
     def partition_evolution(self) -> str:
         table = self._fresh("specevo")
-        self.sql(f"ALTER TABLE {self.t(table)} ADD PARTITION FIELD bucket(4, id)")
+        self.sql(f"ALTER TABLE {self.t(table)} SET PARTITIONED BY (bucket(4, id))")
         spec = [str(f.transform) for f in self.iceberg(table).spec().fields]
         if not spec:
             raise NoOp("returned success and the table is still unpartitioned")
