@@ -50,7 +50,7 @@ def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
 def test_the_real_workload_tab_reads_the_measured_workload():
     """The Real workload tab draws the latest run: a card per leg and dbt's own DAG."""
     assert (
-        'const REAL_WORKLOAD = { id: "workload", title: "Real workload", '
+        'const REAL_WORKLOAD = { id: "workload", title: "Real workload write", '
         'json: "data/workload.json" };' in PAGE
     )
     assert "const { W, H, NW, NH, pos } = dagLayout(w.dag);" in PAGE
@@ -121,7 +121,16 @@ def test_file_pruning_and_query_plans_share_the_less_work_tab():
     assert '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }' in PAGE
 
 
-def test_bug_reports_then_the_real_workload_are_the_last_top_tabs():
+def test_simple_write_real_workload_write_then_complex_read_are_the_last_top_tabs():
     bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
-    assert bar[-2] == '{ id: "bugs", title: "Bug reports", subs: [REPORTS] },'
-    assert bar[-1] == '{ id: "summary", title: "Real workload", subs: [REAL_WORKLOAD] },'
+    assert bar[-3].startswith('{ id: "write", title: "Simple write", subs: [SUITES[0]] },')
+    assert bar[-2] == '{ id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },'
+    assert bar[-1].startswith('{ id: "read", title: "Complex read", subs: [SUITES[1]] },')
+
+
+def test_bug_reports_is_a_header_link_next_to_about():
+    assert '{ id: "bugs", title: "Bug reports", subs: [REPORTS], bar: false },' in PAGE
+    assert (
+        '<a class="top-link" id="reports-link" href="#reports">Bug reports</a>'
+        '<a class="top-link" id="about-link" href="#about">About</a>'
+    ) in PAGE
