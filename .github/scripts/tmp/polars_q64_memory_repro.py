@@ -1,4 +1,5 @@
-"""TPC-DS Q64 on local parquet: peak RSS of the streaming engine against POLARS_OOC_MEMORY_BUDGET_MB.
+"""TPC-DS Q64 on local parquet: peak RSS of the streaming engine against
+POLARS_OOC_MEMORY_BUDGET_MB.
 
 TEMPORARY, for a Polars issue draft. The bench's TPC-DS SF=300 Q64 takes the 16 GB runner down 48 s
 in, with a 10 GB budget (run 41727713405, main f07718c97e). This checks the same query off OneLake:
@@ -16,9 +17,21 @@ import threading
 import time
 from pathlib import Path
 
-TABLES = ["store_sales", "store_returns", "catalog_sales", "catalog_returns", "date_dim", "store",
-          "customer", "customer_demographics", "promotion", "household_demographics",
-          "customer_address", "income_band", "item"]
+TABLES = [
+    "store_sales",
+    "store_returns",
+    "catalog_sales",
+    "catalog_returns",
+    "date_dim",
+    "store",
+    "customer",
+    "customer_demographics",
+    "promotion",
+    "household_demographics",
+    "customer_address",
+    "income_band",
+    "item",
+]
 SQL = Path(__file__).resolve().parents[3] / "sql" / "tpcds.sql"
 
 
@@ -33,16 +46,29 @@ def generate(sf: int, out: Path) -> None:
         if (out / table).exists():
             continue
         t0 = time.time()
-        subprocess.run(["tpcgen-cli", "tpcds", "parquet", "-s", str(sf), "--tables", table,
-                        "--parts", "8" if table.endswith("sales") else "1",
-                        "--output-dir", str(out / table)], check=True)
+        subprocess.run(
+            [
+                "tpcgen-cli",
+                "tpcds",
+                "parquet",
+                "-s",
+                str(sf),
+                "--tables",
+                table,
+                "--parts",
+                "8" if table.endswith("sales") else "1",
+                "--output-dir",
+                str(out / table),
+            ],
+            check=True,
+        )
         print(f"  generated {table} in {time.time() - t0:.0f}s", flush=True)
 
 
 def child(out: Path) -> None:
     """One query in this process. Prints peak RSS, sampled every 50 ms, as the runner sees it."""
-    import psutil
     import polars as pl
+    import psutil
 
     proc, peak, done = psutil.Process(), [0], threading.Event()
 
@@ -56,8 +82,10 @@ def child(out: Path) -> None:
     t0 = time.time()
     rows = ctx.execute(q64()).collect(engine="streaming").height
     done.set()
-    print(f"RESULT rows={rows} seconds={time.time() - t0:.1f} peak_rss_mb={peak[0] / 2**20:.0f}",
-          flush=True)
+    print(
+        f"RESULT rows={rows} seconds={time.time() - t0:.1f} peak_rss_mb={peak[0] / 2**20:.0f}",
+        flush=True,
+    )
 
 
 def main() -> None:
@@ -65,15 +93,25 @@ def main() -> None:
     out = Path(os.environ.get("DATA_DIR", f"tpcds_sf{sf}"))
     generate(sf, out)
     import polars as pl
-    print(f"polars {pl.__version__}, build {os.environ.get('POLARS_SHA', '?')}, SF={sf}", flush=True)
+
+    print(
+        f"polars {pl.__version__}, build {os.environ.get('POLARS_SHA', '?')}, SF={sf}", flush=True
+    )
     for budget in os.environ.get("BUDGETS", "none,2000,1000").split(","):
         env = {**os.environ, "POLARS_MAX_THREADS": "4"}
         if budget != "none":
             env["POLARS_OOC_MEMORY_BUDGET_MB"] = budget
-        result = subprocess.run([sys.executable, __file__, "child", str(out)], env=env,
-                                capture_output=True, text=True, timeout=1800)
-        line = next((l for l in result.stdout.splitlines() if l.startswith("RESULT")),
-                    f"exit {result.returncode} {result.stderr.strip()[-300:]}")
+        result = subprocess.run(
+            [sys.executable, __file__, "child", str(out)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=1800,
+        )
+        line = next(
+            (ln for ln in result.stdout.splitlines() if ln.startswith("RESULT")),
+            f"exit {result.returncode} {result.stderr.strip()[-300:]}",
+        )
         print(f"budget={budget} MB: {line}", flush=True)
 
 

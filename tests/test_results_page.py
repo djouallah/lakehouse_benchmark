@@ -73,7 +73,9 @@ def test_issue_links_that_left_the_dbt_rows_are_still_on_the_page():
 def test_maintenance_is_a_group_of_the_iceberg_support_grid():
     import json
 
-    assert '{ id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] }' in PAGE
+    assert (
+        '{ id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] }' in PAGE
+    )
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
     maintenance = [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"]

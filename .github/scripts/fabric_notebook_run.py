@@ -69,9 +69,7 @@ IPython.get_ipython().set_custom_exc((BaseException,), _bench_exc)
 def with_error_hook(notebook: dict, path: str) -> dict:
     """The notebook plus the error-hook cell, after the restart so the restart doesn't wipe it."""
     cells = notebook["cells"]
-    after = next(
-        (i + 1 for i, c in enumerate(cells) if "restartPython" in "".join(c["source"])), 0
-    )
+    after = next((i + 1 for i, c in enumerate(cells) if "restartPython" in "".join(c["source"])), 0)
     hook = {
         "cell_type": "code",
         "execution_count": None,
@@ -105,7 +103,9 @@ def create(ws: str, name: str, notebook: dict) -> str:
             "parts": [_part("notebook-content.ipynb", notebook), _part(".platform", platform)],
         },
     }
-    r = requests.post(f"{FABRIC_API}/workspaces/{ws}/notebooks", headers=_headers(), json=body, timeout=60)
+    r = requests.post(
+        f"{FABRIC_API}/workspaces/{ws}/notebooks", headers=_headers(), json=body, timeout=60
+    )
     if r.status_code in (200, 201):
         return r.json()["id"]
     if r.status_code != 202:
@@ -150,7 +150,8 @@ def main(path: str) -> int:
     cfg = Config.from_env()
     with open(path, encoding="utf-8") as f:
         notebook = json.load(f)
-    name = f"bench_{os.path.splitext(os.path.basename(path))[0]}_{os.environ.get('GITHUB_RUN_ID', 'local')}"
+    stem = os.path.splitext(os.path.basename(path))[0]
+    name = f"bench_{stem}_{os.environ.get('GITHUB_RUN_ID', 'local')}"
 
     error_path = f"Files/_bench_notebook/{name}.txt"
     abfss = f"abfss://{cfg.workspace_id}@{ONELAKE_DFS}/{cfg.lakehouse_id}/{error_path}"
@@ -165,11 +166,18 @@ def main(path: str) -> int:
             {"workspace_id": cfg.workspace_id, "lakehouse_id": cfg.lakehouse_id},
         )
     finally:
-        requests.delete(f"{FABRIC_API}/workspaces/{cfg.workspace_id}/items/{item}", headers=_headers(), timeout=60)
+        requests.delete(
+            f"{FABRIC_API}/workspaces/{cfg.workspace_id}/items/{item}",
+            headers=_headers(),
+            timeout=60,
+        )
 
     if job["status"] != "Completed":
         print(json.dumps(job.get("failureReason") or job, indent=2))
-        print(read_error(https) or "no traceback written: the job failed before or in the restart cell")
+        print(
+            read_error(https)
+            or "no traceback written: the job failed before or in the restart cell"
+        )
         return 1
     print("notebook ran clean")
     return 0
