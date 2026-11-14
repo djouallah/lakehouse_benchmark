@@ -41,7 +41,7 @@ def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
         .strip()
         .startswith(
             '{ id: "lakehouse", title: "Lakehouse", '
-            "subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, ENGINES] },"
+            "subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] },"
         )
     )
     assert "const state = { suite: TIMELINE.id," in PAGE
@@ -117,8 +117,9 @@ def test_engines_and_issues_are_not_header_links_and_issues_is_under_bug_reports
     assert PAGE.index('id="reports"') < PAGE.index('<section class="details" id="issues"')
 
 
-def test_file_pruning_and_query_plans_share_the_less_work_tab():
-    assert '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }' in PAGE
+def test_file_pruning_and_query_plans_are_under_lakehouse():
+    assert "subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] }" in PAGE
+    assert 'id: "work"' not in rows("GROUPS")
 
 
 def test_simple_write_real_workload_write_then_complex_read_are_the_last_top_tabs():

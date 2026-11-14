@@ -315,11 +315,8 @@ def story_files() -> set[str]:
     return set(re.findall(r'"((?:tpch|tpcds)_q\d+_\w+?_sf\d+)"', block))
 
 
-def test_the_query_plans_tab_is_in_the_main_bar_before_performance():
-    tab = '{ id: "work", title: "Less work", subs: [PRUNING, PLANS] }'
-    assert tab in PAGE
-    performance = '{ id: "write", title: "Simple write", subs: [SUITES[0]] }'
-    assert PAGE.index(tab) < PAGE.index(performance)
+def test_the_query_plans_tab_is_under_lakehouse():
+    assert "subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] }" in PAGE
     assert '<section class="pl" id="plans" hidden></section>' in PAGE
 
 

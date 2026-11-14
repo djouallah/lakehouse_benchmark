@@ -35,7 +35,7 @@ body {
 }
 main { max-width: 1440px; margin: 0 auto; padding: 14px 16px 16px; }
 h1 { font-size: clamp(24px, 5vw, 32px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 12px; }
-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0 16px; }
 .top { display: flex; align-items: center; gap: 20px; flex: none; }
 .top-link { color: var(--ink-2); font-weight: 600; text-decoration: none; margin-top: 6px; }
 .top-link:hover, .top-link[aria-current] { color: var(--ink); text-decoration: underline; }
@@ -647,12 +647,11 @@ const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
 const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY_RANK, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
-// a lake table works, how an engine does less work, what it supports; then writes, simple (CSVs into one table)
+// a lake table works and how an engine does less work, what it supports; then writes, simple (CSVs into one table)
 // and real (the dbt workload), and the complex reads last. Bug reports and About are header links.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
-  { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, ENGINES] },  // the state is in the catalog
-  { id: "work", title: "Less work", subs: [PRUNING, PLANS] },  // skip files, then a good join order
+  { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] },  // the state is in the catalog; skip files, then a good join order
   { id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] },
   { id: "write", title: "Simple write", subs: [SUITES[0]] },  // CSVs into one Iceberg table
   { id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },
@@ -2289,7 +2288,7 @@ for (const li of $("issues").querySelectorAll("li")) {
     }).catch(() => {});
   });
 }
-// Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #work, #pruning, #plans (#plans-q72 for one story), #features,
+// Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #pruning, #plans (#plans-q72 for one story), #features,
 // #write, #etl, #read, #tpcds, #iceberg-overview, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
 // or one engine in that list (#datafusion).
 function fromHash() {
@@ -2301,6 +2300,7 @@ function fromHash() {
   if (h === "dbt" || h === "scorecard") h = REAL_WORKLOAD.id;  // the dbt tab and the Scorecard became the Real workload tab
   if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
   if (h === "tpch") h = "tpcds";  // TPC-H-like, retired 2026-11-07
+  if (h === "work") h = PRUNING.id;  // the Less work tab, now under Lakehouse
   if (h === "performance") h = "etl";  // the Benchmarks tab, split into Simple write and Complex read
   const story = h.match(/^plans-(\w+)$/);  // one Query plans story: #plans-q64
   if (story && STORIES.some(s => s.id === story[1])) { pl.story = story[1]; h = PLANS.id; }
