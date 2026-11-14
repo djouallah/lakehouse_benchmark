@@ -303,7 +303,7 @@ class PolarsCapability:
 
     def sort_order(self) -> str:
         table = self._fresh("sorted")
-        self.sql(f"ALTER TABLE {self.t(table)} WRITE ORDERED BY id")
+        self.sql(f"ALTER TABLE {self.t(table)} SET SORTED BY (id)")
         if not self.iceberg(table).sort_order().fields:
             raise NoOp("returned success and the table has no sort order")
         return "sort order set"
