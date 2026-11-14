@@ -1,13 +1,13 @@
 {
  "engine": "polars",
- "version": "main fad42ed7f0",
+ "version": "main 5c36cdd75a",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Polars attaches the REST catalog with register_catalog",
    "outcome": "supported",
-   "detail": "polars main fad42ed7f0; the REST catalog attached as `lake`"
+   "detail": "polars main 5c36cdd75a; the REST catalog attached as `lake`"
   },
   {
    "key": "create_table",
@@ -160,8 +160,8 @@
    "key": "partition_evolution",
    "group": "schema",
    "question": "ALTER TABLE ADD PARTITION FIELD (partition evolution)",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: FIELD at Line: 1, Column: 75"
+   "outcome": "supported",
+   "detail": "spec now ['bucket[4]']"
   },
   {
    "key": "write_after_evolution",
@@ -181,8 +181,8 @@
    "key": "time_travel",
    "group": "read",
    "question": "time travel, FOR VERSION AS OF",
-   "outcome": "no",
-   "detail": "SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: one of UPDATE or SHARE, found: VERSION at Line: 1, Column: 73"
+   "outcome": "supported",
+   "detail": "FOR VERSION AS OF the seed's snapshot reads 3 rows (the table has 4)"
   },
   {
    "key": "metadata_tables",
@@ -245,7 +245,7 @@
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`pl_43224769974_1_ns` created; pyiceberg lists it"
+   "detail": "`pl_43550873752_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -290,7 +290,7 @@
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "43224769974",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43224769974",
- "date": "2026-11-12"
+ "run": "43550873752",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43550873752",
+ "date": "2026-11-14"
 }
