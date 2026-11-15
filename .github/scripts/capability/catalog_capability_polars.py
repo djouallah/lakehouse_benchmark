@@ -82,9 +82,9 @@ TYPES = {
     "timestamptz": ("TIMESTAMPTZ", "CAST('2026-01-02 03:04:05.123456+00:00' AS TIMESTAMPTZ)"),
     "uuid": ("UUID", "CAST('6f1c2d3e-4b5a-4c6d-8e7f-0123456789ab' AS UUID)"),
     "binary": ("BINARY", "X'0102'"),
-    "struct": ("STRUCT<a BIGINT, b VARCHAR>", "STRUCT(1 AS a, 'x' AS b)"),
+    "struct": ("STRUCT<a BIGINT, b VARCHAR>", "{'a': 1, 'b': 'x'}"),
     "list": ("BIGINT[]", "[1, 2, 3]"),
-    "map": ("MAP<VARCHAR, BIGINT>", "MAP {'k': 1}"),
+    "map": ("MAP(VARCHAR, BIGINT)", "MAP {'k': 1}"),
 }
 
 
