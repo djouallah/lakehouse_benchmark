@@ -1,13 +1,13 @@
 {
  "engine": "polars",
- "version": "main 36ea0f99d6",
+ "version": "main 52630ba508",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Polars attaches the REST catalog with register_catalog",
    "outcome": "supported",
-   "detail": "polars main 36ea0f99d6; the REST catalog attached as `lake`"
+   "detail": "polars main 52630ba508; the REST catalog attached as `lake`"
   },
   {
    "key": "create_table",
@@ -76,8 +76,8 @@
    "key": "types_nested",
    "group": "create",
    "question": "nested types: struct, list, map",
-   "outcome": "no",
-   "detail": "works: ['list']; refused: struct: SQLInterfaceError: SQLInterfaceError: expression Struct { values: [Named { expr: Value(ValueWithSpan { value: Number(\"1\", false), span: Span(Location(1,34)..Location(1,35)) }), name: Ident { value: \"a\", quote_style: None, span: Span(Location(1,39)..Location(1,40)) } }, Named { expr: Value(ValueWithSpan { value: SingleQuotedString(\"x\"), span: Span(Location(1,42)..Location(1,45)) }), name: Ident { value: \"b\", quote_style: None, span: Span(Location(1,49)..Location(1,50)) } }], fields: [] } is not currently supported Resolved plan until failure: ---> FAILED HERE RESOLVING THIS_NODE <--- DF []; PROJECT */0 COLUMNS; map: SQLInterfaceError: SQLInterfaceError: sql parser error: Expected: (, found: < at Line: 1, Column: 80"
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
   },
   {
    "key": "insert_into",
@@ -245,7 +245,7 @@
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`pl_43597937446_1_ns` created; pyiceberg lists it"
+   "detail": "`pl_43722358302_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -290,7 +290,7 @@
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
   }
  ],
- "run": "43599036730",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43599036730",
- "date": "2026-11-14"
+ "run": "43722358302",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43722358302",
+ "date": "2026-11-15"
 }
