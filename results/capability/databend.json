@@ -1,20 +1,20 @@
 {
  "engine": "databend",
- "version": "8.0.90-v1.2.953-38d782fa13(rust-1.100.0-nightly-2026-10-21T01:22:19.764725488Z) (datafuselabs/databend:v1.2.953-nightly)",
+ "version": "8.0.90-v1.2.965-a7a0a58bf1(rust-1.101.0-nightly-2026-11-16T09:29:39.956446688Z) (datafuselabs/databend:v1.2.965-nightly)",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Databend starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "Databend 8.0.90-v1.2.953-38d782fa13(rust-1.100.0-nightly-2026-10-21T01:22:19.764725488Z) (datafuselabs/databend:v1.2.953-nightly); _bench_capability listed, seen by Databend; race catalog attached"
+   "detail": "Databend 8.0.90-v1.2.965-a7a0a58bf1(rust-1.101.0-nightly-2026-11-16T09:29:39.956446688Z) (datafuselabs/databend:v1.2.965-nightly); _bench_capability listed, seen by Databend; race catalog attached"
   },
   {
    "key": "create_table",
    "group": "create",
    "question": "CREATE TABLE ENGINE = ICEBERG (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_39906543136_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_44097986254_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -27,8 +27,8 @@
    "key": "ctas",
    "group": "create",
    "question": "CREATE TABLE ... AS SELECT",
-   "outcome": "no",
-   "detail": "OperationalError: (1105, 'TokioError. Code: 1068, Text = Cannot join handle from context\\'s runtime, cause: task 648 panicked with message \"internal error: table_id_seq must have been set. CTAS(replace) of table\".')"
+   "outcome": "supported",
+   "detail": "CTAS: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Databend agrees"
   },
   {
    "key": "partitioned",
@@ -70,14 +70,14 @@
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
    "outcome": "no",
-   "detail": "works: ['date', 'timestamp', 'binary']; refused: decimal: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_decimal failed: DataInvalid => Unsupported Arrow data type: Decimal64(10, 2)\\n.'); timestamptz: OperationalError: (1105, \"BadArguments. Code: 1006, Text = fail to auto cast column '2026-01-02 03:04:05.123456 +00:00' (TimestampTz) to column x (Decimal(38, 0) NULL)\\nunable to cast type `TimestampTz` to type `Decimal(38, 0)`, during run expr: `CAST('2026-01-02 03:04:05.123456 +00:00' AS Decimal(38, 0) NULL)`.\"); uuid: OperationalError: (1105, 'SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:85\\n |\\n1 | CREATE TABLE onelake.\"_bench_capability\".\"db_39032752740_1_type_uuid\" (id BIGINT, x UUID) ENGINE = ICEBERG \\n | ------ - ^^^^ unexpected `UUID`, expecting `UINT8`, `UINT16`, `UINT32`, `UINT64`, `SIGNED`, `UNSIGNED`, `INT`, `INT8`, `DATE`, `INT16`, `INT32`, `INT64`, `TUPLE`, `BIGINT`, `BITMAP`, `BINARY`, `STRING`, `TINYINT`, `INTEGER`, `NUMERIC`, `VARIANT`, `SMALLINT`, `INTERVAL`, `TINYBLOB`, `NULLABLE`, `TIMESTAMP`, `VARBINARY`, `MEDIUMBLOB`, `TIMESTAMP_TZ`, `DOUBLE`, `DECIMAL`, `DATETIME`, `BOOLEAN`, `BOOL`, `FLOAT32`, `FLOAT`, `REAL`, `FLOAT64`, `ARRAY`, `MAP`, `LONGBLOB`, `BLOB`, `VARCHAR`, `CHA\u2026"
+   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: OperationalError: (1105, 'SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:85\\n |\\n1 | CREATE TABLE onelake.\"_bench_capability\".\"db_44097986254_1_type_uuid\" (id BIGINT, x UUID) ENGINE = ICEBERG \\n | ------ - ^^^^ unexpected `UUID`, expecting `UINT8`, `UINT16`, `UINT32`, `UINT64`, `SIGNED`, `UNSIGNED`, `INT`, `INT8`, `DATE`, `INT16`, `INT32`, `INT64`, `TUPLE`, `BIGINT`, `BITMAP`, `BINARY`, `STRING`, `TINYINT`, `INTEGER`, `NUMERIC`, `VARIANT`, `SMALLINT`, `INTERVAL`, `TINYBLOB`, `NULLABLE`, `TIMESTAMP`, `VARBINARY`, `MEDIUMBLOB`, `TIMESTAMP_TZ`, `DOUBLE`, `DECIMAL`, `DATETIME`, `BOOLEAN`, `BOOL`, `FLOAT32`, `FLOAT`, `REAL`, `FLOAT64`, `ARRAY`, `MAP`, `LONGBLOB`, `BLOB`, `VARCHAR`, `CHA\u2026"
   },
   {
    "key": "types_nested",
    "group": "create",
    "question": "nested types: struct, list, map",
-   "outcome": "no",
-   "detail": "works: none; refused: struct: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_struct failed: DataInvalid => Field id not found in metadata\\n.'); list: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_list failed: DataInvalid => Field id not found in metadata\\n.'); map: OperationalError: (1105, 'Internal. Code: 1001, Text = Iceberg create table _bench_capability.db_39032752740_1_type_map failed: DataInvalid => Field id not found in metadata\\n.')"
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
   },
   {
    "key": "insert_into",
@@ -98,56 +98,56 @@
    "group": "write",
    "question": "DELETE FROM",
    "outcome": "no",
-   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_delete, engine type iceberg, does not support DELETE.')"
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_delete, engine type iceberg, does not support DELETE.')"
   },
   {
    "key": "update",
    "group": "write",
    "question": "UPDATE",
    "outcome": "no",
-   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_update, engine type iceberg, does not support UPDATE.')"
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_update, engine type iceberg, does not support UPDATE.')"
   },
   {
    "key": "merge_upsert",
    "group": "write",
    "question": "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT",
    "outcome": "no",
-   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_39032752740_1_merge does not support MERGE.')"
+   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_44097986254_1_merge does not support MERGE.')"
   },
   {
    "key": "truncate",
    "group": "write",
    "question": "TRUNCATE TABLE",
-   "outcome": "no-op",
-   "detail": "TRUNCATE returned success; expected [], pyiceberg reads [(1, 10), (2, 20), (3, 30)], Databend reads [(1, 10), (2, 20), (3, 30)]"
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = TRUNCATE TABLE is not supported for the table '_bench_capability.db_44097986254_1_truncate' which uses the 'iceberg' engine.\")"
   },
   {
    "key": "insert_overwrite",
    "group": "write",
    "question": "INSERT OVERWRITE (whole-table overwrite)",
-   "outcome": "no-op",
-   "detail": "INSERT OVERWRITE returned success; expected [(7, 70), (8, 80)], pyiceberg reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], Databend reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]"
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44097986254_1_overwrite' which uses the 'iceberg' engine.\")"
   },
   {
    "key": "add_column",
    "group": "schema",
    "question": "ALTER TABLE ADD COLUMN",
-   "outcome": "no-op",
-   "detail": "returned success and the schema is ['id', 'v']"
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44097986254_1_addcol engine is iceberg that doesn't support alter.\")"
   },
   {
    "key": "drop_column",
    "group": "schema",
    "question": "ALTER TABLE DROP COLUMN",
-   "outcome": "no-op",
-   "detail": "returned success and the schema is still ['id', 'v']"
+   "outcome": "no",
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44097986254_1_dropcol engine is iceberg that doesn't support alter.\")"
   },
   {
    "key": "rename_column",
    "group": "schema",
    "question": "ALTER TABLE RENAME COLUMN",
    "outcome": "no",
-   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_39032752740_1_renamecol engine is iceberg that doesn't support rename column name.\")"
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44097986254_1_renamecol engine is iceberg that doesn't support rename column name.\")"
   },
   {
    "key": "type_promotion",
@@ -168,7 +168,7 @@
    "group": "schema",
    "question": "INSERT, pyiceberg adds bucket(4, id), INSERT",
    "outcome": "no",
-   "detail": "OperationalError: (1105, 'UnwindError. Code: 1104, Text = internal error: entered unreachable code.')"
+   "detail": "OperationalError: (1105, 'Internal. Code: 1001, Text = Failed to commit transaction: DataInvalid => Data file partition spec id does not match table default partition spec id\\n.')"
   },
   {
    "key": "set_property",
@@ -181,8 +181,8 @@
    "key": "time_travel",
    "group": "read",
    "question": "time travel, AT (SNAPSHOT => ...)",
-   "outcome": "no-op",
-   "detail": "AT (SNAPSHOT => the seed's) reads 4 rows, not 3"
+   "outcome": "supported",
+   "detail": "AT (SNAPSHOT => the seed's snapshot) reads 3 rows (the table has 4)"
   },
   {
    "key": "metadata_tables",
@@ -190,6 +190,13 @@
    "question": "metadata tables (iceberg_snapshot)",
    "outcome": "supported",
    "detail": "iceberg_snapshot() reads 1 snapshot(s)"
+  },
+  {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   },
   {
    "key": "file_pruning",
@@ -203,14 +210,14 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: OperationalError: (1105, 'StorageNotFound. Code: 3001, Text = NotFound (permanent) at read, context: { uri: https://onelake.dfs.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/db_39032752740_1_max/data/00000-0-cc6ac3d2-178a-43af-bb37-cd513ea0647c.parquet?st=2026-10-17T12%3A26%3A04Z&se=2026-10-17T13%3A26%3A04Z&sp=rcwdl&sv=2026-10-06&sr=d&sdd=1&skoid=wINHAPb%2Ba0m8gVyXH0FH5w-fyKMEE2TiE2WpOJZIfrkOA&sktid=4a86d5bb-4173-45ee-bfd5-a3b56ee2d3d5&skt=2026-10-17T12%3A26%3A04Z&ske=2026-10-17T13%3A26%3A04Z&sks=b&skv=2022-11-02, response: Parts { status: 404, version: HTTP/1.1, headers: {\"content-length\": \"163\", \"content-type\": \"app\u2026"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: OperationalError: (1105, 'StorageNotFound. Code: 3001, Text = NotFound (permanent) at read, context: { uri: https://onelake.dfs.fabric.microsoft.com/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/db_44097986254_1_max/data/00000-0-c6aca831-2bca-4ef1-becf-28c9aaf76e9f.parquet?st=2026-11-17T13%3A54%3A39Z&se=2026-11-17T14%3A54%3A39Z&sp=rcwdl&sv=2026-10-06&sr=d&sdd=1&skoid=%2BkCuPEM%2Bd0K6qxLRgNJqgA-fyKMEE2TiE2WpOJZIfrkOA&sktid=4a86d5bb-4173-45ee-bfd5-a3b56ee2d3d5&skt=2026-11-17T13%3A54%3A39Z&ske=2026-11-17T14%3A54%3A39Z&sks=b&skv=2022-11-02, response: Parts { status: 404, version: HTTP/1.1, headers: {\"content-length\": \"163\", \"content-type\": \"a\u2026"
   },
   {
    "key": "create_branch",
    "group": "refs",
    "question": "ALTER TABLE CREATE BRANCH",
    "outcome": "no",
-   "detail": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Legacy experimental table refs were removed: ALTER TABLE ... CREATE/DROP BRANCH. The remaining syntax is reserved for a future redesign and is intentionally rejected during binding..')"
+   "detail": "OperationalError: (1105, 'SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:74\\n |\\n1 | ALTER TABLE onelake.\"_bench_capability\".\"db_44097986254_1_branch\" CREATE BRANCH probe_branch\\n | ----- ^^^^^^ unexpected `BRANCH`, expecting `TAG`\\n | | \\n | while parsing `ALTER TABLE [<database>.]<table> <action>`\\n\\n.')"
   },
   {
    "key": "create_tag",
@@ -224,21 +231,35 @@
    "group": "maintenance",
    "question": "OPTIMIZE TABLE PURGE (expire snapshots)",
    "outcome": "no",
-   "detail": "OperationalError: (1105, \"LicenseKeyInvalid. Code: 1402, Text = [LicenseManager] Feature 'vacuum' requires Databend Enterprise Edition license. No license key found for tenant: default. Learn more at https://docs.databend.com/guides/products/dee/.\")"
+   "detail": "OperationalError: (1105, 'StorageOther. Code: 4000, Text = Invalid table engine, only fuse table is supported.')"
   },
   {
    "key": "rewrite_data_files",
    "group": "maintenance",
    "question": "OPTIMIZE TABLE COMPACT (compaction)",
    "outcome": "no",
-   "detail": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_39032752740_1_compact'. Table engine: 'iceberg'..\")"
+   "detail": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_44097986254_1_compact'. Table engine: 'iceberg'..\")"
   },
   {
    "key": "rewrite_manifests",
    "group": "maintenance",
    "question": "OPTIMIZE TABLE COMPACT SEGMENT (rewrite manifests)",
    "outcome": "no",
-   "detail": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_39032752740_1_manifests', which is using the 'iceberg' engine..\")"
+   "detail": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_44097986254_1_manifests', which is using the 'iceberg' engine..\")"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE DATABASE (namespace)",
+   "outcome": "supported",
+   "detail": "`db_44097986254_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP DATABASE (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
   },
   {
    "key": "namespace_existing",
@@ -266,38 +287,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "no",
-   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_delete, engine type iceberg, does not support DELETE.')"
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_race_delete, engine type iceberg, does not support DELETE.')"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
-   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_39032752740_1_race_update, engine type iceberg, does not support UPDATE.')"
-  },
-  {
-   "key": "namespace_create",
-   "group": "catalog",
-   "question": "CREATE DATABASE (namespace)",
-   "outcome": "supported",
-   "detail": "`db_39594010650_1_ns` created; pyiceberg lists it"
-  },
-  {
-   "key": "namespace_drop",
-   "group": "catalog",
-   "question": "DROP DATABASE (namespace)",
-   "outcome": "supported",
-   "detail": "the empty namespace is gone"
-  },
-  {
-   "key": "select_table",
-   "group": "read",
-   "question": "SELECT a table by its catalog name",
-   "outcome": "supported",
-   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_race_update, engine type iceberg, does not support UPDATE.')"
   }
  ],
- "run": "39906543136",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
- "date": "2026-10-23"
+ "run": "44097986254",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44097986254",
+ "date": "2026-11-17"
 }
