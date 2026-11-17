@@ -6,12 +6,15 @@ in one container, a Rust engine end to end, and Python talks to it over the MySQ
 The image is pulled by the workflow before the engine is timed, so the setup row measures a cold
 start, not a download.
 
-THE IMAGE IS DATABEND'S NIGHTLY, v1.2.953-nightly. Added 2026-10-17 after a build of
-databendlabs/databend main passed candidate_engine.yml (TPC-H 22/22, Files CSV, Iceberg write; run
-39015860524). The decimal fix it needs (databend#20594, closes #20588: FIXED_LEN_BYTE_ARRAY
-decimals failed with "Not enough bytes to decode", TPC-H 5/22) was on main only, so until
-2026-10-21 the bench ran our own build of main 8b1dc20714 from this repo's GHCR. v1.2.953-nightly
-is the first nightly with it (14 commits after 8b1dc20714, none of them Iceberg changes).
+THE IMAGE IS DATABEND'S NIGHTLY, v1.2.965-nightly (2026-11-16), the first after databend#21073
+(closes #20735-#20742: Iceberg CTAS, DECIMAL and nested columns, transformed partition values;
+INSERT OVERWRITE, TRUNCATE and ADD/DROP COLUMN refuse instead of doing nothing). Added 2026-10-17
+after a build of databendlabs/databend main passed candidate_engine.yml (TPC-H 22/22, Files CSV,
+Iceberg write; run 39015860524). The decimal fix it needs (databend#20594, closes #20588:
+FIXED_LEN_BYTE_ARRAY decimals failed with "Not enough bytes to decode", TPC-H 5/22) was on main
+only, so until 2026-10-21 the bench ran our own build of main 8b1dc20714 from this repo's GHCR.
+v1.2.953-nightly is the first nightly with it (14 commits after 8b1dc20714, none of them Iceberg
+changes).
 
 HOW IT READS ONELAKE (candidate_engine.py, Databend):
 
@@ -64,7 +67,7 @@ from pathlib import Path
 from bench import auth, scrub
 from bench.config import ICEBERG_ENDPOINT, ONELAKE_DFS, TOKEN_MIN_LIFETIME_SECONDS, Config
 
-IMAGE = os.environ.get("DATABEND_IMAGE", "datafuselabs/databend:v1.2.953-nightly")
+IMAGE = os.environ.get("DATABEND_IMAGE", "datafuselabs/databend:v1.2.965-nightly")
 CONTAINER = "databend"
 CATALOG = "onelake"
 PORT = 3307
