@@ -1,8 +1,8 @@
 """Spark exactly as pyspark_iceberg, with Gluten + Velox executing the plan natively.
 
 THE NIGHTLY, NOT A RELEASE. Gluten 1.7.0 (2026-08-26) ships a Spark 4.1 bundle, but the nightly
-1.8.0-SNAPSHOT is ahead of it, and Apache's nightly builds have carried a Velox bundle for Spark
-4.1 since 1.7.0-SNAPSHOT (2026-06). Compiling Velox in
+(the newest -SNAPSHOT, gluten_jar_url) is ahead of it, and Apache's nightly builds have
+carried a Velox bundle for Spark 4.1 since 1.7.0-SNAPSHOT (2026-06). Compiling Velox in
 CI was the alternative -- hours cold, tens of GB of disk -- and is deliberately not done: if the
 nightly cannot read OneLake, Gluten is out.
 
@@ -49,6 +49,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import urllib.request
@@ -58,10 +59,22 @@ from bench import auth, scrub
 from bench.tpch.engines.pyspark_iceberg import PACKAGES, PysparkIceberg
 
 # The JDK 17 directory, because every Spark job sets up Temurin 17. amd64: the hosted runners.
-GLUTEN_JAR_URL = (
-    "https://nightlies.apache.org/gluten/nightly-release-jdk17/"
-    "gluten-velox-bundle-spark4.1_2.13-linux_amd64-1.8.0-SNAPSHOT.jar"
+# THE NEWEST SNAPSHOT IN IT, not a version in the name: when Gluten moves to the next version the
+# old file stops updating and stays there (1.8.0-SNAPSHOT froze on 2026-10-27 while the nightly
+# went on as 1.9.0-SNAPSHOT), so a pinned name silently runs an old build.
+GLUTEN_NIGHTLY = "https://nightlies.apache.org/gluten/nightly-release-jdk17/"
+GLUTEN_JAR = re.compile(
+    r"gluten-velox-bundle-spark4\.1_2\.13-linux_amd64-(\d+)\.(\d+)\.(\d+)-SNAPSHOT\.jar"
 )
+
+
+def gluten_jar_url(listing: str) -> str:
+    """The newest Spark 4.1 amd64 bundle the nightly directory listing names."""
+    versions = {tuple(int(x) for x in m.groups()): m.group(0) for m in GLUTEN_JAR.finditer(listing)}
+    if not versions:
+        raise RuntimeError(f"no Spark 4.1 amd64 Gluten bundle in {GLUTEN_NIGHTLY}")
+    return GLUTEN_NIGHTLY + versions[max(versions)]
+
 
 HEAP = "3g"
 OFF_HEAP = "9g"
@@ -69,9 +82,11 @@ OFF_HEAP = "9g"
 
 def fetch_gluten_jar() -> Path:
     """Download the bundle once per job and print which build it is."""
-    target = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / Path(GLUTEN_JAR_URL).name
+    with urllib.request.urlopen(GLUTEN_NIGHTLY, timeout=60) as listing:
+        url = gluten_jar_url(listing.read().decode("utf-8"))
+    target = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / Path(url).name
     if not target.exists():
-        urllib.request.urlretrieve(GLUTEN_JAR_URL, target)
+        urllib.request.urlretrieve(url, target)
     digest = hashlib.sha256(target.read_bytes()).hexdigest()
     scrub.safe_print(f"  gluten bundle {target.name} sha256 {digest[:16]}")
     return target

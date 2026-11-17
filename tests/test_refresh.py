@@ -139,3 +139,19 @@ def test_duckdb_re_attaches_the_catalog_with_a_fresh_token(monkeypatch):
     engine.refresh()
     assert any("CREATE OR REPLACE SECRET" in s and "new-token" in s for s in sent)
     assert any("ATTACH OR REPLACE" in s and "TOKEN 'new-token'" in s for s in sent)
+
+
+def test_gluten_takes_the_newest_spark41_amd64_snapshot_in_the_nightly_listing():
+    """A pinned version froze the bench on 1.8.0-SNAPSHOT for three weeks; the listing decides."""
+    listing = (
+        "gluten-velox-bundle-spark4.1_2.13-linux_amd64-1.8.0-SNAPSHOT.jar "
+        "gluten-velox-bundle-spark4.1_2.13-linux_amd64-1.10.0-SNAPSHOT.jar "
+        "gluten-velox-bundle-spark4.1_2.13-linux_amd64-1.9.0-SNAPSHOT.jar "
+        "gluten-velox-bundle-spark4.1_2.13-linux_aarch64-2.0.0-SNAPSHOT.jar "
+        "gluten-velox-bundle-spark4.2_2.13-linux_amd64-2.0.0-SNAPSHOT.jar"
+    )
+    assert gluten.gluten_jar_url(listing) == (
+        gluten.GLUTEN_NIGHTLY + "gluten-velox-bundle-spark4.1_2.13-linux_amd64-1.10.0-SNAPSHOT.jar"
+    )
+    with pytest.raises(RuntimeError):
+        gluten.gluten_jar_url("no bundles here")
