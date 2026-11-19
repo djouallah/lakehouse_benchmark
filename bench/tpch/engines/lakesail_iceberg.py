@@ -73,6 +73,11 @@ class LakesailIceberg:
         # here, and `refresh` renews it by starting a new server.
         os.environ["SAIL_OPTIMIZER__ENABLE_JOIN_REORDER"] = "true"
         os.environ["SAIL_EXECUTION__COLLECT_STATISTICS"] = "true"
+        # As LakeSail's own TPC-DS runs (docs/introduction/benchmark-results): per-partition top-k
+        # for ranked windows with an upper bound (Q67, Q70), and a long idle-session timeout
+        # (default 900 s) so a long query never outlives it.
+        os.environ["SAIL_OPTIMIZER__ENABLE_WINDOW_TOPN"] = "true"
+        os.environ["SAIL_SPARK__SESSION_TIMEOUT_SECS"] = "7200"
         # A BOUNDED POOL, SO SAIL SPILLS (module docstring). `runtime.memory_pool.type` and
         # `runtime.memory_pool.fair.max_size` in crates/sail-common/src/config/application.yaml
         # (v0.7.1), whose defaults are `unbounded` and 64 GiB. Fair, not greedy: FairSpillPool
