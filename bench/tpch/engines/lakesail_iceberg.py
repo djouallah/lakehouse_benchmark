@@ -103,8 +103,12 @@ class LakesailIceberg:
         # SF=10 -- Q7 35.0s against 6-11s, Q8 38.3s against 8-14s (run 36240159354) -- where
         # every hash table fits. So sort-merge once the dataset passes half the pool: SF=10
         # (~2.7 GiB) keeps hash joins, SF=30 (~8 GiB) and up spill.
+        #
+        # TRIAL 2026-11-19: hash joins at every scale. On Sail main (DataFusion 55.2) TPC-DS Q72 at
+        # SF=30 fails in the sort-merge join's own sort ("ExternalSorterMerge ... 2.1 MB remain",
+        # run 44465345382), while it runs 15 s on hash joins at SF=10 (run 44458046901).
         spill_joins = self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2
-        os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "false" if spill_joins else "true"
+        os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "true"
         # Zstd spill files where joins spill: TPC-DS Q72 passes the 64 GiB cap uncompressed at SF=30
         # (run 41164283878) and SF=60 (run 41162782690). The disk holds ~105 GB.
         if spill_joins:
