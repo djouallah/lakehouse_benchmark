@@ -84,7 +84,13 @@ def main() -> int:
         if job["conclusion"] != "failure":
             continue
         # Logs carry the steps' colour codes, which gh prints only when asked to.
-        log = gh("--allow-escape-sequences", f"repos/{repo}/actions/jobs/{job['id']}/logs")
+        # A runner that died of a full disk uploads no log at all (BlobNotFound, run 44100916248):
+        # nothing to read back, and the other engines must still publish.
+        try:
+            log = gh("--allow-escape-sequences", f"repos/{repo}/actions/jobs/{job['id']}/logs")
+        except subprocess.CalledProcessError:
+            print(f"::warning::{job['name']}: the runner died and left no log; nothing recorded")
+            continue
         found = part_from_log(log, suite)
         if found is None:
             continue
