@@ -92,26 +92,18 @@ class LakesailIceberg:
         # refused to start at all ("unknown field: found `memory_limit`").
         os.environ["SAIL_RUNTIME__MEMORY_POOL__TYPE"] = "fair"
         os.environ["SAIL_RUNTIME__MEMORY_POOL__FAIR__MAX_SIZE"] = str(POOL_BYTES)
-        # AND JOINS THAT CAN SPILL. The pool alone took SF=30 from a dead runner to 21/22, and the
-        # one left was Q18: "Failed to allocate ... for HashJoinInput[3] with 1665.0 MB already
-        # allocated" (run 36238299506). A hash join's build side cannot spill in DataFusion 55; a
-        # sort-merge join's buffered side can. `optimizer.prefer_hash_join` (default true) picks
-        # sort-merge for the shuffled joins instead; small build sides still broadcast. With it,
-        # SF=30 went 22/22 (run 36238967358).
-        #
-        # ONLY WHERE HASH JOINS OUTGROW THE POOL. Sort-merge costs the join-heavy queries 3-5x at
-        # SF=10 -- Q7 35.0s against 6-11s, Q8 38.3s against 8-14s (run 36240159354) -- where
-        # every hash table fits. So sort-merge once the dataset passes half the pool: SF=10
-        # (~2.7 GiB) keeps hash joins, SF=30 (~8 GiB) and up spill.
-        #
-        # TRIAL 2026-11-19: hash joins at every scale. On Sail main (DataFusion 55.2) TPC-DS Q72 at
-        # SF=30 fails in the sort-merge join's own sort ("ExternalSorterMerge ... 2.1 MB remain",
-        # run 44465345382), while it runs 15 s on hash joins at SF=10 (run 44458046901).
-        spill_joins = self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2
+        # HASH JOINS AT EVERY SCALE (`optimizer.prefer_hash_join`, Sail's default). From 2026-09
+        # (Sail 0.7.1, DataFusion 54) the bench switched to sort-merge joins past half the pool,
+        # after TPC-H Q18 at SF=30 failed on a hash join's build side (run 36238299506). On Sail
+        # main (DataFusion 55.2) that switch is what failed: TPC-DS Q72 at SF=30 died in the
+        # sort-merge join's own sort ("ExternalSorterMerge ... 2.1 MB remain", run 44465345382).
+        # With hash joins SF=30 went 99/99 for the first time, Q72 29.5 s and Q64 66 s against
+        # 147-204 s (run 44488112168). In the bounded pool a hash table that does not fit fails
+        # its query, not the runner.
         os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "true"
-        # Zstd spill files where joins spill: TPC-DS Q72 passes the 64 GiB cap uncompressed at SF=30
-        # (run 41164283878) and SF=60 (run 41162782690). The disk holds ~105 GB.
-        if spill_joins:
+        # Zstd spill files past half the pool: TPC-DS Q72 passed the 64 GiB cap uncompressed at
+        # SF=30 (run 41164283878) and SF=60 (run 41162782690). The disk holds ~105 GB.
+        if self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2:
             os.environ["SAIL_RUNTIME__TEMPORARY_FILES__COMPRESSION"] = "zstd"
         #
         # TRIED AND REVERTED: SAIL_PARQUET__PUSHDOWN_FILTERS=true (+ REORDER_FILTERS), Sail's

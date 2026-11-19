@@ -105,6 +105,9 @@ Largest scale each engine completes, cold, every statement answered:
     Sort-merge joins (`prefer_hash_join=false`) spill, and with them Sail completes SF=30, 60
     and 100. They cost the join-heavy queries 3–5× at SF=10, where every hash table fits, so
     Sail switches to them only once the dataset passes half the pool.
+    Reversed 2026-11-20: on Sail main (DataFusion 55.2) the sort-merge join's own sort is what
+    failed (TPC-DS Q72 at SF=30, `ExternalSorterMerge`, run 44465345382). With hash joins at
+    every scale Sail answered TPC-DS SF=30 99/99 for the first time (run 44488112168).
   - Giving Polars a budget (`POLARS_OOC_MEMORY_BUDGET_MB`, experimental) stopped the runner dying
     but did not finish: SF=30 stalled and was cancelled (run 36238938131).
 - **A hard limit fails the query, not the runner.** chDB's `max_memory_usage` (12 GB) raises
