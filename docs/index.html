@@ -961,9 +961,10 @@ function renderEngines() {
 // THE LAKEHOUSE TAB'S TIMELINE: how we got here, as in the talk. Three lines that run side by side to today, not
 // eras that replace each other: the warehouse, the open lake (Hadoop, the table formats, the open lakehouse), and the
 // closed lakehouse, which forks off the open line where it reaches today. The warehouse line also sends a branch into
-// the open lakehouse: warehouses now read and write Iceberg in a REST catalog. One era a step, the branches last;
-// Replay runs it again, reduced motion shows it still. Wide, the lines run across (x a share of the width); narrow,
-// down, one era a row in this order.
+// the open lakehouse: warehouses now read and write Iceberg in a REST catalog. One era a step, the branches last.
+// It never plays on its own: it opens on the first era and moves by hand (Back / Next, a click on the picture, the
+// arrow keys, a clicker), or Play runs the rest; reduced motion opens on the whole picture. Wide, the lines run
+// across (x a share of the width); narrow, down, one era a row in this order.
 const ERAS = [
   { k: 1, lane: "wh", x: 2.5, when: "1990s", title: "The warehouse", text: "Storage and compute in one product. The engine owns the data." },
   { k: 2, lane: "op", x: 18, when: "2006", title: "Big data: Hadoop", text: "Open files, but you need the cluster to read them." },
@@ -984,7 +985,7 @@ const TL_X = { wh: 10, op: 32, cl: 54 };  // narrow: each line's left, px
 const TL_FIRST = Object.fromEntries(Object.keys(TL_Y).map(l => [l, ERAS.find(e => e.lane === l)]));  // where each line starts
 const TL_LAST = Math.max(...ERAS.map(e => e.k));
 const TL_WIDE = matchMedia("(min-width: 900px)");
-const tl = { timers: [] };
+const tl = { t: 1, timer: null };  // t: the last era on screen
 
 const eraText = e => `${e.when ? `<span class="when">${e.when}</span>` : ""}<h3>${e.title}</h3><p>${e.text}</p>`;
 function timelineAcross() {
@@ -1003,27 +1004,50 @@ function timelineDown() {
       `<svg class="fk ${lane}" data-k="${k}" style="left:${TL_X[from.lane]}px;width:${TL_X[e.lane] - TL_X[from.lane]}px" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0C0 5 10 5 10 10"/></svg>`).join("")}<b class="dt ${e.lane}${e.now ? " now" : ""}" style="${x(e.lane)}"></b>${eraText(e)}</li>`).join("")}
   </ol>`;
 }
-function renderTimeline() {
+// Opening the tab starts on the first era (the whole picture with reduced motion); a resize keeps the step on screen.
+function renderTimeline(keep = false) {
   stopTimeline();
+  if (!keep) tl.t = ovStill.matches ? TL_LAST : 1;
   $(TIMELINE.id).innerHTML = `
-    <div class="ctl"><button class="play" id="tl-play">↺ Replay</button></div>
-    ${TL_WIDE.matches ? timelineAcross() : timelineDown()}
+    <div class="ctl"><button class="play" id="tl-play"></button>
+      <button class="ghost" id="tl-back">‹ Back</button><button class="ghost" id="tl-step">Next ›</button>
+      <span class="hint">or the arrow keys</span></div>
+    <div id="tl-fig">${TL_WIDE.matches ? timelineAcross() : timelineDown()}</div>
     <p class="intro tl-cap" data-k="${TL_LAST}">Nothing replaced anything: every line runs to today, and the warehouse now writes to the open lakehouse too.</p>`;
   $("tl-play").onclick = playTimeline;
-  playTimeline();
+  $("tl-back").onclick = () => stepTimeline(-1);
+  $("tl-step").onclick = $("tl-fig").onclick = () => stepTimeline(1);
+  drawTimeline();
 }
-// One era every 1.1 s: its line draws, then the era lands on it.
+// Same controls as the Anatomy tab. Play: one era every 1.1 s from the one on screen (from the first once at the
+// end), its line draws, then the era lands on it.
 function playTimeline() {
-  stopTimeline();
-  const els = [...$(TIMELINE.id).querySelectorAll("[data-k]")];
-  const show = k => els.forEach(el => el.classList.toggle("in", +el.dataset.k <= k));
-  if (ovStill.matches) { show(TL_LAST); return; }
-  show(0);
-  void $(TIMELINE.id).offsetWidth;  // start from empty, so a replay animates again
-  for (let k = 1; k <= TL_LAST; k++) tl.timers.push(setTimeout(() => show(k), 250 + (k - 1) * 1100));
+  if (tl.timer) return;
+  if (tl.t >= TL_LAST) { tl.t = 1; drawTimeline(); }
+  tl.timer = setInterval(() => {
+    tl.t++;
+    if (tl.t >= TL_LAST) stopTimeline();
+    drawTimeline();
+  }, 1100);
+  drawTimeline();
 }
-function stopTimeline() { tl.timers.forEach(clearTimeout); tl.timers = []; }
-TL_WIDE.addEventListener("change", () => { if (state.suite === TIMELINE.id) renderTimeline(); });
+function stopTimeline() { clearInterval(tl.timer); tl.timer = null; }
+function stepTimeline(d) {
+  stopTimeline();
+  tl.t = Math.max(1, Math.min(TL_LAST, tl.t + d));
+  drawTimeline();
+}
+function drawTimeline() {
+  const t = tl.t, end = t === TL_LAST, b = $("tl-play"), run = !!tl.timer;
+  if (!b) return;
+  for (const el of $(TIMELINE.id).querySelectorAll("[data-k]")) el.classList.toggle("in", +el.dataset.k <= t);
+  b.classList.toggle("busy", run);
+  b.setAttribute("aria-busy", run);
+  b.innerHTML = run ? `<i class="dot"></i>Running… ${t}/${TL_LAST}` : end ? "↺ Replay" : "▶ Play";
+  $("tl-back").disabled = t === 1;
+  $("tl-step").disabled = end;
+}
+TL_WIDE.addEventListener("change", () => { if (state.suite === TIMELINE.id) renderTimeline(true); });
 
 // THE LAKEHOUSE TAB'S OVERVIEW: the premise the rest of the page tests, the open lakehouse as a stack: who asks,
 // the engines (stateless), the catalog (the state), the object store.
@@ -1914,7 +1938,7 @@ function stepArch(d) {
   drawArch();
 }
 addEventListener("keydown", e => {
-  const step = { [ARCH.id]: stepArch, [ANATOMY.id]: stepAnatomy, [PRUNING.id]: stepPruning }[state.suite];
+  const step = { [TIMELINE.id]: stepTimeline, [ARCH.id]: stepArch, [ANATOMY.id]: stepAnatomy, [PRUNING.id]: stepPruning }[state.suite];
   if (!step || e.altKey || e.ctrlKey || e.metaKey) return;
   const d = { ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 }[e.key];
   if (d) { e.preventDefault(); step(d); }
