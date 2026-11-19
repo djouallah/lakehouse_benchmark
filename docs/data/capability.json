@@ -37,10 +37,10 @@
    "date": "2026-10-23"
   },
   "chdb_iceberg": {
-   "version": "4.4.0",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
+   "version": "4.5.1",
+   "run": "44456511972",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44456511972",
+   "date": "2026-11-19"
   },
   "databend_iceberg": {
    "version": "8.0.90-v1.2.965-a7a0a58bf1(rust-1.101.0-nightly-2026-11-16T09:29:39.956446688Z) (datafuselabs/databend:v1.2.965-nightly)",
@@ -328,7 +328,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44456511972_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -576,7 +576,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_44456511972_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1045,7 +1045,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '44456511972_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1142,7 +1142,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5…"
+     "n": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. The specified blob does not exist. Re…"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1337,8 +1337,7 @@
      "n": "Catalog Error: Table Function with name iceberg_rewrite_manifests does not exist! Did you mean \"iceberg_rewrite_data_files\"?"
     },
     "chdb_iceberg": {
-     "o": "no",
-     "n": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
+     "o": "supported"
     },
     "databend_iceberg": {
      "o": "no",

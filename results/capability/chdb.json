@@ -1,13 +1,13 @@
 {
  "engine": "chdb",
- "version": "4.4.0",
+ "version": "4.5.1",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
    "outcome": "supported",
-   "detail": "chdb 4.4.0; 483 catalog table(s) listed"
+   "detail": "chdb 4.5.1; 521 catalog table(s) listed"
   },
   {
    "key": "create_table",
@@ -126,7 +126,7 @@
    "group": "write",
    "question": "MERGE INTO",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_39179243597_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_44456511972_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.id WHEN MATCHED THEN UPD... Expected end of query. (SYNTAX_ERROR)"
   },
   {
    "key": "truncate",
@@ -140,7 +140,7 @@
    "group": "write",
    "question": "INSERT OVERWRITE TABLE",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_39179243597_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, ORDER BY, LIMIT, OFFSET, FETCH, SETTINGS, end of query. (SYNTAX_ERROR)"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44456511972_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, ORDER BY, LIMIT, OFFSET, FETCH, SETTINGS, end of query. (SYNTAX_ERROR)"
   },
   {
    "key": "add_column",
@@ -189,7 +189,7 @@
    "group": "schema",
    "question": "ALTER TABLE SET TBLPROPERTIES",
    "outcome": "no",
-   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '39179243597_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET\u2026"
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '44456511972_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, MATERIALIZE COLUMN, DROP PARTITION, DROP PART, FORGET PARTITION, DROP DETACHED PARTITION, DROP DETACHED PART, DROP COLUMN, CLEAR COLUMN, ADD INDEX, DROP INDEX, CLEAR INDEX, MATERIALIZE INDEX, ADD STATISTICS, MODIFY STATISTICS, DROP STATISTICS, CLEAR STATISTICS, MATERIALIZE STATISTICS, ADD PROJECTION, DROP PROJECTION, CLEAR PROJECTION, MATERIALIZE PROJECTION, MODIFY PROJECTION, MOVE PART, MOVE PARTITION, ADD CONSTRAINT, MODIFY CONSTRAINT, DROP CONSTRAINT, DETACH PARTITION, DET\u2026"
   },
   {
    "key": "sort_order_evolution",
@@ -213,6 +213,13 @@
    "detail": "system.iceberg_history reads 1 snapshot(s)"
   },
   {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
+  },
+  {
    "key": "file_pruning",
    "group": "read",
    "question": "WHERE id = 22 with the other data files deleted (file pruning)",
@@ -224,7 +231,7 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. Request ID: 5d42841c-e01e-001f-4d5e-5f6564000000. (STD_EXCEPTION)"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 404 The specified blob does not exist. The specified blob does not exist. RequestId:1e7a2820-e01e-006d-10dc-77622b000000 Time:2026-11-19T04:16:24.3911539Z Request ID: 1e7a2820-e01e-006d-10dc-77622b000000. (STD_EXCEPTION)"
   },
   {
    "key": "create_branch",
@@ -244,8 +251,8 @@
    "key": "expire_snapshots",
    "group": "maintenance",
    "question": "ALTER TABLE ... EXECUTE expire_snapshots",
-   "outcome": "no-op",
-   "detail": "returned success and history went 3 -> 3"
+   "outcome": "no",
+   "detail": "ChdbError: Code: 736. DB::Exception: Iceberg catalog commit of the snapshot removal failed for table _bench_capability.ch_44456511972_1_expire: DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/namespaces/_bench_capability/tables/ch_44456511972_1_expire. HTTP status code: 400 'Bad Request', body length: 81 bytes, body: '{\"error\":{\"message\":\"Malformed request\",\"type\":\"BadRequestException\",\"code\":400}}'. (DATALAKE_DATABASE_ERROR)"
   },
   {
    "key": "compaction",
@@ -258,8 +265,22 @@
    "key": "rewrite_manifests",
    "group": "maintenance",
    "question": "rewrite manifests (no statement)",
+   "outcome": "supported",
+   "detail": "manifests rewritten in a new snapshot: pyiceberg reads [(1, 10), (2, 20), (3, 30), (4, 40)]; chDB agrees"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE TABLE in a new namespace (no namespace statement)",
+   "outcome": "supported",
+   "detail": "`ch_44456511972_1_ns` created through CREATE TABLE in it; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "drop a namespace (no namespace statement)",
    "outcome": "no",
-   "detail": "ClickHouse has no statement to rewrite an Iceberg table's manifests"
+   "detail": "ClickHouse has no statement to drop a catalog namespace"
   },
   {
    "key": "namespace_existing",
@@ -302,30 +323,9 @@
    "question": "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
-  },
-  {
-   "key": "namespace_create",
-   "group": "catalog",
-   "question": "CREATE TABLE in a new namespace (no namespace statement)",
-   "outcome": "supported",
-   "detail": "`ch_39594010650_1_ns` created through CREATE TABLE in it; pyiceberg lists it"
-  },
-  {
-   "key": "namespace_drop",
-   "group": "catalog",
-   "question": "drop a namespace (no namespace statement)",
-   "outcome": "no",
-   "detail": "ClickHouse has no statement to drop a catalog namespace"
-  },
-  {
-   "key": "select_table",
-   "group": "read",
-   "question": "SELECT a table by its catalog name",
-   "outcome": "supported",
-   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   }
  ],
- "run": "39906543136",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
- "date": "2026-10-23"
+ "run": "44456511972",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44456511972",
+ "date": "2026-11-19"
 }
