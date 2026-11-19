@@ -33,6 +33,9 @@ NOT_FIXED = {
         "closed: expected behavior, cast_keep_nullable = 1 is the opt-in"
     ),
     "ClickHouse/ClickHouse#126633": "closed: kept in ClickHouse Cloud only",
+    "ClickHouse/ClickHouse#106707": (
+        "closed: allow_lossy_numeric_supertype is the opt-in; TPC-DS Q75 still fails on chDB 4.5.1"
+    ),
 }
 # Issues closed unfixed whose ask a later pull request delivered: the issue counts as fixed, on the
 # day that pull request merged.
