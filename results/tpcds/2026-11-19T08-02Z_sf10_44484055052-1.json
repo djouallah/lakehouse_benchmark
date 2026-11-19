@@ -1,0 +1,140 @@
+{
+  "run_id": "44484055052-1",
+  "run_started_at": "2026-11-19T08:02:20Z",
+  "sf": 10,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44484055052",
+  "git_sha": "bbc52a9",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1019-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.16",
+  "schema_version": 1,
+  "engines": {
+    "chdb_iceberg": {
+      "version": "4.5.1",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 1.7194,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 28.8422,
+          "rows": 33,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": 19.716,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 23,
+          "dur": 18.3933,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 4,
+          "dur": 26.1189,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 14,
+          "dur": 30.5531,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 19,
+          "dur": 3.0081,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 67,
+          "dur": 9.2412,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 9,
+          "dur": 33.0479,
+          "rows": 1,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 95,
+          "dur": 7.9579,
+          "rows": 1,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 78,
+          "dur": 5.5732,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 5,
+          "dur": 6.1697,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 11,
+          "dur": 9.4555,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 75,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "ChdbError: Code: 43. DB::Exception: Illegal type Variant(Decimal(9, 2), Float64) of argument for aggregate function SUM. If it is the inferred common type of if/multiIf/coalesce/ifNull/array/map over numeric arguments, enable setting 'allow_lossy_numeric_supertype' to use a numeric supertype instead. (ILLEGAL_TYPE_OF_ARGUMENT)"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1019-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.16"
+      }
+    }
+  }
+}
