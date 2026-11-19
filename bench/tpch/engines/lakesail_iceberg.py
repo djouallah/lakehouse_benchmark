@@ -40,6 +40,9 @@ POOL_BYTES = 10 * 1024**3
 
 class LakesailIceberg:
     name = "lakesail_iceberg"
+    # A query may run 7200 s, not runner.QUERY_TIMEOUT_S (900): TPC-DS Q72 at SF=30 runs past 900 s
+    # (runs 41314070105, 43226128601, 44458084614) and is let finish.
+    query_timeout_s = 7200
 
     def __init__(self, cfg: Config):
         self.cfg = cfg

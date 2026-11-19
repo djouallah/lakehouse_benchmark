@@ -86,7 +86,8 @@ def run_pass(
     """One pass over the statements, hard ones first (config.HARD_FIRST), ending at the first
     statement that fails or runs past `timeout` (default QUERY_TIMEOUT_S): a run is all of the
     suite or nothing (run_engine.py)."""
-    timeout = QUERY_TIMEOUT_S if timeout is None else timeout
+    if timeout is None:
+        timeout = getattr(engine, "query_timeout_s", QUERY_TIMEOUT_S)
     rows: list[Row] = []
     refresh = getattr(engine, "refresh", None)
     for number in order(len(statements), hard_first):

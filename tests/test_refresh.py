@@ -10,6 +10,7 @@ import pytest
 from bench import auth
 from bench.config import TOKEN_MIN_LIFETIME_SECONDS
 from bench.tpch.config import ENGINES
+from bench.tpch.engines import lakesail_iceberg as sail
 from bench.tpch.engines import pyspark_gluten_iceberg as gluten
 from bench.tpch.engines import pyspark_iceberg as spark
 
@@ -155,3 +156,10 @@ def test_gluten_takes_the_newest_spark41_amd64_snapshot_in_the_nightly_listing()
     )
     with pytest.raises(RuntimeError):
         gluten.gluten_jar_url("no bundles here")
+
+
+def test_sail_queries_may_run_7200_s_and_the_others_keep_the_900_s_cap():
+    from bench.tpch import runner
+
+    assert sail.LakesailIceberg.query_timeout_s == 7200
+    assert runner.QUERY_TIMEOUT_S == 900
