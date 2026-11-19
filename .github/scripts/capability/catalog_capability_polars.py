@@ -492,7 +492,10 @@ class PolarsCapability:
         table = self._fresh("compact")
         self.iceberg(table).append(rows([(4, 40)]))
         before = len(list(self.iceberg(table).scan().plan_files()))
-        self.sql(f"CALL {CATALOG}.system.rewrite_data_files(table => '{self.ns}.{table}')")
+        self.sql(
+            f"CALL {CATALOG}.system.rewrite_data_files(table => '{self.ns}.{table}', "
+            f"options => map('rewrite-all', 'true'))"
+        )
         after = len(list(self.iceberg(table).scan().plan_files()))
         if after >= before:
             raise NoOp(f"returned success and data files went {before} -> {after}")
