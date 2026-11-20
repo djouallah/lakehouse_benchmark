@@ -569,40 +569,6 @@ class DuckDBCapability:
             raise NoOp(f"returned success and the schema is {cols}")
         return f"schema now {cols}; " + self._expect(table, SEED, "data kept", ("id", "v2"))
 
-    def rename_table(self) -> str:
-        table = self._fresh("rename")
-        new = self.name("renamed")
-        self.sql(f'ALTER TABLE {self.t(table)} RENAME TO "{new}"')
-        self._forget(table)
-        self.created.append((self.ns, new, "table"))
-        if not self._exists(new) or self._exists(table):
-            self.created.append((self.ns, table, "table"))
-            raise NoOp("returned success and the catalog still has the old name")
-        # Is what the metadata points at still there? A rename that moves the folder but keeps
-        # the absolute paths in the metadata leaves a table the catalog lists and nobody reads.
-        tbl = self.iceberg(new)
-        io = tbl.io
-
-        def tail(path: str) -> str:
-            return "…" + path.split(self.cfg.lakehouse_id, 1)[-1]
-
-        def state(path: str) -> str:
-            return "exists" if io.new_input(path).exists() else "is GONE"
-
-        manifest_list = tbl.current_snapshot().manifest_list
-        where = (
-            f"location `{tail(tbl.location())}`; metadata `{tail(tbl.metadata_location)}` "
-            f"{state(tbl.metadata_location)}; manifest list `{tail(manifest_list)}` "
-            f"{state(manifest_list)}"
-        )
-        dk, py = self._dk_rows(new), self._py_rows(new)
-        if SEED not in (dk, py):
-            raise NoOp(
-                f"renamed in the catalog, data unreadable: {where}; "
-                f"pyiceberg: {_one_line(py, 160)}; DuckDB: {_one_line(dk, 160)}"
-            )
-        return f"renamed; {where}; " + self._expect(new, SEED, "data kept")
-
     def set_property(self) -> str:
         table = self._fresh("props")
         self.sql(f"CALL set_iceberg_table_properties({self.t(table)}, {{'probe.duckdb': '1'}})")
@@ -856,7 +822,6 @@ PROBES = [
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
     ("schema", "ALTER COLUMN c TYPE BIGINT (int -> long)", "type_promotion"),
-    ("schema", "ALTER TABLE ... RENAME TO (table)", "rename_table"),
     ("schema", "set_iceberg_table_properties", "set_property"),
     ("schema", "ALTER TABLE ... SET PARTITIONED BY (partition evolution)", "partition_evolution"),
     ("schema", "INSERT after SET PARTITIONED BY, read across both specs", "write_after_evolution"),

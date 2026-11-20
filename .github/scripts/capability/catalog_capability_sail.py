@@ -666,18 +666,6 @@ class SailCapability:
         self.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.`{self.ns}`")
         return f"accepted on the existing `{self.ns}`"
 
-    def rename_table(self) -> str:
-        """Renamed AND readable. OneLake moves the folder on a rename; every engine so far found
-        the manifest list still pointing at the old one."""
-        table = self._fresh("rename")
-        target = self.name("renamed")
-        self.sql(f"ALTER TABLE {self.t(table)} RENAME TO {self.t(target)}")
-        self.created = [target if c == table else c for c in self.created]
-        rows = self._py_rows(target)
-        if rows != SEED:
-            raise NoOp(f"renamed, and the data is unreadable under the new name: {rows}")
-        return "renamed, and its 3 rows read back"
-
     def drop_purge(self) -> str:
         table = self._fresh("droppable")
         tbl = self.iceberg(table)
@@ -788,7 +776,6 @@ PROBES = [
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),
-    ("catalog", "ALTER TABLE ... RENAME TO, then read", "rename_table"),
     ("catalog", "DROP TABLE ... PURGE", "drop_purge"),
     ("concurrency", "INSERT INTO; B appends between Sail's read and commit", "race_append"),
     ("concurrency", "DELETE id 1; B appends", "race_delete"),

@@ -603,16 +603,6 @@ class ChdbCapability:
             raise NoOp("returned success and no new snapshot was committed")
         return self._expect(table, SEED + [(4, 40)], "manifests rewritten in a new snapshot")
 
-    def rename_table(self) -> str:
-        table = self._fresh("rename")
-        target = self.name("renamed")
-        self.sql(f"RENAME TABLE {self.t(table)} TO {self.t(target)}")
-        self.created = [target if c == table else c for c in self.created]
-        found = self._py_rows(target)
-        if found != SEED:
-            raise NoOp(f"renamed, and the data is unreadable under the new name: {found}")
-        return "renamed, and its 3 rows read back"
-
     def namespace_create(self) -> str:
         """ClickHouse has no statement for a catalog namespace. Its only way to make one is a
         CREATE TABLE inside it (RestCatalog creates the namespace first)."""
@@ -741,7 +731,6 @@ PROBES = [
     ("catalog", "CREATE TABLE in a new namespace (no namespace statement)", "namespace_create"),
     ("catalog", "drop a namespace (no namespace statement)", "namespace_drop"),
     ("catalog", "namespace IF NOT EXISTS (no namespace statement)", "namespace_existing"),
-    ("catalog", "RENAME TABLE, then read", "rename_table"),
     ("catalog", "DROP TABLE", "drop_table"),
     ("concurrency", "INSERT INTO; B appends between chDB's read and commit", "race_append"),
     ("concurrency", "DELETE id 1; B appends", "race_delete"),

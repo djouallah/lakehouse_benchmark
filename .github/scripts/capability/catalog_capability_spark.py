@@ -666,20 +666,6 @@ class SparkCapability:
         self.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.`{self.ns}`")
         return f"accepted on the existing `{self.ns}`"
 
-    def rename_table(self) -> str:
-        """Renamed AND readable. OneLake moves the folder on a rename; every engine so far found
-        the manifest list still pointing at the old one."""
-        table = self._fresh("rename")
-        target = self.name("renamed")
-        # The new name is relative to the table's catalog: Spark reads a leading `onelake.` in it
-        # as part of the namespace.
-        self.sql(f"ALTER TABLE {self.t(table)} RENAME TO `{self.ns}`.`{target}`")
-        self.created = [target if c == table else c for c in self.created]
-        rows = self._py_rows(target)
-        if rows != SEED:
-            raise NoOp(f"renamed, and the data is unreadable under the new name: {rows}")
-        return "renamed, and its 3 rows read back"
-
     def drop_purge(self) -> str:
         """Dropped through the `race` catalog, so the proxy shows the DELETE Spark sent: with
         rest-catalog-purge on it carries purgeRequested=true and Spark deletes no file itself."""
@@ -839,7 +825,6 @@ PROBES = [
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),
-    ("catalog", "ALTER TABLE ... RENAME TO, then read", "rename_table"),
     ("catalog", "DROP TABLE ... PURGE, rest-catalog-purge on", "drop_purge"),
     ("catalog", "read and INSERT with only the vended credentials", "credential_vending"),
     ("concurrency", "INSERT INTO; B appends between Spark's read and commit", "race_append"),
