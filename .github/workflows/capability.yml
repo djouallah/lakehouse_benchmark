@@ -151,6 +151,12 @@ jobs:
       - name: DuckDB CLI
         if: matrix.client == 'duckdb' || matrix.client == 'duckdb_isolation'
         uses: ./.github/actions/duckdb-cli
+        with:
+          # DuckDB v2.0.1 (duckdb/duckdb `Main (v2.0.1)` on v2.0-cyanoptera, 8d78114e90, iceberg
+          # f979b5b28a) until the release is out. Main's nightly alpha56621 fails every Iceberg
+          # commit ("The COPY TO bind of a copy function was called without its function info")
+          # and then segfaults on a SELECT (run 44680562433).
+          run-id: "44520268851"
 
       # OIDC only. No client secret exists on this app registration.
       - uses: azure/login@v3
