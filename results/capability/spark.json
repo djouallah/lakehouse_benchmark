@@ -1,13 +1,13 @@
 {
  "engine": "spark",
- "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
+ "version": "4.1.4 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Spark starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pyspark 4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01); _bench_capability listed"
+   "detail": "pyspark 4.1.4 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01); _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -15,6 +15,13 @@
    "question": "CREATE TABLE ... USING iceberg",
    "outcome": "supported",
    "detail": "field ids [1, 2], format-version 2"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
   },
   {
    "key": "ctas",
@@ -63,7 +70,7 @@
    "group": "create",
    "question": "types: decimal, date, timestamp, timestamptz, uuid, binary",
    "outcome": "no",
-   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^"
+   "detail": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...2433_1_type_uuid` (id BIGINT, x UUID) USING iceberg ^^^^"
   },
   {
    "key": "types_nested",
@@ -157,6 +164,13 @@
    "detail": "TRUNCATE: pyiceberg reads []; Spark agrees; metadata-only: delete snapshot, deleted-data-files 3, added-data-files None, added-delete-files None"
   },
   {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "supported",
+   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Spark agrees; 1 snapshot(s), operation overwrite"
+  },
+  {
    "key": "add_column",
    "group": "schema",
    "question": "ALTER TABLE ADD COLUMN",
@@ -220,6 +234,13 @@
    "detail": "t.snapshots reads 1 snapshot(s)"
   },
   {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
+  },
+  {
    "key": "file_pruning",
    "group": "read",
    "question": "WHERE id = 22 with the other data files deleted (file pruning)",
@@ -248,6 +269,13 @@
    "detail": "refs now ['main', 'probe_tag']"
   },
   {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "CALL system.expire_snapshots",
+   "outcome": "no",
+   "detail": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request at org.apache.iceberg.rest.ErrorHandlers$DefaultErrorHandler.accept(ErrorHandlers.java:341) at org.apache.iceberg.rest.ErrorHandlers$CommitErrorHandler.accept(ErrorHandlers.java:137) at org.apache.iceberg.rest.ErrorHandlers$CommitErrorHandler.accept(ErrorHandlers.java:119) at org.apache.iceberg.rest.HTTPClient.throwFailure(HTTPClient.java:242) at org.apache.iceberg.rest.HTTPClient.handleResponse(HTTPClient.java:367) at org.apache.iceberg.rest.HTTPClient.lambda$execute$1(HTTPClient.java:325) at org.apache.iceberg.shaded.org.apache.hc.client5.http.\u2026"
+  },
+  {
    "key": "rewrite_data_files",
    "group": "maintenance",
    "question": "CALL system.rewrite_data_files (compaction)",
@@ -262,11 +290,32 @@
    "detail": "a new snapshot rewrote the manifests"
   },
   {
-   "key": "rename_table",
+   "key": "add_files",
+   "group": "maintenance",
+   "question": "CALL system.add_files",
+   "outcome": "supported",
+   "detail": "add_files: pyiceberg reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]; Spark agrees"
+  },
+  {
+   "key": "namespace_create",
    "group": "catalog",
-   "question": "ALTER TABLE ... RENAME TO, then read",
-   "outcome": "no",
-   "detail": "UnsupportedOperationException: {\"error\":{\"code\":\"NotImplemented\",\"message\":\"The Iceberg rename table operation is not supported.\",\"target\":null,\"details\":null}}"
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "`sp_44680562433_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
+  },
+  {
+   "key": "namespace_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
+   "outcome": "supported",
+   "detail": "accepted on the existing `_bench_capability`"
   },
   {
    "key": "drop_purge",
@@ -302,58 +351,9 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
-  },
-  {
-   "key": "create_if_not_exists",
-   "group": "create",
-   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
-   "outcome": "supported",
-   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
-  },
-  {
-   "key": "insert_overwrite",
-   "group": "write",
-   "question": "INSERT OVERWRITE, whole table",
-   "outcome": "supported",
-   "detail": "INSERT OVERWRITE: pyiceberg reads [(7, 70), (8, 80)]; Spark agrees; 1 snapshot(s), operation overwrite"
-  },
-  {
-   "key": "namespace_existing",
-   "group": "catalog",
-   "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
-   "outcome": "supported",
-   "detail": "accepted on the existing `_bench_capability`"
-  },
-  {
-   "key": "expire_snapshots",
-   "group": "maintenance",
-   "question": "CALL system.expire_snapshots",
-   "outcome": "no",
-   "detail": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request at org.apache.iceberg.rest.ErrorHandlers$DefaultErrorHandler.accept(ErrorHandlers.java:341) at org.apache.iceberg.rest.ErrorHandlers$CommitErrorHandler.accept(ErrorHandlers.java:137) at org.apache.iceberg.rest.ErrorHandlers$CommitErrorHandler.accept(ErrorHandlers.java:119) at org.apache.iceberg.rest.HTTPClient.throwFailure(HTTPClient.java:242) at org.apache.iceberg.rest.HTTPClient.handleResponse(HTTPClient.java:367) at org.apache.iceberg.rest.HTTPClient.lambda$execute$1(HTTPClient.java:325) at org.apache.iceberg.shaded.org.apache.hc.client5.http.\u2026"
-  },
-  {
-   "key": "namespace_create",
-   "group": "catalog",
-   "question": "CREATE SCHEMA (namespace)",
-   "outcome": "supported",
-   "detail": "`sp_39594010650_1_ns` created; pyiceberg lists it"
-  },
-  {
-   "key": "namespace_drop",
-   "group": "catalog",
-   "question": "DROP SCHEMA (namespace)",
-   "outcome": "supported",
-   "detail": "the empty namespace is gone"
-  },
-  {
-   "key": "select_table",
-   "group": "read",
-   "question": "SELECT a table by its catalog name",
-   "outcome": "supported",
-   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   }
  ],
- "run": "39906543136",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
- "date": "2026-10-23"
+ "run": "44680562433",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "date": "2026-11-20"
 }

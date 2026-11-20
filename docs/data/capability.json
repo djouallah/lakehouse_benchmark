@@ -1,34 +1,34 @@
 {
  "engines": {
   "lakesail_iceberg": {
-   "version": "0.7.3+main2280ea1928",
-   "run": "43225837832",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43225837832",
-   "date": "2026-11-12"
+   "version": "0.7.3+main8aaa2d3533",
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   },
   "pyspark_iceberg": {
-   "version": "4.1.3 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
+   "version": "4.1.4 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   },
   "polars_iceberg": {
    "version": "main b145ff9463",
-   "run": "44461020189",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44461020189",
-   "date": "2026-11-19"
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   },
   "starrocks_iceberg": {
-   "version": "4.1.7-b81ff9c (starrocks/allin1-ubuntu:4.1-latest)",
-   "run": "41604704770",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41604704770",
-   "date": "2026-11-03"
+   "version": "4.1.8-b16342f (starrocks/allin1-ubuntu:4.1-latest)",
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   },
   "duckdb_iceberg": {
    "version": "v2.0.1",
@@ -38,15 +38,15 @@
   },
   "chdb_iceberg": {
    "version": "4.5.1",
-   "run": "44456511972",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44456511972",
-   "date": "2026-11-19"
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   },
   "databend_iceberg": {
    "version": "8.0.90-v1.2.965-a7a0a58bf1(rust-1.101.0-nightly-2026-11-16T09:29:39.956446688Z) (datafuselabs/databend:v1.2.965-nightly)",
-   "run": "44097986254",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44097986254",
-   "date": "2026-11-17"
+   "run": "44680562433",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "date": "2026-11-20"
   }
  },
  "groups": [
@@ -266,7 +266,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_delete, engine type iceberg, does not support DELETE.')"
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_delete, engine type iceberg, does not support DELETE.')"
     }
    }
   },
@@ -288,7 +288,7 @@
     },
     "starrocks_iceberg": {
      "o": "no",
-     "n": "ProgrammingError: (1064, 'table sr_41602439955_1_update does not support update')"
+     "n": "ProgrammingError: (1064, 'table sr_44680562433_1_update does not support update')"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -298,7 +298,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_update, engine type iceberg, does not support UPDATE.')"
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_update, engine type iceberg, does not support UPDATE.')"
     }
    }
   },
@@ -328,11 +328,11 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44456511972_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44680562433_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44097986254_1_overwrite' which uses the 'iceberg' engine.\")"
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44680562433_1_overwrite' which uses the 'iceberg' engine.\")"
     }
    }
   },
@@ -515,7 +515,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_race_delete, engine type iceberg, does not support DE…"
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_delete, engine type iceberg, does not support DE…"
     }
    }
   },
@@ -537,7 +537,7 @@
     },
     "starrocks_iceberg": {
      "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_41604119887_1_race_update does not support update')"
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_44680562433_1_race_update does not support update')"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -547,7 +547,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44097986254_1_race_update, engine type iceberg, does not support UP…"
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_update, engine type iceberg, does not support UP…"
     }
    }
   },
@@ -576,11 +576,11 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_44456511972_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (onelake): onelake.`_bench_capability.ch_44680562433_1_merge` t USING (SELECT * FROM values('id Int64, v Int64', (1, 777), (9, 90))) s ON t.id = s.…"
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_44097986254_1_merge does not support MERGE.')"
+     "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = Table db_44680562433_1_merge does not support MERGE.')"
     }
    }
   },
@@ -613,7 +613,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = TRUNCATE TABLE is not supported for the table '_bench_capability.db_44097986254_1_truncate' which uses the 'iceberg' engine.\")"
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = TRUNCATE TABLE is not supported for the table '_bench_capability.db_44680562433_1_truncate' which uses the 'iceberg' engine.\")"
     }
    }
   },
@@ -780,7 +780,7 @@
     },
     "pyspark_iceberg": {
      "o": "no",
-     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...3754_1_type_uuid` …"
+     "n": "works: ['decimal', 'date', 'timestamp', 'timestamptz', 'binary']; refused: uuid: ParseException: [UNSUPPORTED_DATATYPE] Unsupported data type \"UUID\". SQLSTATE: 0A000 == SQL (line 1, position 85) == ...2433_1_type_uuid` …"
     },
     "polars_iceberg": {
      "o": "supported"
@@ -861,7 +861,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44097986254_1_addcol engine is iceberg that doesn't support alter.\")"
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44680562433_1_addcol engine is iceberg that doesn't support alter.\")"
     }
    }
   },
@@ -892,7 +892,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44097986254_1_dropcol engine is iceberg that doesn't support alter.\")"
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44680562433_1_dropcol engine is iceberg that doesn't support alter.\")"
     }
    }
   },
@@ -923,7 +923,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44097986254_1_renamecol engine is iceberg that doesn't support rename column name.\")"
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = _bench_capability.db_44680562433_1_renamecol engine is iceberg that doesn't support rename column name.\")"
     }
    }
   },
@@ -1045,7 +1045,7 @@
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '44456511972_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 64 (SET): SET TBLPROPERTIES ('probed-at' = '44680562433_1'). Expected one of: ON, a list of ALTER commands, ALTER command, ADD COLUMN, RENAME COLUMN, …"
     },
     "databend_iceberg": {
      "o": "no",
@@ -1071,7 +1071,7 @@
     },
     "starrocks_iceberg": {
      "o": "no",
-     "n": "ProgrammingError: (1064, \"This connector doesn't support alter table: onelake._bench_capability.sr_41602439955_1_sorted with operation: com.starrocks.sql.ast.ReorderColumnsClause@8986608\")"
+     "n": "ProgrammingError: (1064, \"This connector doesn't support alter table: onelake._bench_capability.sr_44680562433_1_sorted with operation: com.starrocks.sql.ast.ReorderColumnsClause@ce53827\")"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -1241,7 +1241,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, 'SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:74\\n /\\n1 / ALTER TABLE onelake.\"_bench_capability\".\"db_44097986254_1_branch\" CREATE BRANCH probe_branch\\n / ----- ^^^^^^ unexpected `BRA…"
+     "n": "OperationalError: (1105, 'SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:74\\n /\\n1 / ALTER TABLE onelake.\"_bench_capability\".\"db_44680562433_1_branch\" CREATE BRANCH probe_branch\\n / ----- ^^^^^^ unexpected `BRA…"
     }
    }
   },
@@ -1308,7 +1308,7 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_44097986254_1_compact'. Table engine: 'iceberg'..\")"
+     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The 'compact_blocks' operation is not supported for the table 'db_44680562433_1_compact'. Table engine: 'iceberg'..\")"
     }
    }
   },
@@ -1340,7 +1340,42 @@
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_44097986254_1_manifests', which is using the 'iceberg' engine..\")"
+     "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_44680562433_1_manifests', which is using the 'iceberg' engine..\")"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Add existing Parquet files",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: unknown procedure 'lake.system.add_files' in CALL; supported: rewrite_data_files, rewrite_manifests"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "io.trino.spi.TrinoException: add_files procedure is disabled"
+    },
+    "starrocks_iceberg": {
+     "o": "no-op",
+     "n": "add_files returned success; expected [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], pyiceberg reads pyiceberg could not read it: ValueError: Parquet file does not have field-ids and the Iceberg table does not have 'sche…"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (.): .add_files(table => '_bench_capability.ch_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onel…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, \"SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:12\\n /\\n1 / CALL system.add_files(table => '_bench_capability.db_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523…"
     }
    }
   },

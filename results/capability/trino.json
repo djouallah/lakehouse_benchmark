@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_39906543136_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_44680562433_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -126,7 +126,7 @@
    "group": "write",
    "question": "CREATE OR REPLACE TABLE ... AS (whole-table overwrite)",
    "outcome": "no",
-   "detail": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry."
+   "detail": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry.; commits [409, 409, 409, 409, 409]; requirements sent [[{'type': 'assert-table-uuid', 'uuid': 'c49f66a3-7ec8-4c92-aa12-dfb878c82d73'}], [{'type': 'assert-table-uuid', 'uuid': 'c49f66a3-7ec8-4c92-aa12-dfb878c82d73'}], [{'type': 'assert-table-uuid', 'uuid': 'c49f66a3-7ec8-4c92-aa12-dfb878c82d73'}], [{'type': 'assert-table-uuid', 'uuid': 'c49f66a3-7ec8-4c92-aa12-dfb878c82d73'}], [{'type': 'assert-table-uuid', 'uuid': 'c49f66a3-7ec8-4c92-aa12-dfb878c82d73'}]]; updates [['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref']]; table holds uuid c49f66a3-7ec8-4c92-aa12-dfb878c82d73, current-schema-id 0, last-column-id 2, default-spec-id 0, last-partition-id 999, default-sort-order-id 0, main 7818516691883585089"
   },
   {
    "key": "add_column",
@@ -192,6 +192,13 @@
    "detail": "\"t$snapshots\" reads 2 snapshot(s)"
   },
   {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a table by its catalog name",
+   "outcome": "supported",
+   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
+  },
+  {
    "key": "file_pruning",
    "group": "read",
    "question": "WHERE id = 22 with the other data files deleted (file pruning)",
@@ -203,7 +210,7 @@
    "group": "read",
    "question": "max(id) with every data file deleted (min/max from metadata)",
    "outcome": "no",
-   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: io.trino.spi.TrinoException: Error opening Iceberg split abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_38909350278_1_max/data/00000-0-541242ca-9a10-4087-9e97-ed88669829dc.parquet (offset=4, length=995): abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_38909350278_1_max/data/00000-0-541242ca-9a10-4087-9e97-ed88669829dc.parquet <- java.io.FileNotFoundException: abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_389\u2026"
+   "detail": "SELECT max(id) fails with 4 of 4 data files deleted, so it opens them: io.trino.spi.TrinoException: Error opening Iceberg split abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_44680562433_1_max/data/00000-0-65c382ff-0926-42ad-90e8-105c2d46e517.parquet (offset=4, length=995): abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_44680562433_1_max/data/00000-0-65c382ff-0926-42ad-90e8-105c2d46e517.parquet <- java.io.FileNotFoundException: abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_capability/tr_446\u2026"
   },
   {
    "key": "create_branch",
@@ -241,6 +248,27 @@
    "detail": "a new snapshot rewrote the manifests"
   },
   {
+   "key": "add_files",
+   "group": "maintenance",
+   "question": "EXECUTE add_files",
+   "outcome": "no",
+   "detail": "io.trino.spi.TrinoException: add_files procedure is disabled"
+  },
+  {
+   "key": "namespace_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "`tr_44680562433_1_ns` created; pyiceberg lists it"
+  },
+  {
+   "key": "namespace_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA (namespace)",
+   "outcome": "supported",
+   "detail": "the empty namespace is gone"
+  },
+  {
    "key": "namespace_existing",
    "group": "catalog",
    "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
@@ -274,30 +302,9 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
-  },
-  {
-   "key": "namespace_create",
-   "group": "catalog",
-   "question": "CREATE SCHEMA (namespace)",
-   "outcome": "supported",
-   "detail": "`tr_39594010650_1_ns` created; pyiceberg lists it"
-  },
-  {
-   "key": "namespace_drop",
-   "group": "catalog",
-   "question": "DROP SCHEMA (namespace)",
-   "outcome": "supported",
-   "detail": "the empty namespace is gone"
-  },
-  {
-   "key": "select_table",
-   "group": "read",
-   "question": "SELECT a table by its catalog name",
-   "outcome": "supported",
-   "detail": "SELECT id, v FROM the catalog table reads the 3 rows pyiceberg wrote"
   }
  ],
- "run": "39906543136",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
- "date": "2026-10-23"
+ "run": "44680562433",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "date": "2026-11-20"
 }

@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.3+main2280ea1928",
+ "version": "0.7.3+main8aaa2d3533",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.3+main2280ea1928; _bench_capability listed"
+   "detail": "pysail 0.7.3+main8aaa2d3533; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -273,7 +273,7 @@
    "group": "maintenance",
    "question": "CALL system.expire_snapshots",
    "outcome": "no",
-   "detail": "UnsupportedOperationException: Iceberg system procedure 'expire_snapshots' is recognized but not implemented"
+   "detail": "IllegalArgumentException: invalid argument: Procedure arguments must be foldable constants: Internal error: invoke should not be called on a simplified timestamp_now() function. This issue was likely caused by a bug in DataFusion's code. Please help us to resolve this by filing a bug report in our issue tracker: https://github.com/apache/datafusion/issues"
   },
   {
    "key": "rewrite_data_files",
@@ -290,11 +290,18 @@
    "detail": "a new snapshot rewrote the manifests"
   },
   {
+   "key": "add_files",
+   "group": "maintenance",
+   "question": "CALL system.add_files",
+   "outcome": "supported",
+   "detail": "add_files: pyiceberg reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]; Sail agrees"
+  },
+  {
    "key": "namespace_create",
    "group": "catalog",
    "question": "CREATE SCHEMA (namespace)",
    "outcome": "supported",
-   "detail": "`sl_43225837832_1_ns` created; pyiceberg lists it"
+   "detail": "`sl_44680562433_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -309,13 +316,6 @@
    "question": "CREATE SCHEMA IF NOT EXISTS, existing namespace",
    "outcome": "supported",
    "detail": "accepted on the existing `_bench_capability`"
-  },
-  {
-   "key": "rename_table",
-   "group": "catalog",
-   "question": "ALTER TABLE ... RENAME TO, then read",
-   "outcome": "no",
-   "detail": "AnalysisException: external error: Failed to rename Iceberg table: unknown error: status code 406 Not Acceptable"
   },
   {
    "key": "drop_purge",
@@ -336,17 +336,17 @@
    "group": "concurrency",
    "question": "DELETE id 1; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6299779997698387171) but found Some(7206367413621069006)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(1444411755452857498) but found Some(781298746416069111)"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
-   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(6716854403841054606) but found Some(2151524428006569356)"
+   "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(5799076980063249858) but found Some(2906126615963063931)"
   }
  ],
- "run": "43225837832",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/43225837832",
- "date": "2026-11-12"
+ "run": "44680562433",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "date": "2026-11-20"
 }

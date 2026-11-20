@@ -1,20 +1,20 @@
 {
  "engine": "starrocks",
- "version": "4.1.7-b81ff9c (starrocks/allin1-ubuntu:4.1-latest)",
+ "version": "4.1.8-b16342f (starrocks/allin1-ubuntu:4.1-latest)",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "StarRocks starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "StarRocks 4.1.7-b81ff9c (starrocks/allin1-ubuntu:4.1-latest); _bench_capability listed, seen by StarRocks; race catalog attached"
+   "detail": "StarRocks 4.1.8-b16342f (starrocks/allin1-ubuntu:4.1-latest); _bench_capability listed, seen by StarRocks; race catalog attached"
   },
   {
    "key": "create_table",
    "group": "create",
    "question": "CREATE TABLE ... PROPERTIES (location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_41604704770_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_44680562433_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -42,7 +42,7 @@
    "group": "create",
    "question": "ALTER TABLE ORDER BY (sort order)",
    "outcome": "no",
-   "detail": "ProgrammingError: (1064, \"This connector doesn't support alter table: onelake._bench_capability.sr_41602439955_1_sorted with operation: com.starrocks.sql.ast.ReorderColumnsClause@8986608\")"
+   "detail": "ProgrammingError: (1064, \"This connector doesn't support alter table: onelake._bench_capability.sr_44680562433_1_sorted with operation: com.starrocks.sql.ast.ReorderColumnsClause@ce53827\")"
   },
   {
    "key": "sort_order_at_create",
@@ -112,7 +112,7 @@
    "group": "write",
    "question": "UPDATE",
    "outcome": "no",
-   "detail": "ProgrammingError: (1064, 'table sr_41602439955_1_update does not support update')"
+   "detail": "ProgrammingError: (1064, 'table sr_44680562433_1_update does not support update')"
   },
   {
    "key": "merge_upsert",
@@ -255,11 +255,18 @@
    "detail": "a new snapshot rewrote the manifests"
   },
   {
+   "key": "add_files",
+   "group": "maintenance",
+   "question": "EXECUTE add_files",
+   "outcome": "no-op",
+   "detail": "add_files returned success; expected [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], pyiceberg reads pyiceberg could not read it: ValueError: Parquet file does not have field-ids and the Iceberg table does not have 'schema.name-mapping.default' defined, StarRocks reads [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)]"
+  },
+  {
    "key": "namespace_create",
    "group": "catalog",
    "question": "CREATE DATABASE (namespace)",
    "outcome": "supported",
-   "detail": "`sr_41602439955_1_ns` created; pyiceberg lists it"
+   "detail": "`sr_44680562433_1_ns` created; pyiceberg lists it"
   },
   {
    "key": "namespace_drop",
@@ -301,10 +308,10 @@
    "group": "concurrency",
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
-   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_41604119887_1_race_update does not support update')"
+   "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_44680562433_1_race_update does not support update')"
   }
  ],
- "run": "41604704770",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/41604704770",
- "date": "2026-11-03"
+ "run": "44680562433",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "date": "2026-11-20"
 }

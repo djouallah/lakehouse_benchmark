@@ -79,7 +79,7 @@ def test_maintenance_is_a_group_of_the_iceberg_support_grid():
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
     maintenance = [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"]
-    assert maintenance == ["Compaction", "Rewrite manifests"]
+    assert maintenance == ["Compaction", "Rewrite manifests", "Add existing Parquet files"]
 
 
 def test_the_iceberg_support_grid_opens_on_core():
