@@ -1,51 +1,51 @@
 {
  "engines": {
   "lakesail_iceberg": {
-   "version": "0.7.3+main8aaa2d3533",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "version": "0.7.3+main86da637b4f",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "pyspark_iceberg": {
    "version": "4.1.4 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "polars_iceberg": {
    "version": "main b145ff9463",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "starrocks_iceberg": {
    "version": "4.1.8-b16342f (starrocks/allin1-ubuntu:4.1-latest)",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "duckdb_iceberg": {
    "version": "v2.0.1",
-   "run": "44687346765",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44687346765",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "chdb_iceberg": {
    "version": "4.5.1",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   },
   "databend_iceberg": {
    "version": "8.0.90-v1.2.965-a7a0a58bf1(rust-1.101.0-nightly-2026-11-16T09:29:39.956446688Z) (datafuselabs/databend:v1.2.965-nightly)",
-   "run": "44680562433",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+   "run": "44741451292",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
    "date": "2026-11-20"
   }
  },
@@ -317,22 +317,22 @@
     },
     "trino_iceberg": {
      "o": "no",
-     "n": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit fai…"
+     "n": "io.trino.sql.parser.ParsingException: line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO' <- org.antlr.v4.runtime.InputMismatchException: None"
     },
     "starrocks_iceberg": {
      "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_44687346765_1_ove... ^^^^^^^^^"
+     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_44741451292_1_ove... ^^^^^^^^^"
     },
     "chdb_iceberg": {
      "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44680562433_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44741451292_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
     },
     "databend_iceberg": {
      "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44680562433_1_overwrite' which uses the 'iceberg' engine.\")"
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44741451292_1_overwrite' which uses the 'iceberg' engine.\")"
     }
    }
   },
@@ -614,6 +614,44 @@
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = TRUNCATE TABLE is not supported for the table '_bench_capability.db_44680562433_1_truncate' which uses the 'iceberg' engine.\")"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "CREATE OR REPLACE TABLE ... AS",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: atomic Iceberg table replacement"
+    },
+    "pyspark_iceberg": {
+     "o": "no",
+     "n": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry. at org.apache.iceberg.rest.ErrorHandl…"
+    },
+    "polars_iceberg": {
+     "o": "no",
+     "n": "SQLInterfaceError: SQLInterfaceError: `CREATE OR REPLACE TABLE` is not supported for catalog tables"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit fai…"
+    },
+    "starrocks_iceberg": {
+     "o": "no",
+     "n": "ProgrammingError: (1064, \"Getting syntax error at line 1, column 24. Detail message: Unexpected input '`onelake`', the most similar input is {'FUNCTION'}.\")"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Not implemented Error: CREATE OR REPLACE not supported in DuckDB-Iceberg. Please use separate Drop and Create Statements"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 80. DB::Exception: CREATE OR REPLACE TABLE query is supported only for Atomic databases. (INCORRECT_QUERY)"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "CREATE OR REPLACE TABLE ... AS: pyiceberg reads [(7, 70), (8, 80)]; Databend agrees, but as a NEW table: dropped and re-created, not replaced"
     }
    }
   },

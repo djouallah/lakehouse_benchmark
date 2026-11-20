@@ -1,13 +1,13 @@
 {
  "engine": "sail",
- "version": "0.7.3+main8aaa2d3533",
+ "version": "0.7.3+main86da637b4f",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "Sail starts and attaches the REST catalog",
    "outcome": "supported",
-   "detail": "pysail 0.7.3+main8aaa2d3533; _bench_capability listed"
+   "detail": "pysail 0.7.3+main86da637b4f; _bench_capability listed"
   },
   {
    "key": "create_table",
@@ -344,9 +344,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "refused: final [(1, 10), (2, 20), (3, 30), (4, 40)]; commits [409]; raised Refused: Refused: AnalysisException: Iceberg commit failed: reference 'main' expected snapshot Some(5799076980063249858) but found Some(2906126615963063931)"
+  },
+  {
+   "key": "create_or_replace",
+   "group": "write",
+   "question": "CREATE OR REPLACE TABLE ... AS",
+   "outcome": "no",
+   "detail": "UnsupportedOperationException: atomic Iceberg table replacement"
   }
  ],
- "run": "44680562433",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "run": "44741451292",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
  "date": "2026-11-20"
 }

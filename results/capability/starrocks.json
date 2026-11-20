@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE ... PROPERTIES (location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_44680562433_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at `\u2026/Tables/_bench_capability/sr_44741451292_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -309,9 +309,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
    "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_44680562433_1_race_update does not support update')"
+  },
+  {
+   "key": "create_or_replace",
+   "group": "write",
+   "question": "CREATE OR REPLACE TABLE ... AS",
+   "outcome": "no",
+   "detail": "ProgrammingError: (1064, \"Getting syntax error at line 1, column 24. Detail message: Unexpected input '`onelake`', the most similar input is {'FUNCTION'}.\")"
   }
  ],
- "run": "44680562433",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "run": "44741451292",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
  "date": "2026-11-20"
 }

@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE ENGINE = ICEBERG (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_44680562433_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_44741451292_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -126,7 +126,7 @@
    "group": "write",
    "question": "INSERT OVERWRITE (whole-table overwrite)",
    "outcome": "no",
-   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44680562433_1_overwrite' which uses the 'iceberg' engine.\")"
+   "detail": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44741451292_1_overwrite' which uses the 'iceberg' engine.\")"
   },
   {
    "key": "add_column",
@@ -302,9 +302,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
    "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_update, engine type iceberg, does not support UPDATE.')"
+  },
+  {
+   "key": "create_or_replace",
+   "group": "write",
+   "question": "CREATE OR REPLACE TABLE ... AS",
+   "outcome": "no",
+   "detail": "CREATE OR REPLACE TABLE ... AS: pyiceberg reads [(7, 70), (8, 80)]; Databend agrees, but as a NEW table: dropped and re-created, not replaced"
   }
  ],
- "run": "44680562433",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44680562433",
+ "run": "44741451292",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
  "date": "2026-11-20"
 }
