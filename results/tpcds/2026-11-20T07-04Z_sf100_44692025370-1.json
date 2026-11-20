@@ -1,0 +1,129 @@
+{
+  "run_id": "44692025370-1",
+  "run_started_at": "2026-11-20T07:04:15Z",
+  "sf": 100,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44692025370",
+  "git_sha": "3070334",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1020-azure",
+  "cpu": 4,
+  "mem_gb": 15.6,
+  "python": "3.12.16",
+  "schema_version": 1,
+  "engines": {
+    "chdb_iceberg": {
+      "version": "4.5.1",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 1.6789,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 221.1362,
+          "rows": 466,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": 342.7433,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 23,
+          "dur": 247.8407,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 4,
+          "dur": 215.9757,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 14,
+          "dur": 599.7054,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 19,
+          "dur": 49.0401,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 67,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "ChdbError: Code: 241. DB::Exception: Query memory limit exceeded: would use 11.18 GiB (attempt to allocate chunk of 2.39 MiB), maximum: 11.18 GiB: While executing AdaptiveBucketMergingSource. (MEMORY_LIMIT_EXCEEDED)"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1020-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.16"
+      }
+    },
+    "databend_iceberg": {
+      "version": "8.0.90-v1.2.965-a7a0a58bf1(rust-1.101.0-nightly-2026-11-16T09:29:39.956446688Z) (datafuselabs/databend:v1.2.965-nightly)",
+      "status": "timed_out",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 31.9598,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 187.9376,
+          "rows": 466,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "QueryTimeout: did not finish in 900 s"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1020-azure",
+        "cpu": 4,
+        "mem_gb": 15.6,
+        "python": "3.12.16"
+      }
+    }
+  }
+}
