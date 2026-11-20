@@ -98,9 +98,11 @@ class LakesailIceberg:
         # main (DataFusion 55.2) that switch is what failed: TPC-DS Q72 at SF=30 died in the
         # sort-merge join's own sort ("ExternalSorterMerge ... 2.1 MB remain", run 44465345382).
         # With hash joins SF=30 went 99/99 for the first time, Q72 29.5 s and Q64 66 s against
-        # 147-204 s (run 44488112168). In the bounded pool a hash table that does not fit fails
-        # its query, not the runner.
-        os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = "true"
+        # 147-204 s (run 44488112168). Except where the config says otherwise: the workload's
+        # fct_scada merge kills the runner on hash joins (WorkloadConfig.SORT_MERGE_JOINS).
+        os.environ["SAIL_OPTIMIZER__PREFER_HASH_JOIN"] = (
+            "false" if self.cfg.SORT_MERGE_JOINS else "true"
+        )
         # Zstd spill files past half the pool: TPC-DS Q72 passed the 64 GiB cap uncompressed at
         # SF=30 (run 41164283878) and SF=60 (run 41162782690). The disk holds ~105 GB.
         if self.cfg.estimated_gib > POOL_BYTES / 2**30 / 2:

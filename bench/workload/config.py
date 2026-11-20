@@ -37,6 +37,11 @@ DEFAULT_PROCESS_LIMIT = 50
 
 @dataclass(frozen=True)
 class WorkloadConfig(Config):
+    # The Sail leg joins sort-merge. On hash joins the runner died in fct_scada's merge, twice:
+    # run 39690698607 (Sail 0.7.1) and run 44668064334 (main cc69bf3b10, exit 143 after 72 s),
+    # the night hash joins went to every scale for TPC-DS. fct_scada is past 380M rows.
+    SORT_MERGE_JOINS = True
+
     @property
     def files_relative(self) -> str:
         """The landing root relative to the workspace filesystem client."""
@@ -49,10 +54,9 @@ class WorkloadConfig(Config):
 
     @property
     def estimated_gib(self) -> float:
-        """What an engine sizes its memory against (bench's Sail engine, the sail leg: sort-merge
-        joins past half its 10 GiB pool). Not an SF: the workload's tables only grow -- fct_scada is
-        past 380M rows -- so this says "bigger than memory". With hash joins the runner died in
-        fct_scada's merge (run 39690698607): a hash join's build side cannot spill."""
+        """What an engine sizes its memory against (bench's Sail engine, the sail leg: zstd spill
+        files past half its 10 GiB pool). Not an SF: the workload's tables only grow -- fct_scada
+        is past 380M rows -- so this says "bigger than memory"."""
         return 64.0
 
     @property

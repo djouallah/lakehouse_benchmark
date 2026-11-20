@@ -121,6 +121,9 @@ class Config:
     # Statements run before the rest, in this order; the others follow in query order. Rows keep
     # their query number either way, so this changes when a query runs, never what it is.
     HARD_FIRST = ()
+    # Sail only: sort-merge joins instead of hash joins, whose build side cannot spill. TPC-DS
+    # passes on hash joins at every scale; the workload's fct_scada merge does not (WorkloadConfig).
+    SORT_MERGE_JOINS = False
 
     workspace_id: str
     lakehouse_id: str
