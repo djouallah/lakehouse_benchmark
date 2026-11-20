@@ -31,10 +31,10 @@
    "date": "2026-11-03"
   },
   "duckdb_iceberg": {
-   "version": "v2.0.0",
-   "run": "39906543136",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/39906543136",
-   "date": "2026-10-23"
+   "version": "v2.0.1",
+   "run": "44687346765",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44687346765",
+   "date": "2026-11-20"
   },
   "chdb_iceberg": {
    "version": "4.5.1",
@@ -324,7 +324,7 @@
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_39612418050_1_ove... ^^^^^^^^^"
+     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_44687346765_1_ove... ^^^^^^^^^"
     },
     "chdb_iceberg": {
      "o": "no",
@@ -1233,7 +1233,7 @@
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_39612418050_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
+     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_44687346765_1_branch\" CREATE BRANCH probe_branch ^^^^^^"
     },
     "chdb_iceberg": {
      "o": "no",
@@ -1268,7 +1268,7 @@
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_39612418050_1_tag\" CREATE TAG probe_tag ^^^^^^"
+     "n": "Parser Error: syntax error at or near \"CREATE\" LINE 1: ... TABLE onelake.\"_bench_capability\".\"dk_44687346765_1_tag\" CREATE TAG probe_tag ^^^^^^"
     },
     "chdb_iceberg": {
      "o": "no",
@@ -1341,6 +1341,37 @@
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_44097986254_1_manifests', which is using the 'iceberg' engine..\")"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Add existing Parquet files",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "polars_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "starrocks_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Catalog Error: Table Function with name iceberg_add_files does not exist! Did you mean \"iceberg_files\"?"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
+    },
+    "databend_iceberg": {
+     "o": "skipped"
     }
    }
   }
