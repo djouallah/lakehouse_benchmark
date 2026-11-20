@@ -302,13 +302,6 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
    "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_update, engine type iceberg, does not support UPDATE.')"
-  },
-  {
-   "key": "create_or_replace",
-   "group": "write",
-   "question": "CREATE OR REPLACE TABLE ... AS",
-   "outcome": "no",
-   "detail": "CREATE OR REPLACE TABLE ... AS: pyiceberg reads [(7, 70), (8, 80)]; Databend agrees, but as a NEW table: dropped and re-created, not replaced"
   }
  ],
  "run": "44741451292",

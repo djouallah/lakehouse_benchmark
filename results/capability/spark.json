@@ -351,13 +351,6 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
-  },
-  {
-   "key": "create_or_replace",
-   "group": "write",
-   "question": "CREATE OR REPLACE TABLE ... AS",
-   "outcome": "no",
-   "detail": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry. at org.apache.iceberg.rest.ErrorHandlers$CommitErrorHandler.accept(ErrorHandlers.java:128) at org.apache.iceberg.rest.ErrorHandlers$CommitErrorHandler.accept(ErrorHandlers.java:119) at org.apache.iceberg.rest.HTTPClient.throwFailure(HTTPClient.java:242) at org.apache.iceberg.rest.HTTPClient.handleResponse(HTTPClient.java:367) at org.apache.iceberg.rest.HTTPClient.lambda$execute$1(HTTPClient.java:325) at org.apache.iceberg.shaded.org.apache.hc.client5.http.impl.classic.CloseableHttpClient.execute(CloseableHttpCli\u2026"
   }
  ],
  "run": "44741451292",

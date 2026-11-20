@@ -302,13 +302,6 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
-  },
-  {
-   "key": "create_or_replace",
-   "group": "write",
-   "question": "CREATE OR REPLACE TABLE ... AS",
-   "outcome": "no",
-   "detail": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry.; commits [409, 409, 409, 409, 409]; requirements sent [[{'type': 'assert-table-uuid', 'uuid': 'db14e536-ab26-4cfc-85de-a8918c95f0e7'}], [{'type': 'assert-table-uuid', 'uuid': 'db14e536-ab26-4cfc-85de-a8918c95f0e7'}], [{'type': 'assert-table-uuid', 'uuid': 'db14e536-ab26-4cfc-85de-a8918c95f0e7'}], [{'type': 'assert-table-uuid', 'uuid': 'db14e536-ab26-4cfc-85de-a8918c95f0e7'}], [{'type': 'assert-table-uuid', 'uuid': 'db14e536-ab26-4cfc-85de-a8918c95f0e7'}]]; updates [['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref'], ['set-current-schema', 'set-default-spec', 'set-default-sort-order', 'remove-snapshot-ref', 'set-properties', 'remove-properties', 'add-snapshot', 'set-snapshot-ref']]; table holds uuid db14e536-ab26-4cfc-85de-a8918c95f0e7, current-schema-id 0, last-column-id 2, default-spec-id 0, last-partition-id 999, default-sort-order-id 0, main 8650575132702908045"
   }
  ],
  "run": "44741451292",

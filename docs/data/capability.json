@@ -619,44 +619,6 @@
   },
   {
    "group": "Writes",
-   "label": "CREATE OR REPLACE TABLE ... AS",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "UnsupportedOperationException: atomic Iceberg table replacement"
-    },
-    "pyspark_iceberg": {
-     "o": "no",
-     "n": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.CommitFailedException: Commit failed: One or more requirements failed. The client may retry. at org.apache.iceberg.rest.ErrorHandl…"
-    },
-    "polars_iceberg": {
-     "o": "no",
-     "n": "SQLInterfaceError: SQLInterfaceError: `CREATE OR REPLACE TABLE` is not supported for catalog tables"
-    },
-    "trino_iceberg": {
-     "o": "no",
-     "n": "io.trino.spi.TrinoException: Failed to commit the transaction during create table: Commit failed: One or more requirements failed. The client may retry. <- org.apache.iceberg.exceptions.CommitFailedException: Commit fai…"
-    },
-    "starrocks_iceberg": {
-     "o": "no",
-     "n": "ProgrammingError: (1064, \"Getting syntax error at line 1, column 24. Detail message: Unexpected input '`onelake`', the most similar input is {'FUNCTION'}.\")"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Not implemented Error: CREATE OR REPLACE not supported in DuckDB-Iceberg. Please use separate Drop and Create Statements"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 80. DB::Exception: CREATE OR REPLACE TABLE query is supported only for Atomic databases. (INCORRECT_QUERY)"
-    },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "CREATE OR REPLACE TABLE ... AS: pyiceberg reads [(7, 70), (8, 80)]; Databend agrees, but as a NEW table: dropped and re-created, not replaced"
-    }
-   }
-  },
-  {
-   "group": "Writes",
    "label": "CREATE TABLE IF NOT EXISTS, existing table",
    "cells": {
     "lakesail_iceberg": {
