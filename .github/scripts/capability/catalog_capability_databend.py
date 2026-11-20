@@ -69,6 +69,8 @@ from bench.capability.race import RaceProxy
 from bench.config import Config
 
 CATALOG = databend.CATALOG
+# What INSERT OVERWRITE and CREATE OR REPLACE TABLE ... AS leave in the table.
+NEW_ROWS = [(7, 70), (8, 80)]
 SEED = [(1, 10), (2, 20), (3, 30)]
 
 
@@ -420,6 +422,17 @@ class DatabendCapability:
             f"{result}; {same}, {len(snapshots) - before} snapshot(s) added, operation {operation}"
         )
 
+    def create_or_replace(self) -> str:
+        """CREATE OR REPLACE TABLE ... AS over an existing table: the same table (its uuid kept),
+        holding only the new rows. A drop and a fresh create is not a replace."""
+        table = self._fresh("replace")
+        uuid = self.iceberg(table).metadata.table_uuid
+        self.sql(f"CREATE OR REPLACE TABLE {self.t(table)} ENGINE = ICEBERG AS {_select(NEW_ROWS)}")
+        result = self._expect(table, NEW_ROWS, "CREATE OR REPLACE TABLE ... AS")
+        if self.iceberg(table).metadata.table_uuid != uuid:
+            raise Refused(f"{result}, but as a NEW table: dropped and re-created, not replaced")
+        return f"{result}; same table"
+
     # -- schema ------------------------------------------------------------------------------
 
     def add_column(self) -> str:
@@ -715,6 +728,7 @@ PROBES = [
     ("write", "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT", "merge_upsert"),
     ("write", "TRUNCATE TABLE", "truncate"),
     ("write", "INSERT OVERWRITE (whole-table overwrite)", "insert_overwrite"),
+    ("write", "CREATE OR REPLACE TABLE ... AS", "create_or_replace"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),

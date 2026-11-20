@@ -79,6 +79,7 @@ ROWS = [
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in FULL_SQL}),
+    ("CREATE OR REPLACE TABLE ... AS", {e: ["create_or_replace"] for e in ENGINES}),
     (
         "Partitioned table",
         {
@@ -244,6 +245,7 @@ GROUPS = {
     "Writes": [
         "MERGE with two actions (UPDATE + INSERT)",
         "TRUNCATE",
+        "CREATE OR REPLACE TABLE ... AS",
         "CREATE TABLE IF NOT EXISTS, existing table",
     ],
     "Partitions & types": [

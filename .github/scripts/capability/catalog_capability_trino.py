@@ -78,6 +78,8 @@ from bench.capability.race import RaceProxy
 from bench.config import ICEBERG_ENDPOINT, Config
 
 CATALOG = "onelake"
+# What INSERT OVERWRITE and CREATE OR REPLACE TABLE ... AS leave in the table.
+NEW_ROWS = [(7, 70), (8, 80)]
 SEED = [(1, 10), (2, 20), (3, 30)]
 
 
@@ -458,11 +460,18 @@ class TrinoCapability:
         return f"{result}; {truncate_kind(self.iceberg(table))}"
 
     def insert_overwrite(self) -> str:
-        """Trino has no INSERT OVERWRITE: its whole-table overwrite is CREATE OR REPLACE TABLE ...
-        AS, one commit on the same table, history kept (as Polars is asked its sink mode).
-        Sent through the race catalog, unarmed, so the proxy records the commit's requirements
-        and updates: a refusal then says what was asserted against what the table holds."""
+        """Trino has no INSERT OVERWRITE for an Iceberg table and no other statement that
+        overwrites its data; asked anyway, so the no is in Trino's words."""
         table = self._fresh("overwrite")
+        self.sql(f"INSERT OVERWRITE {self.t(table)} {_select(NEW_ROWS)}")
+        return self._expect(table, NEW_ROWS, "INSERT OVERWRITE")
+
+    def create_or_replace(self) -> str:
+        """CREATE OR REPLACE TABLE ... AS over an existing table: one commit on the same table,
+        history kept. Sent through the race catalog, unarmed, so the proxy records the commit's
+        requirements and updates: a refusal then says what was asserted against what the table
+        holds."""
+        table = self._fresh("replace")
         tbl = self.iceberg(table)
         meta = tbl.metadata
         held = (
@@ -796,7 +805,8 @@ PROBES = [
     ("write", "UPDATE", "update"),
     ("write", "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT", "merge_upsert"),
     ("write", "TRUNCATE TABLE", "truncate"),
-    ("write", "CREATE OR REPLACE TABLE ... AS (whole-table overwrite)", "insert_overwrite"),
+    ("write", "INSERT OVERWRITE (no such statement)", "insert_overwrite"),
+    ("write", "CREATE OR REPLACE TABLE ... AS", "create_or_replace"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
