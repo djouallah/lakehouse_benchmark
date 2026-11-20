@@ -1,0 +1,76 @@
+{
+  "run_id": "44701753864-1",
+  "run_started_at": "2026-11-20T08:22:48Z",
+  "sf": 300,
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44701753864",
+  "git_sha": "45c69f9",
+  "test": "tpcds",
+  "runner": "linux-7.0.0-1016-aws",
+  "cpu": 4,
+  "mem_gb": 15.3,
+  "python": "3.12.16",
+  "schema_version": 1,
+  "engines": {
+    "lakesail_iceberg": {
+      "version": "0.7.3+main8aaa2d3533",
+      "status": "ok",
+      "rows": [
+        {
+          "run_type": "cold",
+          "phase": "setup",
+          "query": 0,
+          "dur": 2.9413,
+          "rows": null,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 64,
+          "dur": 242.9252,
+          "rows": 1560,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 72,
+          "dur": 58.5042,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 23,
+          "dur": 363.8177,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 4,
+          "dur": 297.3911,
+          "rows": 100,
+          "status": "ok"
+        },
+        {
+          "run_type": "cold",
+          "phase": "query",
+          "query": 14,
+          "dur": null,
+          "rows": null,
+          "status": "error",
+          "error": "AnalysisException: Failed to allocate additional 2.1 GB for HashJoinInput[0] with 747.4 MB already allocated for this reservation - 1858.5 MB remain available for the total memory pool: fair(pool_size: 10.0 GB)"
+        }
+      ],
+      "host": {
+        "runner": "linux-7.0.0-1016-aws",
+        "cpu": 4,
+        "mem_gb": 15.3,
+        "python": "3.12.16"
+      }
+    }
+  }
+}
