@@ -33,6 +33,7 @@ import os
 import sys
 
 from harness import (
+    ADD_FILES_ROWS,
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
@@ -62,6 +63,7 @@ from harness import (
     read_without_files,
     remove_data_files,
     rows,
+    stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
@@ -667,6 +669,16 @@ class TrinoCapability:
             raise NoOp(f"returned success and data files went {before} -> {after}")
         return self._expect(table, SEED + [(4, 40)], f"{before} -> {after} data file(s), data kept")
 
+    def add_files(self) -> str:
+        """Register a Parquet file no snapshot references (harness.stage_parquet)."""
+        table = self._fresh("addfiles")
+        folder = stage_parquet(self.iceberg(table))
+        self.sql(
+            f"ALTER TABLE {self.t(table)} EXECUTE add_files("
+            f"location => '{folder}', format => 'PARQUET')"
+        )
+        return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
@@ -802,6 +814,7 @@ PROBES = [
     ("maintenance", "EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "EXECUTE optimize (compaction)", "rewrite_data_files"),
     ("maintenance", "EXECUTE optimize_manifests", "rewrite_manifests"),
+    ("maintenance", "EXECUTE add_files", "add_files"),
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),

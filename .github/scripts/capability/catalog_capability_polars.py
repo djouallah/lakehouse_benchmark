@@ -26,6 +26,7 @@ import os
 import sys
 
 from harness import (
+    ADD_FILES_ROWS,
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
@@ -57,6 +58,7 @@ from harness import (
     read_without_files,
     remove_data_files,
     rows,
+    stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
@@ -501,6 +503,13 @@ class PolarsCapability:
             raise NoOp(f"returned success and data files went {before} -> {after}")
         return self._expect(table, SEED + [(4, 40)], f"{before} -> {after} data file(s), data kept")
 
+    def add_files(self) -> str:
+        """Register a Parquet file no snapshot references (harness.stage_parquet)."""
+        table = self._fresh("addfiles")
+        folder = stage_parquet(self.iceberg(table))
+        self.sql(f"CALL {CATALOG}.system.add_files('{self.ns}.{table}', 'parquet.`{folder}`')")
+        return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.iceberg(table).append(rows([(4, 40)]))
@@ -651,6 +660,7 @@ PROBES = [
     ("refs", "ALTER TABLE ... CREATE TAG", "create_tag"),
     ("maintenance", "CALL system.rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "CALL system.rewrite_manifests", "rewrite_manifests"),
+    ("maintenance", "CALL system.add_files", "add_files"),
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),

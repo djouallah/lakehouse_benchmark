@@ -24,6 +24,7 @@ import os
 import sys
 
 from harness import (
+    ADD_FILES_ROWS,
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
@@ -53,6 +54,7 @@ from harness import (
     read_without_files,
     remove_data_files,
     rows,
+    stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
@@ -579,6 +581,16 @@ class DatabendCapability:
             raise NoOp(f"returned success and data files went {before} -> {after}")
         return self._expect(table, SEED + [(4, 40)], f"{before} -> {after} data file(s), data kept")
 
+    def add_files(self) -> str:
+        """Register a Parquet file no snapshot references (harness.stage_parquet)."""
+        table = self._fresh("addfiles")
+        folder = stage_parquet(self.iceberg(table))
+        self.sql(
+            f"CALL system.add_files(table => '{self.ns}.{table}', "
+            f"source_table => 'parquet.`{folder}`')"
+        )
+        return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
@@ -720,6 +732,7 @@ PROBES = [
     ("maintenance", "OPTIMIZE TABLE PURGE (expire snapshots)", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE COMPACT (compaction)", "rewrite_data_files"),
     ("maintenance", "OPTIMIZE TABLE COMPACT SEGMENT (rewrite manifests)", "rewrite_manifests"),
+    ("maintenance", "add files (Spark's CALL; no statement)", "add_files"),
     ("catalog", "CREATE DATABASE (namespace)", "namespace_create"),
     ("catalog", "DROP DATABASE (namespace)", "namespace_drop"),
     ("catalog", "CREATE DATABASE IF NOT EXISTS, existing namespace", "namespace_existing"),

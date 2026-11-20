@@ -27,6 +27,7 @@ import os
 import sys
 
 from harness import (
+    ADD_FILES_ROWS,
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
@@ -56,6 +57,7 @@ from harness import (
     read_without_files,
     remove_data_files,
     rows,
+    stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
@@ -606,6 +608,16 @@ class StarRocksCapability:
             raise NoOp(f"returned success and data files went {before} -> {after}")
         return self._expect(table, SEED + [(4, 40)], f"{before} -> {after} data file(s), data kept")
 
+    def add_files(self) -> str:
+        """Register a Parquet file no snapshot references (harness.stage_parquet)."""
+        table = self._fresh("addfiles")
+        folder = stage_parquet(self.iceberg(table))
+        self.sql(
+            f"ALTER TABLE {self.t(table)} EXECUTE add_files("
+            f"location = '{folder}', file_format = 'parquet')"
+        )
+        return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
@@ -748,6 +760,7 @@ PROBES = [
     ("maintenance", "EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "EXECUTE rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "EXECUTE rewrite_manifests", "rewrite_manifests"),
+    ("maintenance", "EXECUTE add_files", "add_files"),
     ("catalog", "CREATE DATABASE (namespace)", "namespace_create"),
     ("catalog", "DROP DATABASE (namespace)", "namespace_drop"),
     ("catalog", "CREATE DATABASE IF NOT EXISTS, existing namespace", "namespace_existing"),

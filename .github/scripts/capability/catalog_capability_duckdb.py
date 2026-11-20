@@ -30,6 +30,7 @@ import os
 import sys
 
 from harness import (
+    ADD_FILES_ROWS,
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
@@ -58,6 +59,7 @@ from harness import (
     read_without_files,
     remove_data_files,
     rows,
+    stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
@@ -716,6 +718,13 @@ class DuckDBCapability:
         """The dotted name the maintenance functions take as a string argument."""
         return f"'{CATALOG}.{self.ns}.{table}'"
 
+    def add_files(self) -> str:
+        """Register a Parquet file no snapshot references (harness.stage_parquet)."""
+        table = self._fresh("addfiles")
+        folder = stage_parquet(self.iceberg(table))
+        self.sql(f"CALL iceberg_add_files({self._name_arg(table)}, '{folder}')")
+        return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} VALUES (4, 40)")
@@ -862,6 +871,7 @@ PROBES = [
     ("maintenance", "iceberg_expire_snapshots", "expire_snapshots"),
     ("maintenance", "iceberg_rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "iceberg_rewrite_manifests", "rewrite_manifests"),
+    ("maintenance", "iceberg_add_files", "add_files"),
     ("catalog", "DROP TABLE", "drop_table"),
     (
         "catalog",

@@ -146,6 +146,7 @@ ROWS = [
     ("MAX from the metadata, no data file read", {e: ["max_from_metadata"] for e in ENGINES}),
     ("Compaction", {e: ["rewrite_data_files"] for e in FULL_SQL}),
     ("Rewrite manifests", {e: ["rewrite_manifests"] for e in SQL}),
+    ("Add existing Parquet files", {e: ["add_files"] for e in SQL}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
     ("Create tag", {e: ["create_tag"] for e in FULL_SQL}),
     (
@@ -272,7 +273,7 @@ GROUPS = {
         "Create tag",
     ],
     # The site shows this group on a tab of its own, Maintenance.
-    "Maintenance": ["Compaction", "Rewrite manifests"],
+    "Maintenance": ["Compaction", "Rewrite manifests", "Add existing Parquet files"],
 }
 # The site's engine keys, which are lakehouse_benchmark's.
 SITE_KEY = {

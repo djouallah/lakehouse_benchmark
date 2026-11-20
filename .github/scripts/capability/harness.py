@@ -545,6 +545,24 @@ def promotion_check(tbl) -> str:
 # Four appends by pyiceberg: four data files with ids 1-3, 11-13, 21-23 and 31-33 (v = id * 10).
 # Their min/max bounds in the manifests do not overlap. pyiceberg writes the files for every
 # engine, so every engine reads the same bounds and only its reader is asked.
+# add_files: two rows in a Parquet file no snapshot references, registered into a SEED table.
+ADD_FILES_ROWS = [(7, 70), (8, 80)]
+
+
+def stage_parquet(tbl) -> str:
+    """ADD_FILES_ROWS as one Parquet file, written with pyarrow (no Iceberg field ids) into a
+    directory of its own under the table's location and referenced by no snapshot: what an
+    engine's `add_files` is pointed at. Returns the directory."""
+    import uuid
+
+    import pyarrow.parquet as pq
+
+    folder = f"{tbl.location().rstrip('/')}/staged-{uuid.uuid4().hex[:8]}"
+    with tbl.io.new_output(f"{folder}/part-0.parquet").create(overwrite=True) as out:
+        pq.write_table(rows(ADD_FILES_ROWS), out)
+    return folder
+
+
 STATS_FILES = [[(i, i * 10) for i in range(base + 1, base + 4)] for base in (0, 10, 20, 30)]
 PRUNE_ID = 22
 PRUNE_EXPECTED = [(220,)]

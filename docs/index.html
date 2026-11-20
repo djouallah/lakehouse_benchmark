@@ -781,7 +781,7 @@ function renderCapability() {
   };
   sec.innerHTML = `
     <div class="chips"${groups.length < 2 ? " hidden" : ""}>${groups.map(g => `<button aria-pressed="${g === group}">${esc(g)}</button>`).join("")}</div>
-    <p class="caption">What each engine can do on the OneLake Iceberg REST catalog, in SQL vocabulary only. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.</p>
+    <p class="caption">What each engine can do on the OneLake Iceberg REST catalog, in SQL vocabulary only, on Iceberg format v2 tables only (v3 is not tested). Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.</p>
     <div class="legend">
       <span class="supported"><i class="m"></i>yes</span>
       <span class="no"><i class="m"></i>no</span>
@@ -843,7 +843,7 @@ function renderCapabilityRank() {
   const engines = Object.keys(cap.engines).sort((a, b) =>
     yes(b) - yes(a) || yes(b, groups[0]) - yes(a, groups[0]) || label(a).localeCompare(label(b)));
   sec.innerHTML = `
-    <p class="caption">Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group.</p>
+    <p class="caption">Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group. Iceberg format v2 tables only; v3 is not tested.</p>
     <div class="legend">${groups.map((g, i) =>
       `<span><i class="sw" style="background: ${shade("var(--ink)", i)}"></i>${esc(g)}</span>`).join("")}</div>
     <div class="chart"></div>`;

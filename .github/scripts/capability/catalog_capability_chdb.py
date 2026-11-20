@@ -26,6 +26,7 @@ import time
 from datetime import UTC, datetime
 
 from harness import (
+    ADD_FILES_ROWS,
     BROKEN,
     EVOLVE_FIRST,
     EVOLVE_THEN,
@@ -57,6 +58,7 @@ from harness import (
     read_without_files,
     remove_data_files,
     rows,
+    stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
@@ -576,6 +578,16 @@ class ChdbCapability:
 
     # -- catalog -----------------------------------------------------------------------------
 
+    def add_files(self) -> str:
+        """Register a Parquet file no snapshot references (harness.stage_parquet)."""
+        table = self._fresh("addfiles")
+        folder = stage_parquet(self.iceberg(table))
+        self.sql(
+            f"CALL system.add_files(table => '{self.ns}.{table}', "
+            f"source_table => 'parquet.`{folder}`')"
+        )
+        return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
+
     def rewrite_manifests(self) -> str:
         """OPTIMIZE TABLE ... MANIFEST, manifest-only compaction; the threshold is set to 0 so the
         probe's few manifests qualify (`iceberg_manifest_min_count_to_compact`, 100 by default)."""
@@ -725,6 +737,7 @@ PROBES = [
     ("maintenance", "ALTER TABLE ... EXECUTE expire_snapshots", "expire_snapshots"),
     ("maintenance", "OPTIMIZE TABLE (compaction)", "compaction"),
     ("maintenance", "rewrite manifests (no statement)", "rewrite_manifests"),
+    ("maintenance", "add files (Spark's CALL; no statement)", "add_files"),
     ("catalog", "CREATE TABLE in a new namespace (no namespace statement)", "namespace_create"),
     ("catalog", "drop a namespace (no namespace statement)", "namespace_drop"),
     ("catalog", "namespace IF NOT EXISTS (no namespace statement)", "namespace_existing"),
