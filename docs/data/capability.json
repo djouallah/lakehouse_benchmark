@@ -1367,7 +1367,8 @@
      "n": "add_files returned success; expected [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], pyiceberg reads pyiceberg could not read it: ValueError: Parquet file does not have field-ids and the Iceberg table does not have 'sche…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "Catalog Error: Table Function with name iceberg_add_files does not exist! Did you mean \"iceberg_files\"?"
     },
     "chdb_iceberg": {
      "o": "no",
@@ -1376,37 +1377,6 @@
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, \"SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:12\\n /\\n1 / CALL system.add_files(table => '_bench_capability.db_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523…"
-    }
-   }
-  },
-  {
-   "group": "Maintenance",
-   "label": "Add existing Parquet files",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "skipped"
-    },
-    "pyspark_iceberg": {
-     "o": "skipped"
-    },
-    "polars_iceberg": {
-     "o": "skipped"
-    },
-    "trino_iceberg": {
-     "o": "skipped"
-    },
-    "starrocks_iceberg": {
-     "o": "skipped"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Catalog Error: Table Function with name iceberg_add_files does not exist! Did you mean \"iceberg_files\"?"
-    },
-    "chdb_iceberg": {
-     "o": "skipped"
-    },
-    "databend_iceberg": {
-     "o": "skipped"
     }
    }
   }
