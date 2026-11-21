@@ -279,15 +279,15 @@
    "key": "race_delete",
    "group": "concurrency",
    "question": "DELETEs while delta-rs appends to the same table",
-   "outcome": "skipped",
-   "detail": "the second writer (delta-rs) failed, so this asks nothing: 2005: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to exclude the removed data. Also, if you don't ca\u2026"
+   "outcome": "supported",
+   "detail": "4 Sail DELETEs applied, every delta-rs append kept, interleaved 3 times; 6 refused on the conflict, nothing changed: SparkRuntimeException: SparkRuntimeException: Failed to commit transaction: 0"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATEs while delta-rs appends to the same table",
-   "outcome": "skipped",
-   "detail": "the second writer (delta-rs) failed, so this asks nothing: 2001: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to exclude the removed data. Also, if you don't ca\u2026"
+   "outcome": "supported",
+   "detail": "4 Sail UPDATEs applied, every delta-rs append kept, interleaved 2 times; 6 refused on the conflict, nothing changed: SparkRuntimeException: SparkRuntimeException: Failed to commit transaction: 0"
   },
   {
    "key": "schema_create",
@@ -360,7 +360,7 @@
    "detail": "refused: AnalysisException: AnalysisException: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint v_positive (v > 0) violated."
   }
  ],
- "run": "44904390886",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904390886",
+ "run": "44905468610",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44905468610",
  "date": "2026-11-21"
 }
