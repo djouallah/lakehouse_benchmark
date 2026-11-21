@@ -67,6 +67,22 @@ class DuckdbDelta(DeltaProbe):
             f"FROM (VALUES {values}) AS s(id, v)"
         )
 
+    def _lake(self) -> str:
+        return f"ATTACH OR REPLACE '{self.cfg.base_path}/Tables' AS lake (TYPE delta)"
+
+    def schema_create_sql(self, schema, if_not_exists=False):
+        ine = "IF NOT EXISTS " if if_not_exists else ""
+        return [self._lake(), f'CREATE SCHEMA {ine}lake."{schema}"']
+
+    def schema_drop_sql(self, schema):
+        return f'DROP SCHEMA lake."{schema}"'
+
+    def in_schema(self, schema, table):
+        return f'lake."{schema}"."{table}"'
+
+    def create_in_schema_sql(self, schema, table):
+        return [f"CREATE TABLE {self.in_schema(schema, table)} ({self._cols()})"]
+
     def select_dated(self, rows) -> str:
         values = ", ".join(f"({i}, {v}, DATE '{d}')" for i, v, d in rows)
         return (

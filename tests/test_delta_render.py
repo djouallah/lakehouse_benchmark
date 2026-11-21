@@ -34,11 +34,11 @@ def test_every_probe_has_a_row_and_every_row_a_probe():
     assert probes == rows
 
 
-def test_every_row_is_in_one_group_and_the_grid_opens_on_core():
+def test_every_row_is_in_one_group_and_the_grid_opens_on_basic():
     grouped = [label for labels in render_delta.GROUPS.values() for label in labels]
     assert sorted(grouped) == sorted(label for label, _ in render_delta.ROWS)
     assert len(grouped) == len(set(grouped))
-    assert list(render_delta.GROUPS)[0] == "Core"
+    assert list(render_delta.GROUPS)[0] == "Basic"
 
 
 def test_the_grid_is_only_the_engines_that_write_delta_in_sql():
@@ -90,6 +90,6 @@ def test_sail_is_sent_sparks_sql_byte_for_byte():
 
 
 def test_the_delta_support_tab_is_on_the_page():
-    assert '{ id: "delta-features", title: "Delta support", subs: [DELTA_RANK, DELTA] }' in PAGE
+    assert "subs: [CAPABILITY, DELTA]" in PAGE
     assert '<section class="cap" id="delta" hidden></section>' in PAGE
     assert 'json: "data/delta.json"' in PAGE

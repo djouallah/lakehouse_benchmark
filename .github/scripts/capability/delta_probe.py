@@ -108,6 +108,7 @@ class DeltaProbe:
         self.version = "no session"
         self.can_create = False
         self.created: list[str] = []
+        self.schemas: list[str] = []
 
     # == the engine: what a subclass provides ================================================
 
@@ -290,6 +291,39 @@ class DeltaProbe:
             f"CREATE TABLE {ident} USING delta LOCATION '{self.oracle.uri(name)}'",
         ], ident
 
+    # -- schemas: a folder under Tables/ -------------------------------------------------------
+
+    def catalog(self) -> str:
+        if not hasattr(self, "_catalog_name"):
+            self._catalog_name = self.execute("SELECT current_catalog()")[0][0]
+        return self._catalog_name
+
+    def schema_create_sql(self, schema: str, if_not_exists: bool = False) -> list[str]:
+        ine = "IF NOT EXISTS " if if_not_exists else ""
+        return [
+            f"CREATE SCHEMA {ine}`{self.catalog()}`.`{schema}` "
+            f"LOCATION '{self.oracle.schema_uri(schema)}'"
+        ]
+
+    def schema_drop_sql(self, schema: str) -> str:
+        return f"DROP SCHEMA `{self.catalog()}`.`{schema}`"
+
+    def in_schema(self, schema: str, table: str) -> str:
+        return f"`{self.catalog()}`.`{schema}`.`{table}`"
+
+    def create_in_schema_sql(self, schema: str, table: str) -> list[str]:
+        """CREATE TABLE by name in the schema, no LOCATION: the engine places it."""
+        return [f"CREATE TABLE {self.in_schema(schema, table)} ({self._cols()}) USING delta"]
+
+    def stats_sql(self, t: str) -> str:
+        return f"SELECT max(id), count(*) FROM {t}"
+
+    def convert_sql(self, name: str) -> str:
+        return f"CONVERT TO DELTA parquet.`{self.oracle.uri(name)}`"
+
+    def detail_sql(self, t: str) -> str:
+        return f"DESCRIBE DETAIL {t}"
+
     def drop_sql(self, name: str) -> str | None:
         """Forget the table in the engine's own catalog before its files are purged."""
         return f"DROP TABLE IF EXISTS {self.ref(name)}"
@@ -469,6 +503,69 @@ class DeltaProbe:
         self.sql(self.overwrite_sql(self.ref(name), self.select(NEW_ROWS)))
         return self._expect(name, NEW_ROWS, "INSERT OVERWRITE")
 
+    # -- catalog: schemas and tables by name ----------------------------------------------------
+
+    def _schema(self, what: str) -> str:
+        """A schema of this run's own, created at Tables/<schema>; purged at teardown."""
+        schema = f"_bench_delta_{what}_{self.run}".lower()
+        self.schemas.append(schema)
+        try:
+            self.run_all(self.schema_create_sql(schema))
+        except Refused as exc:
+            raise Refused(f"CREATE SCHEMA at Tables/{schema}: {exc}") from None
+        return schema
+
+    def schema_create(self) -> str:
+        """CREATE SCHEMA at a folder, then a table by name in it: the table must land at
+        Tables/<schema>/<table>, where Fabric and every path-based reader looks for it."""
+        schema = self._schema("mk")
+        table = "t1"
+        self.run_all(self.create_in_schema_sql(schema, table))
+        ident = self.in_schema(schema, table)
+        self.sql(f"INSERT INTO {ident} {self.values(SEED)}")
+        where = f"{self.oracle.schema_relative(schema)}/{table}"
+        if not self.oracle.has_log(where):
+            raise NoOp(f"the schema was created, and its table is not at Tables/{schema}/{table}")
+        found = self.sql(f"SELECT id, v FROM {ident} ORDER BY id")
+        if not _same(found, SEED):
+            raise NoOp(f"the table is at Tables/{schema}/{table}, and {ident} reads {found}")
+        return (
+            f"schema at Tables/{schema}; a table created by name lands at Tables/{schema}/{table}"
+        )
+
+    def schema_existing(self) -> str:
+        schema = self._schema("ine")
+        self.run_all(self.schema_create_sql(schema, if_not_exists=True))
+        return f"CREATE SCHEMA IF NOT EXISTS on the existing {schema}: accepted"
+
+    def schema_drop(self) -> str:
+        """DROP SCHEMA on an empty schema: the folder is the schema, so it has to go."""
+        schema = self._schema("rm")
+        self.sql(self.schema_drop_sql(schema))
+        if self.oracle.folder_exists(self.oracle.schema_relative(schema)):
+            raise NoOp(f"DROP SCHEMA returned success; the folder Tables/{schema} is still there")
+        return f"the folder Tables/{schema} is gone"
+
+    def drop_table(self) -> str:
+        """A table created by name in a schema, then DROP TABLE: its folder has to go."""
+        schema = self._schema("drop")
+        table = "t1"
+        ident = self.in_schema(schema, table)
+        try:
+            self.run_all(self.create_in_schema_sql(schema, table))
+            self.sql(f"INSERT INTO {ident} {self.values(SEED)}")
+        except Refused as exc:
+            raise Refused(f"a table could not be created by name in the schema: {exc}") from None
+        where = f"{self.oracle.schema_relative(schema)}/{table}"
+        if not self.oracle.has_log(where):
+            raise Skip(f"the table was not placed at Tables/{schema}/{table}, so nothing to drop")
+        self.sql(f"DROP TABLE {ident}")
+        if self.oracle.has_log(where):
+            raise NoOp(
+                f"DROP TABLE returned success; the table is still at Tables/{schema}/{table}"
+            )
+        return f"DROP TABLE removed Tables/{schema}/{table}"
+
     def full_identifier(self) -> str:
         """A table at Tables/<schema>/<table>, read and written as catalog.schema.table."""
         name = self._claim("fullid")
@@ -487,12 +584,10 @@ class DeltaProbe:
 
     RACE = 10
 
-    def race_append(self) -> str:
-        """The engine's INSERTs while delta-rs appends to the same table, from another thread.
-        Every commit has to land as its own version: a writer that overwrites a commit file
-        loses the other writer's rows."""
-        name = self._fresh("race")
-        mine = [1000 + i for i in range(1, self.RACE + 1)]
+    def _race(self, name: str, statements: list[str]) -> tuple[list[str], list[int], int]:
+        """Run `statements` through the engine while delta-rs appends RACE rows (ids 2001..)
+        to the same table from another thread. (the engine statements that failed, the
+        delta-rs ids that did not survive, how many times the two writers' commits swapped)."""
         theirs = [2000 + i for i in range(1, self.RACE + 1)]
         second: list[str] = []
 
@@ -506,44 +601,99 @@ class DeltaProbe:
         writer = threading.Thread(target=delta_rs)
         writer.start()
         failed = []
-        for i in mine:
+        for statement in statements:
             try:
-                self.sql(f"INSERT INTO {self.ref(name)} {self.values([(i, i)])}")
+                self.sql(statement)
             except Refused as exc:
-                failed.append(f"{i}: {exc}")
+                failed.append(str(exc))
         writer.join()
         if second:
             raise Skip(f"the second writer (delta-rs) failed, so this asks nothing: {second[0]}")
-
         versions = self.oracle.versions(name)
         holes = sorted(set(range(versions[-1] + 1)) - set(versions)) if versions else []
+        if holes:
+            raise Refused(f"the log has no version {holes}: a commit was overwritten")
         authors = self.oracle.commit_authors(name)
         swaps = sum(a != b for a, b in zip(authors, authors[1:], strict=False))
         found = self.oracle.rows(name, ("id", "v"))
         if isinstance(found, str):
             raise NoOp(f"after the race the table cannot be read: {found}")
         ids = {r[0] for r in found}
-        lost_mine = [
-            i for i in mine if i not in ids and not any(f.startswith(f"{i}:") for f in failed)
-        ]
-        lost_theirs = [i for i in theirs if i not in ids]
+        return failed, [i for i in theirs if i not in ids], swaps
+
+    def _race_verdict(self, what: str, failed, lost_theirs, wrong, swaps, rows: int) -> str:
         problems = []
-        if holes:
-            problems.append(f"the log has no version {holes}")
         if lost_theirs:
             problems.append(f"lost {len(lost_theirs)} delta-rs append(s): {lost_theirs}")
-        if lost_mine:
-            problems.append(f"lost {len(lost_mine)} {self.TITLE} append(s): {lost_mine}")
+        if wrong:
+            problems.append(wrong)
         if failed:
-            problems.append(f"{len(failed)} {self.TITLE} INSERT(s) failed: {failed[0]}")
+            problems.append(f"{len(failed)} {self.TITLE} {what}(s) failed: {failed[0]}")
         if problems:
             raise Refused("; ".join(problems))
         if not swaps:
             raise Skip("the two writers' commits never interleaved, so no race happened")
         return (
-            f"{self.RACE} {self.TITLE} and {self.RACE} delta-rs commits, "
-            f"interleaved {swaps} times, all {len(found)} rows kept"
+            f"{self.RACE} {self.TITLE} {what}s and {self.RACE} delta-rs appends, "
+            f"interleaved {swaps} times, {rows} rows as expected"
         )
+
+    def race_append(self) -> str:
+        """The engine's INSERTs while delta-rs appends to the same table, from another thread.
+        Every commit has to land as its own version: a writer that overwrites a commit file
+        loses the other writer's rows."""
+        name = self._fresh("race")
+        mine = [1000 + i for i in range(1, self.RACE + 1)]
+        t = self.ref(name)
+        failed, lost, swaps = self._race(
+            name, [f"INSERT INTO {t} {self.values([(i, i)])}" for i in mine]
+        )
+        ids = {r[0] for r in self.oracle.rows(name, ("id", "v"))}
+        missing = [i for i in mine if i not in ids]
+        wrong = (
+            f"lost {len(missing)} {self.TITLE} append(s): {missing}"
+            if len(missing) > len(failed)
+            else ""
+        )
+        return self._race_verdict("INSERT", failed, lost, wrong, swaps, len(ids))
+
+    def _race_seed(self, what: str) -> tuple[str, list[int]]:
+        """A table holding RACE rows (ids 101..), one INSERT, for the DELETE and UPDATE races."""
+        if not self.can_create:
+            raise Skip("no table could be created")
+        mine = [100 + i for i in range(1, self.RACE + 1)]
+        try:
+            name = self._create(what)
+            self.sql(f"INSERT INTO {self.ref(name)} {self.select([(i, i) for i in mine])}")
+        except Refused as exc:
+            raise Skip(f"could not seed the table: {exc}") from None
+        return name, mine
+
+    def race_delete(self) -> str:
+        """The engine DELETEs its rows one by one while delta-rs appends: every appended row
+        must survive, every deleted row must be gone."""
+        name, mine = self._race_seed("racedel")
+        t = self.ref(name)
+        failed, lost, swaps = self._race(name, [self.delete_sql(t, f"id = {i}") for i in mine])
+        ids = {r[0] for r in self.oracle.rows(name, ("id", "v"))}
+        kept = [i for i in mine if i in ids]
+        wrong = f"{len(kept)} deleted row(s) still there: {kept}" if len(kept) > len(failed) else ""
+        return self._race_verdict("DELETE", failed, lost, wrong, swaps, len(ids))
+
+    def race_update(self) -> str:
+        """The engine UPDATEs its rows one by one (v = v + 1000) while delta-rs appends: every
+        appended row must survive, every updated row must carry the new value exactly once."""
+        name, mine = self._race_seed("raceupd")
+        t = self.ref(name)
+        failed, lost, swaps = self._race(
+            name, [self.update_sql(t, "v = v + 1000", f"id = {i}") for i in mine]
+        )
+        values = dict(self.oracle.rows(name, ("id", "v")))
+        stale = [i for i in mine if values.get(i) != i + 1000]
+        wrong = (
+            f"{len(stale)} row(s) without the update: {stale}" if len(stale) > len(failed) else ""
+        )
+        return self._race_verdict("UPDATE", failed, lost, wrong, swaps, len(values))
 
     # -- writes --------------------------------------------------------------------------------
 
@@ -780,6 +930,38 @@ class DeltaProbe:
             raise Skip("data files still in storage after the delete")
         return f"the files of {len(DAYS) - len(keep)} of {len(DAYS)} days deleted"
 
+    def stats_from_log(self) -> str:
+        """max(id) and count(*) with every data file deleted from storage: the right answer can
+        only come from the file statistics in the log."""
+        name = self._seeded_by_delta_rs("stats", STATS_FILES)
+        files = [a["path"] for a in self.oracle.active_files(name)]
+        for path in files:
+            self.oracle.delete_file(name, path)
+        if any(self.oracle.file_exists(name, p) for p in files):
+            raise Skip("data files still in storage after the delete")
+        t = self.ref(name)
+        rows = [r for batch in STATS_FILES for r in batch]
+        return read_without_files(
+            "max(id), count(*)",
+            lambda: self.sql(self.stats_sql(t)),
+            [(max(i for i, _ in rows), len(rows))],
+            lambda: self.sql(f"SELECT sum(v) FROM {t}"),
+            f"all {len(files)} data files deleted",
+        )
+
+    def describe_detail(self) -> str:
+        name = self._fresh("detail")
+        found = self.sql(self.detail_sql(self.ref(name)))
+        files = len(self.oracle.active_files(name))
+        flat = [v for row in found for v in row]
+        has_count = any(isinstance(v, int) and not isinstance(v, bool) and v == files for v in flat)
+        has_location = any(isinstance(v, str) and v.rstrip("/").endswith(name) for v in flat)
+        if not (has_count and has_location):
+            raise NoOp(
+                f"returns {found}; the log has {files} data file(s) at Tables/{NAMESPACE}/{name}"
+            )
+        return f"location and numFiles ({files}) match the log"
+
     def partition_pruning(self) -> str:
         """WHERE on the partition column, with every other partition's files deleted from
         storage: the right answer means the engine never opened them."""
@@ -945,6 +1127,22 @@ class DeltaProbe:
             )
         return f"the {len(old)} removed file(s) deleted; " + self._expect(name, NEW_ROWS, "VACUUM")
 
+    def convert_to_delta(self) -> str:
+        """Two plain Parquet files in a folder, converted in place: a _delta_log over the same
+        files, and every row readable."""
+        name = self._claim("convert")
+        self.oracle.upload_parquet(name, "part-0.parquet", SEED[:2])
+        self.oracle.upload_parquet(name, "part-1.parquet", SEED[2:])
+        self.sql(self.convert_sql(name))
+        if not self.oracle.versions(name):
+            raise NoOp("returned success; the folder has no _delta_log")
+        paths = sorted(a["path"] for a in self.oracle.active_files(name))
+        found = self.oracle.rows(name)
+        if found != SEED:
+            raise NoOp(f"converted, and DuckDB reads {found}")
+        how = "in place" if paths == ["part-0.parquet", "part-1.parquet"] else f"as {paths}"
+        return f"a _delta_log over the files {how}; DuckDB reads {found}"
+
     def checkpoint(self) -> str:
         if not self.can_create:
             raise Skip("no table could be created")
@@ -982,6 +1180,13 @@ class DeltaProbe:
             except Exception as exc:  # noqa: BLE001 - teardown is best effort
                 if "PathNotFound" not in str(exc) and "not exist" not in str(exc).lower():
                     left.append(f"{name} ({one_line(exc, 80)})")
+        for schema in self.schemas:
+            try:
+                if self.oracle.folder_exists(self.oracle.schema_relative(schema)):
+                    self.oracle.purge_path(self.oracle.schema_relative(schema))
+                    dropped += 1
+            except Exception as exc:  # noqa: BLE001 - teardown is best effort
+                left.append(f"schema {schema} ({one_line(exc, 80)})")
         print(f"\npurged {dropped} probe table(s)" + (f"; left behind {left}" if left else ""))
 
 
@@ -1003,6 +1208,12 @@ PROBES = [
     ("write", "INSERT INTO ... VALUES", "insert_into"),
     ("catalog", "INSERT and SELECT as catalog.schema.table", "full_identifier"),
     ("concurrency", "INSERTs while delta-rs appends to the same table", "race_append"),
+    ("concurrency", "DELETEs while delta-rs appends to the same table", "race_delete"),
+    ("concurrency", "UPDATEs while delta-rs appends to the same table", "race_update"),
+    ("catalog", "CREATE SCHEMA at a folder, a table by name lands in it", "schema_create"),
+    ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing schema", "schema_existing"),
+    ("catalog", "DROP SCHEMA removes the folder", "schema_drop"),
+    ("catalog", "DROP TABLE removes the table folder", "drop_table"),
     ("write", "INSERT INTO ... SELECT", "insert_select"),
     ("write", "DELETE", "delete_from"),
     ("write", "UPDATE", "update"),
@@ -1027,12 +1238,15 @@ PROBES = [
     ("read", "time travel by version", "time_travel_version"),
     ("read", "time travel by timestamp", "time_travel_timestamp"),
     ("read", "table history", "history"),
+    ("read", "max(id), count(*) with every data file deleted", "stats_from_log"),
+    ("read", "DESCRIBE DETAIL", "describe_detail"),
     ("read", "change data feed", "change_data_feed"),
     ("maintenance", "OPTIMIZE (compaction)", "optimize"),
     ("maintenance", "OPTIMIZE ... ZORDER BY", "zorder"),
     ("maintenance", "CLUSTER BY (liquid clustering)", "liquid_clustering"),
     ("maintenance", "VACUUM", "vacuum"),
     ("maintenance", f"checkpoint after {CHECKPOINT_COMMITS} commits", "checkpoint"),
+    ("maintenance", "CONVERT TO DELTA, Parquet files in place", "convert_to_delta"),
 ]
 
 

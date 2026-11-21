@@ -26,8 +26,9 @@
   }
  },
  "groups": [
-  "Core",
+  "Basic",
   "Writes",
+  "Catalog",
   "Partitions & types",
   "Schema",
   "Reads & history",
@@ -35,7 +36,7 @@
  ],
  "rows": [
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "Register a Delta table as catalog.schema.table",
    "cells": {
     "pyspark_iceberg": {
@@ -54,7 +55,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "CREATE TABLE at a path",
    "cells": {
     "pyspark_iceberg": {
@@ -72,7 +73,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "SELECT a table delta-rs wrote",
    "cells": {
     "pyspark_iceberg": {
@@ -90,7 +91,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "CREATE TABLE AS SELECT",
    "cells": {
     "pyspark_iceberg": {
@@ -108,26 +109,7 @@
    }
   },
   {
-   "group": "Core",
-   "label": "CREATE OR REPLACE TABLE AS SELECT",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support CREATE OR REPLACE TABLE"
-    }
-   }
-  },
-  {
-   "group": "Core",
+   "group": "Basic",
    "label": "INSERT / append",
    "cells": {
     "pyspark_iceberg": {
@@ -145,7 +127,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "INSERT ... SELECT",
    "cells": {
     "pyspark_iceberg": {
@@ -163,7 +145,26 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
+   "label": "Concurrent append: both kept",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "9 DuckDB INSERT(s) failed: 1001: RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Multiple exceptions happened. Firstly, the DeltaTransaction failed to commit with 'IO Error: DeltaKernel GenericEr…"
+    }
+   }
+  },
+  {
+   "group": "Writes",
    "label": "DELETE",
    "cells": {
     "pyspark_iceberg": {
@@ -182,7 +183,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Writes",
    "label": "UPDATE",
    "cells": {
     "pyspark_iceberg": {
@@ -197,45 +198,6 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "INSERT OVERWRITE, whole table",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "no",
-     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_050850_00031_w2x7k)"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_overwrite SELECT CAST(id AS BIGINT... ^^^^^^^^^"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Concurrent append: both kept",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "9 DuckDB INSERT(s) failed: 1001: RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Multiple exceptions happened. Firstly, the DeltaTransaction failed to commit with 'IO Error: DeltaKernel GenericEr…"
     }
    }
   },
@@ -274,6 +236,45 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "MERGE on the partitioned table: RuntimeError: RuntimeError: Binder Error: Can only merge into base tables!"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "INSERT OVERWRITE, whole table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_050850_00031_w2x7k)"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_overwrite SELECT CAST(id AS BIGINT... ^^^^^^^^^"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "CREATE OR REPLACE TABLE AS SELECT",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support CREATE OR REPLACE TABLE"
     }
    }
   },
@@ -338,6 +339,96 @@
   },
   {
    "group": "Writes",
+   "label": "Concurrent writer: DELETE loses nothing",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "Concurrent writer: UPDATE loses nothing",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "CREATE SCHEMA at a folder",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "DROP SCHEMA removes the folder",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "CREATE SCHEMA IF NOT EXISTS, existing schema",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
    "label": "CREATE TABLE IF NOT EXISTS, existing table",
    "cells": {
     "pyspark_iceberg": {
@@ -351,6 +442,24 @@
     },
     "duckdb_iceberg": {
      "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "DROP TABLE removes the table folder",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
     }
    }
   },
@@ -582,6 +691,24 @@
   },
   {
    "group": "Reads & history",
+   "label": "MAX and COUNT from the log, no data file read",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
    "label": "Time travel by version",
    "cells": {
     "pyspark_iceberg": {
@@ -632,6 +759,24 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_history\" LINE 1: DESCRIBE HISTORY dk_44866693699_1_history ^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "DESCRIBE DETAIL",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
     }
    }
   },
@@ -751,6 +896,24 @@
     },
     "duckdb_iceberg": {
      "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Convert Parquet files to Delta",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
     }
    }
   }

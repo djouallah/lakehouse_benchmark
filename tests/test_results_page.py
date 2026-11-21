@@ -70,44 +70,38 @@ def test_issue_links_that_left_the_dbt_rows_are_still_on_the_page():
         assert link in PAGE, link
 
 
-def test_maintenance_is_a_group_of_the_iceberg_support_grid():
+def test_one_table_format_tab_with_iceberg_and_delta():
     import json
 
-    assert (
-        '{ id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] }' in PAGE
-    )
+    assert '{ id: "features", title: "Table format support", subs: [CAPABILITY, DELTA] }' in PAGE
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
     maintenance = [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"]
     assert maintenance == ["Compaction", "Rewrite manifests", "Add existing Parquet files"]
 
 
-def test_the_iceberg_support_grid_opens_on_core():
-    """Core, the first chip, holds only the minimum an engine needs to be usable."""
+def test_both_formats_share_their_groups_and_basic_is_the_mvp():
+    """Basic, the first group, is the minimum to use a format: attach or register, create, read,
+    append, append safely. Changing existing rows is Writes."""
     import json
 
-    cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
-    cap = json.loads(cap_path.read_text(encoding="utf-8"))
-    assert cap["groups"][0] == "Core"
-    assert "Advanced" not in cap["groups"]
-    assert [r["label"] for r in cap["rows"] if r["group"] == "Core"] == [
+    data = Path(__file__).parent.parent / "docs" / "data"
+    cap = json.loads((data / "capability.json").read_text(encoding="utf-8"))
+    delta = json.loads((data / "delta.json").read_text(encoding="utf-8"))
+    assert cap["groups"] == delta["groups"]
+    assert cap["groups"][0] == "Basic"
+    assert [r["label"] for r in cap["rows"] if r["group"] == "Basic"] == [
         "Attach the REST catalog",
         "SELECT a table by its catalog name",
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
-        "DELETE",
-        "UPDATE",
-        "INSERT OVERWRITE, whole table",
-        "Drop table with purge",
-        "Create namespace",
-        "Drop namespace",
-        "CREATE SCHEMA IF NOT EXISTS, existing schema",
         "Concurrent append: both kept",
-        "Concurrent writer: DELETE loses nothing",
-        "Concurrent writer: UPDATE loses nothing",
     ]
+    for grid in (cap, delta):
+        basic = {r["label"] for r in grid["rows"] if r["group"] == "Basic"}
+        assert not basic & {"DELETE", "UPDATE", "CREATE OR REPLACE TABLE AS SELECT"}
 
 
 def test_engines_and_issues_are_not_header_links_and_issues_is_under_bug_reports():

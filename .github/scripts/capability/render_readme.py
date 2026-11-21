@@ -221,30 +221,33 @@ for _label, _sources in ROWS:
 
 # THE SITE'S GRID (docs/data/capability.json, the Iceberg support tab): every row of ROWS, grouped.
 GROUPS = {
-    # The grid opens on Core: the minimum an engine needs to be usable on Iceberg.
-    "Core": [
+    # Basic is the minimum to use the format at all: attach the catalog, create a table, read
+    # it, append to it safely. The Delta grid (render_delta.py) uses the same groups.
+    "Basic": [
         "Attach the REST catalog",
         "SELECT a table by its catalog name",
         "CREATE TABLE",
         "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
+        "Concurrent append: both kept",
+    ],
+    # Changing rows that are already there.
+    "Writes": [
         "DELETE",
         "UPDATE",
+        "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
-        "Drop table with purge",
-        "Create namespace",
-        "Drop namespace",
-        "CREATE SCHEMA IF NOT EXISTS, existing schema",
-        "Concurrent append: both kept",
+        "TRUNCATE",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
     ],
-    # Row-level writes beyond Core.
-    "Writes": [
-        "MERGE with two actions (UPDATE + INSERT)",
-        "TRUNCATE",
+    "Catalog": [
+        "Create namespace",
+        "Drop namespace",
+        "CREATE SCHEMA IF NOT EXISTS, existing schema",
         "CREATE TABLE IF NOT EXISTS, existing table",
+        "Drop table with purge",
     ],
     "Partitions & types": [
         "Partitioned table",
@@ -264,7 +267,7 @@ GROUPS = {
         "Set table property",
         "Sort order evolution",
     ],
-    "Reads & refs": [
+    "Reads & history": [
         "File pruning from min/max in the metadata",
         "MAX from the metadata, no data file read",
         "Time travel",
@@ -272,7 +275,6 @@ GROUPS = {
         "Create branch",
         "Create tag",
     ],
-    # The site shows this group on a tab of its own, Maintenance.
     "Maintenance": ["Compaction", "Rewrite manifests", "Add existing Parquet files"],
 }
 # The site's engine keys, which are lakehouse_benchmark's.

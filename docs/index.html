@@ -141,7 +141,7 @@ header { display: flex; flex-wrap: wrap; justify-content: space-between; align-i
 .rows tr.tier th { padding: 14px 0 6px; color: var(--ink); font-weight: 700; text-align: left; }
 .cap .note { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; }
 .cap .note a { color: var(--accent); }
-/* Iceberg support overview: one bar an engine, a segment per group, its shade of the engine colour. */
+/* A format's Overview chip: one bar an engine, a segment per group, its shade of the engine colour. */
 .rank .legend { font-size: 14px; gap: 6px 22px; margin-bottom: 18px; }
 .rank .legend .sw { width: 14px; height: 14px; border-radius: 4px; }
 .rank .chart { gap: clamp(10px, 1.8vh, 18px); }
@@ -506,7 +506,7 @@ main .tiles > a { color: inherit; }
       <li><b>Daft</b>: ETL only. The ETL runs the nightly (bffd83483). Filed: <a href="https://github.com/Eventual-Inc/Daft/issues/7532">#7532</a> (open), split into <a href="https://github.com/Eventual-Inc/Daft/issues/7601">#7601</a> (open) decimal precision; <a href="https://github.com/Eventual-Inc/Daft/issues/7602">#7602</a> (open) <code>CASE</code> with a decimal and a literal; cross join (<a href="https://github.com/Eventual-Inc/Daft/pull/7573">PR #7573</a>) and <code>SUBSTRING</code> (<a href="https://github.com/Eventual-Inc/Daft/pull/7577">PR #7577</a>), in 0.8.0-rc.1; OneLake paths fix <a href="https://github.com/Eventual-Inc/Daft/pull/7533">PR #7533</a>, in 0.8.0-rc.1. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#daft-in-the-etl-not-in-the-query-suites">Details</a></li>
       <li><b>Pandas</b>: ETL only; no SQL. Filed: <a href="https://github.com/pandas-dev/pandas/issues/71034">#71034</a> (open, marked as an Arrow limitation) and Arrow <a href="https://github.com/apache/arrow/issues/53290">#53290</a> (open) <code>read_csv(engine="pyarrow")</code> takes the column count from the first row, so the bench uses the one-thread C parser and reads 4 files at once on a thread pool. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#pandas-in-the-etl-only">Details</a></li>
       <li><b>chDB</b>: not in TPC-DS-like; 6 of 99 queries fail on ClickHouse issues: Q36 and Q66, an alias with the column's name (<a href="https://github.com/ClickHouse/ClickHouse/issues/9715">#9715</a>, open); Q47 and Q57, column names with three or more tables in FROM (<a href="https://github.com/ClickHouse/ClickHouse/issues/34697">#34697</a>, open); Q75, <code>SUM</code> over mixed Decimal and Float (<a href="https://github.com/ClickHouse/ClickHouse/issues/106707">#106707</a>); Q18, <code>CAST(NULL AS decimal)</code> is an error, not NULL (<a href="https://github.com/ClickHouse/ClickHouse/issues/126628">#126628</a>, closed: expected behavior, <code>cast_keep_nullable = 1</code> is the opt-in). Still the same six on chdb-core 26.10. Iceberg features missing on a REST catalog: <a href="https://github.com/ClickHouse/ClickHouse/issues/126630">#126630</a> MERGE; <a href="https://github.com/ClickHouse/ClickHouse/issues/126631">#126631</a> whole-table overwrite; <a href="https://github.com/ClickHouse/ClickHouse/issues/126632">#126632</a> TRUNCATE; <a href="https://github.com/ClickHouse/ClickHouse/issues/126633">#126633</a> compaction on catalog tables (closed: kept in ClickHouse Cloud only); <a href="https://github.com/ClickHouse/ClickHouse/issues/126634">#126634</a> partition evolution; <a href="https://github.com/ClickHouse/ClickHouse/issues/126635">#126635</a> sort order evolution; <a href="https://github.com/ClickHouse/ClickHouse/issues/126636">#126636</a> branches and tags; <a href="https://github.com/ClickHouse/ClickHouse/issues/126637">#126637</a> namespace DDL (the others open). DROP TABLE on Iceberg sent <code>purgeRequested=False</code> (<a href="https://github.com/ClickHouse/ClickHouse/issues/125410">#125410</a>, fixed by <a href="https://github.com/ClickHouse/ClickHouse/pull/125469">PR #125469</a>); fixed in the bench since chdb-core 26.10.0.dev2610180851, the nightly after the ClickHouse master sync, which also made CREATE TABLE and CTAS work. <a href="https://github.com/djouallah/lakehouse_benchmark/blob/main/LEARNING.md#chdb">Details</a></li>
-      <li><b>Databend</b>: added 2026-10-17. It runs the v1.2.965-nightly image, the first nightly with <a href="https://github.com/databendlabs/databend/pull/21073">#21073</a> (Iceberg CTAS, decimal and nested columns, partition transforms). Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (fixed by <a href="https://github.com/databendlabs/databend/pull/20594">PR #20594</a>, in v1.2.953-nightly) decimals failed, TPC-H-like 5/22. Azure reads (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) are in the nightlies, not in a stable release. Iceberg reads take a SAS: the workload identity does not reach its Azure reader. Filed: <a href="https://github.com/databendlabs/databend/issues/20732">#20732</a> (open) <code>UNION ALL</code> over two tables applies one table's schema to the other's file, so TPC-DS-like stops at Q5; <a href="https://github.com/databendlabs/databend/issues/20733">#20733</a> (open) TPC-H-like SF=100 Q4 builds its semi join on 379M lineitem rows and runs out of memory instead of spilling. Iceberg writes, from the Iceberg support tab: <a href="https://github.com/databendlabs/databend/issues/20735">#20735</a> (open) CTAS panics; <a href="https://github.com/databendlabs/databend/issues/20736">#20736</a> (open) DECIMAL columns; <a href="https://github.com/databendlabs/databend/issues/20737">#20737</a> (open) nested columns; <a href="https://github.com/databendlabs/databend/issues/20738">#20738</a> (open) TRUNCATE does nothing; <a href="https://github.com/databendlabs/databend/issues/20739">#20739</a> (open) INSERT OVERWRITE appends; <a href="https://github.com/databendlabs/databend/issues/20740">#20740</a> (open) ADD/DROP COLUMN do nothing; <a href="https://github.com/databendlabs/databend/issues/20741">#20741</a> (open) time travel reads the current snapshot; <a href="https://github.com/databendlabs/databend/issues/20742">#20742</a> (open) INSERT into a bucket-partitioned table panics. Iceberg features not implemented: <a href="https://github.com/databendlabs/databend/issues/20757">#20757</a> DELETE; <a href="https://github.com/databendlabs/databend/issues/20758">#20758</a> UPDATE; <a href="https://github.com/databendlabs/databend/issues/20759">#20759</a> MERGE; <a href="https://github.com/databendlabs/databend/issues/20760">#20760</a> partition transforms; <a href="https://github.com/databendlabs/databend/issues/20761">#20761</a> RENAME COLUMN; <a href="https://github.com/databendlabs/databend/issues/20762">#20762</a> type promotion; <a href="https://github.com/databendlabs/databend/issues/20763">#20763</a> partition evolution; <a href="https://github.com/databendlabs/databend/issues/20764">#20764</a> table properties; <a href="https://github.com/databendlabs/databend/issues/20765">#20765</a> sort order; <a href="https://github.com/databendlabs/databend/issues/20766">#20766</a> branches and tags; <a href="https://github.com/databendlabs/databend/issues/20767">#20767</a> compaction; <a href="https://github.com/databendlabs/databend/issues/20768">#20768</a> rewrite manifests; <a href="https://github.com/databendlabs/databend/issues/20769">#20769</a> min/max from metadata (all open).</li>
+      <li><b>Databend</b>: added 2026-10-17. It runs the v1.2.965-nightly image, the first nightly with <a href="https://github.com/databendlabs/databend/pull/21073">#21073</a> (Iceberg CTAS, decimal and nested columns, partition transforms). Filed: <a href="https://github.com/databendlabs/databend/issues/20588">#20588</a> (fixed by <a href="https://github.com/databendlabs/databend/pull/20594">PR #20594</a>, in v1.2.953-nightly) decimals failed, TPC-H-like 5/22. Azure reads (<a href="https://github.com/databendlabs/databend/pull/20590">PR #20590</a>) are in the nightlies, not in a stable release. Iceberg reads take a SAS: the workload identity does not reach its Azure reader. Filed: <a href="https://github.com/databendlabs/databend/issues/20732">#20732</a> (open) <code>UNION ALL</code> over two tables applies one table's schema to the other's file, so TPC-DS-like stops at Q5; <a href="https://github.com/databendlabs/databend/issues/20733">#20733</a> (open) TPC-H-like SF=100 Q4 builds its semi join on 379M lineitem rows and runs out of memory instead of spilling. Iceberg writes, from the Table format support tab (Iceberg): <a href="https://github.com/databendlabs/databend/issues/20735">#20735</a> (open) CTAS panics; <a href="https://github.com/databendlabs/databend/issues/20736">#20736</a> (open) DECIMAL columns; <a href="https://github.com/databendlabs/databend/issues/20737">#20737</a> (open) nested columns; <a href="https://github.com/databendlabs/databend/issues/20738">#20738</a> (open) TRUNCATE does nothing; <a href="https://github.com/databendlabs/databend/issues/20739">#20739</a> (open) INSERT OVERWRITE appends; <a href="https://github.com/databendlabs/databend/issues/20740">#20740</a> (open) ADD/DROP COLUMN do nothing; <a href="https://github.com/databendlabs/databend/issues/20741">#20741</a> (open) time travel reads the current snapshot; <a href="https://github.com/databendlabs/databend/issues/20742">#20742</a> (open) INSERT into a bucket-partitioned table panics. Iceberg features not implemented: <a href="https://github.com/databendlabs/databend/issues/20757">#20757</a> DELETE; <a href="https://github.com/databendlabs/databend/issues/20758">#20758</a> UPDATE; <a href="https://github.com/databendlabs/databend/issues/20759">#20759</a> MERGE; <a href="https://github.com/databendlabs/databend/issues/20760">#20760</a> partition transforms; <a href="https://github.com/databendlabs/databend/issues/20761">#20761</a> RENAME COLUMN; <a href="https://github.com/databendlabs/databend/issues/20762">#20762</a> type promotion; <a href="https://github.com/databendlabs/databend/issues/20763">#20763</a> partition evolution; <a href="https://github.com/databendlabs/databend/issues/20764">#20764</a> table properties; <a href="https://github.com/databendlabs/databend/issues/20765">#20765</a> sort order; <a href="https://github.com/databendlabs/databend/issues/20766">#20766</a> branches and tags; <a href="https://github.com/databendlabs/databend/issues/20767">#20767</a> compaction; <a href="https://github.com/databendlabs/databend/issues/20768">#20768</a> rewrite manifests; <a href="https://github.com/databendlabs/databend/issues/20769">#20769</a> min/max from metadata (all open).</li>
     </ul>
     <h3>Tried, not added</h3>
     <ul>
@@ -517,16 +517,14 @@ main .tiles > a { color: inherit; }
       <li><b>pg_lake</b>: (tested on 3.5.3) has no catalog cache for read-only tables; every statement reloads the metadata, so the 25-row <code>nation</code> takes 4–5s.</li>
     </ul>
   </section>
-  <section class="cap rank" id="iceberg-overview" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
-  <section class="cap rank" id="delta-overview" hidden></section>
   <section class="cap" id="delta" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
     <p>This is not a benchmark. It is a way to find bugs in open-source engines and get them fixed.</p>
     <p>Every engine runs the same jobs on the same GitHub runner (16 GB RAM), against the same Iceberg tables in one
       OneLake REST catalog: load raw CSV files (<a href="#etl">Simple write</a>), TPC-DS-like (<a href="#tpcds">Complex read</a>), Iceberg
-      writes and table maintenance (<a href="#iceberg">Iceberg support</a>), and one dbt project every day on
+      writes and table maintenance (<a href="#iceberg">Table format support</a>), and one dbt project every day on
       Spark, Trino, DuckDB and Polars (<a href="#workload">Real workload write</a>).</p>
     <p>When a job fails, runs out of memory or returns a wrong answer, the bug is filed upstream: one issue per bug,
       with a script that reproduces it on a clean machine. The maintainers write the fix; the bench picks it up from
@@ -635,15 +633,13 @@ const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const ABOUT = { id: "about", title: "About" };
-const CAPABILITY = { id: "iceberg", title: "Grid", json: "data/capability.json", key: "capability",
+const CAPABILITY = { id: "iceberg", title: "Iceberg", json: "data/capability.json", key: "capability",
   caption: "What each engine can do in SQL on the OneLake Iceberg REST catalog, format v2 tables only. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.",
   rank: total => `Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group. Iceberg format v2 tables only; v3 is not tested.` };
-const CAPABILITY_RANK = { id: "iceberg-overview", title: "Overview", of: CAPABILITY };  // the grid's data, ranked
-// The Delta support tab: the same grid and overview on data/delta.json (.github/scripts/capability/render_delta.py).
-const DELTA = { id: "delta", title: "Grid", json: "data/delta.json", key: "delta",
+// The Delta sub-tab: the same grid and overview on data/delta.json (.github/scripts/capability/render_delta.py).
+const DELTA = { id: "delta", title: "Delta", json: "data/delta.json", key: "delta",
   caption: "What each engine can do in SQL writing Delta tables into OneLake, each table a path under the lakehouse's Tables folder. Spark runs delta-spark; DuckDB writes through Delta Kernel.",
   rank: total => `Operations each engine supports writing Delta tables into OneLake in SQL, out of ${total}, split by group.` };
-const DELTA_RANK = { id: "delta-overview", title: "Overview", of: DELTA };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
@@ -654,15 +650,14 @@ const REAL_WORKLOAD = { id: "workload", title: "Real workload write", json: "dat
 const MAINTENANCE = { json: "data/maintenance.json" };  // table_maintenance.yml, shown on the Real workload tab
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY_RANK, CAPABILITY, DELTA_RANK, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works and how an engine does less work, what it supports; then writes, simple (CSVs into one table)
 // and real (the dbt workload), and the complex reads last. Bug reports and About are header links.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] },  // the state is in the catalog; skip files, then a good join order
-  { id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] },
-  { id: "delta-features", title: "Delta support", subs: [DELTA_RANK, DELTA] },
+  { id: "features", title: "Table format support", subs: [CAPABILITY, DELTA] },  // one grid per format, same groups
   { id: "write", title: "Simple write", subs: [SUITES[0]] },  // CSVs into one Iceberg table
   { id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },
   { id: "read", title: "Complex read", subs: [SUITES[1]] },  // TPC-DS-like, last
@@ -724,7 +719,6 @@ function render() {
     return;
   }
   if (page === PLANS) { renderPlans(); return; }
-  if (page === CAPABILITY_RANK || page === DELTA_RANK) { renderCapabilityRank(page.of, page); return; }
   if (page === CAPABILITY || page === DELTA) { renderCapability(page); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
@@ -784,13 +778,23 @@ function renderCapability(page) {
   const cap = data[page.key], sec = $(page.id);
   if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${page.json}.</div>`; return; }
   const engines = Object.keys(cap.engines), groups = cap.groups, rows = cap.rows;
-  const group = groups.includes(state.group[page.id]) ? state.group[page.id] : groups[0];
+  // Overview, the ranked bars, is the first chip; the format's groups follow.
+  const chips = ["Overview", ...groups];
+  const group = chips.includes(state.group[page.id]) ? state.group[page.id] : chips[0];
+  const chipBar = `<div class="chips">${chips.map(g => `<button aria-pressed="${g === group}">${esc(g)}</button>`).join("")}</div>`;
+  const wire = () => [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group[page.id] = chips[i]; render(); });
+  if (group === "Overview") {
+    sec.innerHTML = `${chipBar}<div class="rank"></div>`;
+    wire();
+    renderCapabilityRank(page, sec.querySelector(".rank"));
+    return;
+  }
   const score = e => {
     const all = rows.map(r => r.cells[e].o);  // every engine out of the same total
     return [all.filter(o => o === "supported").length, all.length];
   };
   sec.innerHTML = `
-    <div class="chips"${groups.length < 2 ? " hidden" : ""}>${groups.map(g => `<button aria-pressed="${g === group}">${esc(g)}</button>`).join("")}</div>
+    ${chipBar}
     <p class="caption">${esc(page.caption)}</p>
     <div class="legend">
       <span class="supported"><i class="m"></i>yes</span>
@@ -808,7 +812,7 @@ function renderCapability(page) {
       }).join("")}</tr></thead>
       <tbody></tbody>
     </table></div>`;
-  [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group[page.id] = groups[i]; render(); });
+  wire();
 
   const body = sec.querySelector("tbody");
   for (const row of rows) {
@@ -840,11 +844,11 @@ function renderCapability(page) {
   }
 }
 
-// THE ICEBERG SUPPORT OVERVIEW: the grid's data, one bar an engine ranked by the operations it supports (the
-// grid header's count), a segment per group in the grid's order. Ties go to Core, the minimum to be usable.
-const SHADE = [100, 90, 80, 70, 60, 50];  // a group's share of the engine colour, Core first
-function renderCapabilityRank(grid, page) {
-  const cap = data[grid.key], sec = $(page.id);
+// A FORMAT'S OVERVIEW CHIP: the grid's data, one bar an engine ranked by the operations it supports (the grid
+// header's count), a segment per group in the grid's order. Ties go to Basic, the minimum to be usable.
+const SHADE = [100, 90, 80, 70, 60, 50, 40];  // a group's share of the engine colour, Basic first
+function renderCapabilityRank(grid, sec) {
+  const cap = data[grid.key];
   if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${grid.json}.</div>`; return; }
   const groups = cap.groups, total = cap.rows.length, label = e => LABEL[e] ?? e;
   const yes = (e, g) => cap.rows.filter(r => (!g || r.group === g) && r.cells[e].o === "supported").length;
@@ -2323,14 +2327,16 @@ for (const li of $("issues").querySelectorAll("li")) {
   });
 }
 // Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #pruning, #plans (#plans-q72 for one story), #features,
-// #write, #etl, #read, #tpcds, #iceberg-overview, #iceberg, #delta-overview, #delta, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
+// #write, #etl, #read, #tpcds, #iceberg, #delta, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
 // or one engine in that list (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
   if (h === "details" || h === "tried") h = "issues";  // the Issues tab's old names
   if (h === "capability") h = CAPABILITY.id;  // the Iceberg support tab's old name
   if (h === "architecture") h = ARCH.id;  // the Concurrency tab's old name
-  if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg support grid
+  if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg grid
+  if (h === "iceberg-overview") h = CAPABILITY.id;  // Overview is now the first chip of each format
+  if (h === "delta-overview" || h === "delta-features") h = DELTA.id;  // the Delta support tab's old pages
   if (h === "dbt" || h === "scorecard") h = REAL_WORKLOAD.id;  // the dbt tab and the Scorecard became the Real workload tab
   if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
   if (h === "tpch") h = "tpcds";  // TPC-H-like, retired 2026-11-07

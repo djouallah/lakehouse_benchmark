@@ -248,6 +248,47 @@ class DeltaOracle:
             ".checkpoint." in f for f in self.log_files(name)
         )
 
+    # -- schemas, folders, plain Parquet ------------------------------------------------------
+
+    def schema_relative(self, schema: str) -> str:
+        return f"{self.cfg.lakehouse_id}/Tables/{schema}"
+
+    def schema_uri(self, schema: str) -> str:
+        return f"{self.cfg.base_path}/Tables/{schema}"
+
+    def folder_exists(self, relative: str) -> bool:
+        return self.fs().get_directory_client(relative).exists()
+
+    def has_log(self, relative: str) -> bool:
+        """A Delta table's directory: one holding a _delta_log with a commit in it."""
+        try:
+            paths = self.fs().get_paths(f"{relative}/_delta_log", recursive=False)
+            return any(re.fullmatch(r"\d{20}\.json", p.name.rsplit("/", 1)[-1]) for p in paths)
+        except Exception:  # noqa: BLE001 - no such folder
+            return False
+
+    def upload_parquet(self, name: str, filename: str, pairs) -> None:
+        """Rows (id, v) as one plain Parquet file in the table's directory, with no log."""
+        import io
+
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        data = pa.table(
+            {
+                "id": pa.array([i for i, _ in pairs], pa.int64()),
+                "v": pa.array([v for _, v in pairs], pa.int64()),
+            }
+        )
+        buffer = io.BytesIO()
+        pq.write_table(data, buffer)
+        self.fs().get_file_client(f"{self.relative(name)}/{filename}").upload_data(
+            buffer.getvalue(), overwrite=True
+        )
+
+    def purge_path(self, relative: str) -> None:
+        self.fs().get_directory_client(relative).delete_directory()
+
     # -- teardown ----------------------------------------------------------------------------
 
     def purge(self, name: str) -> None:

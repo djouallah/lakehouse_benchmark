@@ -50,16 +50,17 @@
   }
  },
  "groups": [
-  "Core",
+  "Basic",
   "Writes",
+  "Catalog",
   "Partitions & types",
   "Schema",
-  "Reads & refs",
+  "Reads & history",
   "Maintenance"
  ],
  "rows": [
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "Attach the REST catalog",
    "cells": {
     "lakesail_iceberg": {
@@ -89,7 +90,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "SELECT a table by its catalog name",
    "cells": {
     "lakesail_iceberg": {
@@ -119,7 +120,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "CREATE TABLE",
    "cells": {
     "lakesail_iceberg": {
@@ -149,7 +150,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "CREATE TABLE AS SELECT",
    "cells": {
     "lakesail_iceberg": {
@@ -180,7 +181,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "INSERT / append",
    "cells": {
     "lakesail_iceberg": {
@@ -210,7 +211,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
    "label": "INSERT ... SELECT",
    "cells": {
     "lakesail_iceberg": {
@@ -240,7 +241,37 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Basic",
+   "label": "Concurrent append: both kept",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Writes",
    "label": "DELETE",
    "cells": {
     "lakesail_iceberg": {
@@ -271,7 +302,7 @@
    }
   },
   {
-   "group": "Core",
+   "group": "Writes",
    "label": "UPDATE",
    "cells": {
     "lakesail_iceberg": {
@@ -299,255 +330,6 @@
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_update, engine type iceberg, does not support UPDATE.')"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "INSERT OVERWRITE, whole table",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "no",
-     "n": "io.trino.sql.parser.ParsingException: line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO' <- org.antlr.v4.runtime.InputMismatchException: None"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_44741451292_1_ove... ^^^^^^^^^"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44741451292_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
-    },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44741451292_1_overwrite' which uses the 'iceberg' engine.\")"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Drop table with purge",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Create namespace",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Drop namespace",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ClickHouse has no statement to drop a catalog namespace"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "CREATE SCHEMA IF NOT EXISTS, existing schema",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ClickHouse has no statement for a catalog namespace"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Concurrent append: both kept",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Concurrent writer: DELETE loses nothing",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_delete, engine type iceberg, does not support DE…"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Concurrent writer: UPDATE loses nothing",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_44680562433_1_race_update does not support update')"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    },
-    "chdb_iceberg": {
-     "o": "supported"
-    },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_update, engine type iceberg, does not support UP…"
     }
    }
   },
@@ -586,6 +368,40 @@
   },
   {
    "group": "Writes",
+   "label": "INSERT OVERWRITE, whole table",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "io.trino.sql.parser.ParsingException: line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO' <- org.antlr.v4.runtime.InputMismatchException: None"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE onelake.\"_bench_capability\".\"dk_44741451292_1_ove... ^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 18 (TABLE): TABLE onelake.`_bench_capability.ch_44741451292_1_overwrite` SELECT * FROM values('id Int64, v Int64', (7, 70), (8, 80)). Expected one of:…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, \"TableEngineNotSupported. Code: 1302, Text = INSERT OVERWRITE is not supported for the table '_bench_capability.db_44741451292_1_overwrite' which uses the 'iceberg' engine.\")"
+    }
+   }
+  },
+  {
+   "group": "Writes",
    "label": "TRUNCATE",
    "cells": {
     "lakesail_iceberg": {
@@ -619,7 +435,192 @@
   },
   {
    "group": "Writes",
+   "label": "Concurrent writer: DELETE loses nothing",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_delete, engine type iceberg, does not support DE…"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "Concurrent writer: UPDATE loses nothing",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "no",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: ProgrammingError: (1064, 'table sr_44680562433_1_race_update does not support update')"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_update, engine type iceberg, does not support UP…"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "Create namespace",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "Drop namespace",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ClickHouse has no statement to drop a catalog namespace"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "CREATE SCHEMA IF NOT EXISTS, existing schema",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ClickHouse has no statement for a catalog namespace"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
    "label": "CREATE TABLE IF NOT EXISTS, existing table",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "supported"
+    },
+    "databend_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "Drop table with purge",
    "cells": {
     "lakesail_iceberg": {
      "o": "supported"
@@ -1087,7 +1088,7 @@
    }
   },
   {
-   "group": "Reads & refs",
+   "group": "Reads & history",
    "label": "File pruning from min/max in the metadata",
    "cells": {
     "lakesail_iceberg": {
@@ -1117,7 +1118,7 @@
    }
   },
   {
-   "group": "Reads & refs",
+   "group": "Reads & history",
    "label": "MAX from the metadata, no data file read",
    "cells": {
     "lakesail_iceberg": {
@@ -1151,7 +1152,7 @@
    }
   },
   {
-   "group": "Reads & refs",
+   "group": "Reads & history",
    "label": "Time travel",
    "cells": {
     "lakesail_iceberg": {
@@ -1181,7 +1182,7 @@
    }
   },
   {
-   "group": "Reads & refs",
+   "group": "Reads & history",
    "label": "Metadata tables",
    "cells": {
     "lakesail_iceberg": {
@@ -1211,7 +1212,7 @@
    }
   },
   {
-   "group": "Reads & refs",
+   "group": "Reads & history",
    "label": "Create branch",
    "cells": {
     "lakesail_iceberg": {
@@ -1245,7 +1246,7 @@
    }
   },
   {
-   "group": "Reads & refs",
+   "group": "Reads & history",
    "label": "Create tag",
    "cells": {
     "lakesail_iceberg": {

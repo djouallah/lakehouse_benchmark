@@ -58,6 +58,9 @@ class TrinoDelta(DeltaProbe):
                 "delta.enable-non-concurrent-writes": "true",
                 "delta.register-table-procedure.enabled": "true",
                 "delta.vacuum.min-retention": "0s",
+                # A table created by name goes to <schema location>/<name>, the layout Fabric
+                # finds, not <name>-<uuid>. Every other probe gives its location explicitly.
+                "delta.unique-table-location": "false",
                 **trino.storage_properties(),
             },
         )
@@ -84,6 +87,20 @@ class TrinoDelta(DeltaProbe):
             "SELECT CAST(id AS BIGINT) AS id, CAST(v AS BIGINT) AS v "
             f"FROM (VALUES {values}) AS s(id, v)"
         )
+
+    def schema_create_sql(self, schema, if_not_exists=False):
+        ine = "IF NOT EXISTS " if if_not_exists else ""
+        uri = self.oracle.schema_uri(schema)
+        return [f"CREATE SCHEMA {ine}{CATALOG}.\"{schema}\" WITH (location = '{uri}')"]
+
+    def schema_drop_sql(self, schema):
+        return f'DROP SCHEMA {CATALOG}."{schema}"'
+
+    def in_schema(self, schema, table):
+        return f'{CATALOG}."{schema}"."{table}"'
+
+    def create_in_schema_sql(self, schema, table):
+        return [f"CREATE TABLE {self.in_schema(schema, table)} ({self._cols()})"]
 
     def select_dated(self, rows) -> str:
         values = ", ".join(f"({i}, {v}, DATE '{d}')" for i, v, d in rows)
