@@ -168,6 +168,10 @@ wire it in. Engine lists are cross-checked by `tests/test_config.py`, `tests/tes
 - For the Iceberg support grid: `.github/scripts/capability/catalog_capability_<client>.py`,
   `requirements/capability_<client>.txt`, the `clients` options in `capability.yml`, and `ENGINES`
   in `.github/scripts/capability/render_readme.py`.
+- For the Delta support grid, only once the engine has a documented SQL path that writes Delta:
+  `.github/scripts/capability/delta_capability_<client>.py` (a `DeltaProbe` subclass in
+  `delta_probe.py`), `requirements/capability_delta_<client>.txt`, the `clients` options in
+  `delta_capability.yml`, and `ENGINES` in `.github/scripts/capability/render_delta.py`.
 
 Set its catalog cache from `CATALOG_CACHE_SECONDS` rather than a literal. Then run `smoke.yml`
 before `tpcds.yml`.

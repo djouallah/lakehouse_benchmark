@@ -519,6 +519,8 @@ main .tiles > a { color: inherit; }
   </section>
   <section class="cap rank" id="iceberg-overview" hidden></section>
   <section class="cap" id="iceberg" hidden></section>
+  <section class="cap rank" id="delta-overview" hidden></section>
+  <section class="cap" id="delta" hidden></section>
   <section class="pl" id="plans" hidden></section>
   <section class="details" id="about" hidden>
     <p>This is not a benchmark. It is a way to find bugs in open-source engines and get them fixed.</p>
@@ -633,8 +635,15 @@ const $ = id => document.getElementById(id);
 const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(1)}s`;
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const ABOUT = { id: "about", title: "About" };
-const CAPABILITY = { id: "iceberg", title: "Grid", json: "data/capability.json" };
-const CAPABILITY_RANK = { id: "iceberg-overview", title: "Overview" };  // the grid's data, ranked
+const CAPABILITY = { id: "iceberg", title: "Grid", json: "data/capability.json", key: "capability",
+  caption: "What each engine can do in SQL on the OneLake Iceberg REST catalog, format v2 tables only. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.",
+  rank: total => `Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group. Iceberg format v2 tables only; v3 is not tested.` };
+const CAPABILITY_RANK = { id: "iceberg-overview", title: "Overview", of: CAPABILITY };  // the grid's data, ranked
+// The Delta support tab: the same grid and overview on data/delta.json (.github/scripts/capability/render_delta.py).
+const DELTA = { id: "delta", title: "Grid", json: "data/delta.json", key: "delta",
+  caption: "What each engine can do in SQL writing Delta tables into OneLake, each table a path under the lakehouse's Tables folder. Spark runs delta-spark; DuckDB and chDB write through Delta Kernel.",
+  rank: total => `Operations each engine supports writing Delta tables into OneLake in SQL, out of ${total}, split by group.` };
+const DELTA_RANK = { id: "delta-overview", title: "Overview", of: DELTA };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };
@@ -645,7 +654,7 @@ const REAL_WORKLOAD = { id: "workload", title: "Real workload write", json: "dat
 const MAINTENANCE = { json: "data/maintenance.json" };  // table_maintenance.yml, shown on the Real workload tab
 const PRUNING = { id: "pruning", title: "File pruning" };
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY_RANK, CAPABILITY, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY_RANK, CAPABILITY, DELTA_RANK, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works and how an engine does less work, what it supports; then writes, simple (CSVs into one table)
 // and real (the dbt workload), and the complex reads last. Bug reports and About are header links.
@@ -653,6 +662,7 @@ const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS,
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] },  // the state is in the catalog; skip files, then a good join order
   { id: "features", title: "Iceberg support", subs: [CAPABILITY_RANK, CAPABILITY] },
+  { id: "delta-features", title: "Delta support", subs: [DELTA_RANK, DELTA] },
   { id: "write", title: "Simple write", subs: [SUITES[0]] },  // CSVs into one Iceberg table
   { id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },
   { id: "read", title: "Complex read", subs: [SUITES[1]] },  // TPC-DS-like, last
@@ -660,7 +670,7 @@ const GROUPS = [
   { id: "bugs", title: "Bug reports", subs: [REPORTS], bar: false },  // a header link, next to About
 ];
 const groupOf = id => GROUPS.find(g => g.subs.some(s => s.id === id));
-const state = { suite: TIMELINE.id, sf: {}, group: null, last: {} };
+const state = { suite: TIMELINE.id, sf: {}, group: {}, last: {} };
 const data = {};
 
 function go(id) { state.suite = id; history.replaceState(null, "", `#${id}`); render(); }
@@ -714,8 +724,8 @@ function render() {
     return;
   }
   if (page === PLANS) { renderPlans(); return; }
-  if (page === CAPABILITY_RANK) { renderCapabilityRank(); return; }
-  if (page === CAPABILITY) { renderCapability(); return; }
+  if (page === CAPABILITY_RANK || page === DELTA_RANK) { renderCapabilityRank(page.of, page); return; }
+  if (page === CAPABILITY || page === DELTA) { renderCapability(page); return; }
   if (page) { $(page.id).querySelector("li:target")?.scrollIntoView({ block: "center" }); return; }
   const suite = SUITES.find(s => s.id === state.suite);
   const results = data[suite.id];
@@ -770,18 +780,18 @@ const WORD = { supported: "yes", no: "no", "no-op": "accepted, not applied",
                skipped: "not probed", broken: "the probe could not ask" };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-function renderCapability() {
-  const cap = data.capability, sec = $(CAPABILITY.id);
-  if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${CAPABILITY.json}.</div>`; return; }
+function renderCapability(page) {
+  const cap = data[page.key], sec = $(page.id);
+  if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${page.json}.</div>`; return; }
   const engines = Object.keys(cap.engines), groups = cap.groups, rows = cap.rows;
-  const group = groups.includes(state.group) ? state.group : groups[0];
+  const group = groups.includes(state.group[page.id]) ? state.group[page.id] : groups[0];
   const score = e => {
     const all = rows.map(r => r.cells[e].o);  // every engine out of the same total
     return [all.filter(o => o === "supported").length, all.length];
   };
   sec.innerHTML = `
     <div class="chips"${groups.length < 2 ? " hidden" : ""}>${groups.map(g => `<button aria-pressed="${g === group}">${esc(g)}</button>`).join("")}</div>
-    <p class="caption">What each engine can do in SQL on the OneLake Iceberg REST catalog, format v2 tables only. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.</p>
+    <p class="caption">${esc(page.caption)}</p>
     <div class="legend">
       <span class="supported"><i class="m"></i>yes</span>
       <span class="no"><i class="m"></i>no</span>
@@ -798,7 +808,7 @@ function renderCapability() {
       }).join("")}</tr></thead>
       <tbody></tbody>
     </table></div>`;
-  [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group = groups[i]; render(); });
+  [...sec.querySelector(".chips").children].forEach((b, i) => b.onclick = () => { state.group[page.id] = groups[i]; render(); });
 
   const body = sec.querySelector("tbody");
   for (const row of rows) {
@@ -833,9 +843,9 @@ function renderCapability() {
 // THE ICEBERG SUPPORT OVERVIEW: the grid's data, one bar an engine ranked by the operations it supports (the
 // grid header's count), a segment per group in the grid's order. Ties go to Core, the minimum to be usable.
 const SHADE = [100, 90, 80, 70, 60, 50];  // a group's share of the engine colour, Core first
-function renderCapabilityRank() {
-  const cap = data.capability, sec = $(CAPABILITY_RANK.id);
-  if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${CAPABILITY.json}.</div>`; return; }
+function renderCapabilityRank(grid, page) {
+  const cap = data[grid.key], sec = $(page.id);
+  if (!cap) { sec.innerHTML = `<div class="empty">Could not load ${grid.json}.</div>`; return; }
   const groups = cap.groups, total = cap.rows.length, label = e => LABEL[e] ?? e;
   const yes = (e, g) => cap.rows.filter(r => (!g || r.group === g) && r.cells[e].o === "supported").length;
   const size = g => cap.rows.filter(r => r.group === g).length;
@@ -843,7 +853,7 @@ function renderCapabilityRank() {
   const engines = Object.keys(cap.engines).sort((a, b) =>
     yes(b) - yes(a) || yes(b, groups[0]) - yes(a, groups[0]) || label(a).localeCompare(label(b)));
   sec.innerHTML = `
-    <p class="caption">Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group. Iceberg format v2 tables only; v3 is not tested.</p>
+    <p class="caption">${esc(grid.rank(total))}</p>
     <div class="legend">${groups.map((g, i) =>
       `<span><i class="sw" style="background: ${shade("var(--ink)", i)}"></i>${esc(g)}</span>`).join("")}</div>
     <div class="chart"></div>`;
@@ -2313,7 +2323,7 @@ for (const li of $("issues").querySelectorAll("li")) {
   });
 }
 // Deep links: #lakehouse, #timeline, #overview, #concurrency, #anatomy, #pruning, #plans (#plans-q72 for one story), #features,
-// #write, #etl, #read, #tpcds, #iceberg-overview, #iceberg, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
+// #write, #etl, #read, #tpcds, #iceberg-overview, #iceberg, #delta-overview, #delta, #workload, #reports, #issues (the list under Bug reports), #about, #engines,
 // or one engine in that list (#datafusion).
 function fromHash() {
   let h = decodeURIComponent(location.hash.slice(1));
@@ -2341,6 +2351,8 @@ Promise.all([
     .then(t => { data[s.id] = summarize(parseCSV(t), s); }).catch(() => {})),
   fetch(CAPABILITY.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.capability = j; }).catch(() => {}),
+  fetch(DELTA.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(j => { data.delta = j; }).catch(() => {}),
   fetch(REPORTS.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(j => { data.reports = j; }).catch(() => {}),
   fetch(REAL_WORKLOAD.json).then(r => r.ok ? r.json() : Promise.reject(r.status))
