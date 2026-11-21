@@ -833,7 +833,8 @@ class DeltaProbe:
         try:
             self.sql(self.merge_dated_sql(self.ref(cold), source, since))
             try:
-                self.sql(f"SELECT count(*) FROM {self.ref(cold)}")
+                # sum(v), not count(*): count(*) is answered from the log's row counts.
+                self.sql(f"SELECT sum(v) FROM {self.ref(cold)}")
                 results.append(
                     ("read", BROKEN, f"with {gone}, a full scan still works: proves nothing")
                 )
