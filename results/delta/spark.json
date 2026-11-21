@@ -274,9 +274,72 @@
    "question": "WHERE d = <day> with the other days' files deleted",
    "outcome": "supported",
    "detail": "WHERE d = DATE '2026-01-03' returns [(630,)] with the files of 4 of 5 days deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETEs while delta-rs appends to the same table",
+   "outcome": "no",
+   "detail": "2 Spark DELETE(s) failed: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : io.delta.exceptions.ConcurrentAppendException: [DELTA_CONCURRENT_APPEND.WITHOUT_HINT] Transaction conflict detected. a concurrent WRITE added data to table spark_catalog.default.sp_44902839111_1_racedel committed at version 2. The concurrent operation modified data that should have been read by this operation. Please retry the operation. Refer to https://docs.delta.io/latest/concurrency-control.html for more information. at io.delta.exceptions.ConcurrentAppendException$.apply(DeltaConcurrentExceptions.scala:136) at org.a\u2026"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATEs while delta-rs appends to the same table",
+   "outcome": "no",
+   "detail": "5 Spark UPDATE(s) failed: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : io.delta.exceptions.ConcurrentAppendException: [DELTA_CONCURRENT_APPEND.WITHOUT_HINT] Transaction conflict detected. a concurrent WRITE added data to table spark_catalog.default.sp_44902839111_1_raceupd committed at version 2. The concurrent operation modified data that should have been read by this operation. Please retry the operation. Refer to https://docs.delta.io/latest/concurrency-control.html for more information. at io.delta.exceptions.ConcurrentAppendException$.apply(DeltaConcurrentExceptions.scala:136) at org.a\u2026"
+  },
+  {
+   "key": "schema_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA at a folder, a table by name lands in it",
+   "outcome": "supported",
+   "detail": "schema at Tables/_bench_delta_mk_44902839111_1; a table created by name lands at Tables/_bench_delta_mk_44902839111_1/t1"
+  },
+  {
+   "key": "schema_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing schema",
+   "outcome": "supported",
+   "detail": "CREATE SCHEMA IF NOT EXISTS on the existing _bench_delta_ine_44902839111_1: accepted"
+  },
+  {
+   "key": "schema_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA removes the folder",
+   "outcome": "supported",
+   "detail": "the folder Tables/_bench_delta_rm_44902839111_1 is gone"
+  },
+  {
+   "key": "drop_table",
+   "group": "catalog",
+   "question": "DROP TABLE removes the table folder",
+   "outcome": "supported",
+   "detail": "DROP TABLE removed Tables/_bench_delta_drop_44902839111_1/t1"
+  },
+  {
+   "key": "stats_from_log",
+   "group": "read",
+   "question": "max(id), count(*) with every data file deleted",
+   "outcome": "supported",
+   "detail": "max(id), count(*) returns [(33, 12)] with all 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "describe_detail",
+   "group": "read",
+   "question": "DESCRIBE DETAIL",
+   "outcome": "supported",
+   "detail": "location and numFiles (3) match the log"
+  },
+  {
+   "key": "convert_to_delta",
+   "group": "maintenance",
+   "question": "CONVERT TO DELTA, Parquet files in place",
+   "outcome": "supported",
+   "detail": "a _delta_log over the files in place; DuckDB reads [(1, 10), (2, 20), (3, 30)]"
   }
  ],
- "run": "44900192461",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900192461",
+ "run": "44902839111",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44902839111",
  "date": "2026-11-21"
 }
