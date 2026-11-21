@@ -423,7 +423,10 @@ class DeltaProbe:
         expected = SEED + [(4, 40)]
         if not _same(found, expected):
             raise NoOp(f"{ident} reads {found}, expected {expected}")
-        return self._expect(name, expected, f"INSERT and SELECT as {ident}")
+        found = self.oracle.rows(name)
+        if found != expected:
+            raise NoOp(f"{ident} reads {expected}, DuckDB reads {found}")
+        return f"INSERT and SELECT as {ident}: DuckDB reads {found}; {self.TITLE} agrees"
 
     RACE = 10
 
