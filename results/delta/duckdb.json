@@ -274,9 +274,72 @@
    "question": "WHERE d = <day> with the other days' files deleted",
    "outcome": "supported",
    "detail": "WHERE d = DATE '2026-01-03' returns [(630,)] with the files of 4 of 5 days deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETEs while delta-rs appends to the same table",
+   "outcome": "no",
+   "detail": "10 DuckDB DELETE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATEs while delta-rs appends to the same table",
+   "outcome": "no",
+   "detail": "10 DuckDB UPDATE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only update base table"
+  },
+  {
+   "key": "schema_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA at a folder, a table by name lands in it",
+   "outcome": "no",
+   "detail": "CREATE SCHEMA at Tables/_bench_delta_mk_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
+  },
+  {
+   "key": "schema_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing schema",
+   "outcome": "no",
+   "detail": "CREATE SCHEMA at Tables/_bench_delta_ine_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
+  },
+  {
+   "key": "schema_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA removes the folder",
+   "outcome": "no",
+   "detail": "CREATE SCHEMA at Tables/_bench_delta_rm_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
+  },
+  {
+   "key": "drop_table",
+   "group": "catalog",
+   "question": "DROP TABLE removes the table folder",
+   "outcome": "no",
+   "detail": "CREATE SCHEMA at Tables/_bench_delta_drop_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
+  },
+  {
+   "key": "stats_from_log",
+   "group": "read",
+   "question": "max(id), count(*) with every data file deleted",
+   "outcome": "no",
+   "detail": "max(id), count(*) fails with all 4 data files deleted, so it opens them: RuntimeError: RuntimeError: IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/dk_44903801565_1_stats/part-00000-2cc1d9c9-376d-4fbb-b197-52ceb794015f-c000.snappy.parquet' failed with code 'BlobNotFound', Reason Phrase: 'The specified blob does not exist.', Message: ''"
+  },
+  {
+   "key": "describe_detail",
+   "group": "read",
+   "question": "DESCRIBE DETAIL",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44903801565_1_detail\" LINE 1: DESCRIBE DETAIL dk_44903801565_1_detail ^^^^^^^^^^^^^^^^^^^^^^^"
+  },
+  {
+   "key": "convert_to_delta",
+   "group": "maintenance",
+   "question": "CONVERT TO DELTA, Parquet files in place",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TO\" LINE 1: CONVERT TO DELTA parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^"
   }
  ],
- "run": "44900003561",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900003561",
+ "run": "44903801565",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44903801565",
  "date": "2026-11-21"
 }

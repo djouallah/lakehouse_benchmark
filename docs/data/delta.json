@@ -20,8 +20,8 @@
   },
   "duckdb_iceberg": {
    "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
-   "run": "44900003561",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900003561",
+   "run": "44903801565",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44903801565",
    "date": "2026-11-21"
   }
  },
@@ -372,7 +372,8 @@
      "n": "the second writer (delta-rs) failed, so this asks nothing: 2003: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to ex…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "10 DuckDB DELETE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
     }
    }
   },
@@ -393,7 +394,8 @@
      "n": "7 Trino UPDATE(s) failed: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_BAD_WRITE, message=\"Failed to write Delta Lake transaction log entry\", query_id=20261121_122416_00022_x…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "10 DuckDB UPDATE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only update base table"
     }
    }
   },
@@ -412,7 +414,8 @@
      "n": "TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_delta_mk_44903599830_1/t1\", query_id=20261121_122424_…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "CREATE SCHEMA at Tables/_bench_delta_mk_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
     }
    }
   },
@@ -430,7 +433,8 @@
      "o": "supported"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "CREATE SCHEMA at Tables/_bench_delta_rm_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
     }
    }
   },
@@ -448,7 +452,8 @@
      "o": "supported"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "CREATE SCHEMA at Tables/_bench_delta_ine_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
     }
    }
   },
@@ -486,7 +491,8 @@
      "n": "a table could not be created by name in the schema: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_d…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "CREATE SCHEMA at Tables/_bench_delta_drop_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
     }
    }
   },
@@ -749,7 +755,8 @@
      "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_CANNOT_OPEN_SPLIT, message=\"Error opening Hive split abfss://1…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: RuntimeError: RuntimeError: IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.…"
     }
    }
   },
@@ -823,7 +830,8 @@
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:17: mismatched input 'delta'. Expecting: '.', <EOF>\", query_id=20261121_122430_00044_xizu3)"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44903801565_1_detail\" LINE 1: DESCRIBE DETAIL dk_44903801565_1_detail ^^^^^^^^^^^^^^^^^^^^^^^"
     }
    }
   },
@@ -980,7 +988,8 @@
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELE…"
     },
     "duckdb_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TO\" LINE 1: CONVERT TO DELTA parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^"
     }
    }
   }
