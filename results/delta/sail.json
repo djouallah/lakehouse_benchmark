@@ -146,15 +146,15 @@
    "key": "rename_column",
    "group": "schema",
    "question": "RENAME COLUMN, column-mapped table",
-   "outcome": "no-op",
-   "detail": "RENAME COLUMN v TO v2 returned success; expected [(1, 10), (2, 20), (3, 30)], delta-rs reads delta-rs could not read it: DeltaProtocolError: The table has set these reader features: {'columnMapping'} but these are not yet supported by the deltalake reader., Sail reads [(1, 10), (2, 20), (3, 30)]"
+   "outcome": "supported",
+   "detail": "RENAME COLUMN v TO v2: DuckDB reads [(1, 10), (2, 20), (3, 30)]; Sail agrees; log: CREATE TABLE > WRITE > RENAME COLUMN"
   },
   {
    "key": "type_widening",
    "group": "schema",
    "question": "int -> long, type widening on",
-   "outcome": "no-op",
-   "detail": "c is long, and the old row reads delta-rs could not read it: DeltaProtocolError: The table has set these reader features: {'typeWidening'} but these are not yet supported by the deltalake reader."
+   "outcome": "supported",
+   "detail": "c is long in the log; ALTER COLUMN c TYPE BIGINT: DuckDB reads [(1, 7)]; Sail agrees; log: CREATE TABLE > WRITE > CHANGE COLUMN; features ['appendOnly', 'invariants', 'typeWidening']"
   },
   {
    "key": "set_property",
@@ -230,8 +230,8 @@
    "key": "vacuum",
    "group": "maintenance",
    "question": "VACUUM",
-   "outcome": "no",
-   "detail": "AnalysisException: AnalysisException: VACUUM retention is shorter than delta.deletedFileRetentionDuration; set spark.databricks.delta.retentionDurationCheck.enabled=false to explicitly disable the retention check"
+   "outcome": "no-op",
+   "detail": "returned success; the 1 file(s) the overwrite removed are still in storage"
   },
   {
    "key": "checkpoint",
@@ -241,7 +241,7 @@
    "detail": "checkpoint written after 12 commits"
   }
  ],
- "run": "44866693699",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+ "run": "44870941238",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44870941238",
  "date": "2026-11-21"
 }
