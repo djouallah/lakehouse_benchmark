@@ -97,8 +97,8 @@
    "key": "deletion_vectors",
    "group": "write",
    "question": "DELETE on a table with deletion vectors on",
-   "outcome": "no-op",
-   "detail": "the table has deletion vectors on and DELETE rewrote the data instead: 0 new file(s), no deletion vector; log: CREATE TABLE > WRITE > DELETE"
+   "outcome": "supported",
+   "detail": "DELETE wrote 1 deletion vector(s); features ['appendOnly', 'deletionVectors', 'invariants']"
   },
   {
    "key": "partitioned",
@@ -146,15 +146,15 @@
    "key": "rename_column",
    "group": "schema",
    "question": "RENAME COLUMN, column-mapped table",
-   "outcome": "no-op",
-   "detail": "RENAME COLUMN v TO v2 returned success; expected [(1, 10), (2, 20), (3, 30)], delta-rs reads [(None, None), (None, None), (None, None)], Spark reads [(1, 10), (2, 20), (3, 30)]"
+   "outcome": "supported",
+   "detail": "RENAME COLUMN v TO v2: Spark reads [(1, 10), (2, 20), (3, 30)] (delta-rs does not read this table feature)"
   },
   {
    "key": "type_widening",
    "group": "schema",
    "question": "int -> long, type widening on",
-   "outcome": "no-op",
-   "detail": "c is long, and the old row reads delta-rs could not read it: DeltaProtocolError: The table has set these reader features: {'typeWidening'} but these are not yet supported by the deltalake reader."
+   "outcome": "supported",
+   "detail": "c is long in the log; ALTER COLUMN c TYPE BIGINT: Spark reads [(1, 7)] (delta-rs does not read this table feature); features ['appendOnly', 'invariants', 'typeWidening']"
   },
   {
    "key": "set_property",
@@ -241,7 +241,7 @@
    "detail": "checkpoint written after 12 commits"
   }
  ],
- "run": "44866693699",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+ "run": "44869772010",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44869772010",
  "date": "2026-11-21"
 }
