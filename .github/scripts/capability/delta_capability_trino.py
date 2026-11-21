@@ -137,10 +137,10 @@ class TrinoDelta(DeltaProbe):
     def replace_sql(self, name, select):
         return [f"CREATE OR REPLACE TABLE {self.ref(name)}{self._with(name)} AS {select}"]
 
-    def register_sql(self, name):
+    def register_sql(self, name, uri=None):
         return [
             f"CALL {CATALOG}.system.register_table(schema_name => '{SCHEMA}', "
-            f"table_name => '{name}', table_location => '{self.oracle.uri(name)}')"
+            f"table_name => '{name}', table_location => '{uri or self.oracle.uri(name)}')"
         ]
 
     def generated_sql(self, name):

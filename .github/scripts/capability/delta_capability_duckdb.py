@@ -57,8 +57,8 @@ class DuckdbDelta(DeltaProbe):
     def ref(self, name: str) -> str:
         return name
 
-    def _attach(self, name: str) -> str:
-        return f"ATTACH OR REPLACE '{self.oracle.uri(name)}' AS {name} (TYPE delta)"
+    def _attach(self, name: str, uri: str | None = None) -> str:
+        return f"ATTACH OR REPLACE '{uri or self.oracle.uri(name)}' AS {name} (TYPE delta)"
 
     def select(self, pairs) -> str:
         values = ", ".join(f"({i}, {v})" for i, v in pairs)
@@ -66,6 +66,9 @@ class DuckdbDelta(DeltaProbe):
             "SELECT CAST(id AS BIGINT) AS id, CAST(v AS BIGINT) AS v "
             f"FROM (VALUES {values}) AS s(id, v)"
         )
+
+    def variant_sql(self, t):
+        return f"""INSERT INTO {t} SELECT 1::BIGINT AS id, '{{"a": 1}}'::JSON::VARIANT AS x"""
 
     def _lake(self) -> str:
         return f"ATTACH OR REPLACE '{self.cfg.base_path}/Tables' AS lake (TYPE delta)"
@@ -117,8 +120,8 @@ class DuckdbDelta(DeltaProbe):
     def replace_sql(self, name, select):
         return [self._attach(name), f"CREATE OR REPLACE TABLE {name}.{name} AS {select}"]
 
-    def register_sql(self, name):
-        return [self._attach(name)]
+    def register_sql(self, name, uri=None):
+        return [self._attach(name, uri)]
 
     def generated_sql(self, name):
         return [

@@ -178,9 +178,11 @@ class DeltaProbe:
             f"LOCATION '{self.oracle.uri(name)}' AS {select}"
         ]
 
-    def register_sql(self, name: str) -> list[str]:
-        """Make a table delta-rs wrote readable by name."""
-        return [f"CREATE TABLE {self.ref(name)} USING delta LOCATION '{self.oracle.uri(name)}'"]
+    def register_sql(self, name: str, uri: str | None = None) -> list[str]:
+        """Make an existing Delta table readable by name: by default the probe table `name`
+        delta-rs wrote, or the table at `uri`."""
+        where = uri or self.oracle.uri(name)
+        return [f"CREATE TABLE {self.ref(name)} USING delta LOCATION '{where}'"]
 
     def generated_sql(self, name: str) -> list[str]:
         return [
@@ -314,6 +316,10 @@ class DeltaProbe:
     def create_in_schema_sql(self, schema: str, table: str) -> list[str]:
         """CREATE TABLE by name in the schema, no LOCATION: the engine places it."""
         return [f"CREATE TABLE {self.in_schema(schema, table)} ({self._cols()}) USING delta"]
+
+    def variant_sql(self, t: str) -> str:
+        """One row (1, {"a": 1}) into (id BIGINT, x VARIANT)."""
+        return f"""INSERT INTO {t} SELECT CAST(1 AS BIGINT) AS id, parse_json('{{"a": 1}}') AS x"""
 
     def stats_sql(self, t: str) -> str:
         return f"SELECT max(id), count(*) FROM {t}"
@@ -930,6 +936,96 @@ class DeltaProbe:
             raise Skip("data files still in storage after the delete")
         return f"the files of {len(DAYS) - len(keep)} of {len(DAYS)} days deleted"
 
+    FIXTURE = "spark_newer_features_v1"
+    # What the fixture holds once Spark has written it (newer_features_fixture): ids 2..21, after
+    # a DELETE (a deletion vector), an int -> long widening of c and a rename of v to v2.
+    FIXTURE_ROWS = [(i, i * 10, i) for i in range(2, 22)]
+    FIXTURE_FEATURES = {"deletionVectors", "columnMapping", "typeWidening", "v2Checkpoint"}
+
+    def newer_features_fixture(self) -> None:
+        """Spark writes the fixture once, at Tables/_bench_delta_fixtures/<FIXTURE>, and it
+        stays for every engine and every later run."""
+        uri = self.oracle.fixture_uri(self.FIXTURE)
+        t = f"fx_{self.run}"
+        props = (
+            "'delta.columnMapping.mode' = 'id', 'delta.enableDeletionVectors' = 'true', "
+            "'delta.enableTypeWidening' = 'true', 'delta.checkpointPolicy' = 'v2', "
+            "'delta.checkpointInterval' = '2'"
+        )
+        try:
+            self.run_all(
+                [
+                    f"CREATE TABLE `{t}` (id BIGINT, v BIGINT, c INT) USING delta "
+                    f"LOCATION '{uri}' TBLPROPERTIES ({props})",
+                    f"INSERT INTO `{t}` SELECT id, id * 10, CAST(id AS INT) FROM range(1, 21)",
+                    f"DELETE FROM `{t}` WHERE id = 1",
+                    f"ALTER TABLE `{t}` ALTER COLUMN c TYPE BIGINT",
+                    f"ALTER TABLE `{t}` RENAME COLUMN v TO v2",
+                    f"INSERT INTO `{t}` VALUES (21, 210, 21)",
+                ]
+            )
+        except Refused:
+            with contextlib.suppress(Exception):
+                self.oracle.purge_path(self.oracle.fixture_relative(self.FIXTURE))
+            raise
+
+    def read_newer_features(self) -> str:
+        """A table Spark wrote with deletion vectors, column mapping (id), type widening and a
+        v2 checkpoint, read by every engine."""
+        where = self.oracle.fixture_relative(self.FIXTURE)
+        if not self.oracle.has_log(where):
+            if self.CLIENT != "spark":
+                raise Skip("Spark has not written the fixture table yet")
+            self.newer_features_fixture()
+        features = set(self.oracle.features_at(where))
+        if not features >= self.FIXTURE_FEATURES:
+            raise Broken(f"the fixture has features {sorted(features)}")
+        name = f"fxr_{self.run}".lower()
+        try:
+            self.run_all(self.register_sql(name, self.oracle.fixture_uri(self.FIXTURE)))
+        except Refused as exc:
+            raise Refused(f"the table could not be opened: {exc}") from None
+        found = self.sql(f"SELECT id, v2, c FROM {self.ref(name)} ORDER BY id")
+        if not _same(found, self.FIXTURE_ROWS):
+            raise NoOp(f"reads {found[:4]}... ({len(found)} rows), expected ids 2..21")
+        return f"reads all {len(found)} rows right; table features {sorted(self.FIXTURE_FEATURES)}"
+
+    def variant(self) -> str:
+        """A VARIANT column written by the engine: the log must carry the variantType feature,
+        and DuckDB must read the value back."""
+        if not self.can_create:
+            raise Skip("no table could be created")
+        name = self._create("variant", f"id {self.BIGINT}, x VARIANT")
+        self.sql(self.variant_sql(self.ref(name)))
+        features = self.oracle.features(name)
+        if not any(f.startswith("variantType") for f in features):
+            raise NoOp(f"written; the table has no variantType feature: {features}")
+        value = self.oracle.column(name)
+        if isinstance(value, list) and len(value) == 1:
+            value = value[0]
+        if isinstance(value, str):
+            with contextlib.suppress(ValueError):
+                value = json.loads(value)
+        if value != {"a": 1}:
+            raise NoOp(f"variantType on the table, and DuckDB reads {value!r}")
+        return f"features {features}; DuckDB reads {value}"
+
+    def check_constraint(self) -> str:
+        """delta-rs adds CHECK (v > 0); the engine is asked to INSERT v = -1. Refused is right
+        whichever way: by enforcing the constraint, or by refusing a writer feature it does not
+        support. Writing the row breaks the table for every engine that enforces it."""
+        name = self._seeded_by_delta_rs("check")
+        self.oracle.add_constraint(name, "v_positive", "v > 0")
+        try:
+            self.sql(f"INSERT INTO {self.ref(name)} {self.values([(5, -1)])}")
+        except Refused as exc:
+            found = self.oracle.rows(name)
+            if found != SEED:
+                raise NoOp(f"the INSERT failed, and the table now reads {found}") from None
+            return f"refused: {exc}"
+        found = self.oracle.rows(name)
+        raise NoOp(f"wrote (5, -1) past CHECK (v > 0): DuckDB reads {found}")
+
     def stats_from_log(self) -> str:
         """max(id) and count(*) with every data file deleted from storage: the right answer can
         only come from the file statistics in the log."""
@@ -1240,6 +1336,13 @@ PROBES = [
     ("read", "table history", "history"),
     ("read", "max(id), count(*) with every data file deleted", "stats_from_log"),
     ("read", "DESCRIBE DETAIL", "describe_detail"),
+    (
+        "read",
+        "a Spark table with deletion vectors, column mapping, type widening",
+        "read_newer_features",
+    ),
+    ("create", "VARIANT column: write, DuckDB reads it", "variant"),
+    ("write", "INSERT past a CHECK constraint", "check_constraint"),
     ("read", "change data feed", "change_data_feed"),
     ("maintenance", "OPTIMIZE (compaction)", "optimize"),
     ("maintenance", "OPTIMIZE ... ZORDER BY", "zorder"),

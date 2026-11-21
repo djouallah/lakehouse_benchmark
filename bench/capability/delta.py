@@ -64,7 +64,9 @@ class DeltaOracle:
 
     # -- DuckDB reads ------------------------------------------------------------------------
 
-    def _scan(self, name: str, cols: str, version: int | None = None) -> list[tuple]:
+    def _scan(
+        self, name: str, cols: str, version: int | None = None, uri: str | None = None
+    ) -> list[tuple]:
         """`SELECT cols FROM delta_scan(...)`, on a secret holding the current bearer."""
         import duckdb
 
@@ -82,7 +84,7 @@ class DeltaOracle:
         )
         at = f", version => {version}" if version is not None else ""
         return self._duck.execute(
-            f"SELECT {cols} FROM delta_scan('{self.uri(name)}'{at})"
+            f"SELECT {cols} FROM delta_scan('{uri or self.uri(name)}'{at})"
         ).fetchall()
 
     def rows(self, name: str, cols=("id", "v")):
@@ -98,6 +100,22 @@ class DeltaOracle:
             return sorted(tuple(r) for r in self._scan(name, ", ".join(cols), version))
         except Exception as exc:  # noqa: BLE001 - the read-back failing is part of the answer
             return f"DuckDB could not read version {version}: {scrub.scrub_exc(exc, 300)}"
+
+    def rows_uri(self, uri: str, cols: tuple[str, ...]):
+        """The rows of the Delta table at `uri`, through DuckDB; a string when it cannot read."""
+        try:
+            return sorted(tuple(r) for r in self._scan("", ", ".join(cols), uri=uri))
+        except Exception as exc:  # noqa: BLE001 - the read-back failing is part of the answer
+            return f"DuckDB could not read it: {scrub.scrub_exc(exc, 300)}"
+
+    def add_constraint(self, name: str, constraint: str, expression: str) -> None:
+        """A CHECK constraint, added by delta-rs: the checkConstraints writer feature."""
+        self.table_rs(name).alter.add_constraint({constraint: expression})
+
+    def table_rs(self, name: str):
+        from deltalake import DeltaTable
+
+        return DeltaTable(self.uri(name), storage_options=self.storage_options())
 
     def column(self, name: str, col: str = "x") -> list:
         return [r[0] for r in self._scan(name, col)]
@@ -258,6 +276,26 @@ class DeltaOracle:
 
     def folder_exists(self, relative: str) -> bool:
         return self.fs().get_directory_client(relative).exists()
+
+    def fixture_relative(self, fixture: str) -> str:
+        return f"{self.cfg.lakehouse_id}/Tables/_bench_delta_fixtures/{fixture}"
+
+    def fixture_uri(self, fixture: str) -> str:
+        return f"{self.cfg.base_path}/Tables/_bench_delta_fixtures/{fixture}"
+
+    def features_at(self, relative: str) -> list[str]:
+        """Table features of the table at `relative`, from every protocol action in its log."""
+        found: set[str] = set()
+        folder = f"{relative}/_delta_log"
+        for p in self.fs().get_paths(folder, recursive=False):
+            leaf = p.name.rsplit("/", 1)[-1]
+            if not re.fullmatch(r"\d{20}\.json", leaf):
+                continue
+            for line in self._read(p.name).decode().splitlines():
+                if '"protocol"' in line:
+                    proto = json.loads(line)["protocol"]
+                    found |= set(proto.get("readerFeatures", []) + proto.get("writerFeatures", []))
+        return sorted(found)
 
     def has_log(self, relative: str) -> bool:
         """A Delta table's directory: one holding a _delta_log with a commit in it."""
