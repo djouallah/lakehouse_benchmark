@@ -265,8 +265,8 @@
    "key": "merge_partitions",
    "group": "write",
    "question": "MERGE of the last two days into a table partitioned by day",
-   "outcome": "broken",
-   "detail": "with the files of 3 of 5 days deleted, a full scan still works: proves nothing"
+   "outcome": "supported",
+   "detail": "all of rewrite, read"
   },
   {
    "key": "partition_pruning",
@@ -276,7 +276,7 @@
    "detail": "WHERE d = DATE '2026-01-03' returns [(630,)] with the files of 4 of 5 days deleted; a full scan fails, as it should"
   }
  ],
- "run": "44899766192",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44899766192",
+ "run": "44900624331",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900624331",
  "date": "2026-11-21"
 }
