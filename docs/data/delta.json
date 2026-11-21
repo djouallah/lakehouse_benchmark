@@ -2,8 +2,8 @@
  "engines": {
   "pyspark_iceberg": {
    "version": "4.2.1 + delta-spark_4.2_2.13:4.4.1",
-   "run": "44879077298",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44879077298",
+   "run": "44899274431",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44899274431",
    "date": "2026-11-21"
   },
   "lakesail_iceberg": {
@@ -255,6 +255,25 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only merge into base tables!"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "MERGE into a partitioned table reads and rewrites only its partitions",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "broken",
+     "n": "with the files of 3 of 5 days deleted, a full scan still works: proves nothing"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
     }
    }
   },
@@ -540,6 +559,24 @@
     },
     "duckdb_iceberg": {
      "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Partition pruning",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
     }
    }
   },
