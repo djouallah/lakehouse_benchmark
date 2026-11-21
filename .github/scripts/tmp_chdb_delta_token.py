@@ -99,13 +99,15 @@ for label, token in sas.items():
         print(f"\n== {label} SAS on {host}")
         ask(
             "azureBlobStorage read",
-            f"SELECT * FROM azureBlobStorage('{conn}', '{cfg.workspace_id}', '{folder}/x.csv', 'CSVWithNames')",
+            f"SELECT * FROM azureBlobStorage('{conn}', '{cfg.workspace_id}', "
+            f"'{folder}/x.csv', 'CSVWithNames')",
         )
         t = f"t_{run}_{abs(hash((label, host))) % 10000}"
         blob = f"{folder}/{t}/"
         ask(
             "DeltaLakeAzure CREATE",
-            f"CREATE TABLE {t} (id Nullable(Int64)) ENGINE = DeltaLakeAzure('{conn}', '{cfg.workspace_id}', '{blob}')",
+            f"CREATE TABLE {t} (id Nullable(Int64)) "
+            f"ENGINE = DeltaLakeAzure('{conn}', '{cfg.workspace_id}', '{blob}')",
         )
         ask("DeltaLakeAzure INSERT", f"INSERT INTO {t} VALUES (1), (2)")
         ask("DeltaLakeAzure SELECT", f"SELECT count() FROM {t}")
