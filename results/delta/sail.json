@@ -253,9 +253,16 @@
    "question": "INSERTs while delta-rs appends to the same table",
    "outcome": "supported",
    "detail": "10 Sail and 10 delta-rs commits, interleaved 18 times, all 23 rows kept"
+  },
+  {
+   "key": "create_or_replace",
+   "group": "create",
+   "question": "CREATE OR REPLACE TABLE ... AS SELECT on an existing table",
+   "outcome": "supported",
+   "detail": "one commit, version 1 -> 2; DuckDB reads [(7, 70), (8, 80)] now and [(1, 10), (2, 20), (3, 30)] at version 1; log: CREATE TABLE > WRITE > WRITE"
   }
  ],
- "run": "44874863988",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44874863988",
+ "run": "44879316212",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44879316212",
  "date": "2026-11-21"
 }
