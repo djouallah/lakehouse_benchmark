@@ -14,8 +14,8 @@
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
-   "run": "44900624331",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900624331",
+   "run": "44903599830",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44903599830",
    "date": "2026-11-21"
   },
   "duckdb_iceberg": {
@@ -368,7 +368,8 @@
      "n": "the second writer (delta-rs) failed, so this asks nothing: 2005: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to ex…"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "skipped",
+     "n": "the second writer (delta-rs) failed, so this asks nothing: 2003: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to ex…"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -388,7 +389,8 @@
      "n": "the second writer (delta-rs) failed, so this asks nothing: 2001: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to ex…"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "7 Trino UPDATE(s) failed: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_BAD_WRITE, message=\"Failed to write Delta Lake transaction log entry\", query_id=20261121_122416_00022_x…"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -406,7 +408,8 @@
      "o": "supported"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_delta_mk_44903599830_1/t1\", query_id=20261121_122424_…"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -424,7 +427,7 @@
      "o": "supported"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -442,7 +445,7 @@
      "o": "supported"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -479,7 +482,8 @@
      "n": "DROP TABLE returned success; the table is still at Tables/_bench_delta_drop_44903436601_1/t1"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "a table could not be created by name in the schema: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_d…"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -741,7 +745,8 @@
      "o": "supported"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_CANNOT_OPEN_SPLIT, message=\"Error opening Hive split abfss://1…"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -814,7 +819,8 @@
      "o": "supported"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:17: mismatched input 'delta'. Expecting: '.', <EOF>\", query_id=20261121_122430_00044_xizu3)"
     },
     "duckdb_iceberg": {
      "o": "skipped"
@@ -970,7 +976,8 @@
      "n": "IllegalArgumentException: IllegalArgumentException: invalid argument: found CONVERT at 0:7 expected something else, ';', statement, or end of input"
     },
     "trino_iceberg": {
-     "o": "skipped"
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELE…"
     },
     "duckdb_iceberg": {
      "o": "skipped"

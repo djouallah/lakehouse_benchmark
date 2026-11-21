@@ -274,9 +274,72 @@
    "question": "WHERE d = <day> with the other days' files deleted",
    "outcome": "supported",
    "detail": "WHERE d = DATE '2026-01-03' returns [(630,)] with the files of 4 of 5 days deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "race_delete",
+   "group": "concurrency",
+   "question": "DELETEs while delta-rs appends to the same table",
+   "outcome": "skipped",
+   "detail": "the second writer (delta-rs) failed, so this asks nothing: 2003: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to exclude the removed data. Also, if you don't ca\u2026"
+  },
+  {
+   "key": "race_update",
+   "group": "concurrency",
+   "question": "UPDATEs while delta-rs appends to the same table",
+   "outcome": "no",
+   "detail": "7 Trino UPDATE(s) failed: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_BAD_WRITE, message=\"Failed to write Delta Lake transaction log entry\", query_id=20261121_122416_00022_xizu3)"
+  },
+  {
+   "key": "schema_create",
+   "group": "catalog",
+   "question": "CREATE SCHEMA at a folder, a table by name lands in it",
+   "outcome": "no",
+   "detail": "TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_delta_mk_44903599830_1/t1\", query_id=20261121_122424_00033_xizu3)"
+  },
+  {
+   "key": "schema_existing",
+   "group": "catalog",
+   "question": "CREATE SCHEMA IF NOT EXISTS, existing schema",
+   "outcome": "supported",
+   "detail": "CREATE SCHEMA IF NOT EXISTS on the existing _bench_delta_ine_44903599830_1: accepted"
+  },
+  {
+   "key": "schema_drop",
+   "group": "catalog",
+   "question": "DROP SCHEMA removes the folder",
+   "outcome": "supported",
+   "detail": "the folder Tables/_bench_delta_rm_44903599830_1 is gone"
+  },
+  {
+   "key": "drop_table",
+   "group": "catalog",
+   "question": "DROP TABLE removes the table folder",
+   "outcome": "no",
+   "detail": "a table could not be created by name in the schema: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_delta_drop_44903599830_1/t1\", query_id=20261121_122425_00039_xizu3)"
+  },
+  {
+   "key": "stats_from_log",
+   "group": "read",
+   "question": "max(id), count(*) with every data file deleted",
+   "outcome": "no",
+   "detail": "max(id), count(*) fails with all 4 data files deleted, so it opens them: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_CANNOT_OPEN_SPLIT, message=\"Error opening Hive split abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/tr_44903599830_1_stats/part-00000-ffefde91-87d8-4517-9b4a-9fe09da3774a-c000.snappy.parquet (offset=0, length=803): abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/tr_44903599830_1_stats/part-00000-ffefde91-87d8-4517-9b4a-9fe09da3774a-c000.s\u2026"
+  },
+  {
+   "key": "describe_detail",
+   "group": "read",
+   "question": "DESCRIBE DETAIL",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:17: mismatched input 'delta'. Expecting: '.', <EOF>\", query_id=20261121_122430_00044_xizu3)"
+  },
+  {
+   "key": "convert_to_delta",
+   "group": "maintenance",
+   "question": "CONVERT TO DELTA, Parquet files in place",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELETE', 'DENY', 'DESC', 'DESCRIBE', 'DROP', 'EXECUTE', 'EXPLAIN', 'GRANT', 'INSERT', 'MERGE', 'PREPARE', 'REFRESH', 'RESET', 'REVOKE', 'ROLLBACK', 'SET', 'SHOW', 'START', 'TRUNCATE', 'UPDATE', 'USE', 'WITH', <query>\", query_id=20261121_122430_00045_xizu3)"
   }
  ],
- "run": "44900624331",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900624331",
+ "run": "44903599830",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44903599830",
  "date": "2026-11-21"
 }
