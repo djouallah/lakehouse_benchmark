@@ -253,9 +253,16 @@
    "question": "INSERTs while delta-rs appends to the same table",
    "outcome": "no",
    "detail": "9 DuckDB INSERT(s) failed: 1001: RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Multiple exceptions happened. Firstly, the DeltaTransaction failed to commit with 'IO Error: DeltaKernel GenericError (5): Generic delta kernel error: commit conflict at version 2'. Secondly, DuckDB failed to clean up the files produced by this transaction, with: 'INTERNAL Error: TransactionContext::ActiveTransaction called without active transaction This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic. For more information, see https://du\u2026"
+  },
+  {
+   "key": "create_or_replace",
+   "group": "create",
+   "question": "CREATE OR REPLACE TABLE ... AS SELECT on an existing table",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support CREATE OR REPLACE TABLE"
   }
  ],
- "run": "44877644672",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44877644672",
+ "run": "44879752671",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44879752671",
  "date": "2026-11-21"
 }
