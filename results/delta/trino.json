@@ -279,15 +279,15 @@
    "key": "race_delete",
    "group": "concurrency",
    "question": "DELETEs while delta-rs appends to the same table",
-   "outcome": "skipped",
-   "detail": "the second writer (delta-rs) failed, so this asks nothing: 2003: Failed to commit transaction: Commit failed: a concurrent transaction deleted data this operation read. Help: This transaction's query must be rerun to exclude the removed data. Also, if you don't ca\u2026"
+   "outcome": "supported",
+   "detail": "7 Trino DELETEs applied, every delta-rs append kept, interleaved 7 times; 3 refused on the conflict, nothing changed: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_BAD_WRITE, message=\"Failed to write Delta Lake transaction log entry\"\u2026"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATEs while delta-rs appends to the same table",
-   "outcome": "no",
-   "detail": "7 Trino UPDATE(s) failed: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_BAD_WRITE, message=\"Failed to write Delta Lake transaction log entry\", query_id=20261121_122416_00022_xizu3)"
+   "outcome": "supported",
+   "detail": "5 Trino UPDATEs applied, every delta-rs append kept, interleaved 3 times; 5 refused on the conflict, nothing changed: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_BAD_WRITE, message=\"Failed to write Delta Lake transaction log entry\"\u2026"
   },
   {
    "key": "schema_create",
@@ -360,7 +360,7 @@
    "detail": "refused: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=CONSTRAINT_VIOLATION, message=\"Check constraint violation: (\"v\" > 0)\", query_id=20261121_123549_00011_dfd5k)"
   }
  ],
- "run": "44904553818",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904553818",
+ "run": "44905808721",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44905808721",
  "date": "2026-11-21"
 }
