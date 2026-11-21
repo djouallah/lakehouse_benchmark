@@ -260,9 +260,23 @@
    "question": "CREATE OR REPLACE TABLE ... AS SELECT on an existing table",
    "outcome": "no",
    "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support CREATE OR REPLACE TABLE"
+  },
+  {
+   "key": "merge_partitions",
+   "group": "write",
+   "question": "MERGE of the last two days into a table partitioned by day",
+   "outcome": "no",
+   "detail": "MERGE on the partitioned table: RuntimeError: RuntimeError: Binder Error: Can only merge into base tables!"
+  },
+  {
+   "key": "partition_pruning",
+   "group": "read",
+   "question": "WHERE d = <day> with the other days' files deleted",
+   "outcome": "supported",
+   "detail": "WHERE d = DATE '2026-01-03' returns [(630,)] with the files of 4 of 5 days deleted; a full scan fails, as it should"
   }
  ],
- "run": "44879752671",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44879752671",
+ "run": "44900003561",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44900003561",
  "date": "2026-11-21"
 }
