@@ -260,9 +260,23 @@
    "question": "CREATE OR REPLACE TABLE ... AS SELECT on an existing table",
    "outcome": "supported",
    "detail": "one commit, version 1 -> 2; DuckDB reads [(7, 70), (8, 80)] now and [(1, 10), (2, 20), (3, 30)] at version 1; log: CREATE TABLE > WRITE > CREATE OR REPLACE TABLE AS SELECT"
+  },
+  {
+   "key": "merge_partitions",
+   "group": "write",
+   "question": "MERGE of the last two days into a table partitioned by day",
+   "outcome": "broken",
+   "detail": "with the files of 3 of 5 days deleted, a full scan still works: proves nothing"
+  },
+  {
+   "key": "partition_pruning",
+   "group": "read",
+   "question": "WHERE d = <day> with the other days' files deleted",
+   "outcome": "supported",
+   "detail": "WHERE d = DATE '2026-01-03' returns [(630,)] with the files of 4 of 5 days deleted; a full scan fails, as it should"
   }
  ],
- "run": "44879520155",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44879520155",
+ "run": "44899766192",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44899766192",
  "date": "2026-11-21"
 }
