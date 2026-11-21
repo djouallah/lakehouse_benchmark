@@ -36,6 +36,25 @@
  "rows": [
   {
    "group": "Core",
+   "label": "Register a Delta table as catalog.schema.table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Catalog Error: Table with name \"_bench_delta.dk_44877644672_1_fullid\" does not exist because schema \"_bench_delta\" does not exist."
+    }
+   }
+  },
+  {
+   "group": "Core",
    "label": "CREATE TABLE at a path",
    "cells": {
     "pyspark_iceberg": {
@@ -179,25 +198,6 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_overwrite SELECT CAST(id AS BIGINT... ^^^^^^^^^"
-    }
-   }
-  },
-  {
-   "group": "Core",
-   "label": "Full identifier: catalog.schema.table",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "RuntimeError: RuntimeError: Catalog Error: Table with name \"_bench_delta.dk_44877644672_1_fullid\" does not exist because schema \"_bench_delta\" does not exist."
     }
    }
   },

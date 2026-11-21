@@ -30,10 +30,10 @@ SITE_KEY = {
 
 # (row label, probe key): every engine is asked every row under the same key (delta_probe.PROBES).
 ROWS = [
+    ("Register a Delta table as catalog.schema.table", "full_identifier"),
     ("CREATE TABLE at a path", "create_table"),
     ("SELECT a table delta-rs wrote", "select_table"),
     ("CREATE TABLE AS SELECT", "ctas"),
-    ("Full identifier: catalog.schema.table", "full_identifier"),
     ("Concurrent append: both kept", "race_append"),
     ("INSERT / append", "insert_into"),
     ("INSERT ... SELECT", "insert_select"),
@@ -70,6 +70,7 @@ ROWS = [
 GROUPS = {
     # The grid opens on Core: the minimum an engine needs to be usable on Delta.
     "Core": [
+        "Register a Delta table as catalog.schema.table",
         "CREATE TABLE at a path",
         "SELECT a table delta-rs wrote",
         "CREATE TABLE AS SELECT",
@@ -78,7 +79,6 @@ GROUPS = {
         "DELETE",
         "UPDATE",
         "INSERT OVERWRITE, whole table",
-        "Full identifier: catalog.schema.table",
         "Concurrent append: both kept",
     ],
     "Writes": [
