@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 from bench import auth, scrub
 from bench.config import ONELAKE_DFS, Config
@@ -107,15 +108,16 @@ class DeltaOracle:
         """The names in _delta_log, sorted."""
         folder = f"{self.relative(name)}/_delta_log"
         try:
-            return sorted(p.name.rsplit("/", 1)[-1] for p in self.fs().get_paths(folder))
+            # Not recursive: writers keep their own files in subdirectories of the log (Trino's
+            # _trino_meta/extended_stats.json), which are not commits.
+            paths = self.fs().get_paths(folder, recursive=False)
+            return sorted(p.name.rsplit("/", 1)[-1] for p in paths if not p.is_directory)
         except Exception:  # noqa: BLE001 - no log yet
             return []
 
     def versions(self, name: str) -> list[int]:
         return sorted(
-            int(f.split(".")[0])
-            for f in self.log_files(name)
-            if f.endswith(".json") and f[0] != "_"
+            int(f.split(".")[0]) for f in self.log_files(name) if re.fullmatch(r"\d{20}\.json", f)
         )
 
     def latest(self, name: str) -> int:

@@ -323,6 +323,14 @@ class DeltaProbe:
         agree = f"{self.TITLE} agrees" if _same(engine, found) else f"{self.TITLE} reads {engine}"
         return f"{what}: delta-rs reads {found}; {agree}; {self._ops(name)}"
 
+    def _engine_reads(self, name: str, expected: list[tuple], what: str, cols: str) -> str:
+        """For the tables delta-rs cannot read (column mapping, type widening): the log has
+        already decided the schema, and the rows are read back through the engine."""
+        engine = self._engine_rows(name, cols)
+        if not _same(engine, expected):
+            raise NoOp(f"{what} returned success; expected {expected}, {self.TITLE} reads {engine}")
+        return f"{what}: {self.TITLE} reads {engine} (delta-rs does not read this table feature)"
+
     def _ops(self, name: str) -> str:
         try:
             return f"log: {' > '.join(self.oracle.operations(name))}"
@@ -424,10 +432,19 @@ class DeltaProbe:
         )
 
     def deletion_vectors(self) -> str:
-        name = self._fresh("dv", props={"delta.enableDeletionVectors": "true"})
+        # 20 rows in one INSERT, so the deleted row shares its data file with others: a file
+        # holding only deleted rows is dropped whole, and needs no deletion vector.
+        many = [(i, i * 10) for i in range(1, 21)]
+        if not self.can_create:
+            raise Skip("no table could be created")
+        try:
+            name = self._create("dv", props={"delta.enableDeletionVectors": "true"})
+            self.sql(f"INSERT INTO {self.ref(name)} {self.select(many)}")
+        except Refused as exc:
+            raise Refused(f"a table with deletion vectors on could not be created: {exc}") from None
         self.sql(self.delete_sql(self.ref(name), "id = 1"))
         engine = self._engine_rows(name)
-        if not _same(engine, SEED[1:]):
+        if not _same(engine, many[1:]):
             raise NoOp(f"DELETE returned success; {self.TITLE} reads {engine}")
         dvs = [a for a in self.oracle.actions(name, "add") if a.get("deletionVector")]
         if not dvs:
@@ -538,7 +555,7 @@ class DeltaProbe:
         schema = self.oracle.schema(name)
         if "v2" not in schema or "v" in schema:
             raise NoOp(f"RENAME COLUMN returned success; the log's schema is {schema}")
-        return self._expect(name, SEED, "RENAME COLUMN v TO v2", ("id", "v2"))
+        return self._engine_reads(name, SEED, "RENAME COLUMN v TO v2", "id, v2")
 
     def type_widening(self) -> str:
         if not self.can_create:
@@ -558,12 +575,8 @@ class DeltaProbe:
         kind = self.oracle.schema(name).get("c")
         if kind != "long":
             raise NoOp(f"returned success and c is still {kind}")
-        found = self.oracle.rows(name, ("c",))
-        if found != [(7,)]:
-            raise NoOp(f"c is long, and the old row reads {found}")
-        return (
-            f"c is long, and the row written as int reads 7; features {self.oracle.features(name)}"
-        )
+        read = self._engine_reads(name, [(1, 7)], "ALTER COLUMN c TYPE BIGINT", "id, c")
+        return f"c is long in the log; {read}; features {self.oracle.features(name)}"
 
     def set_property(self) -> str:
         name = self._fresh("prop")

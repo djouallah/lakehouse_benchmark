@@ -32,6 +32,8 @@ class SailDelta(DeltaProbe):
         _, port = self.server.listening_address
         self.spark = SparkSession.builder.remote(f"sc://localhost:{port}").getOrCreate()
         self.spark.conf.set("spark.sql.session.timeZone", "UTC")
+        # The same as Spark's session: VACUUM ... RETAIN 0 HOURS is what the vacuum probe asks.
+        self.spark.conf.set("spark.databricks.delta.retentionDurationCheck.enabled", "false")
         scrub.safe_print(f"  pysail listening on {port}")
         return version("pysail")
 
