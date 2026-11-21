@@ -147,14 +147,14 @@
    "group": "schema",
    "question": "RENAME COLUMN, column-mapped table",
    "outcome": "supported",
-   "detail": "RENAME COLUMN v TO v2: Trino reads [(1, 10), (2, 20), (3, 30)] (delta-rs does not read this table feature)"
+   "detail": "RENAME COLUMN v TO v2: DuckDB reads [(1, 10), (2, 20), (3, 30)]; Trino agrees; log: CREATE TABLE > WRITE > RENAME COLUMN"
   },
   {
    "key": "type_widening",
    "group": "schema",
    "question": "int -> long, type widening on",
    "outcome": "no",
-   "detail": "a table with type widening on could not be created and seeded: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:252: Catalog 'delta' table property 'delta.enabletypewidening' does not exist\", query_id=20261121_050946_00075_w2x7k)"
+   "detail": "a table with type widening on could not be created and seeded: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:252: Catalog 'delta' table property 'delta.enabletypewidening' does not exist\", query_id=20261121_053432_00012_3qvif)"
   },
   {
    "key": "set_property",
@@ -241,7 +241,7 @@
    "detail": "checkpoint written after 12 commits"
   }
  ],
- "run": "44869309085",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44869309085",
+ "run": "44871371976",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44871371976",
  "date": "2026-11-21"
 }
