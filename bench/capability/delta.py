@@ -175,6 +175,16 @@ class DeltaOracle:
         """The operation each commit recorded, oldest first."""
         return [c.get("operation", "?") for c in self.all_actions(name, "commitInfo")]
 
+    def commit_authors(self, name: str) -> list[str]:
+        """Who wrote each version, oldest first: "delta-rs" (its commitInfo says clientVersion
+        delta-rs.*) or "engine" (any other writer)."""
+        found = []
+        for version in self.versions(name):
+            info = self.actions(name, "commitInfo", version)
+            client = str((info[0] if info else {}).get("clientVersion", ""))
+            found.append("delta-rs" if client.startswith("delta-rs") else "engine")
+        return found
+
     def active_files(self, name: str) -> list[dict]:
         """The add actions no later remove cancels: the files the current version reads."""
         live: dict[str, dict] = {}

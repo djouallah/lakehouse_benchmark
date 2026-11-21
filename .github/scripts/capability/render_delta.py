@@ -33,6 +33,8 @@ ROWS = [
     ("CREATE TABLE at a path", "create_table"),
     ("SELECT a table delta-rs wrote", "select_table"),
     ("CREATE TABLE AS SELECT", "ctas"),
+    ("Full identifier: catalog.schema.table", "full_identifier"),
+    ("Concurrent append: both kept", "race_append"),
     ("INSERT / append", "insert_into"),
     ("INSERT ... SELECT", "insert_select"),
     ("DELETE", "delete_from"),
@@ -76,6 +78,8 @@ GROUPS = {
         "DELETE",
         "UPDATE",
         "INSERT OVERWRITE, whole table",
+        "Full identifier: catalog.schema.table",
+        "Concurrent append: both kept",
     ],
     "Writes": [
         "MERGE with two actions (UPDATE + INSERT)",

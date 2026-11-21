@@ -81,6 +81,13 @@ class DuckdbDelta(DeltaProbe):
             f"CREATE TABLE {ine}{name}.{name} ({columns}){part}{clus}{with_}",
         ]
 
+    def full_sql(self, name):
+        # The closest core DuckDB has to a catalog over Tables/: attach the folder itself.
+        lake = f"{self.cfg.base_path}/Tables"
+        return [f"ATTACH OR REPLACE '{lake}' AS lake (TYPE delta)"], (
+            f'lake."{self.oracle.folder_uri.rsplit("/", 1)[-1]}"."{name}"'
+        )
+
     def ctas_sql(self, name, select):
         return [self._attach(name), f"CREATE TABLE {name}.{name} AS {select}"]
 

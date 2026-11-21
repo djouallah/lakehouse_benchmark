@@ -103,6 +103,10 @@ class TrinoDelta(DeltaProbe):
         tail = self._with(name, partition, props, cluster)
         return [f"CREATE TABLE {ine}{self.ref(name)} ({columns}){tail}"]
 
+    def full_sql(self, name):
+        # The probe tables already live in schema delta.bench, located at Tables/_bench_delta.
+        return self.register_sql(name), self.ref(name)
+
     def ctas_sql(self, name, select):
         return [f"CREATE TABLE {self.ref(name)}{self._with(name)} AS {select}"]
 

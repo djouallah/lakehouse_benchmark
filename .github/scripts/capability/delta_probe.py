@@ -22,6 +22,7 @@ import datetime as dt
 import json
 import os
 import sys
+import threading
 import time
 
 from harness import (
@@ -244,6 +245,17 @@ class DeltaProbe:
         """An explicit checkpoint statement, for an engine that writes one only when asked."""
         return None
 
+    def full_sql(self, name: str) -> tuple[list[str], str]:
+        """(statements that make the table reachable by a full name, that name): the table sits
+        at Tables/<schema>/<name>, and the name is <catalog>.<schema>.<table>."""
+        catalog = self.execute("SELECT current_catalog()")[0][0]
+        ident = f"`{catalog}`.`{NAMESPACE}`.`{name}`"
+        return [
+            f"CREATE SCHEMA IF NOT EXISTS `{catalog}`.`{NAMESPACE}` "
+            f"LOCATION '{self.oracle.folder_uri}'",
+            f"CREATE TABLE {ident} USING delta LOCATION '{self.oracle.uri(name)}'",
+        ], ident
+
     def drop_sql(self, name: str) -> str | None:
         """Forget the table in the engine's own catalog before its files are purged."""
         return f"DROP TABLE IF EXISTS {self.ref(name)}"
@@ -399,6 +411,79 @@ class DeltaProbe:
         name = self._fresh("overwrite")
         self.sql(self.overwrite_sql(self.ref(name), self.select(NEW_ROWS)))
         return self._expect(name, NEW_ROWS, "INSERT OVERWRITE")
+
+    def full_identifier(self) -> str:
+        """A table at Tables/<schema>/<table>, read and written as catalog.schema.table."""
+        name = self._claim("fullid")
+        self.oracle.write(name, SEED)
+        setup, ident = self.full_sql(name)
+        self.run_all(setup)
+        self.sql(f"INSERT INTO {ident} {self.values([(4, 40)])}")
+        found = self.sql(f"SELECT id, v FROM {ident} ORDER BY id")
+        expected = SEED + [(4, 40)]
+        if not _same(found, expected):
+            raise NoOp(f"{ident} reads {found}, expected {expected}")
+        return self._expect(name, expected, f"INSERT and SELECT as {ident}")
+
+    RACE = 10
+
+    def race_append(self) -> str:
+        """The engine's INSERTs while delta-rs appends to the same table, from another thread.
+        Every commit has to land as its own version: a writer that overwrites a commit file
+        loses the other writer's rows."""
+        name = self._fresh("race")
+        mine = [1000 + i for i in range(1, self.RACE + 1)]
+        theirs = [2000 + i for i in range(1, self.RACE + 1)]
+        second: list[str] = []
+
+        def delta_rs() -> None:
+            for i in theirs:
+                try:
+                    self.oracle.write(name, [(i, i)])
+                except Exception as exc:  # noqa: BLE001 - reported below
+                    second.append(f"{i}: {one_line(exc, 200)}")
+
+        writer = threading.Thread(target=delta_rs)
+        writer.start()
+        failed = []
+        for i in mine:
+            try:
+                self.sql(f"INSERT INTO {self.ref(name)} {self.values([(i, i)])}")
+            except Refused as exc:
+                failed.append(f"{i}: {exc}")
+        writer.join()
+        if second:
+            raise Skip(f"the second writer (delta-rs) failed, so this asks nothing: {second[0]}")
+
+        versions = self.oracle.versions(name)
+        holes = sorted(set(range(versions[-1] + 1)) - set(versions)) if versions else []
+        authors = self.oracle.commit_authors(name)
+        swaps = sum(a != b for a, b in zip(authors, authors[1:], strict=False))
+        found = self.oracle.rows(name, ("id", "v"))
+        if isinstance(found, str):
+            raise NoOp(f"after the race the table cannot be read: {found}")
+        ids = {r[0] for r in found}
+        lost_mine = [
+            i for i in mine if i not in ids and not any(f.startswith(f"{i}:") for f in failed)
+        ]
+        lost_theirs = [i for i in theirs if i not in ids]
+        problems = []
+        if holes:
+            problems.append(f"the log has no version {holes}")
+        if lost_theirs:
+            problems.append(f"lost {len(lost_theirs)} delta-rs append(s): {lost_theirs}")
+        if lost_mine:
+            problems.append(f"lost {len(lost_mine)} {self.TITLE} append(s): {lost_mine}")
+        if failed:
+            problems.append(f"{len(failed)} {self.TITLE} INSERT(s) failed: {failed[0]}")
+        if problems:
+            raise Refused("; ".join(problems))
+        if not swaps:
+            raise Skip("the two writers' commits never interleaved, so no race happened")
+        return (
+            f"{self.RACE} {self.TITLE} and {self.RACE} delta-rs commits, "
+            f"interleaved {swaps} times, all {len(found)} rows kept"
+        )
 
     # -- writes --------------------------------------------------------------------------------
 
@@ -765,6 +850,8 @@ PROBES = [
     ("create", "CREATE TABLE ... AS SELECT", "ctas"),
     ("create", "CREATE TABLE IF NOT EXISTS on an existing table", "create_if_not_exists"),
     ("write", "INSERT INTO ... VALUES", "insert_into"),
+    ("catalog", "INSERT and SELECT as catalog.schema.table", "full_identifier"),
+    ("concurrency", "INSERTs while delta-rs appends to the same table", "race_append"),
     ("write", "INSERT INTO ... SELECT", "insert_select"),
     ("write", "DELETE", "delete_from"),
     ("write", "UPDATE", "update"),
