@@ -4,16 +4,19 @@ Delta has no REST catalog here: a Delta table on OneLake is a directory with a `
 probe table is one under the lakehouse's Tables/_bench_delta/, which Fabric shows as schema
 `_bench_delta`, apart from the Iceberg grid's _bench_capability.
 
-TWO READERS, NEITHER OF THEM AN ENGINE UNDER TEST:
+TWO READERS, NEITHER OF THEM THE ENGINE'S SESSION:
 
-* delta-rs (`deltalake`) reads the rows, the schema and the active files, the way pyiceberg does
-  for the Iceberg grid: it reads what the LOG now says, not what the engine cached.
-* The log itself, read as JSON straight off storage (`commit`), for what delta-rs does not expose
-  the same way across versions: the protocol's table features, deletion vectors, domain metadata,
-  the operation each commit recorded, and whether a checkpoint was written.
+* DuckDB (the `duckdb` wheel, the same 2.0.1 as the pinned CLI, and its delta extension on Delta
+  Kernel) reads the rows, the way pyiceberg does for the Iceberg grid: a fresh `delta_scan` of what
+  the LOG now says, not what the engine cached. Not delta-rs: delta-rs does not read column
+  mapping, type widening or deletion vectors, so it called a working rename a no-op.
+* The log itself, read as JSON straight off storage (`commit`), for the protocol's table
+  features, deletion vectors, domain metadata, the operation each commit recorded, and whether a
+  checkpoint was written.
 
-Storage goes through azure-storage-file-datalake on the job's OIDC credential (bench.auth), and
-delta-rs takes the same bearer.
+delta-rs only WRITES: the seed tables the engines are asked to read. Storage goes through
+azure-storage-file-datalake on the job's OIDC credential (bench.auth); DuckDB and delta-rs take
+the same bearer.
 """
 
 from __future__ import annotations
@@ -32,6 +35,7 @@ class DeltaOracle:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self._fs = None
+        self._duck = None
 
     # -- where -------------------------------------------------------------------------------
 
@@ -58,24 +62,35 @@ class DeltaOracle:
     def storage_options(self) -> dict[str, str]:
         return {"bearer_token": auth.onelake_token(), "use_fabric_endpoint": "true"}
 
-    # -- delta-rs ----------------------------------------------------------------------------
+    # -- DuckDB reads ------------------------------------------------------------------------
 
-    def table(self, name: str, version: int | None = None):
-        from deltalake import DeltaTable
+    def _scan(self, name: str, cols: str) -> list[tuple]:
+        """`SELECT cols FROM delta_scan(...)`, on a secret holding the current bearer."""
+        import duckdb
 
-        return DeltaTable(self.uri(name), version=version, storage_options=self.storage_options())
+        from bench.config import azure_transport
+
+        if self._duck is None:
+            self._duck = duckdb.connect()
+            transport = azure_transport()
+            if transport:
+                self._duck.execute(f"SET azure_transport_option_type = '{transport}'")
+            self._duck.execute("SET TimeZone = 'UTC'")
+        self._duck.execute(
+            "CREATE OR REPLACE SECRET onelake (TYPE azure, PROVIDER access_token, "
+            f"ACCESS_TOKEN '{auth.onelake_token()}')"
+        )
+        return self._duck.execute(f"SELECT {cols} FROM delta_scan('{self.uri(name)}')").fetchall()
 
     def rows(self, name: str, cols=("id", "v")):
-        """The table's rows as sorted tuples, through delta-rs; a string when it cannot read."""
+        """The table's rows as sorted tuples, through DuckDB; a string when it cannot read."""
         try:
-            arrow = self.table(name).to_pyarrow_table(columns=list(cols))
-            return sorted(tuple(row[c] for c in cols) for row in arrow.to_pylist())
+            return sorted(tuple(r) for r in self._scan(name, ", ".join(cols)))
         except Exception as exc:  # noqa: BLE001 - the read-back failing is part of the answer
-            return f"delta-rs could not read it: {scrub.scrub_exc(exc, 300)}"
+            return f"DuckDB could not read it: {scrub.scrub_exc(exc, 300)}"
 
     def column(self, name: str, col: str = "x") -> list:
-        arrow = self.table(name).to_pyarrow_table(columns=[col])
-        return [row[col] for row in arrow.to_pylist()]
+        return [r[0] for r in self._scan(name, col)]
 
     def schema(self, name: str) -> dict[str, str]:
         """{column: Delta type} of the current version, from the log's metaData."""

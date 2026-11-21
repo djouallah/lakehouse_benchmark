@@ -2,7 +2,7 @@
 
 THE SAME APPROACH AS THE ICEBERG GRID (harness.py), on Delta tables written by path into OneLake:
 every engine is asked every row in SQL, one statement at a time, and every effect is checked
-outside the engine (bench.capability.delta.DeltaOracle: delta-rs for the rows, the _delta_log
+outside the engine (bench.capability.delta.DeltaOracle: DuckDB for the rows, the _delta_log
 for the rest). Accepted with no effect is a no-op; every error the engine raises is a `no`
 carrying its own words.
 
@@ -312,24 +312,16 @@ class DeltaProbe:
             return f"the engine could not read it back: {one_line(exc, 300)}"
 
     def _expect(self, name: str, expected: list[tuple], what: str, cols=("id", "v")) -> str:
-        """delta-rs decides, because it reads the log; the engine's own read is reported beside."""
+        """DuckDB decides, reading the log afresh; the engine's own read is reported beside."""
         found = self.oracle.rows(name, cols)
         engine = self._engine_rows(name, ", ".join(cols))
         if found != expected:
             raise NoOp(
-                f"{what} returned success; expected {expected}, delta-rs reads {found}, "
+                f"{what} returned success; expected {expected}, DuckDB reads {found}, "
                 f"{self.TITLE} reads {engine}"
             )
         agree = f"{self.TITLE} agrees" if _same(engine, found) else f"{self.TITLE} reads {engine}"
-        return f"{what}: delta-rs reads {found}; {agree}; {self._ops(name)}"
-
-    def _engine_reads(self, name: str, expected: list[tuple], what: str, cols: str) -> str:
-        """For the tables delta-rs cannot read (column mapping, type widening): the log has
-        already decided the schema, and the rows are read back through the engine."""
-        engine = self._engine_rows(name, cols)
-        if not _same(engine, expected):
-            raise NoOp(f"{what} returned success; expected {expected}, {self.TITLE} reads {engine}")
-        return f"{what}: {self.TITLE} reads {engine} (delta-rs does not read this table feature)"
+        return f"{what}: DuckDB reads {found}; {agree}; {self._ops(name)}"
 
     def _ops(self, name: str) -> str:
         try:
@@ -509,7 +501,7 @@ class DeltaProbe:
         try:
             found = self.oracle.column(name)
         except Exception as exc:  # noqa: BLE001 - the read-back failing is the answer
-            return kind, NOOP, f"written; delta-rs cannot read it: {one_line(exc, 200)}"
+            return kind, NOOP, f"written; DuckDB cannot read it: {one_line(exc, 200)}"
         try:
             got = normalize(kind, found[0]) if len(found) == 1 else f"{len(found)} rows"
         except Exception:  # noqa: BLE001 - a value of another type reads back as itself
@@ -555,7 +547,7 @@ class DeltaProbe:
         schema = self.oracle.schema(name)
         if "v2" not in schema or "v" in schema:
             raise NoOp(f"RENAME COLUMN returned success; the log's schema is {schema}")
-        return self._engine_reads(name, SEED, "RENAME COLUMN v TO v2", "id, v2")
+        return self._expect(name, SEED, "RENAME COLUMN v TO v2", ("id", "v2"))
 
     def type_widening(self) -> str:
         if not self.can_create:
@@ -575,7 +567,7 @@ class DeltaProbe:
         kind = self.oracle.schema(name).get("c")
         if kind != "long":
             raise NoOp(f"returned success and c is still {kind}")
-        read = self._engine_reads(name, [(1, 7)], "ALTER COLUMN c TYPE BIGINT", "id, c")
+        read = self._expect(name, [(1, 7)], "ALTER COLUMN c TYPE BIGINT", ("id", "c"))
         return f"c is long in the log; {read}; features {self.oracle.features(name)}"
 
     def set_property(self) -> str:
@@ -758,11 +750,11 @@ class DeltaProbe:
         print(f"\npurged {dropped} probe table(s)" + (f"; left behind {left}" if left else ""))
 
 
-def _same(engine, delta_rs) -> bool:
-    """The engine's rows against delta-rs's, ignoring tuple vs list and int types."""
-    if isinstance(engine, str) or isinstance(delta_rs, str):
+def _same(engine, oracle) -> bool:
+    """The engine's rows against the oracle's, ignoring tuple vs list."""
+    if isinstance(engine, str) or isinstance(oracle, str):
         return False
-    return [tuple(r) for r in engine] == [tuple(r) for r in delta_rs]
+    return [tuple(r) for r in engine] == [tuple(r) for r in oracle]
 
 
 # (group, question, probe key). The grid's rows are render_delta.py's.
