@@ -1,0 +1,247 @@
+{
+ "engine": "trino",
+ "version": "484 (trinodb/trino:484)",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "the engine starts",
+   "outcome": "supported",
+   "detail": "Trino 484 (trinodb/trino:484); tables under Tables/_bench_delta"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE at a path",
+   "outcome": "supported",
+   "detail": "version 0, schema {'id': 'long', 'v': 'long'}, protocol reader 1 / writer 2"
+  },
+  {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a Delta table delta-rs wrote",
+   "outcome": "supported",
+   "detail": "reads the 3 rows delta-rs wrote"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "supported",
+   "detail": "CTAS: delta-rs reads [(1, 10), (2, 20), (3, 30)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO ... VALUES",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... VALUES: delta-rs reads [(1, 10), (2, 20), (3, 30)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: delta-rs reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE",
+   "outcome": "supported",
+   "detail": "DELETE: delta-rs reads [(2, 20), (3, 30)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "supported",
+   "detail": "UPDATE: delta-rs reads [(1, 999), (2, 20), (3, 30)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_045538_00031_upbaz)"
+  },
+  {
+   "key": "merge_upsert",
+   "group": "write",
+   "question": "MERGE, UPDATE + INSERT",
+   "outcome": "supported",
+   "detail": "MERGE: delta-rs reads [(1, 777), (2, 20), (3, 30), (9, 90)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "overwrite_partition",
+   "group": "write",
+   "question": "overwrite one partition",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_045550_00042_upbaz)"
+  },
+  {
+   "key": "deletion_vectors",
+   "group": "write",
+   "question": "DELETE on a table with deletion vectors on",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "PARTITIONED BY (p)",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "generated_partition",
+   "group": "create",
+   "question": "generated column as the partition",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:91: mismatched input 'GENERATED'. Expecting: ')', ','\", query_id=20261121_045556_00049_upbaz)"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, binary",
+   "outcome": "no",
+   "detail": "works: ['decimal', 'date', 'timestamp', 'binary']; refused: timestamptz: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_INVALID_SCHEMA, message=\"Unsupported type: timestamp(6) with time zone\", query_id=20261121_045607_00056_upbaz)"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ADD COLUMN",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "DROP COLUMN, column-mapped table",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "RENAME COLUMN, column-mapped table",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "type_widening",
+   "group": "schema",
+   "question": "int -> long, type widening on",
+   "outcome": "no",
+   "detail": "a table with type widening on could not be created and seeded: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:252: Catalog 'delta' table property 'delta.enabletypewidening' does not exist\", query_id=20261121_045631_00074_upbaz)"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "set a table property",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "write_after_schema_change",
+   "group": "schema",
+   "question": "ADD COLUMN, then INSERT",
+   "outcome": "supported",
+   "detail": "ADD COLUMN w, then INSERT: delta-rs reads [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 400)]; Trino agrees; log unreadable: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "time_travel_version",
+   "group": "read",
+   "question": "time travel by version",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "time_travel_timestamp",
+   "group": "read",
+   "question": "time travel by timestamp",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "history",
+   "group": "read",
+   "question": "table history",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "change_data_feed",
+   "group": "read",
+   "question": "change data feed",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  },
+  {
+   "key": "optimize",
+   "group": "maintenance",
+   "question": "OPTIMIZE (compaction)",
+   "outcome": "supported",
+   "detail": "4 data files into 1; OPTIMIZE: delta-rs reads [(1, 10), (2, 20), (3, 30), (11, 110), (12, 120), (13, 130), (21, 210), (22, 220), (23, 230), (31, 310), (32, 320), (33, 330)]; Trino agrees; log: WRITE > WRITE > WRITE > WRITE > OPTIMIZE"
+  },
+  {
+   "key": "zorder",
+   "group": "maintenance",
+   "question": "OPTIMIZE ... ZORDER BY",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'OPTIMIZE'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELETE', 'DENY', 'DESC', 'DESCRIBE', 'DROP', 'EXECUTE', 'EXPLAIN', 'GRANT', 'INSERT', 'MERGE', 'PREPARE', 'REFRESH', 'RESET', 'REVOKE', 'ROLLBACK', 'SET', 'SHOW', 'START', 'TRUNCATE', 'UPDATE', 'USE', 'WITH', <query>\", query_id=20261121_045724_00098_upbaz)"
+  },
+  {
+   "key": "liquid_clustering",
+   "group": "maintenance",
+   "question": "CLUSTER BY (liquid clustering)",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:255: Catalog 'delta' table property 'clustered_by' does not exist\", query_id=20261121_045724_00099_upbaz)"
+  },
+  {
+   "key": "vacuum",
+   "group": "maintenance",
+   "question": "VACUUM",
+   "outcome": "supported",
+   "detail": "the 1 removed file(s) deleted; VACUUM: delta-rs reads [(7, 70), (8, 80)]; Trino agrees; log: WRITE > WRITE"
+  },
+  {
+   "key": "checkpoint",
+   "group": "maintenance",
+   "question": "checkpoint after 11 commits",
+   "outcome": "broken",
+   "detail": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+  }
+ ],
+ "run": "44866693699",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+ "date": "2026-11-21"
+}

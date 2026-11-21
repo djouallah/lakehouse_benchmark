@@ -1,0 +1,247 @@
+{
+ "engine": "duckdb",
+ "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
+ "rows": [
+  {
+   "key": "session",
+   "group": "session",
+   "question": "the engine starts",
+   "outcome": "supported",
+   "detail": "DuckDB v2.0.1 (azure bf93a0af8f, delta f41762b37b); tables under Tables/_bench_delta"
+  },
+  {
+   "key": "create_table",
+   "group": "create",
+   "question": "CREATE TABLE at a path",
+   "outcome": "supported",
+   "detail": "version 0, schema {'id': 'long', 'v': 'long'}, protocol reader 3 / writer 7"
+  },
+  {
+   "key": "select_table",
+   "group": "read",
+   "question": "SELECT a Delta table delta-rs wrote",
+   "outcome": "supported",
+   "detail": "reads the 3 rows delta-rs wrote"
+  },
+  {
+   "key": "ctas",
+   "group": "create",
+   "question": "CREATE TABLE ... AS SELECT",
+   "outcome": "supported",
+   "detail": "CTAS: delta-rs reads [(1, 10), (2, 20), (3, 30)]; DuckDB agrees; log: CREATE TABLE"
+  },
+  {
+   "key": "create_if_not_exists",
+   "group": "create",
+   "question": "CREATE TABLE IF NOT EXISTS on an existing table",
+   "outcome": "supported",
+   "detail": "accepted, the existing table untouched: columns ['id', 'v'], rows [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "insert_into",
+   "group": "write",
+   "question": "INSERT INTO ... VALUES",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... VALUES: delta-rs reads [(1, 10), (2, 20), (3, 30)]; DuckDB agrees; log: CREATE TABLE > WRITE"
+  },
+  {
+   "key": "insert_select",
+   "group": "write",
+   "question": "INSERT INTO ... SELECT",
+   "outcome": "supported",
+   "detail": "INSERT INTO ... SELECT: delta-rs reads [(1, 10), (2, 20), (3, 30), (11, 10), (12, 20), (13, 30)]; DuckDB agrees; log: CREATE TABLE > WRITE > WRITE"
+  },
+  {
+   "key": "delete_from",
+   "group": "write",
+   "question": "DELETE",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+  },
+  {
+   "key": "update",
+   "group": "write",
+   "question": "UPDATE",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+  },
+  {
+   "key": "insert_overwrite",
+   "group": "write",
+   "question": "INSERT OVERWRITE, whole table",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_overwrite SELECT CAST(id AS BIGINT... ^^^^^^^^^"
+  },
+  {
+   "key": "merge_upsert",
+   "group": "write",
+   "question": "MERGE, UPDATE + INSERT",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only merge into base tables!"
+  },
+  {
+   "key": "truncate",
+   "group": "write",
+   "question": "TRUNCATE",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+  },
+  {
+   "key": "overwrite_partition",
+   "group": "write",
+   "question": "overwrite one partition",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_ovpart PARTITION (p = 'a') SELECT... ^^^^^^^^^"
+  },
+  {
+   "key": "deletion_vectors",
+   "group": "write",
+   "question": "DELETE on a table with deletion vectors on",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+  },
+  {
+   "key": "partitioned",
+   "group": "create",
+   "question": "PARTITIONED BY (p)",
+   "outcome": "supported",
+   "detail": "partitionColumns ['p']; 3 rows over 2 partitions"
+  },
+  {
+   "key": "generated_partition",
+   "group": "create",
+   "question": "generated column as the partition",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta CREATE TABLE does not support generated columns ('d')"
+  },
+  {
+   "key": "types_scalar",
+   "group": "create",
+   "question": "types: decimal, date, timestamp, timestamptz, binary",
+   "outcome": "supported",
+   "detail": "all of decimal, date, timestamp, timestamptz, binary"
+  },
+  {
+   "key": "types_nested",
+   "group": "create",
+   "question": "nested types: struct, list, map",
+   "outcome": "supported",
+   "detail": "all of struct, list, map"
+  },
+  {
+   "key": "add_column",
+   "group": "schema",
+   "question": "ADD COLUMN",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+  },
+  {
+   "key": "drop_column",
+   "group": "schema",
+   "question": "DROP COLUMN, column-mapped table",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+  },
+  {
+   "key": "rename_column",
+   "group": "schema",
+   "question": "RENAME COLUMN, column-mapped table",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+  },
+  {
+   "key": "type_widening",
+   "group": "schema",
+   "question": "int -> long, type widening on",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+  },
+  {
+   "key": "set_property",
+   "group": "schema",
+   "question": "set a table property",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TBLPROPERTIES\" LINE 1: ALTER TABLE dk_44866693699_1_prop SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true') ^^^^^^^^^^^^^"
+  },
+  {
+   "key": "write_after_schema_change",
+   "group": "schema",
+   "question": "ADD COLUMN, then INSERT",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+  },
+  {
+   "key": "file_pruning",
+   "group": "read",
+   "question": "WHERE id = 22 with the other data files deleted (file pruning)",
+   "outcome": "supported",
+   "detail": "WHERE id = 22 returns [(220,)] with 3 of 4 data files deleted; a full scan fails, as it should"
+  },
+  {
+   "key": "time_travel_version",
+   "group": "read",
+   "question": "time travel by version",
+   "outcome": "supported",
+   "detail": "version 1 reads the 3 seeded rows (the table has 5)"
+  },
+  {
+   "key": "time_travel_timestamp",
+   "group": "read",
+   "question": "time travel by timestamp",
+   "outcome": "supported",
+   "detail": "as of 2026-11-21 05:02:35 UTC reads the 3 seeded rows (the table has 5)"
+  },
+  {
+   "key": "history",
+   "group": "read",
+   "question": "table history",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_history\" LINE 1: DESCRIBE HISTORY dk_44866693699_1_history ^^^^^^^^^^^^^^^^^^^^^^^^"
+  },
+  {
+   "key": "change_data_feed",
+   "group": "read",
+   "question": "change data feed",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+  },
+  {
+   "key": "optimize",
+   "group": "maintenance",
+   "question": "OPTIMIZE (compaction)",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_optimize\" LINE 1: OPTIMIZE dk_44866693699_1_optimize ^^^^^^^^^^^^^^^^^^^^^^^^^"
+  },
+  {
+   "key": "zorder",
+   "group": "maintenance",
+   "question": "OPTIMIZE ... ZORDER BY",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_zorder\" LINE 1: OPTIMIZE dk_44866693699_1_zorder ZORDER BY (id) ^^^^^^^^^^^^^^^^^^^^^^^"
+  },
+  {
+   "key": "liquid_clustering",
+   "group": "maintenance",
+   "question": "CLUSTER BY (liquid clustering)",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"CLUSTER\" LINE 1: ...9_1_cluster.dk_44866693699_1_cluster (id BIGINT, v BIGINT) CLUSTER BY (id) ^^^^^^^"
+  },
+  {
+   "key": "vacuum",
+   "group": "maintenance",
+   "question": "VACUUM",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Binder Error: Can only vacuum or analyze base tables"
+  },
+  {
+   "key": "checkpoint",
+   "group": "maintenance",
+   "question": "checkpoint after 11 commits",
+   "outcome": "supported",
+   "detail": "checkpoint written after 12 commits (CHECKPOINT dk_44866693699_1_checkpoint)"
+  }
+ ],
+ "run": "44866693699",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+ "date": "2026-11-21"
+}

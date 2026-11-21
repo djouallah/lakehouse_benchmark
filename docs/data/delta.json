@@ -1,0 +1,820 @@
+{
+ "engines": {
+  "pyspark_iceberg": {
+   "version": "4.2.1 + delta-spark_4.2_2.13:4.4.1",
+   "run": "44866693699",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+   "date": "2026-11-21"
+  },
+  "lakesail_iceberg": {
+   "version": "0.7.3+main86da637b4f",
+   "run": "44866693699",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+   "date": "2026-11-21"
+  },
+  "trino_iceberg": {
+   "version": "484 (trinodb/trino:484)",
+   "run": "44866693699",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+   "date": "2026-11-21"
+  },
+  "duckdb_iceberg": {
+   "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
+   "run": "44866693699",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+   "date": "2026-11-21"
+  },
+  "chdb_iceberg": {
+   "version": "4.5.1 (delta_lake settings: delta_lake_accurate_write_cast, delta_lake_enable_engine_predicate, delta_lake_enable_expression_visitor_logging, delta_lake_insert_max_bytes_in_data_file, delta_lake_insert_max_rows_in_data_file, delta_lake_log_metadata, delta_lake_reload_schema_for_consistency, delta_lake_snapshot_end_version, delta_lake_snapshot_start_version, delta_lake_snapshot_version, delta_lake_throw_on_engine_predicate_error)",
+   "run": "44866693699",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+   "date": "2026-11-21"
+  }
+ },
+ "groups": [
+  "Core",
+  "Writes",
+  "Partitions & types",
+  "Schema",
+  "Reads & history",
+  "Maintenance"
+ ],
+ "rows": [
+  {
+   "group": "Core",
+   "label": "CREATE TABLE at a path",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this permission. Request ID: . (STD_EXCEPTION)"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "SELECT a table delta-rs wrote",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this…"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "CREATE TABLE AS SELECT",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this permission. Request ID: . (STD_EXCEPTION)"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "INSERT / append",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "INSERT ... SELECT",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "DELETE",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "UPDATE",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Core",
+   "label": "INSERT OVERWRITE, whole table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_045538_00031_upbaz)"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_overwrite SELECT CAST(id AS BIGINT... ^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "MERGE with two actions (UPDATE + INSERT)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only merge into base tables!"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "TRUNCATE",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "Overwrite one partition",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: UnsupportedOperationException: static or mixed PARTITION clauses for INSERT"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_045550_00042_upbaz)"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_ovpart PARTITION (p = 'a') SELECT... ^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "DELETE writes deletion vectors",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "no-op",
+     "n": "the table has deletion vectors on and DELETE rewrote the data instead: 0 new file(s), no deletion vector; log: CREATE TABLE > WRITE > DELETE"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "CREATE TABLE IF NOT EXISTS, existing table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Partitions & types",
+   "label": "Partitioned table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Partitions & types",
+   "label": "Generated column as the partition",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:91: mismatched input 'GENERATED'. Expecting: ')', ','\", query_id=20261121_045556_00049_upbaz)"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta CREATE TABLE does not support generated columns ('d')"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Partitions & types",
+   "label": "Types: decimal, date, timestamp, timestamptz, binary",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "works: ['decimal', 'date', 'timestamp', 'binary']; refused: timestamptz: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_INVALID_SCHEMA, message=\"Unsupported type: timestamp(6) …"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Partitions & types",
+   "label": "Nested types: struct, list, map",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Add column",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Drop column (column mapping)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Rename column (column mapping)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "no-op",
+     "n": "RENAME COLUMN v TO v2 returned success; expected [(1, 10), (2, 20), (3, 30)], delta-rs reads [(None, None), (None, None), (None, None)], Spark reads [(1, 10), (2, 20), (3, 30)]"
+    },
+    "lakesail_iceberg": {
+     "o": "no-op",
+     "n": "RENAME COLUMN v TO v2 returned success; expected [(1, 10), (2, 20), (3, 30)], delta-rs reads delta-rs could not read it: DeltaProtocolError: The table has set these reader features: {'columnMapping'} but these are not y…"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Type widening (int → long)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "no-op",
+     "n": "c is long, and the old row reads delta-rs could not read it: DeltaProtocolError: The table has set these reader features: {'typeWidening'} but these are not yet supported by the deltalake reader."
+    },
+    "lakesail_iceberg": {
+     "o": "no-op",
+     "n": "c is long, and the old row reads delta-rs could not read it: DeltaProtocolError: The table has set these reader features: {'typeWidening'} but these are not yet supported by the deltalake reader."
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "a table with type widening on could not be created and seeded: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:252: Catalog 'delta' table property 'delta.enab…"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Set table property",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TBLPROPERTIES\" LINE 1: ALTER TABLE dk_44866693699_1_prop SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true') ^^^^^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Schema",
+   "label": "Write after a schema change",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "File pruning from file stats",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this…"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Time travel by version",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Time travel by timestamp",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Table history",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_history\" LINE 1: DESCRIBE HISTORY dk_44866693699_1_history ^^^^^^^^^^^^^^^^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Change data feed",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: UnsupportedOperationException: unknown table function: table_changes"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created, so there is nothing to write to"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "OPTIMIZE (compaction)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_optimize\" LINE 1: OPTIMIZE dk_44866693699_1_optimize ^^^^^^^^^^^^^^^^^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this…"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "OPTIMIZE ... ZORDER BY",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: UnsupportedOperationException: OPTIMIZE FULL and ZORDER are not implemented"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'OPTIMIZE'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DEL…"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_zorder\" LINE 1: OPTIMIZE dk_44866693699_1_zorder ZORDER BY (id) ^^^^^^^^^^^^^^^^^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this…"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Liquid clustering (CLUSTER BY)",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: UnsupportedOperationException: CLUSTER BY in CREATE TABLE statement"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:255: Catalog 'delta' table property 'clustered_by' does not exist\", query_id=20261121_045724_00099_upbaz)"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"CLUSTER\" LINE 1: ...9_1_cluster.dk_44866693699_1_cluster (id BIGINT, v BIGINT) CLUSTER BY (id) ^^^^^^^"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "VACUUM",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "AnalysisException: AnalysisException: VACUUM retention is shorter than delta.deletedFileRetentionDuration; set spark.databricks.delta.retentionDurationCheck.enabled=false to explicitly disable the retention check"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only vacuum or analyze base tables"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: ChdbError: ChdbError: Code: 1001. DB::Exception: Azure::Storage::StorageException: 403 Forbidden This request is not authorized to perform this operation using this…"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Checkpoint written",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "broken",
+     "n": "ValueError: invalid literal for int() with base 10: 'extended_stats'"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    },
+    "chdb_iceberg": {
+     "o": "skipped",
+     "n": "no table could be created"
+    }
+   }
+  }
+ ]
+}
