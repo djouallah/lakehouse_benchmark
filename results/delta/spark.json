@@ -337,9 +337,30 @@
    "question": "CONVERT TO DELTA, Parquet files in place",
    "outcome": "supported",
    "detail": "a _delta_log over the files in place; DuckDB reads [(1, 10), (2, 20), (3, 30)]"
+  },
+  {
+   "key": "read_newer_features",
+   "group": "read",
+   "question": "a Spark table with deletion vectors, column mapping, type widening",
+   "outcome": "supported",
+   "detail": "reads all 20 rows right; table features ['columnMapping', 'deletionVectors', 'typeWidening', 'v2Checkpoint']"
+  },
+  {
+   "key": "variant",
+   "group": "create",
+   "question": "VARIANT column: write, DuckDB reads it",
+   "outcome": "supported",
+   "detail": "features ['appendOnly', 'invariants', 'variantType']; DuckDB reads {'a': 1}"
+  },
+  {
+   "key": "check_constraint",
+   "group": "write",
+   "question": "INSERT past a CHECK constraint",
+   "outcome": "supported",
+   "detail": "refused: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : org.apache.spark.sql.delta.schema.DeltaInvariantViolationException: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint v_positive (v > 0) violated by row with values: - v : -1 at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.getConstraintViolationWithValuesException(InvariantViolationException.scala:78) at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.apply(InvariantViolationException.scala:106) at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.apply(I\u2026"
   }
  ],
- "run": "44902839111",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44902839111",
+ "run": "44904017148",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904017148",
  "date": "2026-11-21"
 }
