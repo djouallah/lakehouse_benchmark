@@ -19,13 +19,12 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,sail,trino,duckdb,chdb
+          - spark,sail,trino,duckdb
           - spark
           - sail
           - trino
           - duckdb
-          - chdb
-        default: spark,sail,trino,duckdb,chdb
+        default: spark,sail,trino,duckdb
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -55,7 +54,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,sail,trino,duckdb,chdb' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,sail,trino,duckdb' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -67,7 +66,6 @@ jobs:
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'trino' && 'Trino'
       || matrix.client == 'duckdb' && 'DuckDB'
-      || matrix.client == 'chdb' && 'chDB'
       || matrix.client }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -104,7 +102,7 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(deltalake|pyarrow|pysail|pyspark|chdb|chdb-core|trino)=' || true
+          pip list --format=freeze | grep -Ei '^(deltalake|pyarrow|pysail|pyspark|trino)=' || true
 
       - uses: actions/setup-java@v5
         if: matrix.client == 'spark'

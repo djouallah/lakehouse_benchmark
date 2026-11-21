@@ -18,7 +18,7 @@ from render_readme import _one_line, cell, load
 
 # The engines with a SQL path that writes Delta. An engine whose docs say it only reads Delta, or
 # whose SQL has no Delta write, has no column.
-ENGINES = ("spark", "sail", "trino", "duckdb", "chdb")
+ENGINES = ("spark", "sail", "trino", "duckdb")
 # The site's engine keys: the same as the Iceberg grid's, so each engine keeps its one label and
 # colour across the site (bench/charts.py, docs/index.html).
 SITE_KEY = {
@@ -26,7 +26,6 @@ SITE_KEY = {
     "sail": "lakesail_iceberg",
     "trino": "trino_iceberg",
     "duckdb": "duckdb_iceberg",
-    "chdb": "chdb_iceberg",
 }
 
 # (row label, probe key): every engine is asked every row under the same key (delta_probe.PROBES).

@@ -641,7 +641,7 @@ const CAPABILITY = { id: "iceberg", title: "Grid", json: "data/capability.json",
 const CAPABILITY_RANK = { id: "iceberg-overview", title: "Overview", of: CAPABILITY };  // the grid's data, ranked
 // The Delta support tab: the same grid and overview on data/delta.json (.github/scripts/capability/render_delta.py).
 const DELTA = { id: "delta", title: "Grid", json: "data/delta.json", key: "delta",
-  caption: "What each engine can do in SQL writing Delta tables into OneLake, each table a path under the lakehouse's Tables folder. Spark runs delta-spark; DuckDB and chDB write through Delta Kernel.",
+  caption: "What each engine can do in SQL writing Delta tables into OneLake, each table a path under the lakehouse's Tables folder. Spark runs delta-spark; DuckDB writes through Delta Kernel.",
   rank: total => `Operations each engine supports writing Delta tables into OneLake in SQL, out of ${total}, split by group.` };
 const DELTA_RANK = { id: "delta-overview", title: "Overview", of: DELTA };
 const ENGINES = { id: "engines", title: "Engines" };

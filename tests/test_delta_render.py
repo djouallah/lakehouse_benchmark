@@ -42,7 +42,7 @@ def test_every_row_is_in_one_group_and_the_grid_opens_on_core():
 
 
 def test_the_grid_is_only_the_engines_that_write_delta_in_sql():
-    assert render_delta.ENGINES == ("spark", "sail", "trino", "duckdb", "chdb")
+    assert render_delta.ENGINES == ("spark", "sail", "trino", "duckdb")
     for engine in render_delta.ENGINES:
         assert (_SCRIPTS / f"delta_capability_{engine}.py").exists()
         assert (_ROOT / "requirements" / f"capability_delta_{engine}.txt").exists()
@@ -52,12 +52,12 @@ def test_cells_quote_the_reading_and_columns_sort_by_yes():
     keys = [key for _, key in render_delta.ROWS]
     data = {
         "duckdb": _reading("duckdb", {k: "supported" for k in keys}),
-        "chdb": _reading("chdb", {k: ("no" if k == "update" else "no-op") for k in keys}),
+        "trino": _reading("trino", {k: ("no" if k == "update" else "no-op") for k in keys}),
     }
     grid = render_delta.site_matrix(data)
-    assert list(grid["engines"]) == ["duckdb_iceberg", "chdb_iceberg"]
+    assert list(grid["engines"]) == ["duckdb_iceberg", "trino_iceberg"]
     update = next(r for r in grid["rows"] if r["label"] == "UPDATE")
-    assert update["cells"]["chdb_iceberg"] == {"o": "no", "n": "update said no"}
+    assert update["cells"]["trino_iceberg"] == {"o": "no", "n": "update said no"}
     assert update["cells"]["duckdb_iceberg"] == {"o": "supported"}
 
 

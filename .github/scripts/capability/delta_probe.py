@@ -7,7 +7,7 @@ for the rest). Accepted with no effect is a no-op; every error the engine raises
 carrying its own words.
 
 ONE CLASS, ONE DIALECT PER ENGINE. `DeltaProbe` holds every probe and writes Spark SQL, which is
-Delta's own dialect: Spark's and Sail's scripts use it byte for byte. DuckDB, Trino and chDB
+Delta's own dialect: Spark's and Sail's scripts use it byte for byte. DuckDB and Trino
 override the statements they spell differently. Where an engine has no statement for an
 operation, it is sent the closest one it has, or Spark's, so the `no` is in its own words.
 
