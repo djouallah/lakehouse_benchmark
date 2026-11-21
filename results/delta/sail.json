@@ -239,9 +239,23 @@
    "question": "checkpoint after 11 commits",
    "outcome": "supported",
    "detail": "checkpoint written after 12 commits"
+  },
+  {
+   "key": "full_identifier",
+   "group": "catalog",
+   "question": "INSERT and SELECT as catalog.schema.table",
+   "outcome": "supported",
+   "detail": "INSERT and SELECT as `sail`.`_bench_delta`.`sl_44874863988_1_fullid`: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; Sail reads the engine could not read it back: Table not found: [TABLE_OR_VIEW_NOT_FOUND] Table or view not found: sl_44874863988_1_fullid; log: WRITE > WRITE"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERTs while delta-rs appends to the same table",
+   "outcome": "supported",
+   "detail": "10 Sail and 10 delta-rs commits, interleaved 18 times, all 23 rows kept"
   }
  ],
- "run": "44870941238",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44870941238",
+ "run": "44874863988",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44874863988",
  "date": "2026-11-21"
 }
