@@ -279,15 +279,15 @@
    "key": "race_delete",
    "group": "concurrency",
    "question": "DELETEs while delta-rs appends to the same table",
-   "outcome": "no",
-   "detail": "2 Spark DELETE(s) failed: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : io.delta.exceptions.ConcurrentAppendException: [DELTA_CONCURRENT_APPEND.WITHOUT_HINT] Transaction conflict detected. a concurrent WRITE added data to table spark_catalog.default.sp_44902839111_1_racedel committed at version 2. The concurrent operation modified data that should have been read by this operation. Please retry the operation. Refer to https://docs.delta.io/latest/concurrency-control.html for more information. at io.delta.exceptions.ConcurrentAppendException$.apply(DeltaConcurrentExceptions.scala:136) at org.a\u2026"
+   "outcome": "supported",
+   "detail": "7 Spark DELETEs applied, every delta-rs append kept, interleaved 2 times; 3 refused on the conflict, nothing changed: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : io.delta.exceptions.ConcurrentAppendException: [DELTA_CONCURRENT_APPEND.WITHOUT_HINT] \u2026"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATEs while delta-rs appends to the same table",
-   "outcome": "no",
-   "detail": "5 Spark UPDATE(s) failed: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : io.delta.exceptions.ConcurrentAppendException: [DELTA_CONCURRENT_APPEND.WITHOUT_HINT] Transaction conflict detected. a concurrent WRITE added data to table spark_catalog.default.sp_44902839111_1_raceupd committed at version 2. The concurrent operation modified data that should have been read by this operation. Please retry the operation. Refer to https://docs.delta.io/latest/concurrency-control.html for more information. at io.delta.exceptions.ConcurrentAppendException$.apply(DeltaConcurrentExceptions.scala:136) at org.a\u2026"
+   "outcome": "supported",
+   "detail": "7 Spark UPDATEs applied, every delta-rs append kept, interleaved 2 times; 3 refused on the conflict, nothing changed: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : io.delta.exceptions.ConcurrentAppendException: [DELTA_CONCURRENT_APPEND.WITHOUT_HINT] \u2026"
   },
   {
    "key": "schema_create",
@@ -360,7 +360,7 @@
    "detail": "refused: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : org.apache.spark.sql.delta.schema.DeltaInvariantViolationException: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint v_positive (v > 0) violated by row with values: - v : -1 at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.getConstraintViolationWithValuesException(InvariantViolationException.scala:78) at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.apply(InvariantViolationException.scala:106) at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.apply(I\u2026"
   }
  ],
- "run": "44904017148",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904017148",
+ "run": "44904945726",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904945726",
  "date": "2026-11-21"
 }
