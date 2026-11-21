@@ -337,9 +337,30 @@
    "question": "CONVERT TO DELTA, Parquet files in place",
    "outcome": "no",
    "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELETE', 'DENY', 'DESC', 'DESCRIBE', 'DROP', 'EXECUTE', 'EXPLAIN', 'GRANT', 'INSERT', 'MERGE', 'PREPARE', 'REFRESH', 'RESET', 'REVOKE', 'ROLLBACK', 'SET', 'SHOW', 'START', 'TRUNCATE', 'UPDATE', 'USE', 'WITH', <query>\", query_id=20261121_122430_00045_xizu3)"
+  },
+  {
+   "key": "read_newer_features",
+   "group": "read",
+   "question": "a Spark table with deletion vectors, column mapping, type widening",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=COLUMN_NOT_FOUND, message=\"line 1:16: Column 'c' cannot be resolved\", query_id=20261121_123543_00008_dfd5k)"
+  },
+  {
+   "key": "variant",
+   "group": "create",
+   "question": "VARIANT column: write, DuckDB reads it",
+   "outcome": "no",
+   "detail": "TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_INVALID_SCHEMA, message=\"Unsupported type: variant\", query_id=20261121_123543_00009_dfd5k)"
+  },
+  {
+   "key": "check_constraint",
+   "group": "write",
+   "question": "INSERT past a CHECK constraint",
+   "outcome": "supported",
+   "detail": "refused: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=CONSTRAINT_VIOLATION, message=\"Check constraint violation: (\"v\" > 0)\", query_id=20261121_123549_00011_dfd5k)"
   }
  ],
- "run": "44903599830",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44903599830",
+ "run": "44904553818",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904553818",
  "date": "2026-11-21"
 }
