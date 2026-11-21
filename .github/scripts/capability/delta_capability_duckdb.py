@@ -91,6 +91,9 @@ class DuckdbDelta(DeltaProbe):
     def ctas_sql(self, name, select):
         return [self._attach(name), f"CREATE TABLE {name}.{name} AS {select}"]
 
+    def replace_sql(self, name, select):
+        return [self._attach(name), f"CREATE OR REPLACE TABLE {name}.{name} AS {select}"]
+
     def register_sql(self, name):
         return [self._attach(name)]
 

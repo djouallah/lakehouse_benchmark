@@ -161,6 +161,13 @@ class DeltaProbe:
             f"LOCATION '{self.oracle.uri(name)}' AS {select}"
         ]
 
+    def replace_sql(self, name: str, select: str) -> list[str]:
+        """CREATE OR REPLACE TABLE ... AS SELECT on an existing table, at the same location."""
+        return [
+            f"CREATE OR REPLACE TABLE {self.ref(name)} USING delta "
+            f"LOCATION '{self.oracle.uri(name)}' AS {select}"
+        ]
+
     def register_sql(self, name: str) -> list[str]:
         """Make a table delta-rs wrote readable by name."""
         return [f"CREATE TABLE {self.ref(name)} USING delta LOCATION '{self.oracle.uri(name)}'"]
@@ -372,6 +379,29 @@ class DeltaProbe:
         name = self._claim("ctas")
         self.run_all(self.ctas_sql(name, self.select(SEED)))
         return self._expect(name, SEED, "CTAS")
+
+    def create_or_replace(self) -> str:
+        """Replace an existing table with a query's rows. On Delta that is one new commit in the
+        same _delta_log: the table keeps its path and history, and is never missing."""
+        name = self._fresh("replace")
+        before = self.oracle.latest(name)
+        self.run_all(self.replace_sql(name, self.select(NEW_ROWS)))
+        after = self.oracle.versions(name)
+        found = self.oracle.rows(name)
+        if found != NEW_ROWS:
+            raise NoOp(f"returned success; expected {NEW_ROWS}, DuckDB reads {found}")
+        if not after or after[-1] <= before or before not in after:
+            raise NoOp(
+                f"the rows were replaced by starting a new log (versions {after}), "
+                f"not by a commit after version {before}: the table's history is gone"
+            )
+        old = self.oracle.rows_at(name, before)
+        if old != SEED:
+            raise NoOp(f"replaced in version {after[-1]}; version {before} reads {old}")
+        return (
+            f"one commit, version {before} -> {after[-1]}; DuckDB reads {found} now and "
+            f"{old} at version {before}; {self._ops(name)}"
+        )
 
     def create_if_not_exists(self) -> str:
         name = self._fresh("ine")
@@ -851,6 +881,7 @@ PROBES = [
     ("create", "CREATE TABLE at a path", "create_table"),
     ("read", "SELECT a Delta table delta-rs wrote", "select_table"),
     ("create", "CREATE TABLE ... AS SELECT", "ctas"),
+    ("create", "CREATE OR REPLACE TABLE ... AS SELECT on an existing table", "create_or_replace"),
     ("create", "CREATE TABLE IF NOT EXISTS on an existing table", "create_if_not_exists"),
     ("write", "INSERT INTO ... VALUES", "insert_into"),
     ("catalog", "INSERT and SELECT as catalog.schema.table", "full_identifier"),

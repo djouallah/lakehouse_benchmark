@@ -64,7 +64,7 @@ class DeltaOracle:
 
     # -- DuckDB reads ------------------------------------------------------------------------
 
-    def _scan(self, name: str, cols: str) -> list[tuple]:
+    def _scan(self, name: str, cols: str, version: int | None = None) -> list[tuple]:
         """`SELECT cols FROM delta_scan(...)`, on a secret holding the current bearer."""
         import duckdb
 
@@ -80,7 +80,10 @@ class DeltaOracle:
             "CREATE OR REPLACE SECRET onelake (TYPE azure, PROVIDER access_token, "
             f"ACCESS_TOKEN '{auth.onelake_token()}')"
         )
-        return self._duck.execute(f"SELECT {cols} FROM delta_scan('{self.uri(name)}')").fetchall()
+        at = f", version => {version}" if version is not None else ""
+        return self._duck.execute(
+            f"SELECT {cols} FROM delta_scan('{self.uri(name)}'{at})"
+        ).fetchall()
 
     def rows(self, name: str, cols=("id", "v")):
         """The table's rows as sorted tuples, through DuckDB; a string when it cannot read."""
@@ -88,6 +91,13 @@ class DeltaOracle:
             return sorted(tuple(r) for r in self._scan(name, ", ".join(cols)))
         except Exception as exc:  # noqa: BLE001 - the read-back failing is part of the answer
             return f"DuckDB could not read it: {scrub.scrub_exc(exc, 300)}"
+
+    def rows_at(self, name: str, version: int, cols=("id", "v")):
+        """The rows of one earlier version, through DuckDB; a string when it cannot read."""
+        try:
+            return sorted(tuple(r) for r in self._scan(name, ", ".join(cols), version))
+        except Exception as exc:  # noqa: BLE001 - the read-back failing is part of the answer
+            return f"DuckDB could not read version {version}: {scrub.scrub_exc(exc, 300)}"
 
     def column(self, name: str, col: str = "x") -> list:
         return [r[0] for r in self._scan(name, col)]

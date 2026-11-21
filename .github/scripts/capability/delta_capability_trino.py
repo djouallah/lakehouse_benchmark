@@ -110,6 +110,9 @@ class TrinoDelta(DeltaProbe):
     def ctas_sql(self, name, select):
         return [f"CREATE TABLE {self.ref(name)}{self._with(name)} AS {select}"]
 
+    def replace_sql(self, name, select):
+        return [f"CREATE OR REPLACE TABLE {self.ref(name)}{self._with(name)} AS {select}"]
+
     def register_sql(self, name):
         return [
             f"CALL {CATALOG}.system.register_table(schema_name => '{SCHEMA}', "
