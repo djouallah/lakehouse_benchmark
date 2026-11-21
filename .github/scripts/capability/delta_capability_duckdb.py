@@ -67,6 +67,13 @@ class DuckdbDelta(DeltaProbe):
             f"FROM (VALUES {values}) AS s(id, v)"
         )
 
+    def select_dated(self, rows) -> str:
+        values = ", ".join(f"({i}, {v}, DATE '{d}')" for i, v, d in rows)
+        return (
+            "SELECT CAST(id AS BIGINT) AS id, CAST(v AS BIGINT) AS v, d "
+            f"FROM (VALUES {values}) AS s(id, v, d)"
+        )
+
     def create_sql(
         self, name, columns, *, partition=None, props=None, cluster=None, if_not_exists=False
     ):

@@ -85,6 +85,13 @@ class TrinoDelta(DeltaProbe):
             f"FROM (VALUES {values}) AS s(id, v)"
         )
 
+    def select_dated(self, rows) -> str:
+        values = ", ".join(f"({i}, {v}, DATE '{d}')" for i, v, d in rows)
+        return (
+            "SELECT CAST(id AS BIGINT) AS id, CAST(v AS BIGINT) AS v, d "
+            f"FROM (VALUES {values}) AS s(id, v, d)"
+        )
+
     def _with(self, name, partition=None, props=None, cluster=None) -> str:
         parts = [f"location = '{self.oracle.uri(name)}'"]
         if partition:

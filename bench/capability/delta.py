@@ -121,6 +121,32 @@ class DeltaOracle:
         )
         write_deltalake(self.uri(name), data, mode=mode, storage_options=self.storage_options())
 
+    def write_dated(self, name: str, rows) -> None:
+        """Rows (id, v, d) written by delta-rs, partitioned by the DATE column d: one data file
+        per partition, the table the partition probes read and merge into."""
+        import datetime as dt
+
+        import pyarrow as pa
+        from deltalake import write_deltalake
+
+        data = pa.table(
+            {
+                "id": pa.array([r[0] for r in rows], pa.int64()),
+                "v": pa.array([r[1] for r in rows], pa.int64()),
+                "d": pa.array([dt.date.fromisoformat(r[2]) for r in rows], pa.date32()),
+            }
+        )
+        write_deltalake(
+            self.uri(name), data, partition_by=["d"], storage_options=self.storage_options()
+        )
+
+    def partition_of(self, name: str) -> dict[str, str]:
+        """{data file path: its partition value of d}, for every file any add action named."""
+        found = {}
+        for add in self.all_actions(name, "add"):
+            found[add["path"]] = str((add.get("partitionValues") or {}).get("d"))
+        return found
+
     # -- the log -----------------------------------------------------------------------------
 
     def _read(self, path: str) -> bytes:

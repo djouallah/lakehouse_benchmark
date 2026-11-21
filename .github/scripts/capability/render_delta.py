@@ -43,6 +43,7 @@ ROWS = [
     ("INSERT OVERWRITE, whole table", "insert_overwrite"),
     ("CREATE TABLE IF NOT EXISTS, existing table", "create_if_not_exists"),
     ("MERGE with two actions (UPDATE + INSERT)", "merge_upsert"),
+    ("MERGE into a partitioned table reads and rewrites only its partitions", "merge_partitions"),
     ("TRUNCATE", "truncate"),
     ("Overwrite one partition", "overwrite_partition"),
     ("DELETE writes deletion vectors", "deletion_vectors"),
@@ -57,6 +58,7 @@ ROWS = [
     ("Set table property", "set_property"),
     ("Write after a schema change", "write_after_schema_change"),
     ("File pruning from file stats", "file_pruning"),
+    ("Partition pruning", "partition_pruning"),
     ("Time travel by version", "time_travel_version"),
     ("Time travel by timestamp", "time_travel_timestamp"),
     ("Table history", "history"),
@@ -85,6 +87,7 @@ GROUPS = {
     ],
     "Writes": [
         "MERGE with two actions (UPDATE + INSERT)",
+        "MERGE into a partitioned table reads and rewrites only its partitions",
         "TRUNCATE",
         "Overwrite one partition",
         "DELETE writes deletion vectors",
@@ -106,6 +109,7 @@ GROUPS = {
     ],
     "Reads & history": [
         "File pruning from file stats",
+        "Partition pruning",
         "Time travel by version",
         "Time travel by timestamp",
         "Table history",

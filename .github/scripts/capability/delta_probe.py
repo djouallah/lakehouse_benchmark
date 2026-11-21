@@ -36,6 +36,7 @@ from harness import (
     STATS_FILES,
     SUPPORTED,
     TYPE_EXPECTED,
+    Broken,
     NoOp,
     Refused,
     Report,
@@ -57,6 +58,14 @@ NEW_ROWS = [(7, 70), (8, 80)]
 # Delta has no UUID type, so the scalar row asks the five it has.
 SCALAR_TYPES = ("decimal", "date", "timestamp", "timestamptz", "binary")
 CHECKPOINT_COMMITS = 11
+# A table partitioned by day: two rows a day over five days, one data file per day.
+DAYS = [f"2026-01-0{i}" for i in range(1, 6)]
+DATED = [(i * 10 + j, (i * 10 + j) * 10, day) for i, day in enumerate(DAYS, 1) for j in (1, 2)]
+# The incremental batch: every row in the last two days, two updates and one insert.
+MERGE_DATED = [(41, 999, DAYS[3]), (51, 999, DAYS[4]), (53, 530, DAYS[4])]
+MERGED_DATED = sorted(
+    [(i, 999 if i in (41, 51) else v, d) for i, v, d in DATED] + [(53, 530, DAYS[4])]
+)
 
 
 def one_line(text: object, limit: int = 600) -> str:
@@ -193,6 +202,24 @@ class DeltaProbe:
             f"MERGE INTO {t} AS tg USING ({source}) AS s ON tg.id = s.id "
             "WHEN MATCHED THEN UPDATE SET v = s.v "
             "WHEN NOT MATCHED THEN INSERT (id, v) VALUES (s.id, s.v)"
+        )
+
+    def select_dated(self, rows) -> str:
+        """A SELECT yielding (id BIGINT, v BIGINT, d DATE) rows."""
+        values = ", ".join(f"({i}, {v}, '{d}')" for i, v, d in rows)
+        return (
+            "SELECT CAST(id AS BIGINT) AS id, CAST(v AS BIGINT) AS v, CAST(d AS DATE) AS d "
+            f"FROM VALUES {values} AS s(id, v, d)"
+        )
+
+    def merge_dated_sql(self, t: str, source: str, since: str) -> str:
+        """The incremental MERGE: matched on the key and the partition, with the window the new
+        rows fall in stated in the ON clause, the way an incremental model writes it."""
+        return (
+            f"MERGE INTO {t} AS tg USING ({source}) AS s "
+            f"ON tg.id = s.id AND tg.d = s.d AND tg.d >= DATE '{since}' "
+            "WHEN MATCHED THEN UPDATE SET v = s.v "
+            "WHEN NOT MATCHED THEN INSERT (id, v, d) VALUES (s.id, s.v, s.d)"
         )
 
     def truncate_sql(self, t: str) -> str:
@@ -729,6 +756,95 @@ class DeltaProbe:
             f"{len(gone)} of {len(files)} data files deleted",
         )
 
+    def _dated_by_delta_rs(self, what: str) -> str:
+        """DATED written by delta-rs, one data file per day, made readable to the engine."""
+        name = self._claim(what)
+        self.oracle.write_dated(name, DATED)
+        try:
+            self.run_all(self.register_sql(name))
+        except Refused as exc:
+            raise Refused(
+                f"a partitioned table written by delta-rs could not be opened: {exc}"
+            ) from None
+        return name
+
+    def _delete_days(self, name: str, keep: set[str]) -> str:
+        """Delete the data files of every day not in `keep` from storage; the log stays."""
+        files = self.oracle.partition_of(name)
+        gone = [path for path, day in files.items() if day not in keep]
+        if len(set(files.values())) != len(DAYS) or not gone:
+            raise Skip(f"expected one partition per day, found {sorted(set(files.values()))}")
+        for path in gone:
+            self.oracle.delete_file(name, path)
+        if any(self.oracle.file_exists(name, p) for p in gone):
+            raise Skip("data files still in storage after the delete")
+        return f"the files of {len(DAYS) - len(keep)} of {len(DAYS)} days deleted"
+
+    def partition_pruning(self) -> str:
+        """WHERE on the partition column, with every other partition's files deleted from
+        storage: the right answer means the engine never opened them."""
+        name = self._dated_by_delta_rs("ppart")
+        day = DAYS[2]
+        gone = self._delete_days(name, {day})
+        t = self.ref(name)
+        expected = [(sum(v for _, v, d in DATED if d == day),)]
+        return read_without_files(
+            f"WHERE d = DATE '{day}'",
+            lambda: self.sql(f"SELECT sum(v) FROM {t} WHERE d = DATE '{day}'"),
+            expected,
+            lambda: self.sql(f"SELECT sum(v) FROM {t}"),
+            gone,
+        )
+
+    def merge_partitions(self) -> str:
+        """An incremental MERGE whose new rows all fall in the last two days, on a table
+        partitioned by day. Two questions: does it rewrite only those two partitions (the
+        commit's add and remove actions), and does it read only them (the same MERGE with the
+        older days' files deleted from storage must still succeed)?"""
+        since = DAYS[-2]
+        recent = set(DAYS[-2:])
+        source = self.select_dated(MERGE_DATED)
+        results = []
+
+        name = self._dated_by_delta_rs("mergepart")
+        try:
+            self.sql(self.merge_dated_sql(self.ref(name), source, since))
+        except Refused as exc:
+            raise Refused(f"MERGE on the partitioned table: {exc}") from None
+        found = self.oracle.rows(name, ("id", "v", "d"))
+        found = found if isinstance(found, str) else [(i, v, str(d)) for i, v, d in found]
+        if found != MERGED_DATED:
+            raise NoOp(f"MERGE returned success; expected {MERGED_DATED}, DuckDB reads {found}")
+        where = self.oracle.partition_of(name)
+        removed = {where.get(a["path"], "?") for a in self.oracle.actions(name, "remove")}
+        added = {
+            str((a.get("partitionValues") or {}).get("d")) for a in self.oracle.actions(name, "add")
+        }
+        touched = sorted(removed | added)
+        if set(touched) <= recent:
+            results.append(("rewrite", SUPPORTED, f"rewrote only {touched}"))
+        else:
+            results.append(
+                ("rewrite", NOOP, f"rewrote {touched}, the source only holds {sorted(recent)}")
+            )
+
+        cold = self._dated_by_delta_rs("mergecold")
+        gone = self._delete_days(cold, recent)
+        try:
+            self.sql(self.merge_dated_sql(self.ref(cold), source, since))
+            try:
+                self.sql(f"SELECT count(*) FROM {self.ref(cold)}")
+                results.append(
+                    ("read", BROKEN, f"with {gone}, a full scan still works: proves nothing")
+                )
+            except Refused:
+                results.append(("read", SUPPORTED, f"succeeds with {gone}"))
+        except Refused as exc:
+            results.append(("read", REFUSED, f"fails with {gone}, so it opens them: {exc}"))
+        if any(o == BROKEN for _, o, _ in results):
+            raise Broken("; ".join(d for _, o, d in results if o == BROKEN))
+        return verdict(results)
+
     def _history_table(self, what: str, gap: float = 0) -> tuple[str, int, str]:
         """SEED, then two more rows: (name, the seeded version, a UTC time between the two)."""
         name = self._fresh(what)
@@ -891,6 +1007,7 @@ PROBES = [
     ("write", "UPDATE", "update"),
     ("write", "INSERT OVERWRITE, whole table", "insert_overwrite"),
     ("write", "MERGE, UPDATE + INSERT", "merge_upsert"),
+    ("write", "MERGE of the last two days into a table partitioned by day", "merge_partitions"),
     ("write", "TRUNCATE", "truncate"),
     ("write", "overwrite one partition", "overwrite_partition"),
     ("write", "DELETE on a table with deletion vectors on", "deletion_vectors"),
@@ -905,6 +1022,7 @@ PROBES = [
     ("schema", "set a table property", "set_property"),
     ("schema", "ADD COLUMN, then INSERT", "write_after_schema_change"),
     ("read", "WHERE id = 22 with the other data files deleted (file pruning)", "file_pruning"),
+    ("read", "WHERE d = <day> with the other days' files deleted", "partition_pruning"),
     ("read", "time travel by version", "time_travel_version"),
     ("read", "time travel by timestamp", "time_travel_timestamp"),
     ("read", "table history", "history"),
