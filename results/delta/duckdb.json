@@ -239,9 +239,23 @@
    "question": "checkpoint after 11 commits",
    "outcome": "supported",
    "detail": "checkpoint written after 12 commits (CHECKPOINT dk_44866693699_1_checkpoint)"
+  },
+  {
+   "key": "full_identifier",
+   "group": "catalog",
+   "question": "INSERT and SELECT as catalog.schema.table",
+   "outcome": "no",
+   "detail": "RuntimeError: RuntimeError: Catalog Error: Table with name \"_bench_delta.dk_44877644672_1_fullid\" does not exist because schema \"_bench_delta\" does not exist."
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERTs while delta-rs appends to the same table",
+   "outcome": "no",
+   "detail": "9 DuckDB INSERT(s) failed: 1001: RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Multiple exceptions happened. Firstly, the DeltaTransaction failed to commit with 'IO Error: DeltaKernel GenericError (5): Generic delta kernel error: commit conflict at version 2'. Secondly, DuckDB failed to clean up the files produced by this transaction, with: 'INTERNAL Error: TransactionContext::ActiveTransaction called without active transaction This error signals an assertion failure within DuckDB. This usually occurs due to unexpected conditions or errors in the program's logic. For more information, see https://du\u2026"
   }
  ],
- "run": "44866693699",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44866693699",
+ "run": "44877644672",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44877644672",
  "date": "2026-11-21"
 }
