@@ -239,9 +239,23 @@
    "question": "checkpoint after 11 commits",
    "outcome": "supported",
    "detail": "checkpoint written after 12 commits"
+  },
+  {
+   "key": "full_identifier",
+   "group": "catalog",
+   "question": "INSERT and SELECT as catalog.schema.table",
+   "outcome": "supported",
+   "detail": "INSERT and SELECT as delta.bench.\"tr_44877365449_1_fullid\": DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; Trino agrees; log: WRITE > WRITE"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERTs while delta-rs appends to the same table",
+   "outcome": "supported",
+   "detail": "10 Trino and 10 delta-rs commits, interleaved 5 times, all 23 rows kept"
   }
  ],
- "run": "44871371976",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44871371976",
+ "run": "44877365449",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44877365449",
  "date": "2026-11-21"
 }
