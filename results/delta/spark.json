@@ -239,9 +239,23 @@
    "question": "checkpoint after 11 commits",
    "outcome": "supported",
    "detail": "checkpoint written after 12 commits"
+  },
+  {
+   "key": "full_identifier",
+   "group": "catalog",
+   "question": "INSERT and SELECT as catalog.schema.table",
+   "outcome": "supported",
+   "detail": "INSERT and SELECT as `spark_catalog`.`_bench_delta`.`sp_44874399956_1_fullid`: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; Spark reads the engine could not read it back: [TABLE_OR_VIEW_NOT_FOUND] The table or view `sp_44874399956_1_fullid` cannot be found. Verify the spelling and correctness of the schema and catalog. Search path: [`system`.`builtin`, `system`.`session`, `spark_catalog`.`default`]. If you did not qualify the name with a schema, verify the current_s\u2026; log: WRITE > WRITE"
+  },
+  {
+   "key": "race_append",
+   "group": "concurrency",
+   "question": "INSERTs while delta-rs appends to the same table",
+   "outcome": "supported",
+   "detail": "10 Spark and 10 delta-rs commits, interleaved 8 times, all 23 rows kept"
   }
  ],
- "run": "44871118627",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44871118627",
+ "run": "44874399956",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44874399956",
  "date": "2026-11-21"
 }
