@@ -547,10 +547,15 @@ class DeltaProbe:
     def schema_drop(self) -> str:
         """DROP SCHEMA on an empty schema: the folder is the schema, so it has to go."""
         schema = self._schema("rm")
+        made = (
+            ""
+            if self.oracle.folder_exists(self.oracle.schema_relative(schema))
+            else " (CREATE SCHEMA made no folder, so there was none to remove)"
+        )
         self.sql(self.schema_drop_sql(schema))
         if self.oracle.folder_exists(self.oracle.schema_relative(schema)):
             raise NoOp(f"DROP SCHEMA returned success; the folder Tables/{schema} is still there")
-        return f"the folder Tables/{schema} is gone"
+        return f"no folder Tables/{schema} left{made}"
 
     def drop_table(self) -> str:
         """A table created by name in a schema, then DROP TABLE: its folder has to go."""
@@ -590,31 +595,38 @@ class DeltaProbe:
 
     RACE = 10
 
-    def _race(self, name: str, statements: list[str]) -> tuple[list[str], list[int], int]:
+    def _race(self, name: str, statements: list[str]) -> tuple[dict[int, str], list[int], int]:
         """Run `statements` through the engine while delta-rs appends RACE rows (ids 2001..)
-        to the same table from another thread. (the engine statements that failed, the
-        delta-rs ids that did not survive, how many times the two writers' commits swapped)."""
+        to the same table from another thread. ({index of each engine statement that failed:
+        its error}, the delta-rs ids that did not survive, how many times the commits swapped).
+
+        delta-rs is the probe, not the engine under test: when its own append loses a conflict
+        it retries until the row lands, so every one of its rows has to be in the table."""
         theirs = [2000 + i for i in range(1, self.RACE + 1)]
         second: list[str] = []
 
         def delta_rs() -> None:
             for i in theirs:
-                try:
-                    self.oracle.write(name, [(i, i)])
-                except Exception as exc:  # noqa: BLE001 - reported below
-                    second.append(f"{i}: {one_line(exc, 200)}")
+                for attempt in range(8):
+                    try:
+                        self.oracle.write(name, [(i, i)])
+                        break
+                    except Exception as exc:  # noqa: BLE001 - retried, then reported
+                        if attempt == 7:
+                            second.append(f"{i}: {one_line(exc, 200)}")
+                        time.sleep(0.5)
 
         writer = threading.Thread(target=delta_rs)
         writer.start()
-        failed = []
-        for statement in statements:
+        failed: dict[int, str] = {}
+        for index, statement in enumerate(statements):
             try:
                 self.sql(statement)
             except Refused as exc:
-                failed.append(str(exc))
+                failed[index] = str(exc)
         writer.join()
         if second:
-            raise Skip(f"the second writer (delta-rs) failed, so this asks nothing: {second[0]}")
+            raise Broken(f"the second writer (delta-rs) could not land its rows: {second[0]}")
         versions = self.oracle.versions(name)
         holes = sorted(set(range(versions[-1] + 1)) - set(versions)) if versions else []
         if holes:
@@ -627,27 +639,10 @@ class DeltaProbe:
         ids = {r[0] for r in found}
         return failed, [i for i in theirs if i not in ids], swaps
 
-    def _race_verdict(self, what: str, failed, lost_theirs, wrong, swaps, rows: int) -> str:
-        problems = []
-        if lost_theirs:
-            problems.append(f"lost {len(lost_theirs)} delta-rs append(s): {lost_theirs}")
-        if wrong:
-            problems.append(wrong)
-        if failed:
-            problems.append(f"{len(failed)} {self.TITLE} {what}(s) failed: {failed[0]}")
-        if problems:
-            raise Refused("; ".join(problems))
-        if not swaps:
-            raise Skip("the two writers' commits never interleaved, so no race happened")
-        return (
-            f"{self.RACE} {self.TITLE} {what}s and {self.RACE} delta-rs appends, "
-            f"interleaved {swaps} times, {rows} rows as expected"
-        )
-
     def race_append(self) -> str:
-        """The engine's INSERTs while delta-rs appends to the same table, from another thread.
-        Every commit has to land as its own version: a writer that overwrites a commit file
-        loses the other writer's rows."""
+        """The engine's INSERTs while delta-rs appends to the same table. Every INSERT has to
+        land: an append that loses a conflict is retried, since nothing it read changed. A
+        writer that overwrites a commit file loses the other writer's rows."""
         name = self._fresh("race")
         mine = [1000 + i for i in range(1, self.RACE + 1)]
         t = self.ref(name)
@@ -656,12 +651,22 @@ class DeltaProbe:
         )
         ids = {r[0] for r in self.oracle.rows(name, ("id", "v"))}
         missing = [i for i in mine if i not in ids]
-        wrong = (
-            f"lost {len(missing)} {self.TITLE} append(s): {missing}"
-            if len(missing) > len(failed)
-            else ""
+        problems = []
+        if lost:
+            problems.append(f"lost {len(lost)} delta-rs append(s): {lost}")
+        if failed:
+            first = next(iter(failed.values()))
+            problems.append(f"{len(failed)} {self.TITLE} INSERT(s) failed: {first}")
+        elif missing:
+            problems.append(f"lost {len(missing)} {self.TITLE} append(s): {missing}")
+        if problems:
+            raise Refused("; ".join(problems))
+        if not swaps:
+            raise Skip("the two writers' commits never interleaved, so no race happened")
+        return (
+            f"{self.RACE} {self.TITLE} and {self.RACE} delta-rs commits, "
+            f"interleaved {swaps} times, all {len(ids)} rows kept"
         )
-        return self._race_verdict("INSERT", failed, lost, wrong, swaps, len(ids))
 
     def _race_seed(self, what: str) -> tuple[str, list[int]]:
         """A table holding RACE rows (ids 101..), one INSERT, for the DELETE and UPDATE races."""
@@ -675,31 +680,60 @@ class DeltaProbe:
             raise Skip(f"could not seed the table: {exc}") from None
         return name, mine
 
+    def _change_verdict(self, what, failed, lost, wrong, swaps, total) -> str:
+        """The Iceberg grid's rule for a DELETE or UPDATE racing an append: a statement that
+        fails on the conflict and changes nothing is safe; one that succeeds must apply in
+        full, and the appended rows must all survive. One that never runs at all is a no."""
+        if len(failed) == total:
+            raise Refused(f"every {what} failed: {next(iter(failed.values()))}")
+        problems = []
+        if lost:
+            problems.append(f"lost {len(lost)} delta-rs append(s): {lost}")
+        if wrong:
+            problems.append(wrong)
+        if problems:
+            raise Refused("; ".join(problems))
+        if not swaps:
+            raise Skip("the two writers' commits never interleaved, so no race happened")
+        refused = (
+            f"; {len(failed)} refused on the conflict, nothing changed: "
+            f"{one_line(next(iter(failed.values())), 160)}"
+            if failed
+            else ""
+        )
+        return (
+            f"{total - len(failed)} {self.TITLE} {what}s applied, every delta-rs append kept, "
+            f"interleaved {swaps} times{refused}"
+        )
+
     def race_delete(self) -> str:
-        """The engine DELETEs its rows one by one while delta-rs appends: every appended row
-        must survive, every deleted row must be gone."""
+        """The engine DELETEs its rows one by one while delta-rs appends."""
         name, mine = self._race_seed("racedel")
         t = self.ref(name)
         failed, lost, swaps = self._race(name, [self.delete_sql(t, f"id = {i}") for i in mine])
         ids = {r[0] for r in self.oracle.rows(name, ("id", "v"))}
-        kept = [i for i in mine if i in ids]
-        wrong = f"{len(kept)} deleted row(s) still there: {kept}" if len(kept) > len(failed) else ""
-        return self._race_verdict("DELETE", failed, lost, wrong, swaps, len(ids))
+        wrong = []
+        for index, i in enumerate(mine):
+            if index in failed and i not in ids:
+                wrong.append(f"{i} gone though its DELETE failed")
+            if index not in failed and i in ids:
+                wrong.append(f"{i} still there though its DELETE succeeded")
+        return self._change_verdict("DELETE", failed, lost, "; ".join(wrong), swaps, len(mine))
 
     def race_update(self) -> str:
-        """The engine UPDATEs its rows one by one (v = v + 1000) while delta-rs appends: every
-        appended row must survive, every updated row must carry the new value exactly once."""
+        """The engine UPDATEs its rows one by one (v = v + 1000) while delta-rs appends."""
         name, mine = self._race_seed("raceupd")
         t = self.ref(name)
         failed, lost, swaps = self._race(
             name, [self.update_sql(t, "v = v + 1000", f"id = {i}") for i in mine]
         )
         values = dict(self.oracle.rows(name, ("id", "v")))
-        stale = [i for i in mine if values.get(i) != i + 1000]
-        wrong = (
-            f"{len(stale)} row(s) without the update: {stale}" if len(stale) > len(failed) else ""
-        )
-        return self._race_verdict("UPDATE", failed, lost, wrong, swaps, len(values))
+        wrong = []
+        for index, i in enumerate(mine):
+            expected = i if index in failed else i + 1000
+            if values.get(i) != expected:
+                wrong.append(f"{i} reads {values.get(i)}, expected {expected}")
+        return self._change_verdict("UPDATE", failed, lost, "; ".join(wrong), swaps, len(mine))
 
     # -- writes --------------------------------------------------------------------------------
 
