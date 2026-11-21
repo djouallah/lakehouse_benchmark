@@ -147,14 +147,14 @@
    "group": "schema",
    "question": "RENAME COLUMN, column-mapped table",
    "outcome": "supported",
-   "detail": "RENAME COLUMN v TO v2: Spark reads [(1, 10), (2, 20), (3, 30)] (delta-rs does not read this table feature)"
+   "detail": "RENAME COLUMN v TO v2: DuckDB reads [(1, 10), (2, 20), (3, 30)]; Spark agrees; log: CREATE TABLE > WRITE > RENAME COLUMN"
   },
   {
    "key": "type_widening",
    "group": "schema",
    "question": "int -> long, type widening on",
    "outcome": "supported",
-   "detail": "c is long in the log; ALTER COLUMN c TYPE BIGINT: Spark reads [(1, 7)] (delta-rs does not read this table feature); features ['appendOnly', 'invariants', 'typeWidening']"
+   "detail": "c is long in the log; ALTER COLUMN c TYPE BIGINT: DuckDB reads [(1, 7)]; Spark agrees; log: CREATE TABLE > WRITE > CHANGE COLUMN; features ['appendOnly', 'invariants', 'typeWidening']"
   },
   {
    "key": "set_property",
@@ -241,7 +241,7 @@
    "detail": "checkpoint written after 12 commits"
   }
  ],
- "run": "44869772010",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44869772010",
+ "run": "44871118627",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44871118627",
  "date": "2026-11-21"
 }
