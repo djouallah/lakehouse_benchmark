@@ -20,7 +20,7 @@ import decimal
 import re
 
 from delta_probe import DeltaProbe, one_line, run
-from harness import NOOP, REFUSED, SUPPORTED, TYPE_EXPECTED, normalize
+from harness import NOOP, REFUSED, STATS_FILES, SUPPORTED, TYPE_EXPECTED, NoOp, normalize
 
 from bench.capability.delta import NAMESPACE
 
@@ -522,6 +522,27 @@ class DeltaRs(DeltaProbe):
 
     def drop_sql(self, name):
         return None
+
+    # == the probes whose check is delta-rs's own ============================================
+
+    def zorder(self) -> str:
+        """delta-rs records no zOrderBy in its OPTIMIZE commit (only targetSize and predicate),
+        so the call is the evidence: z_order(['id']), one OPTIMIZE commit that rewrote the files,
+        and every row still there."""
+
+        name = self._seeded_by_delta_rs("zorder", STATS_FILES)
+        before = len(self.oracle.active_files(name))
+        self.sql(self.zorder_sql(self.ref(name)))
+        info = self.oracle.actions(name, "commitInfo")
+        removed = len(self.oracle.actions(name, "remove"))
+        if not info or info[0].get("operation") != "OPTIMIZE" or not removed:
+            raise NoOp(f"returned success; the last commit is {info[0] if info else 'none'}")
+        expected = sorted(p for batch in STATS_FILES for p in batch)
+        after = len(self.oracle.active_files(name))
+        return (
+            f"z_order(['id']): one OPTIMIZE commit rewrote {before} data files into {after} "
+            f"(delta-rs records no zOrderBy); " + self._expect(name, expected, "Z-order")
+        )
 
     # == the probes whose statement is a column type ==========================================
 
