@@ -166,8 +166,11 @@ def test_every_sql_engine_is_probed_on_every_row():
 
 
 def test_insert_select_reads_the_table_it_writes():
-    """Every engine's INSERT ... SELECT is the same statement: the table into itself."""
+    """Every engine's INSERT ... SELECT is the same statement: the table into itself. pyiceberg
+    has no SQL: it appends a scan of the table, ids + 10."""
     for engine in dict(render_readme.ROWS)["INSERT ... SELECT"]:
+        if engine == "pyiceberg":
+            continue
         script = _ROOT / ".github" / "scripts" / "capability" / f"catalog_capability_{engine}.py"
         probe = (
             script.read_text(encoding="utf-8")

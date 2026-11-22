@@ -20,11 +20,22 @@ from pathlib import Path
 # Every engine with a probe. The site's columns are NOT this order: site_matrix sorts them by
 # supported cells, most first, and a tie keeps the order here.
 # Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
-# credited for a library call beside its SQL.
-ENGINES = ("spark", "sail", "trino", "starrocks", "duckdb", "polars", "chdb", "databend")
+# credited for a library call beside its SQL. pyiceberg is the one library, a column of its own,
+# asked through its Python API (catalog_capability_pyiceberg.py).
+ENGINES = (
+    "spark",
+    "sail",
+    "trino",
+    "starrocks",
+    "duckdb",
+    "polars",
+    "chdb",
+    "databend",
+    "pyiceberg",
+)
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
-FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend", "starrocks")
+FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend", "starrocks", "pyiceberg")
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
@@ -44,6 +55,7 @@ ROWS = [
             "databend": ["insert_into"],
             "starrocks": ["insert_into"],
             "polars": ["insert_into"],
+            "pyiceberg": ["insert_into"],
             "duckdb": ["insert_values"],
             "sail": ["insert_into"],
         },
@@ -63,6 +75,7 @@ ROWS = [
             "sail": ["merge_mor"],
             "chdb": ["merge_into"],
             "polars": ["merge_upsert"],
+            "pyiceberg": ["merge_upsert"],
         },
     ),
     (
@@ -76,6 +89,7 @@ ROWS = [
             "sail": ["insert_overwrite"],
             "chdb": ["insert_overwrite"],
             "polars": ["insert_overwrite"],
+            "pyiceberg": ["insert_overwrite"],
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in FULL_SQL}),
@@ -87,6 +101,7 @@ ROWS = [
             "databend": ["partitioned"],
             "starrocks": ["partitioned"],
             "polars": ["partitioned"],
+            "pyiceberg": ["partitioned"],
             "duckdb": ["create_partitioned"],
             "sail": ["partitioned"],
         },
@@ -125,6 +140,7 @@ ROWS = [
             "duckdb": ["create_sorted"],
             "sail": ["sort_order"],
             "polars": ["sort_order"],
+            "pyiceberg": ["sort_order"],
         },
     ),
     ("Time travel", {e: ["time_travel"] for e in ENGINES}),
@@ -138,6 +154,7 @@ ROWS = [
             "duckdb": ["metadata_snapshots", "metadata_files"],
             "sail": ["metadata_tables"],
             "polars": ["metadata_tables"],
+            "pyiceberg": ["metadata_tables"],
         },
     ),
     # pyiceberg writes four data files with known min/max bounds, then deletes some of them from
@@ -159,6 +176,7 @@ ROWS = [
             "duckdb": ["drop_table"],
             "sail": ["drop_purge"],
             "polars": ["drop_purge"],
+            "pyiceberg": ["drop_purge"],
         },
     ),
     (
@@ -172,6 +190,7 @@ ROWS = [
             "sail": ["namespace_create"],
             "chdb": ["namespace_create"],
             "polars": ["namespace_create"],
+            "pyiceberg": ["namespace_create"],
         },
     ),
     (
@@ -185,6 +204,7 @@ ROWS = [
             "sail": ["namespace_drop"],
             "chdb": ["namespace_drop"],
             "polars": ["namespace_drop"],
+            "pyiceberg": ["namespace_drop"],
         },
     ),
     ("CREATE SCHEMA IF NOT EXISTS, existing schema", {e: ["namespace_existing"] for e in SQL}),
@@ -287,6 +307,7 @@ SITE_KEY = {
     "duckdb": "duckdb_iceberg",
     "sail": "lakesail_iceberg",
     "chdb": "chdb_iceberg",
+    "pyiceberg": "pyiceberg",
 }
 
 # Worst first: the cell shows the worst outcome among the row's probes.

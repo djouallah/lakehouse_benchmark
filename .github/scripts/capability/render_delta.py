@@ -17,8 +17,9 @@ from pathlib import Path
 from render_readme import _one_line, cell, load
 
 # The engines with a SQL path that writes Delta. An engine whose docs say it only reads Delta, or
-# whose SQL has no Delta write, has no column.
-ENGINES = ("spark", "sail", "trino", "duckdb")
+# whose SQL has no Delta write, has no column. delta-rs is the one library, asked through its
+# Python API (delta_capability_delta_rs.py).
+ENGINES = ("spark", "sail", "trino", "duckdb", "delta_rs")
 # The site's engine keys: the same as the Iceberg grid's, so each engine keeps its one label and
 # colour across the site (bench/charts.py, docs/index.html).
 SITE_KEY = {
@@ -26,6 +27,7 @@ SITE_KEY = {
     "sail": "lakesail_iceberg",
     "trino": "trino_iceberg",
     "duckdb": "duckdb_iceberg",
+    "delta_rs": "delta_rs",
 }
 
 # (group, row label, probe key): every engine is asked every row under the same key

@@ -15,6 +15,7 @@
   --lakesail_iceberg: #eda100; --daft_iceberg: #8a5cd1; --pyspark_iceberg: #d6468f;
   --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
   --pandas_iceberg: #932601; --databend_iceberg: #99a7f9;
+  --pyiceberg: #6b7280; --delta_rs: #57534e;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -24,6 +25,7 @@
     --lakesail_iceberg: #c98500; --daft_iceberg: #9b6ee0; --pyspark_iceberg: #e05a9c;
     --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
     --pandas_iceberg: #8d4e10; --databend_iceberg: #4f58b1;
+    --pyiceberg: #9ca3af; --delta_rs: #a8a29e;
   }
 }
 * { box-sizing: border-box; }
@@ -551,6 +553,8 @@ const LABEL = {         // bench/charts.py LABEL
   lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",
   pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
   pandas_iceberg: "Pandas", databend_iceberg: "Databend",
+  // bench/charts.py API_LABEL: libraries asked through their Python API, in the format support grids only.
+  pyiceberg: "pyiceberg (API)", delta_rs: "delta-rs (API)",
 };
 const GLUTEN = "pyspark_gluten_iceberg";
 const SUITES = [
@@ -634,12 +638,12 @@ const fmt = s => s >= 100 ? `${Math.round(s).toLocaleString()}s` : `${s.toFixed(
 const ratio = r => r < 10 ? `${r.toFixed(1)}×` : `${Math.round(r)}×`;
 const ABOUT = { id: "about", title: "About" };
 const CAPABILITY = { id: "iceberg", title: "Iceberg", json: "data/capability.json", key: "capability",
-  caption: "What each engine can do in SQL on the OneLake Iceberg REST catalog, format v2 tables only. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.",
-  rank: total => `Operations each engine supports on the OneLake Iceberg REST catalog, out of ${total}, split by group. Iceberg format v2 tables only; v3 is not tested.` };
+  caption: "What each engine can do in SQL on the OneLake Iceberg REST catalog, format v2 tables only, and pyiceberg through its Python API. Spark and Trino use the Iceberg Java library (Gluten and StarRocks too); the others have their own.",
+  rank: total => `Operations each engine supports on the OneLake Iceberg REST catalog, in SQL or for pyiceberg its Python API, out of ${total}, split by group. Iceberg format v2 tables only; v3 is not tested.` };
 // The Delta sub-tab: the same grid and overview on data/delta.json (.github/scripts/capability/render_delta.py).
 const DELTA = { id: "delta", title: "Delta", json: "data/delta.json", key: "delta",
-  caption: "What each engine can do in SQL writing Delta tables into OneLake, each table a path under the lakehouse's Tables folder. Spark runs delta-spark; DuckDB writes through Delta Kernel.",
-  rank: total => `Operations each engine supports writing Delta tables into OneLake in SQL, out of ${total}, split by group.` };
+  caption: "What each engine can do in SQL writing Delta tables into OneLake, each table a path under the lakehouse's Tables folder, and delta-rs through its Python API. Spark runs delta-spark; DuckDB writes through Delta Kernel.",
+  rank: total => `Operations each engine supports writing Delta tables into OneLake, in SQL or for delta-rs its Python API, out of ${total}, split by group.` };
 const ENGINES = { id: "engines", title: "Engines" };
 const PLANS = { id: "plans", title: "Query plans" };
 const ARCH = { id: "concurrency", title: "Concurrency" };

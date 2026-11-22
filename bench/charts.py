@@ -86,3 +86,13 @@ LABEL = {
     "pandas_iceberg": "Pandas",
     "databend_iceberg": "Databend",
 }
+
+# NOT ENGINES: the libraries the table format support grids ask through their Python API, beside
+# the SQL engines. No chart slot and no Engines-tab row; a neutral colour each, so the column reads
+# apart from the engines. Each appears in one grid only, so the two never sit side by side.
+API_LABEL = {
+    "pyiceberg": "pyiceberg (API)",
+    "delta_rs": "delta-rs (API)",
+}
+API_LIGHT = {"pyiceberg": "#6b7280", "delta_rs": "#57534e"}
+API_DARK = {"pyiceberg": "#9ca3af", "delta_rs": "#a8a29e"}

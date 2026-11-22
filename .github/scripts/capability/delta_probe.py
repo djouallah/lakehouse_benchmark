@@ -136,8 +136,29 @@ class DeltaProbe:
         )
 
     def values(self, rows) -> str:
-        """`VALUES (...), (...)` for an INSERT."""
-        return "VALUES " + ", ".join("(" + ", ".join(map(str, r)) + ")" for r in rows)
+        """`VALUES (...), (...)` for an INSERT; a string is quoted."""
+        lit = lambda x: f"'{x}'" if isinstance(x, str) else str(x)  # noqa: E731
+        return "VALUES " + ", ".join("(" + ", ".join(map(lit, r)) + ")" for r in rows)
+
+    def insert_sql(self, t: str, rows, cols=("id", "v")) -> str:
+        """INSERT of literal rows; `cols` names their columns, for a client that needs them."""
+        return f"INSERT INTO {t} {self.values(rows)}"
+
+    def insert_select_sql(self, t: str, select) -> str:
+        """INSERT of a `select` (the hook's own, such as self.select(SEED))."""
+        return f"INSERT INTO {t} {select}"
+
+    def insert_self_sql(self, t: str) -> str:
+        """The table's own rows appended again, ids + 10."""
+        return f"INSERT INTO {t} SELECT id + 10, v FROM {t}"
+
+    def read_sql(self, t: str, cols: str = "id, v", where: str | None = None, order=True) -> str:
+        where_ = f" WHERE {where}" if where else ""
+        return f"SELECT {cols} FROM {t}{where_}" + (" ORDER BY id" if order else "")
+
+    def sum_sql(self, t: str, where: str | None = None) -> str:
+        """sum(v), not count(*): count(*) is answered from the log's row counts."""
+        return f"SELECT sum(v) FROM {t}" + (f" WHERE {where}" if where else "")
 
     @staticmethod
     def _props(props: dict | None, keyword: str = "TBLPROPERTIES") -> str:
@@ -369,7 +390,7 @@ class DeltaProbe:
             raise Skip("no table could be created, so there is nothing to write to")
         try:
             name = self._create(what, **kw)
-            self.sql(f"INSERT INTO {self.ref(name)} {self.select(SEED)}")
+            self.sql(self.insert_select_sql(self.ref(name), self.select(SEED)))
         except Refused as exc:
             if kw:
                 raise Refused(
@@ -391,9 +412,7 @@ class DeltaProbe:
 
     def _engine_rows(self, name: str, cols: str = "id, v"):
         try:
-            return [
-                tuple(r) for r in self.execute(f"SELECT {cols} FROM {self.ref(name)} ORDER BY id")
-            ]
+            return [tuple(r) for r in self.execute(self.read_sql(self.ref(name), cols))]
         except Exception as exc:  # noqa: BLE001 - a read-back must not decide the answer
             return f"the engine could not read it back: {one_line(exc, 300)}"
 
@@ -437,7 +456,7 @@ class DeltaProbe:
 
     def select_table(self) -> str:
         name = self._seeded_by_delta_rs("select")
-        found = self.sql(f"SELECT id, v FROM {self.ref(name)} ORDER BY id")
+        found = self.sql(self.read_sql(self.ref(name)))
         if found != SEED:
             raise NoOp(f"reads {found}, delta-rs wrote {SEED}")
         return f"reads the {len(found)} rows delta-rs wrote"
@@ -485,13 +504,13 @@ class DeltaProbe:
         if not self.can_create:
             raise Skip("no table could be created")
         name = self._create("insert")
-        self.sql(f"INSERT INTO {self.ref(name)} {self.values(SEED)}")
+        self.sql(self.insert_sql(self.ref(name), SEED))
         return self._expect(name, SEED, "INSERT INTO ... VALUES")
 
     def insert_select(self) -> str:
         name = self._fresh("insertsel")
         t = self.ref(name)
-        self.sql(f"INSERT INTO {t} SELECT id + 10, v FROM {t}")
+        self.sql(self.insert_self_sql(t))
         return self._expect(name, SEED + [(11, 10), (12, 20), (13, 30)], "INSERT INTO ... SELECT")
 
     def delete_from(self) -> str:
@@ -528,11 +547,11 @@ class DeltaProbe:
         table = "t1"
         self.run_all(self.create_in_schema_sql(schema, table))
         ident = self.in_schema(schema, table)
-        self.sql(f"INSERT INTO {ident} {self.values(SEED)}")
+        self.sql(self.insert_sql(ident, SEED))
         where = f"{self.oracle.schema_relative(schema)}/{table}"
         if not self.oracle.has_log(where):
             raise NoOp(f"the schema was created, and its table is not at Tables/{schema}/{table}")
-        found = self.sql(f"SELECT id, v FROM {ident} ORDER BY id")
+        found = self.sql(self.read_sql(ident))
         if not _same(found, SEED):
             raise NoOp(f"the table is at Tables/{schema}/{table}, and {ident} reads {found}")
         return (
@@ -564,7 +583,7 @@ class DeltaProbe:
         ident = self.in_schema(schema, table)
         try:
             self.run_all(self.create_in_schema_sql(schema, table))
-            self.sql(f"INSERT INTO {ident} {self.values(SEED)}")
+            self.sql(self.insert_sql(ident, SEED))
         except Refused as exc:
             raise Refused(f"a table could not be created by name in the schema: {exc}") from None
         where = f"{self.oracle.schema_relative(schema)}/{table}"
@@ -583,8 +602,8 @@ class DeltaProbe:
         self.oracle.write(name, SEED)
         setup, ident = self.full_sql(name)
         self.run_all(setup)
-        self.sql(f"INSERT INTO {ident} {self.values([(4, 40)])}")
-        found = self.sql(f"SELECT id, v FROM {ident} ORDER BY id")
+        self.sql(self.insert_sql(ident, [(4, 40)]))
+        found = self.sql(self.read_sql(ident))
         expected = SEED + [(4, 40)]
         if not _same(found, expected):
             raise NoOp(f"{ident} reads {found}, expected {expected}")
@@ -646,9 +665,7 @@ class DeltaProbe:
         name = self._fresh("race")
         mine = [1000 + i for i in range(1, self.RACE + 1)]
         t = self.ref(name)
-        failed, lost, swaps = self._race(
-            name, [f"INSERT INTO {t} {self.values([(i, i)])}" for i in mine]
-        )
+        failed, lost, swaps = self._race(name, [self.insert_sql(t, [(i, i)]) for i in mine])
         ids = {r[0] for r in self.oracle.rows(name, ("id", "v"))}
         missing = [i for i in mine if i not in ids]
         problems = []
@@ -675,7 +692,7 @@ class DeltaProbe:
         mine = [100 + i for i in range(1, self.RACE + 1)]
         try:
             name = self._create(what)
-            self.sql(f"INSERT INTO {self.ref(name)} {self.select([(i, i) for i in mine])}")
+            self.sql(self.insert_select_sql(self.ref(name), self.select([(i, i) for i in mine])))
         except Refused as exc:
             raise Skip(f"could not seed the table: {exc}") from None
         return name, mine
@@ -766,7 +783,7 @@ class DeltaProbe:
             raise Skip("no table could be created")
         try:
             name = self._create("dv", props={"delta.enableDeletionVectors": "true"})
-            self.sql(f"INSERT INTO {self.ref(name)} {self.select(many)}")
+            self.sql(self.insert_select_sql(self.ref(name), self.select(many)))
         except Refused as exc:
             raise Refused(f"a table with deletion vectors on could not be created: {exc}") from None
         self.sql(self.delete_sql(self.ref(name), "id = 1"))
@@ -789,8 +806,9 @@ class DeltaProbe:
             raise Skip("no table could be created")
         name = self._create(what, self._cols(f"p {self.STRING}"), partition=["p"])
         self.sql(
-            f"INSERT INTO {self.ref(name)} "
-            + self.values([(1, 10, "'a'"), (2, 20, "'a'"), (3, 30, "'b'")])
+            self.insert_sql(
+                self.ref(name), [(1, 10, "a"), (2, 20, "a"), (3, 30, "b")], ("id", "v", "p")
+            )
         )
         return name
 
@@ -893,7 +911,7 @@ class DeltaProbe:
                 f"id {self.BIGINT}, c {self.INT}",
                 props={"delta.enableTypeWidening": "true"},
             )
-            self.sql(f"INSERT INTO {self.ref(name)} {self.values([(1, 7)])}")
+            self.sql(self.insert_sql(self.ref(name), [(1, 7)], ("id", "c")))
         except Refused as exc:
             raise Refused(
                 f"a table with type widening on could not be created and seeded: {exc}"
@@ -917,7 +935,7 @@ class DeltaProbe:
         name = self._fresh("evolve")
         t = self.ref(name)
         self.sql(self.add_column_sql(t))
-        self.sql(f"INSERT INTO {t} {self.values([(4, 40, 400)])}")
+        self.sql(self.insert_sql(t, [(4, 40, 400)], ("id", "v", "w")))
         expected = [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 400)]
         return self._expect(name, expected, "ADD COLUMN w, then INSERT", ("id", "v", "w"))
 
@@ -940,9 +958,9 @@ class DeltaProbe:
         t = self.ref(name)
         return read_without_files(
             f"WHERE id = {PRUNE_ID}",
-            lambda: self.sql(f"SELECT v FROM {t} WHERE id = {PRUNE_ID}"),
+            lambda: self.sql(self.read_sql(t, "v", f"id = {PRUNE_ID}", order=False)),
             PRUNE_EXPECTED,
-            lambda: self.sql(f"SELECT sum(v) FROM {t}"),
+            lambda: self.sql(self.sum_sql(t)),
             f"{len(gone)} of {len(files)} data files deleted",
         )
 
@@ -1019,7 +1037,7 @@ class DeltaProbe:
             self.run_all(self.register_sql(name, self.oracle.fixture_uri(self.FIXTURE)))
         except Refused as exc:
             raise Refused(f"the table could not be opened: {exc}") from None
-        found = self.sql(f"SELECT id, v2, c FROM {self.ref(name)} ORDER BY id")
+        found = self.sql(self.read_sql(self.ref(name), "id, v2, c"))
         if not _same(found, self.FIXTURE_ROWS):
             raise NoOp(f"reads {found[:4]}... ({len(found)} rows), expected ids 2..21")
         return f"reads all {len(found)} rows right; table features {sorted(self.FIXTURE_FEATURES)}"
@@ -1051,7 +1069,7 @@ class DeltaProbe:
         name = self._seeded_by_delta_rs("check")
         self.oracle.add_constraint(name, "v_positive", "v > 0")
         try:
-            self.sql(f"INSERT INTO {self.ref(name)} {self.values([(5, -1)])}")
+            self.sql(self.insert_sql(self.ref(name), [(5, -1)]))
         except Refused as exc:
             found = self.oracle.rows(name)
             if found != SEED:
@@ -1075,7 +1093,7 @@ class DeltaProbe:
             "max(id), count(*)",
             lambda: self.sql(self.stats_sql(t)),
             [(max(i for i, _ in rows), len(rows))],
-            lambda: self.sql(f"SELECT sum(v) FROM {t}"),
+            lambda: self.sql(self.sum_sql(t)),
             f"all {len(files)} data files deleted",
         )
 
@@ -1102,9 +1120,9 @@ class DeltaProbe:
         expected = [(sum(v for _, v, d in DATED if d == day),)]
         return read_without_files(
             f"WHERE d = DATE '{day}'",
-            lambda: self.sql(f"SELECT sum(v) FROM {t} WHERE d = DATE '{day}'"),
+            lambda: self.sql(self.sum_sql(t, f"d = DATE '{day}'")),
             expected,
-            lambda: self.sql(f"SELECT sum(v) FROM {t}"),
+            lambda: self.sql(self.sum_sql(t)),
             gone,
         )
 
@@ -1145,8 +1163,7 @@ class DeltaProbe:
         try:
             self.sql(self.merge_dated_sql(self.ref(cold), source, since))
             try:
-                # sum(v), not count(*): count(*) is answered from the log's row counts.
-                self.sql(f"SELECT sum(v) FROM {self.ref(cold)}")
+                self.sql(self.sum_sql(self.ref(cold)))
                 results.append(
                     ("read", BROKEN, f"with {gone}, a full scan still works: proves nothing")
                 )
@@ -1167,7 +1184,7 @@ class DeltaProbe:
             time.sleep(gap)
             at = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d %H:%M:%S")
             time.sleep(gap)
-        self.sql(f"INSERT INTO {self.ref(name)} {self.select(NEW_ROWS)}")
+        self.sql(self.insert_select_sql(self.ref(name), self.select(NEW_ROWS)))
         return name, seeded, at
 
     def time_travel_version(self) -> str:
@@ -1280,7 +1297,7 @@ class DeltaProbe:
         t = self.ref(name)
         try:
             for i in range(CHECKPOINT_COMMITS):
-                self.sql(f"INSERT INTO {t} {self.values([(i, i)])}")
+                self.sql(self.insert_sql(t, [(i, i)]))
         except Refused as exc:
             raise Skip(f"could not write the {CHECKPOINT_COMMITS} commits: {exc}") from None
         explicit = self.checkpoint_sql(t)

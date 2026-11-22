@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-from bench.charts import LABEL
+from bench.charts import API_LABEL, LABEL
 from bench.report import leak_check
 
 TARGET = Path("docs/data/capability.json")
@@ -26,7 +26,7 @@ def load(path: Path) -> dict:
 
 def check(grid: dict) -> dict:
     """The grid, if it is one the page can draw; SystemExit naming the first thing wrong."""
-    unknown = set(grid["engines"]) - set(LABEL)
+    unknown = set(grid["engines"]) - set(LABEL) - set(API_LABEL)
     if unknown:
         raise SystemExit(f"::error::engines with no label or colour here: {sorted(unknown)}")
     for row in grid["rows"]:

@@ -41,8 +41,8 @@ def test_every_row_is_in_one_group_and_the_grid_opens_on_basic():
     assert list(render_delta.GROUPS)[0] == "Basic"
 
 
-def test_the_grid_is_only_the_engines_that_write_delta_in_sql():
-    assert render_delta.ENGINES == ("spark", "sail", "trino", "duckdb")
+def test_the_grid_is_the_engines_that_write_delta_in_sql_and_delta_rs():
+    assert render_delta.ENGINES == ("spark", "sail", "trino", "duckdb", "delta_rs")
     for engine in render_delta.ENGINES:
         assert (_SCRIPTS / f"delta_capability_{engine}.py").exists()
         assert (_ROOT / "requirements" / f"capability_delta_{engine}.txt").exists()
@@ -93,3 +93,18 @@ def test_the_delta_support_tab_is_on_the_page():
     assert "subs: [CAPABILITY, DELTA]" in PAGE
     assert '<section class="cap" id="delta" hidden></section>' in PAGE
     assert 'json: "data/delta.json"' in PAGE
+
+
+def test_delta_rs_has_a_call_for_every_statement_the_probes_send():
+    """Every DeltaProbe hook that writes SQL is a deltalake call in the delta-rs column."""
+    base = delta_probe.DeltaProbe
+    rs = importlib.import_module("delta_capability_delta_rs").DeltaRs
+    hooks = {k for k, v in vars(base).items() if callable(v) and k.endswith("_sql")}
+    hooks |= {"select", "select_dated", "generated_insert", "ref", "start", "execute"}
+    missing = sorted(h for h in hooks if h not in vars(rs))
+    assert not missing, missing
+
+
+def test_delta_rs_commits_are_told_from_the_second_writer():
+    rs = importlib.import_module("delta_capability_delta_rs")
+    assert rs.ENGINE_TAG == {"bench.writer": "engine"}

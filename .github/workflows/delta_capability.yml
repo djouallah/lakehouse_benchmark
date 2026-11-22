@@ -1,6 +1,7 @@
 name: delta support
 
-# WHAT EACH ENGINE CAN DO writing Delta tables into OneLake, in SQL: the site's Delta support tab.
+# WHAT EACH ENGINE CAN DO writing Delta tables into OneLake, in SQL (delta-rs through its Python
+# API): the site's Delta support tab.
 #
 #   plan  ->  ask (one job per client, one at a time)  ->  publish (only when asked)
 #
@@ -19,12 +20,13 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,sail,trino,duckdb
+          - spark,sail,trino,duckdb,delta_rs
           - spark
           - sail
           - trino
           - duckdb
-        default: spark,sail,trino,duckdb
+          - delta_rs
+        default: spark,sail,trino,duckdb,delta_rs
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -54,7 +56,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,sail,trino,duckdb' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,sail,trino,duckdb,delta_rs' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -66,6 +68,7 @@ jobs:
       || matrix.client == 'sail' && 'LakeSail'
       || matrix.client == 'trino' && 'Trino'
       || matrix.client == 'duckdb' && 'DuckDB'
+      || matrix.client == 'delta_rs' && 'delta-rs (API)'
       || matrix.client }}
     runs-on: ubuntu-latest
     timeout-minutes: 30

@@ -129,3 +129,12 @@ def test_bug_reports_is_a_header_link_next_to_about():
         '<a class="top-link" id="reports-link" href="#reports">Bug reports</a>'
         '<a class="top-link" id="about-link" href="#about">About</a>'
     ) in PAGE
+
+
+def test_every_api_column_has_its_colours_and_label():
+    from bench.charts import API_DARK, API_LABEL, API_LIGHT
+
+    for key, label in API_LABEL.items():
+        assert f"--{key}: {API_LIGHT[key]};" in PAGE, key
+        assert f"--{key}: {API_DARK[key]};" in PAGE, key
+        assert f'{key}: "{label}"' in PAGE, key

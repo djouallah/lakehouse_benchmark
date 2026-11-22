@@ -14,7 +14,8 @@ TWO READERS, NEITHER OF THEM THE ENGINE'S SESSION:
   features, deletion vectors, domain metadata, the operation each commit recorded, and whether a
   checkpoint was written.
 
-delta-rs only WRITES: the seed tables the engines are asked to read. Storage goes through
+delta-rs only WRITES: the seed tables the engines are asked to read (and, in the delta-rs
+column, everything that column is asked). Storage goes through
 azure-storage-file-datalake on the job's OIDC credential (bench.auth); DuckDB and delta-rs take
 the same bearer.
 """
@@ -231,12 +232,15 @@ class DeltaOracle:
 
     def commit_authors(self, name: str) -> list[str]:
         """Who wrote each version, oldest first: "delta-rs" (its commitInfo says clientVersion
-        delta-rs.*) or "engine" (any other writer)."""
+        delta-rs.*) or "engine" (any other writer). The delta-rs column's own commits are delta-rs
+        too, and carry bench.writer = engine (delta_capability_delta_rs.ENGINE_TAG)."""
         found = []
         for version in self.versions(name):
             info = self.actions(name, "commitInfo", version)
-            client = str((info[0] if info else {}).get("clientVersion", ""))
-            found.append("delta-rs" if client.startswith("delta-rs") else "engine")
+            info = info[0] if info else {}
+            client = str(info.get("clientVersion", ""))
+            tagged = '"bench.writer": "engine"' in json.dumps(info)
+            found.append("delta-rs" if client.startswith("delta-rs") and not tagged else "engine")
         return found
 
     def active_files(self, name: str) -> list[dict]:
