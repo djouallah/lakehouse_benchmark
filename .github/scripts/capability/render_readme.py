@@ -340,6 +340,9 @@ CATALOG_NO = {
     ("CREATE TABLE AS SELECT", "spark"): (
         "the OneLake catalog does not support staged create, which Spark's CTAS uses."
     ),
+    ("CREATE TABLE AS SELECT", "pyiceberg"): (
+        "the OneLake catalog does not support staged create, which create_table_transaction uses."
+    ),
 }
 
 
