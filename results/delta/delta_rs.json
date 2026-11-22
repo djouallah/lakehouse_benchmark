@@ -328,8 +328,8 @@
    "key": "zorder",
    "group": "maintenance",
    "question": "OPTIMIZE ... ZORDER BY",
-   "outcome": "no-op",
-   "detail": "returned success; the last commit is {'timestamp': 1795315000055, 'operation': 'OPTIMIZE', 'operationParameters': {'targetSize': '104857600', 'predicate': '[]'}, 'readVersion': 3, 'engineInfo': 'delta-rs:py-1.6.6', 'clientVersion': 'delta-rs.py-1.6.6', 'operationMetrics': {'numFilesAdded': 1, 'numFilesRemoved': 4, 'filesAdded': '{\"avg\":898.0,\"max\":898,\"min\":898,\"totalFiles\":1,\"totalSize\":898}', 'filesRemoved': '{\"avg\":803.25,\"max\":804,\"min\":803,\"totalFiles\":4,\"totalSize\":3213}', 'partitionsOptimized': 1, 'numBatches': 1, 'totalConsideredFiles': 4, 'totalFilesSkipped': 0, 'preserveInsertionOrder': False, 'plannerStrategy': 'zOrder', 'preservedStableOrder': False, 'maxBinSpanFiles': 4}}"
+   "outcome": "supported",
+   "detail": "z_order(['id']): one OPTIMIZE commit rewrote 4 data files into 1 (delta-rs records no zOrderBy); Z-order: DuckDB reads [(1, 10), (2, 20), (3, 30), (11, 110), (12, 120), (13, 130), (21, 210), (22, 220), (23, 230), (31, 310), (32, 320), (33, 330)]; delta-rs agrees; log: WRITE > WRITE > WRITE > WRITE > OPTIMIZE"
   },
   {
    "key": "liquid_clustering",
@@ -360,7 +360,7 @@
    "detail": "a _delta_log over the files in place; DuckDB reads [(1, 10), (2, 20), (3, 30)]"
   }
  ],
- "run": "44976415512",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44976415512",
+ "run": "44977068131",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44977068131",
  "date": "2026-11-22"
 }
