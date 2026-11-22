@@ -1380,7 +1380,7 @@ PROBES = [
     ("read", "change data feed", "change_data_feed"),
     ("maintenance", "OPTIMIZE (compaction)", "optimize"),
     ("maintenance", "OPTIMIZE ... ZORDER BY", "zorder"),
-    ("maintenance", "CLUSTER BY (liquid clustering)", "liquid_clustering"),
+    ("maintenance", "CLUSTER BY: clustering columns in the log", "liquid_clustering"),
     ("maintenance", "VACUUM", "vacuum"),
     ("maintenance", f"checkpoint after {CHECKPOINT_COMMITS} commits", "checkpoint"),
     ("maintenance", "CONVERT TO DELTA, Parquet files in place", "convert_to_delta"),

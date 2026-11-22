@@ -86,7 +86,7 @@ TABLE = [
     ("Reads & history", "Change data feed", "change_data_feed"),
     ("Maintenance", "OPTIMIZE (compaction)", "optimize"),
     ("Maintenance", "OPTIMIZE ... ZORDER BY", "zorder"),
-    ("Maintenance", "Liquid clustering (CLUSTER BY)", "liquid_clustering"),
+    ("Maintenance", "CLUSTER BY", "liquid_clustering"),
     ("Maintenance", "VACUUM", "vacuum"),
     ("Maintenance", "Checkpoint written", "checkpoint"),
     ("Maintenance", "Convert Parquet files to Delta", "convert_to_delta"),
