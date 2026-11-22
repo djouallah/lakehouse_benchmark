@@ -247,13 +247,13 @@ GROUPS = {
         "Attach the REST catalog",
         "SELECT a table by its catalog name",
         "CREATE TABLE",
-        "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
         "Concurrent append: both kept",
     ],
-    # Changing rows that are already there.
+    # Writing a table from a query, and changing rows that are already there.
     "Writes": [
+        "CREATE TABLE AS SELECT",
         "DELETE",
         "UPDATE",
         "MERGE with two actions (UPDATE + INSERT)",

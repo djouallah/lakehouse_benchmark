@@ -43,29 +43,6 @@
  "rows": [
   {
    "group": "Basic",
-   "label": "Register a Delta table as catalog.schema.table",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "delta_rs": {
-     "o": "no",
-     "n": "TableNotFoundError: TableNotFoundError: Local path \"lake._bench_delta.rs_44976415512_1_fullid\" does not exist or you don't have access! Error: Os { code: 2, kind: NotFound, message: \"No such file or directory\" }"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "RuntimeError: RuntimeError: Catalog Error: Table with name \"_bench_delta.dk_44877644672_1_fullid\" does not exist because schema \"_bench_delta\" does not exist."
-    }
-   }
-  },
-  {
-   "group": "Basic",
    "label": "CREATE TABLE at a path",
    "cells": {
     "pyspark_iceberg": {
@@ -88,27 +65,6 @@
   {
    "group": "Basic",
    "label": "SELECT a table delta-rs wrote",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "delta_rs": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "duckdb_iceberg": {
-     "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Basic",
-   "label": "CREATE TABLE AS SELECT",
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
@@ -188,6 +144,27 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "9 DuckDB INSERT(s) failed: 1001: RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Multiple exceptions happened. Firstly, the DeltaTransaction failed to commit with 'IO Error: DeltaKernel GenericEr…"
+    }
+   }
+  },
+  {
+   "group": "Writes",
+   "label": "CREATE TABLE AS SELECT",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "delta_rs": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
     }
    }
   },
@@ -455,6 +432,29 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "10 DuckDB UPDATE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only update base table"
+    }
+   }
+  },
+  {
+   "group": "Catalog",
+   "label": "Register a Delta table as catalog.schema.table",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "delta_rs": {
+     "o": "no",
+     "n": "TableNotFoundError: TableNotFoundError: Local path \"lake._bench_delta.rs_44976415512_1_fullid\" does not exist or you don't have access! Error: Os { code: 2, kind: NotFound, message: \"No such file or directory\" }"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Catalog Error: Table with name \"_bench_delta.dk_44877644672_1_fullid\" does not exist because schema \"_bench_delta\" does not exist."
     }
    }
   },

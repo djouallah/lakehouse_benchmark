@@ -81,8 +81,8 @@ def test_one_table_format_tab_with_iceberg_and_delta():
 
 
 def test_both_formats_share_their_groups_and_basic_is_the_mvp():
-    """Basic, the first group, is the minimum to use a format: attach or register, create, read,
-    append, append safely. Changing existing rows is Writes."""
+    """Basic, the first group, is the minimum to use a format: attach, create, read, append,
+    append safely. CTAS and changing existing rows are Writes."""
     import json
 
     data = Path(__file__).parent.parent / "docs" / "data"
@@ -94,14 +94,22 @@ def test_both_formats_share_their_groups_and_basic_is_the_mvp():
         "Attach the REST catalog",
         "SELECT a table by its catalog name",
         "CREATE TABLE",
-        "CREATE TABLE AS SELECT",
         "INSERT / append",
         "INSERT ... SELECT",
         "Concurrent append: both kept",
     ]
     for grid in (cap, delta):
         basic = {r["label"] for r in grid["rows"] if r["group"] == "Basic"}
-        assert not basic & {"DELETE", "UPDATE", "CREATE OR REPLACE TABLE AS SELECT"}
+        assert not basic & {
+            "DELETE",
+            "UPDATE",
+            "CREATE TABLE AS SELECT",
+            "CREATE OR REPLACE TABLE AS SELECT",
+        }
+        writes = [r["label"] for r in grid["rows"] if r["group"] == "Writes"]
+        assert writes[0] == "CREATE TABLE AS SELECT"
+    catalog = [r["label"] for r in delta["rows"] if r["group"] == "Catalog"]
+    assert catalog[0] == "Register a Delta table as catalog.schema.table"
 
 
 def test_engines_and_issues_are_not_header_links_and_issues_is_under_bug_reports():

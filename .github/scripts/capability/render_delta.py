@@ -32,15 +32,14 @@ SITE_KEY = {
 
 # (group, row label, probe key): every engine is asked every row under the same key
 # (delta_probe.PROBES). The groups are the Iceberg grid's, so the two formats read side by side;
-# Basic is the minimum to use the format at all: register, create, read, append, append safely.
+# Basic is the minimum to use the format at all: create, read, append, append safely.
 TABLE = [
-    ("Basic", "Register a Delta table as catalog.schema.table", "full_identifier"),
     ("Basic", "CREATE TABLE at a path", "create_table"),
     ("Basic", "SELECT a table delta-rs wrote", "select_table"),
-    ("Basic", "CREATE TABLE AS SELECT", "ctas"),
     ("Basic", "INSERT / append", "insert_into"),
     ("Basic", "INSERT ... SELECT", "insert_select"),
     ("Basic", "Concurrent append: both kept", "race_append"),
+    ("Writes", "CREATE TABLE AS SELECT", "ctas"),
     ("Writes", "DELETE", "delete_from"),
     ("Writes", "UPDATE", "update"),
     ("Writes", "MERGE with two actions (UPDATE + INSERT)", "merge_upsert"),
@@ -57,6 +56,7 @@ TABLE = [
     ("Writes", "CHECK constraint: a violating INSERT is refused", "check_constraint"),
     ("Writes", "Concurrent writer: DELETE loses nothing", "race_delete"),
     ("Writes", "Concurrent writer: UPDATE loses nothing", "race_update"),
+    ("Catalog", "Register a Delta table as catalog.schema.table", "full_identifier"),
     ("Catalog", "CREATE SCHEMA at a folder", "schema_create"),
     ("Catalog", "DROP SCHEMA removes the folder", "schema_drop"),
     ("Catalog", "CREATE SCHEMA IF NOT EXISTS, existing schema", "schema_existing"),
