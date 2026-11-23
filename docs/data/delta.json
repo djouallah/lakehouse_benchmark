@@ -24,6 +24,12 @@
    "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
    "date": "2026-11-23"
   },
+  "duckrun": {
+   "version": "duckrun 0.5.7 (duckdb 2.0.1, deltalake 1.5.0)",
+   "run": "45139688818",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45139688818",
+   "date": "2026-11-23"
+  },
   "duckdb_iceberg": {
    "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
    "run": "45112202866",
@@ -57,6 +63,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -76,6 +85,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -99,6 +111,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -118,6 +133,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -141,6 +159,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "skipped",
+     "n": "the two writers' commits never interleaved, so no race happened"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "9 DuckDB INSERT(s) failed: 1001: RuntimeError: RuntimeError: TransactionContext Error: Failed to commit: Multiple exceptions happened. Firstly, the DeltaTransaction failed to commit with 'IO Error: DeltaKernel GenericEr…"
@@ -163,6 +185,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -182,6 +207,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -206,6 +234,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
@@ -228,6 +259,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only merge into base tables!"
@@ -248,6 +282,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -273,6 +310,9 @@
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_050850_00031_w2x7k)"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_overwrite SELECT CAST(id AS BIGINT... ^^^^^^^^^"
@@ -293,6 +333,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -316,6 +359,10 @@
     },
     "trino_iceberg": {
      "o": "supported"
+    },
+    "duckrun": {
+     "o": "no",
+     "n": "BinderException: BinderException: Binder Error: Can only delete from base table"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -341,6 +388,10 @@
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:8: mismatched input 'OVERWRITE'. Expecting: 'INTO'\", query_id=20261121_050904_00042_w2x7k)"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "CatalogException: CatalogException: Catalog Error: PARTITIONED BY is not supported for tables in a duckdb catalog"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"OVERWRITE\" LINE 1: INSERT OVERWRITE dk_44866693699_1_ovpart PARTITION (p = 'a') SELECT... ^^^^^^^^^"
@@ -364,6 +415,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "a table with deletion vectors on could not be created: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
@@ -384,6 +439,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -407,6 +465,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "skipped",
+     "n": "the two writers' commits never interleaved, so no race happened"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "10 DuckDB DELETE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only delete from base table"
@@ -429,6 +491,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "skipped",
+     "n": "the two writers' commits never interleaved, so no race happened"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "10 DuckDB UPDATE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only update base table"
@@ -450,6 +516,9 @@
      "n": "TableNotFoundError: TableNotFoundError: Local path \"lake._bench_delta.rs_45109287095_1_fullid\" does not exist or you don't have access! Error: Os { code: 2, kind: NotFound, message: \"No such file or directory\" }"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -476,6 +545,9 @@
      "o": "no",
      "n": "TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_delta_mk_44903599830_1/t1\", query_id=20261121_122424_…"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "CREATE SCHEMA at Tables/_bench_delta_mk_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
@@ -497,6 +569,9 @@
      "n": "CREATE SCHEMA at Tables/_bench_delta_rm_45109287095_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -522,6 +597,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "CREATE SCHEMA at Tables/_bench_delta_ine_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
@@ -542,6 +620,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -568,6 +649,10 @@
      "o": "no",
      "n": "a table could not be created by name in the schema: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_d…"
     },
+    "duckrun": {
+     "o": "no-op",
+     "n": "DROP TABLE returned success; the table is still at Tables/_bench_delta_drop_45139688818_1/t1"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "CREATE SCHEMA at Tables/_bench_delta_drop_44903801565_1: RuntimeError: RuntimeError: Binder Error: Delta tables do not support creating new schemas"
@@ -590,6 +675,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "CatalogException: CatalogException: Catalog Error: PARTITIONED BY is not supported for tables in a duckdb catalog"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -611,6 +700,10 @@
     "trino_iceberg": {
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:91: mismatched input 'GENERATED'. Expecting: ')', ','\", query_id=20261121_050911_00049_w2x7k)"
+    },
+    "duckrun": {
+     "o": "no",
+     "n": "ValueError: ValueError: invalid CREATE TABLE target 'lake._bench_delta.dr_45139688818_1_generated (id BIGINT, ts TIMESTAMP, d DATE GENERATED ALWAYS': a table name can't contain stray tokens. The layout clauses are SORTE…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -635,6 +728,10 @@
      "o": "no",
      "n": "works: ['decimal', 'date', 'timestamp', 'binary']; refused: timestamptz: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_INVALID_SCHEMA, message=\"Unsupported type: timestamp(6) …"
     },
+    "duckrun": {
+     "o": "no-op",
+     "n": "works: ['decimal', 'date', 'timestamptz', 'binary']; not applied: timestamp: expected 2026-01-02T03:04:05.123456, reads 2026-01-02T03:04:05.123456+00:00"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -654,6 +751,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -679,6 +779,10 @@
      "o": "no",
      "n": "TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=DELTA_LAKE_INVALID_SCHEMA, message=\"Unsupported type: variant\", query_id=20261121_123543_00009_dfd5k)"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "ConversionException: ConversionException: Conversion Error: VARIANT(OBJECT(a)) is missing key 'metadata' to 'STRUCT(metadata BLOB, \"value\" BLOB)'"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -698,6 +802,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -723,6 +830,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
@@ -745,6 +856,10 @@
     },
     "trino_iceberg": {
      "o": "supported"
+    },
+    "duckrun": {
+     "o": "no",
+     "n": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -770,6 +885,10 @@
      "o": "no",
      "n": "a table with type widening on could not be created and seeded: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:252: Catalog 'delta' table property 'delta.enab…"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "a table with type widening on could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Not implemented Error: Delta tables do not support altering"
@@ -792,6 +911,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "ParserException: ParserException: Parser Error: syntax error at or near \"TBLPROPERTIES\" LINE 1: ALTER TABLE lake._bench_delta.dr_45139688818_1_prop SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true') ^^^^^^^^^^^^^"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TBLPROPERTIES\" LINE 1: ALTER TABLE dk_44866693699_1_prop SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true') ^^^^^^^^^^^^^"
@@ -812,6 +935,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -836,6 +962,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -855,6 +984,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -880,6 +1012,10 @@
      "o": "no",
      "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_CANNOT_OPEN_SPLIT, message=\"Error opening Hive split abfss://1…"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: IOException: IOException: IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.co…"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: RuntimeError: RuntimeError: IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.…"
@@ -900,6 +1036,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -923,6 +1062,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "BinderException: BinderException: Binder Error: Catalog type does not support time travel"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -942,6 +1085,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -967,6 +1113,9 @@
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:17: mismatched input 'delta'. Expecting: '.', <EOF>\", query_id=20261121_122430_00044_xizu3)"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44903801565_1_detail\" LINE 1: DESCRIBE DETAIL dk_44903801565_1_detail ^^^^^^^^^^^^^^^^^^^^^^^"
@@ -989,6 +1138,9 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -1008,6 +1160,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -1033,6 +1188,9 @@
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=COLUMN_NOT_FOUND, message=\"line 1:12: Column 'c' cannot be resolved\", query_id=20261123_043631_00012_rfna9)"
     },
+    "duckrun": {
+     "o": "supported"
+    },
     "duckdb_iceberg": {
      "o": "supported"
     }
@@ -1055,6 +1213,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
@@ -1075,6 +1237,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -1101,6 +1266,10 @@
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'OPTIMIZE'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DEL…"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "ParserException: ParserException: Parser Error: syntax error at or near \"OPTIMIZE\" LINE 1: OPTIMIZE lake._bench_delta.dr_45139688818_1_zorder ZORDER... ^^^^^^^^"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"dk_44866693699_1_zorder\" LINE 1: OPTIMIZE dk_44866693699_1_zorder ZORDER BY (id) ^^^^^^^^^^^^^^^^^^^^^^^"
@@ -1126,6 +1295,10 @@
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=INVALID_TABLE_PROPERTY, message=\"line 1:255: Catalog 'delta' table property 'clustered_by' does not exist\", query_id=20261121_051052_00108_w2x7k)"
     },
+    "duckrun": {
+     "o": "no",
+     "n": "ParserException: ParserException: Parser Error: syntax error at or near \"CLUSTER\" LINE 1: ... table \"__duckrun_empty_2ccfa97e008e\" (id BIGINT, v BIGINT) CLUSTER BY (id) ^^^^^^^"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"CLUSTER\" LINE 1: ...9_1_cluster.dk_44866693699_1_cluster (id BIGINT, v BIGINT) CLUSTER BY (id) ^^^^^^^"
@@ -1149,6 +1322,10 @@
     "trino_iceberg": {
      "o": "supported"
     },
+    "duckrun": {
+     "o": "no-op",
+     "n": "returned success; the 1 file(s) the overwrite removed are still in storage"
+    },
     "duckdb_iceberg": {
      "o": "no",
      "n": "RuntimeError: RuntimeError: Binder Error: Can only vacuum or analyze base tables"
@@ -1169,6 +1346,9 @@
      "o": "supported"
     },
     "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckrun": {
      "o": "supported"
     },
     "duckdb_iceberg": {
@@ -1193,6 +1373,9 @@
     "trino_iceberg": {
      "o": "no",
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELE…"
+    },
+    "duckrun": {
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "no",
