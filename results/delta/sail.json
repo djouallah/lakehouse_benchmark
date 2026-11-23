@@ -358,9 +358,30 @@
    "question": "INSERT past a CHECK constraint",
    "outcome": "supported",
    "detail": "refused: AnalysisException: AnalysisException: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint v_positive (v > 0) violated."
+  },
+  {
+   "key": "read_deletion_vectors",
+   "group": "read",
+   "question": "a Spark table with deletion vectors",
+   "outcome": "supported",
+   "detail": "reads all 19 rows right; table features ['appendOnly', 'deletionVectors', 'invariants']"
+  },
+  {
+   "key": "read_column_mapping",
+   "group": "read",
+   "question": "a Spark table with column mapping (a renamed column)",
+   "outcome": "supported",
+   "detail": "reads all 20 rows right; table features ['columnMapping']"
+  },
+  {
+   "key": "read_type_widening",
+   "group": "read",
+   "question": "a Spark table with type widening (INT widened to BIGINT)",
+   "outcome": "supported",
+   "detail": "reads all 21 rows right; table features ['appendOnly', 'invariants', 'typeWidening']"
   }
  ],
- "run": "44905468610",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44905468610",
- "date": "2026-11-21"
+ "run": "45112202866",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+ "date": "2026-11-23"
 }

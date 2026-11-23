@@ -358,9 +358,30 @@
    "question": "INSERT past a CHECK constraint",
    "outcome": "supported",
    "detail": "refused: Py4JJavaError: Py4JJavaError: An error occurred while calling o67.sql. : org.apache.spark.sql.delta.schema.DeltaInvariantViolationException: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint v_positive (v > 0) violated by row with values: - v : -1 at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.getConstraintViolationWithValuesException(InvariantViolationException.scala:78) at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.apply(InvariantViolationException.scala:106) at org.apache.spark.sql.delta.schema.DeltaInvariantViolationException$.apply(I\u2026"
+  },
+  {
+   "key": "read_deletion_vectors",
+   "group": "read",
+   "question": "a Spark table with deletion vectors",
+   "outcome": "supported",
+   "detail": "reads all 19 rows right; table features ['appendOnly', 'deletionVectors', 'invariants']"
+  },
+  {
+   "key": "read_column_mapping",
+   "group": "read",
+   "question": "a Spark table with column mapping (a renamed column)",
+   "outcome": "supported",
+   "detail": "reads all 20 rows right; table features ['columnMapping']"
+  },
+  {
+   "key": "read_type_widening",
+   "group": "read",
+   "question": "a Spark table with type widening (INT widened to BIGINT)",
+   "outcome": "supported",
+   "detail": "reads all 21 rows right; table features ['appendOnly', 'invariants', 'typeWidening']"
   }
  ],
- "run": "44904945726",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904945726",
- "date": "2026-11-21"
+ "run": "45112202866",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+ "date": "2026-11-23"
 }

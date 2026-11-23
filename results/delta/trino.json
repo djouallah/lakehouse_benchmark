@@ -358,9 +358,30 @@
    "question": "INSERT past a CHECK constraint",
    "outcome": "supported",
    "detail": "refused: TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=CONSTRAINT_VIOLATION, message=\"Check constraint violation: (\"v\" > 0)\", query_id=20261121_123549_00011_dfd5k)"
+  },
+  {
+   "key": "read_deletion_vectors",
+   "group": "read",
+   "question": "a Spark table with deletion vectors",
+   "outcome": "supported",
+   "detail": "reads all 19 rows right; table features ['appendOnly', 'deletionVectors', 'invariants']"
+  },
+  {
+   "key": "read_column_mapping",
+   "group": "read",
+   "question": "a Spark table with column mapping (a renamed column)",
+   "outcome": "supported",
+   "detail": "reads all 20 rows right; table features ['columnMapping']"
+  },
+  {
+   "key": "read_type_widening",
+   "group": "read",
+   "question": "a Spark table with type widening (INT widened to BIGINT)",
+   "outcome": "no",
+   "detail": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=COLUMN_NOT_FOUND, message=\"line 1:12: Column 'c' cannot be resolved\", query_id=20261123_043631_00012_rfna9)"
   }
  ],
- "run": "44905808721",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44905808721",
- "date": "2026-11-21"
+ "run": "45112202866",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+ "date": "2026-11-23"
 }

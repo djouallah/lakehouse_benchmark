@@ -2,33 +2,33 @@
  "engines": {
   "pyspark_iceberg": {
    "version": "4.2.1 + delta-spark_4.2_2.13:4.4.1",
-   "run": "44904945726",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904945726",
-   "date": "2026-11-21"
+   "run": "45112202866",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+   "date": "2026-11-23"
   },
   "lakesail_iceberg": {
    "version": "0.7.3+main86da637b4f",
-   "run": "44905468610",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44905468610",
-   "date": "2026-11-21"
+   "run": "45112202866",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+   "date": "2026-11-23"
   },
   "delta_rs": {
    "version": "deltalake 1.7.0 (delta-rs py-1.7.0)",
-   "run": "45109287095",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45109287095",
+   "run": "45112202866",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
    "date": "2026-11-23"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
-   "run": "44905808721",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44905808721",
-   "date": "2026-11-21"
+   "run": "45112202866",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+   "date": "2026-11-23"
   },
   "duckdb_iceberg": {
    "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
-   "run": "44904772267",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44904772267",
-   "date": "2026-11-21"
+   "run": "45112202866",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
+   "date": "2026-11-23"
   }
  },
  "groups": [
@@ -975,7 +975,49 @@
   },
   {
    "group": "Reads & history",
-   "label": "Read a Spark table with deletion vectors, column mapping, type widening",
+   "label": "Read a Spark table with deletion vectors",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "delta_rs": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Read a Spark table with column mapping",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "delta_rs": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "supported"
+    }
+   }
+  },
+  {
+   "group": "Reads & history",
+   "label": "Read a Spark table with type widening",
    "cells": {
     "pyspark_iceberg": {
      "o": "supported"
@@ -989,7 +1031,7 @@
     },
     "trino_iceberg": {
      "o": "no",
-     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=COLUMN_NOT_FOUND, message=\"line 1:16: Column 'c' cannot be resolved\", query_id=20261121_123543_00008_dfd5k)"
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=COLUMN_NOT_FOUND, message=\"line 1:12: Column 'c' cannot be resolved\", query_id=20261123_043631_00012_rfna9)"
     },
     "duckdb_iceberg": {
      "o": "supported"
