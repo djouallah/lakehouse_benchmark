@@ -103,6 +103,17 @@ class DuckrunDelta(DeltaProbe):
         self, name, columns, *, partition=None, props=None, cluster=None, if_not_exists=False
     ):
         ine = "IF NOT EXISTS " if if_not_exists else ""
+        if partition and not (props or cluster):
+            # duckrun partitions in a CTAS (DuckDB's `PARTITIONED BY ... AS`), not on a column
+            # list: an empty partitioned table is a CTAS of no rows.
+            typed = ", ".join(
+                f"CAST(NULL AS {kind}) AS {col}"
+                for col, kind in (part.split(" ", 1) for part in columns.split(", "))
+            )
+            return [
+                f"CREATE TABLE {ine}{self.ref(name)} PARTITIONED BY ({', '.join(partition)}) "
+                f"AS SELECT {typed} WHERE false"
+            ]
         part = f" PARTITIONED BY ({', '.join(partition)})" if partition else ""
         clus = f" CLUSTER BY ({', '.join(cluster)})" if cluster else ""
         with_ = ""

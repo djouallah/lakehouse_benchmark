@@ -30,6 +30,16 @@ from bench import auth, scrub
 from bench.config import ONELAKE_DFS, Config
 
 NAMESPACE = "_bench_delta"
+# Every commit the oracle's own delta-rs writes (the seeds, the race's second writer) carries this
+# in commitInfo, so DeltaOracle.commit_authors tells it from the engine under test, whatever that
+# engine writes with -- delta-rs included (the delta-rs column, duckrun).
+ORACLE_TAG = {"bench.writer": "oracle"}
+
+
+def _oracle_commit():
+    from deltalake import CommitProperties
+
+    return CommitProperties(custom_metadata=ORACLE_TAG)
 
 
 class DeltaOracle:
@@ -138,7 +148,13 @@ class DeltaOracle:
                 "v": pa.array([v for _, v in pairs], pa.int64()),
             }
         )
-        write_deltalake(self.uri(name), data, mode=mode, storage_options=self.storage_options())
+        write_deltalake(
+            self.uri(name),
+            data,
+            mode=mode,
+            storage_options=self.storage_options(),
+            commit_properties=_oracle_commit(),
+        )
 
     def write_dated(self, name: str, rows) -> None:
         """Rows (id, v, d) written by delta-rs, partitioned by the DATE column d: one data file
@@ -156,7 +172,11 @@ class DeltaOracle:
             }
         )
         write_deltalake(
-            self.uri(name), data, partition_by=["d"], storage_options=self.storage_options()
+            self.uri(name),
+            data,
+            partition_by=["d"],
+            storage_options=self.storage_options(),
+            commit_properties=_oracle_commit(),
         )
 
     def partition_of(self, name: str) -> dict[str, str]:
@@ -231,16 +251,15 @@ class DeltaOracle:
         return [c.get("operation", "?") for c in self.all_actions(name, "commitInfo")]
 
     def commit_authors(self, name: str) -> list[str]:
-        """Who wrote each version, oldest first: "delta-rs" (its commitInfo says clientVersion
-        delta-rs.*) or "engine" (any other writer). The delta-rs column's own commits are delta-rs
-        too, and carry bench.writer = engine (delta_capability_delta_rs.ENGINE_TAG)."""
+        """Who wrote each version, oldest first: "delta-rs" (the oracle's own writes, tagged
+        ORACLE_TAG) or "engine" (every other commit). Not clientVersion: the delta-rs column and
+        duckrun commit through delta-rs too."""
         found = []
         for version in self.versions(name):
             info = self.actions(name, "commitInfo", version)
             info = info[0] if info else {}
-            client = str(info.get("clientVersion", ""))
-            tagged = '"bench.writer": "engine"' in json.dumps(info)
-            found.append("delta-rs" if client.startswith("delta-rs") and not tagged else "engine")
+            tagged = '"bench.writer": "oracle"' in json.dumps(info)
+            found.append("delta-rs" if tagged else "engine")
         return found
 
     def active_files(self, name: str) -> list[dict]:
