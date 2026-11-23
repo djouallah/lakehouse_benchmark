@@ -13,10 +13,10 @@
    "date": "2026-11-21"
   },
   "delta_rs": {
-   "version": "deltalake 1.6.6 (delta-rs py-1.6.6)",
-   "run": "44977068131",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44977068131",
-   "date": "2026-11-22"
+   "version": "deltalake 1.7.0 (delta-rs py-1.7.0)",
+   "run": "45109287095",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45109287095",
+   "date": "2026-11-23"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
@@ -359,7 +359,7 @@
     },
     "delta_rs": {
      "o": "no-op",
-     "n": "DELETE returned success; delta-rs reads the engine could not read it back: The table has set these reader features: {'deletionVectors'} but these are not yet supported by the deltalake reader."
+     "n": "the table has deletion vectors on and DELETE rewrote the data instead: 1 new file(s), no deletion vector; log: CREATE TABLE > WRITE > DELETE"
     },
     "trino_iceberg": {
      "o": "supported"
@@ -447,7 +447,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "TableNotFoundError: TableNotFoundError: Local path \"lake._bench_delta.rs_44976415512_1_fullid\" does not exist or you don't have access! Error: Os { code: 2, kind: NotFound, message: \"No such file or directory\" }"
+     "n": "TableNotFoundError: TableNotFoundError: Local path \"lake._bench_delta.rs_45109287095_1_fullid\" does not exist or you don't have access! Error: Os { code: 2, kind: NotFound, message: \"No such file or directory\" }"
     },
     "trino_iceberg": {
      "o": "supported"
@@ -470,7 +470,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "CREATE SCHEMA at Tables/_bench_delta_mk_44976415512_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
+     "n": "CREATE SCHEMA at Tables/_bench_delta_mk_45109287095_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
     },
     "trino_iceberg": {
      "o": "no",
@@ -494,7 +494,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "CREATE SCHEMA at Tables/_bench_delta_rm_44976415512_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
+     "n": "CREATE SCHEMA at Tables/_bench_delta_rm_45109287095_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
     },
     "trino_iceberg": {
      "o": "supported"
@@ -517,7 +517,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "CREATE SCHEMA at Tables/_bench_delta_ine_44976415512_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
+     "n": "CREATE SCHEMA at Tables/_bench_delta_ine_45109287095_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
     },
     "trino_iceberg": {
      "o": "supported"
@@ -562,7 +562,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "CREATE SCHEMA at Tables/_bench_delta_drop_44976415512_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
+     "n": "CREATE SCHEMA at Tables/_bench_delta_drop_45109287095_1: AttributeError: AttributeError: module 'deltalake' has no attribute 'create_schema'"
     },
     "trino_iceberg": {
      "o": "no",
@@ -874,7 +874,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: FileNotFoundError: FileNotFoundError: Object at location ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/rs_44976415512_1_stats/part-0000…"
+     "n": "max(id), count(*) fails with all 4 data files deleted, so it opens them: ArrowInvalid: ArrowInvalid: C Data interface error: External error: Parquet error: Parquet error: Failed to fetch metadata for file ac303243-4441-…"
     },
     "trino_iceberg": {
      "o": "no",
@@ -985,7 +985,7 @@
     },
     "delta_rs": {
      "o": "no",
-     "n": "DeltaProtocolError: DeltaProtocolError: The table has set these reader features: {'deletionVectors', 'v2Checkpoint', 'typeWidening', 'columnMapping'} but these are not yet supported by the deltalake reader."
+     "n": "DeltaError: DeltaError: External error: Transaction failed: Unsupported table features required: [TypeWidening]"
     },
     "trino_iceberg": {
      "o": "no",
