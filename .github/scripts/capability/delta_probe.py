@@ -988,59 +988,100 @@ class DeltaProbe:
             raise Skip("data files still in storage after the delete")
         return f"the files of {len(DAYS) - len(keep)} of {len(DAYS)} days deleted"
 
-    FIXTURE = "spark_newer_features_v1"
-    # What the fixture holds once Spark has written it (newer_features_fixture): ids 2..21, after
-    # a DELETE (a deletion vector), an int -> long widening of c and a rename of v to v2.
-    FIXTURE_ROWS = [(i, i * 10, i) for i in range(2, 22)]
-    FIXTURE_FEATURES = {"deletionVectors", "columnMapping", "typeWidening", "v2Checkpoint"}
+    # SPARK-WRITTEN FIXTURES, ONE READER FEATURE EACH, so a "no" names the feature an engine cannot
+    # read. Spark writes each once, at Tables/_bench_delta_fixtures/<name>, and it stays for every
+    # engine and every later run (Spark is first in the matrix). key: (folder, the one reader
+    # feature, columns read, rows expected, statements after CREATE TABLE ... LOCATION).
+    FIXTURES = {
+        "dv": (
+            "spark_deletion_vectors_v1",
+            "deletionVectors",
+            "id, v",
+            [(i, i * 10) for i in range(2, 21)],
+            "(id BIGINT, v BIGINT)",
+            "'delta.enableDeletionVectors' = 'true'",
+            [
+                # 20 rows in one INSERT, so the deleted row shares its file: a deletion vector.
+                "INSERT INTO {t} SELECT id, id * 10 FROM range(1, 21)",
+                "DELETE FROM {t} WHERE id = 1",
+            ],
+        ),
+        "cm": (
+            "spark_column_mapping_v1",
+            "columnMapping",
+            "id, v2",
+            [(i, i * 10) for i in range(1, 21)],
+            "(id BIGINT, v BIGINT)",
+            # Reader 3 / writer 7, or Spark gives a column-mapping-only table the legacy (2, 5)
+            # protocol, which lists no features: the fixture would read as Broken.
+            "'delta.columnMapping.mode' = 'id', "
+            "'delta.minReaderVersion' = '3', 'delta.minWriterVersion' = '7'",
+            [
+                "INSERT INTO {t} SELECT id, id * 10 FROM range(1, 21)",
+                "ALTER TABLE {t} RENAME COLUMN v TO v2",
+            ],
+        ),
+        "tw": (
+            "spark_type_widening_v1",
+            "typeWidening",
+            "id, c",
+            [(i, i) for i in range(1, 21)] + [(21, 3_000_000_000)],
+            "(id BIGINT, c INT)",
+            "'delta.enableTypeWidening' = 'true'",
+            [
+                "INSERT INTO {t} SELECT id, CAST(id AS INT) FROM range(1, 21)",
+                "ALTER TABLE {t} ALTER COLUMN c TYPE BIGINT",
+                # Past the INT range: the reader must widen the old files and read this one.
+                "INSERT INTO {t} VALUES (21, 3000000000)",
+            ],
+        ),
+    }
 
-    def newer_features_fixture(self) -> None:
-        """Spark writes the fixture once, at Tables/_bench_delta_fixtures/<FIXTURE>, and it
-        stays for every engine and every later run."""
-        uri = self.oracle.fixture_uri(self.FIXTURE)
-        t = f"fx_{self.run}"
-        props = (
-            "'delta.columnMapping.mode' = 'id', 'delta.enableDeletionVectors' = 'true', "
-            "'delta.enableTypeWidening' = 'true', 'delta.checkpointPolicy' = 'v2', "
-            "'delta.checkpointInterval' = '2'"
-        )
+    def _spark_fixture(self, key: str) -> None:
+        folder, _feature, _cols, _rows, columns, props, statements = self.FIXTURES[key]
+        uri = self.oracle.fixture_uri(folder)
+        t = f"`fx{key}_{self.run}`"
         try:
             self.run_all(
-                [
-                    f"CREATE TABLE `{t}` (id BIGINT, v BIGINT, c INT) USING delta "
-                    f"LOCATION '{uri}' TBLPROPERTIES ({props})",
-                    f"INSERT INTO `{t}` SELECT id, id * 10, CAST(id AS INT) FROM range(1, 21)",
-                    f"DELETE FROM `{t}` WHERE id = 1",
-                    f"ALTER TABLE `{t}` ALTER COLUMN c TYPE BIGINT",
-                    f"ALTER TABLE `{t}` RENAME COLUMN v TO v2",
-                    f"INSERT INTO `{t}` VALUES (21, 210, 21)",
-                ]
+                [f"CREATE TABLE {t} {columns} USING delta LOCATION '{uri}' TBLPROPERTIES ({props})"]
+                + [q.format(t=t) for q in statements]
             )
         except Refused:
             with contextlib.suppress(Exception):
-                self.oracle.purge_path(self.oracle.fixture_relative(self.FIXTURE))
+                self.oracle.purge_path(self.oracle.fixture_relative(folder))
             raise
 
-    def read_newer_features(self) -> str:
-        """A table Spark wrote with deletion vectors, column mapping (id), type widening and a
-        v2 checkpoint, read by every engine."""
-        where = self.oracle.fixture_relative(self.FIXTURE)
+    def _read_spark_fixture(self, key: str) -> str:
+        folder, feature, cols, rows, *_ = self.FIXTURES[key]
+        where = self.oracle.fixture_relative(folder)
         if not self.oracle.has_log(where):
             if self.CLIENT != "spark":
                 raise Skip("Spark has not written the fixture table yet")
-            self.newer_features_fixture()
+            self._spark_fixture(key)
         features = set(self.oracle.features_at(where))
-        if not features >= self.FIXTURE_FEATURES:
+        if feature not in features:
             raise Broken(f"the fixture has features {sorted(features)}")
-        name = f"fxr_{self.run}".lower()
+        name = f"fxr{key}_{self.run}".lower()
         try:
-            self.run_all(self.register_sql(name, self.oracle.fixture_uri(self.FIXTURE)))
+            self.run_all(self.register_sql(name, self.oracle.fixture_uri(folder)))
         except Refused as exc:
             raise Refused(f"the table could not be opened: {exc}") from None
-        found = self.sql(self.read_sql(self.ref(name), "id, v2, c"))
-        if not _same(found, self.FIXTURE_ROWS):
-            raise NoOp(f"reads {found[:4]}... ({len(found)} rows), expected ids 2..21")
-        return f"reads all {len(found)} rows right; table features {sorted(self.FIXTURE_FEATURES)}"
+        found = self.sql(self.read_sql(self.ref(name), cols))
+        if not _same(found, rows):
+            raise NoOp(f"reads {found[:4]}... ({len(found)} rows), expected {rows[:4]}...")
+        return f"reads all {len(found)} rows right; table features {sorted(features)}"
+
+    def read_deletion_vectors(self) -> str:
+        """A table Spark wrote with a deletion vector (a DELETE of one row of 20), read back."""
+        return self._read_spark_fixture("dv")
+
+    def read_column_mapping(self) -> str:
+        """A table Spark wrote with column mapping (id) and a renamed column, read back."""
+        return self._read_spark_fixture("cm")
+
+    def read_type_widening(self) -> str:
+        """A table Spark wrote with INT widened to BIGINT and a value past INT, read back."""
+        return self._read_spark_fixture("tw")
 
     def variant(self) -> str:
         """A VARIANT column written by the engine: the log must carry the variantType feature,
@@ -1387,11 +1428,9 @@ PROBES = [
     ("read", "table history", "history"),
     ("read", "max(id), count(*) with every data file deleted", "stats_from_log"),
     ("read", "DESCRIBE DETAIL", "describe_detail"),
-    (
-        "read",
-        "a Spark table with deletion vectors, column mapping, type widening",
-        "read_newer_features",
-    ),
+    ("read", "a Spark table with deletion vectors", "read_deletion_vectors"),
+    ("read", "a Spark table with column mapping (a renamed column)", "read_column_mapping"),
+    ("read", "a Spark table with type widening (INT widened to BIGINT)", "read_type_widening"),
     ("create", "VARIANT column: write, DuckDB reads it", "variant"),
     ("write", "INSERT past a CHECK constraint", "check_constraint"),
     ("read", "change data feed", "change_data_feed"),
