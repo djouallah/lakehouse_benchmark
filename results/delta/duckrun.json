@@ -62,22 +62,22 @@
    "key": "race_append",
    "group": "concurrency",
    "question": "INSERTs while delta-rs appends to the same table",
-   "outcome": "skipped",
-   "detail": "the two writers' commits never interleaved, so no race happened"
+   "outcome": "supported",
+   "detail": "10 duckrun and 10 delta-rs commits, interleaved 6 times, all 23 rows kept"
   },
   {
    "key": "race_delete",
    "group": "concurrency",
    "question": "DELETEs while delta-rs appends to the same table",
-   "outcome": "skipped",
-   "detail": "the two writers' commits never interleaved, so no race happened"
+   "outcome": "supported",
+   "detail": "10 duckrun DELETEs applied, every delta-rs append kept, interleaved 10 times"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATEs while delta-rs appends to the same table",
-   "outcome": "skipped",
-   "detail": "the two writers' commits never interleaved, so no race happened"
+   "outcome": "supported",
+   "detail": "10 duckrun UPDATEs applied, every delta-rs append kept, interleaved 6 times"
   },
   {
    "key": "schema_create",
@@ -160,8 +160,8 @@
    "key": "overwrite_partition",
    "group": "write",
    "question": "overwrite one partition",
-   "outcome": "no",
-   "detail": "CatalogException: CatalogException: Catalog Error: PARTITIONED BY is not supported for tables in a duckdb catalog"
+   "outcome": "supported",
+   "detail": "overwrite of partition p = 'a': DuckDB reads [(3, 30, 'b'), (7, 70, 'a')]; duckrun agrees; log: WRITE > WRITE > WRITE"
   },
   {
    "key": "deletion_vectors",
@@ -174,8 +174,8 @@
    "key": "partitioned",
    "group": "create",
    "question": "PARTITIONED BY (p)",
-   "outcome": "no",
-   "detail": "CatalogException: CatalogException: Catalog Error: PARTITIONED BY is not supported for tables in a duckdb catalog"
+   "outcome": "supported",
+   "detail": "partitionColumns ['p']; 3 rows over 2 partitions"
   },
   {
    "key": "generated_partition",
@@ -374,7 +374,7 @@
    "detail": "a _delta_log over the files in place; DuckDB reads [(1, 10), (2, 20), (3, 30)]"
   }
  ],
- "run": "45139688818",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45139688818",
+ "run": "45142300738",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45142300738",
  "date": "2026-11-23"
 }
