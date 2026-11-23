@@ -93,6 +93,7 @@ LABEL = {
 API_LABEL = {
     "pyiceberg": "pyiceberg (API)",
     "delta_rs": "delta-rs (API)",
+    "duckrun": "duckrun",
 }
-API_LIGHT = {"pyiceberg": "#6b7280", "delta_rs": "#57534e"}
-API_DARK = {"pyiceberg": "#9ca3af", "delta_rs": "#a8a29e"}
+API_LIGHT = {"pyiceberg": "#6b7280", "delta_rs": "#57534e", "duckrun": "#0f766e"}
+API_DARK = {"pyiceberg": "#9ca3af", "delta_rs": "#a8a29e", "duckrun": "#2dd4bf"}

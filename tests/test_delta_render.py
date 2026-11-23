@@ -42,7 +42,7 @@ def test_every_row_is_in_one_group_and_the_grid_opens_on_basic():
 
 
 def test_the_grid_is_the_engines_that_write_delta_in_sql_and_delta_rs():
-    assert render_delta.ENGINES == ("spark", "sail", "trino", "duckdb", "delta_rs")
+    assert render_delta.ENGINES == ("spark", "sail", "trino", "duckdb", "delta_rs", "duckrun")
     for engine in render_delta.ENGINES:
         assert (_SCRIPTS / f"delta_capability_{engine}.py").exists()
         assert (_ROOT / "requirements" / f"capability_delta_{engine}.txt").exists()
