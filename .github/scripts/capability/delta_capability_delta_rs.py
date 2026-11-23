@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
-import re
 
 from delta_probe import DeltaProbe, one_line, run
 from harness import NOOP, REFUSED, STATS_FILES, SUPPORTED, TYPE_EXPECTED, NoOp, normalize
@@ -64,17 +63,12 @@ def _rows(table, cols) -> list[tuple]:
     return [tuple(r[c] for c in cols) for r in table.select(list(cols)).to_pylist()]
 
 
-def _filter(where: str | None):
-    """The probes' WHERE clauses (`id = 22`, `d = DATE '2026-01-03'`) as an Arrow filter."""
-    import pyarrow.compute as pc
-
-    if not where:
-        return None
-    m = re.fullmatch(r"(\w+) = (?:DATE '([^']+)'|(-?\d+))", where.strip())
-    if not m:
-        raise ValueError(f"no Arrow filter for {where!r}")
-    value = dt.date.fromisoformat(m.group(2)) if m.group(2) else int(m.group(3))
-    return pc.field(m.group(1)) == value
+def _scan(table, columns: list[str], where: str | None = None):
+    """Every read of this column: `DeltaTable.scan`, deltalake's DataFusion engine. It reads
+    deletion vectors and column mapping, which the pyarrow engine (`to_pyarrow_dataset`, deprecated
+    in deltalake 1.7.0) refuses. The probes' WHERE clauses (`id = 22`, `d = DATE '2026-01-03'`) are
+    DataFusion SQL as they stand."""
+    return _arrow(table.scan(columns=columns, predicate=where))
 
 
 def _create_at(uri: str, schema, storage_options: dict) -> None:
@@ -179,7 +173,7 @@ class DeltaRs(DeltaProbe):
         from deltalake import write_deltalake
 
         def run_() -> None:
-            current = self.dt(t).to_pyarrow_table(columns=["id", "v"])
+            current = _scan(self.dt(t), ["id", "v"])
             again = _table([(i + 10, v) for i, v in _rows(current, ("id", "v"))])
             write_deltalake(t, again, mode="append", storage_options=self.so())
 
@@ -189,20 +183,20 @@ class DeltaRs(DeltaProbe):
         names = [c.strip() for c in cols.split(",")]
 
         def run_() -> list[tuple]:
-            table = self.dt(t).to_pyarrow_dataset().to_table(columns=names, filter=_filter(where))
+            table = _scan(self.dt(t), names, where)
             found = _rows(table, names)
             return sorted(found) if order else found
 
-        return Op(f"DeltaTable({_short(t)}).to_pyarrow_dataset() {names} where {where}", run_)
+        return Op(f"DeltaTable({_short(t)}).scan({names}, predicate={where!r})", run_)
 
     def sum_sql(self, t, where=None):
         import pyarrow.compute as pc
 
         def run_() -> list[tuple]:
-            table = self.dt(t).to_pyarrow_dataset().to_table(columns=["v"], filter=_filter(where))
+            table = _scan(self.dt(t), ["v"], where)
             return [(pc.sum(table["v"]).as_py(),)]
 
-        return Op(f"sum(v) of DeltaTable({_short(t)}).to_pyarrow_dataset() where {where}", run_)
+        return Op(f"sum(v) of DeltaTable({_short(t)}).scan(['v'], predicate={where!r})", run_)
 
     def create_sql(
         self, name, columns, *, partition=None, props=None, cluster=None, if_not_exists=False
@@ -396,10 +390,8 @@ class DeltaRs(DeltaProbe):
 
     def version_sql(self, t, version):
         return Op(
-            f"DeltaTable({_short(t)}, version={version}).to_pyarrow_table()",
-            lambda: sorted(
-                _rows(self.dt(t, version).to_pyarrow_table(columns=["id", "v"]), ("id", "v"))
-            ),
+            f"DeltaTable({_short(t)}, version={version}).scan()",
+            lambda: sorted(_rows(_scan(self.dt(t, version), ["id", "v"]), ("id", "v"))),
         )
 
     def timestamp_sql(self, t, at):
@@ -408,7 +400,7 @@ class DeltaRs(DeltaProbe):
         def run_() -> list[tuple]:
             table = self.dt(t)
             table.load_as_version(when)
-            return sorted(_rows(table.to_pyarrow_table(columns=["id", "v"]), ("id", "v")))
+            return sorted(_rows(_scan(table, ["id", "v"]), ("id", "v")))
 
         return Op(f"DeltaTable({_short(t)}).load_as_version({at!r} UTC)", run_)
 
@@ -499,10 +491,10 @@ class DeltaRs(DeltaProbe):
 
         def run_() -> list[tuple]:
             table = self.dt(t)
-            ids = table.to_pyarrow_dataset().to_table(columns=["id"])["id"]
+            ids = _scan(table, ["id"])["id"]
             return [(pc.max(ids).as_py(), table.count())]
 
-        return Op(f"max(id) of DeltaTable({_short(t)}).to_pyarrow_dataset(), and .count()", run_)
+        return Op(f"max(id) of DeltaTable({_short(t)}).scan(['id']), and .count()", run_)
 
     def convert_sql(self, name):
         from deltalake import convert_to_deltalake

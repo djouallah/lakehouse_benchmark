@@ -1,2 +1,5 @@
 # The delta-rs column: deltalake itself is the client, already in the shared set.
 -r capability_delta_catalog.txt
+# 1.7.0 (2026-11-22): the column reads with DeltaTable.scan, deltalake's DataFusion engine, which
+# reads deletion vectors and column mapping; the pyarrow engine it replaces refused both.
+deltalake>=1.7.0
