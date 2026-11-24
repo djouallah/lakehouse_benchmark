@@ -25,10 +25,10 @@
    "date": "2026-11-23"
   },
   "duckrun": {
-   "version": "duckrun 0.5.7 (duckdb 2.0.1, deltalake 1.5.0)",
-   "run": "45142300738",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45142300738",
-   "date": "2026-11-23"
+   "version": "duckrun 0.6.0 (duckdb 2.0.1, deltalake 1.7.0)",
+   "run": "45495698816",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45495698816",
+   "date": "2026-11-24"
   },
   "duckdb_iceberg": {
    "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
@@ -360,8 +360,7 @@
      "o": "supported"
     },
     "duckrun": {
-     "o": "no",
-     "n": "BinderException: BinderException: Binder Error: Can only delete from base table"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -415,7 +414,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "a table with deletion vectors on could not be created: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+     "n": "Unsupported: Unsupported: delete: deletion vectors (the commit API cannot remove a file that has one)"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -440,7 +439,8 @@
      "o": "supported"
     },
     "duckrun": {
-     "o": "supported"
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM de…"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -646,8 +646,7 @@
      "n": "a table could not be created by name in the schema: TrinoExternalError: TrinoExternalError: TrinoExternalError(type=EXTERNAL, name=HIVE_METASTORE_ERROR, message=\"Table directory must be local:///trino-metastore/_bench_d…"
     },
     "duckrun": {
-     "o": "no-op",
-     "n": "DROP TABLE returned success; the table is still at Tables/_bench_delta_drop_45139688818_1/t1"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -697,8 +696,7 @@
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:91: mismatched input 'GENERATED'. Expecting: ')', ','\", query_id=20261121_050911_00049_w2x7k)"
     },
     "duckrun": {
-     "o": "no",
-     "n": "ValueError: ValueError: invalid CREATE TABLE target 'lake._bench_delta.dr_45139688818_1_generated (id BIGINT, ts TIMESTAMP, d DATE GENERATED ALWAYS': a table name can't contain stray tokens. The layout clauses are SORTE…"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -776,7 +774,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "ConversionException: ConversionException: Conversion Error: VARIANT(OBJECT(a)) is missing key 'metadata' to 'STRUCT(metadata BLOB, \"value\" BLOB)'"
+     "n": "Unsupported: Unsupported: create table: column 'x' is VARIANT, which Delta has no type for; cast it (VARCHAR, BIGINT, DECIMAL, TIMESTAMPTZ, ...)"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -827,7 +825,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+     "n": "Unsupported: Unsupported: overwrite: replacing the schema of a column-mapped table; DROP TABLE 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -854,7 +852,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+     "n": "Unsupported: Unsupported: overwrite: replacing the schema of a column-mapped table; DROP TABLE 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -882,7 +880,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "a table with type widening on could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+     "n": "a table with type widening on could not be created and seeded: DeltaError: DeltaError: Kernel: Generic delta kernel error: Error parsing property 'delta.enableTypeWidening':'true'"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -907,8 +905,7 @@
      "o": "supported"
     },
     "duckrun": {
-     "o": "no",
-     "n": "ParserException: ParserException: Parser Error: syntax error at or near \"TBLPROPERTIES\" LINE 1: ALTER TABLE lake._bench_delta.dr_45139688818_1_prop SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true') ^^^^^^^^^^^^^"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -1058,8 +1055,7 @@
      "o": "supported"
     },
     "duckrun": {
-     "o": "no",
-     "n": "BinderException: BinderException: Binder Error: Catalog type does not support time travel"
+     "o": "supported"
     },
     "duckdb_iceberg": {
      "o": "supported"
@@ -1210,7 +1206,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+     "n": "Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files)"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -1235,7 +1231,8 @@
      "o": "supported"
     },
     "duckrun": {
-     "o": "supported"
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM de…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -1263,7 +1260,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "ParserException: ParserException: Parser Error: syntax error at or near \"OPTIMIZE\" LINE 1: OPTIMIZE lake._bench_delta.dr_45139688818_1_zorder ZORDER... ^^^^^^^^"
+     "n": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM de…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -1292,7 +1289,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "ParserException: ParserException: Parser Error: syntax error at or near \"CLUSTER\" LINE 1: ... table \"__duckrun_empty_2ccfa97e008e\" (id BIGINT, v BIGINT) CLUSTER BY (id) ^^^^^^^"
+     "n": "ValueError: ValueError: conn.sql() can't write a Delta table from this SQL. Use CREATE TABLE … AS SELECT to create or overwrite, INSERT / UPDATE / DELETE / MERGE against a discovered table, INSERT INTO t REPLACE WHERE <…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -1318,8 +1315,8 @@
      "o": "supported"
     },
     "duckrun": {
-     "o": "no-op",
-     "n": "returned success; the 1 file(s) the overwrite removed are still in storage"
+     "o": "no",
+     "n": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM de…"
     },
     "duckdb_iceberg": {
      "o": "no",
@@ -1370,7 +1367,8 @@
      "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELE…"
     },
     "duckrun": {
-     "o": "supported"
+     "o": "no",
+     "n": "IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM delta_scan('abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2.…"
     },
     "duckdb_iceberg": {
      "o": "no",

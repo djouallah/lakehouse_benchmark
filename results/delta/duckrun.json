@@ -1,13 +1,13 @@
 {
  "engine": "duckrun",
- "version": "duckrun 0.5.7 (duckdb 2.0.1, deltalake 1.5.0)",
+ "version": "duckrun 0.6.0 (duckdb 2.0.1, deltalake 1.7.0)",
  "rows": [
   {
    "key": "session",
    "group": "session",
    "question": "the engine starts",
    "outcome": "supported",
-   "detail": "duckrun duckrun 0.5.7 (duckdb 2.0.1, deltalake 1.5.0); tables under Tables/_bench_delta"
+   "detail": "duckrun duckrun 0.6.0 (duckdb 2.0.1, deltalake 1.7.0); tables under Tables/_bench_delta"
   },
   {
    "key": "create_table",
@@ -28,7 +28,7 @@
    "group": "create",
    "question": "CREATE TABLE ... AS SELECT",
    "outcome": "supported",
-   "detail": "CTAS: DuckDB reads [(1, 10), (2, 20), (3, 30)]; duckrun agrees; log: WRITE"
+   "detail": "CTAS: DuckDB reads [(1, 10), (2, 20), (3, 30)]; duckrun agrees; log: CREATE TABLE"
   },
   {
    "key": "create_or_replace",
@@ -56,7 +56,7 @@
    "group": "catalog",
    "question": "INSERT and SELECT as catalog.schema.table",
    "outcome": "supported",
-   "detail": "INSERT and SELECT as lake._bench_delta.dr_45139688818_1_fullid: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; duckrun agrees"
+   "detail": "INSERT and SELECT as lake._bench_delta.dr_45495698816_1_fullid: DuckDB reads [(1, 10), (2, 20), (3, 30), (4, 40)]; duckrun agrees"
   },
   {
    "key": "race_append",
@@ -70,42 +70,42 @@
    "group": "concurrency",
    "question": "DELETEs while delta-rs appends to the same table",
    "outcome": "supported",
-   "detail": "10 duckrun DELETEs applied, every delta-rs append kept, interleaved 10 times"
+   "detail": "6 duckrun DELETEs applied, every delta-rs append kept, interleaved 2 times; 4 refused on the conflict, nothing changed: CommitFailedError: CommitFailedError: delete: table 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5\u2026"
   },
   {
    "key": "race_update",
    "group": "concurrency",
    "question": "UPDATEs while delta-rs appends to the same table",
    "outcome": "supported",
-   "detail": "10 duckrun UPDATEs applied, every delta-rs append kept, interleaved 6 times"
+   "detail": "8 duckrun UPDATEs applied, every delta-rs append kept, interleaved 2 times; 2 refused on the conflict, nothing changed: CommitFailedError: CommitFailedError: update: table 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5\u2026"
   },
   {
    "key": "schema_create",
    "group": "catalog",
    "question": "CREATE SCHEMA at a folder, a table by name lands in it",
    "outcome": "supported",
-   "detail": "schema at Tables/_bench_delta_mk_45139688818_1; a table created by name lands at Tables/_bench_delta_mk_45139688818_1/t1"
+   "detail": "schema at Tables/_bench_delta_mk_45495698816_1; a table created by name lands at Tables/_bench_delta_mk_45495698816_1/t1"
   },
   {
    "key": "schema_existing",
    "group": "catalog",
    "question": "CREATE SCHEMA IF NOT EXISTS, existing schema",
    "outcome": "supported",
-   "detail": "CREATE SCHEMA IF NOT EXISTS on the existing _bench_delta_ine_45139688818_1: accepted"
+   "detail": "CREATE SCHEMA IF NOT EXISTS on the existing _bench_delta_ine_45495698816_1: accepted"
   },
   {
    "key": "schema_drop",
    "group": "catalog",
    "question": "DROP SCHEMA removes the folder",
    "outcome": "supported",
-   "detail": "no folder Tables/_bench_delta_rm_45139688818_1 left (CREATE SCHEMA made no folder, so there was none to remove)"
+   "detail": "no folder Tables/_bench_delta_rm_45495698816_1 left (CREATE SCHEMA made no folder, so there was none to remove)"
   },
   {
    "key": "drop_table",
    "group": "catalog",
    "question": "DROP TABLE removes the table folder",
-   "outcome": "no-op",
-   "detail": "DROP TABLE returned success; the table is still at Tables/_bench_delta_drop_45139688818_1/t1"
+   "outcome": "supported",
+   "detail": "DROP TABLE removed Tables/_bench_delta_drop_45495698816_1/t1"
   },
   {
    "key": "insert_select",
@@ -119,14 +119,14 @@
    "group": "write",
    "question": "DELETE",
    "outcome": "supported",
-   "detail": "DELETE: DuckDB reads [(2, 20), (3, 30)]; duckrun agrees; log: CREATE TABLE > WRITE > DELETE"
+   "detail": "DELETE: DuckDB reads [(2, 20), (3, 30)]; duckrun agrees; log: CREATE TABLE > WRITE > WRITE"
   },
   {
    "key": "update",
    "group": "write",
    "question": "UPDATE",
    "outcome": "supported",
-   "detail": "UPDATE: DuckDB reads [(1, 999), (2, 20), (3, 30)]; duckrun agrees; log: CREATE TABLE > WRITE > UPDATE"
+   "detail": "UPDATE: DuckDB reads [(1, 999), (2, 20), (3, 30)]; duckrun agrees; log: CREATE TABLE > WRITE > WRITE"
   },
   {
    "key": "insert_overwrite",
@@ -140,7 +140,7 @@
    "group": "write",
    "question": "MERGE, UPDATE + INSERT",
    "outcome": "supported",
-   "detail": "MERGE: DuckDB reads [(1, 777), (2, 20), (3, 30), (9, 90)]; duckrun agrees; log: CREATE TABLE > WRITE > MERGE"
+   "detail": "MERGE: DuckDB reads [(1, 777), (2, 20), (3, 30), (9, 90)]; duckrun agrees; log: CREATE TABLE > WRITE > WRITE"
   },
   {
    "key": "merge_partitions",
@@ -153,22 +153,22 @@
    "key": "truncate",
    "group": "write",
    "question": "TRUNCATE",
-   "outcome": "no",
-   "detail": "BinderException: BinderException: Binder Error: Can only delete from base table"
+   "outcome": "supported",
+   "detail": "TRUNCATE: DuckDB reads []; duckrun agrees; log: CREATE TABLE > WRITE > WRITE"
   },
   {
    "key": "overwrite_partition",
    "group": "write",
    "question": "overwrite one partition",
    "outcome": "supported",
-   "detail": "overwrite of partition p = 'a': DuckDB reads [(3, 30, 'b'), (7, 70, 'a')]; duckrun agrees; log: WRITE > WRITE > WRITE"
+   "detail": "overwrite of partition p = 'a': DuckDB reads [(3, 30, 'b'), (7, 70, 'a')]; duckrun agrees; log: CREATE TABLE > WRITE > WRITE"
   },
   {
    "key": "deletion_vectors",
    "group": "write",
    "question": "DELETE on a table with deletion vectors on",
    "outcome": "no",
-   "detail": "a table with deletion vectors on could not be created: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+   "detail": "Unsupported: Unsupported: delete: deletion vectors (the commit API cannot remove a file that has one)"
   },
   {
    "key": "partitioned",
@@ -181,8 +181,8 @@
    "key": "generated_partition",
    "group": "create",
    "question": "generated column as the partition",
-   "outcome": "no",
-   "detail": "ValueError: ValueError: invalid CREATE TABLE target 'lake._bench_delta.dr_45139688818_1_generated (id BIGINT, ts TIMESTAMP, d DATE GENERATED ALWAYS': a table name can't contain stray tokens. The layout clauses are SORTED BY (cols) | SORTED BY AUTO | PARTITIONED BY (cols) \u2014 check the spelling (it's SORTED BY, not SORT BY)."
+   "outcome": "supported",
+   "detail": "d GENERATED ALWAYS AS (CAST(ts AS DATE)), partition d = 2026-01-02 derived on write"
   },
   {
    "key": "types_scalar",
@@ -210,35 +210,35 @@
    "group": "schema",
    "question": "DROP COLUMN, column-mapped table",
    "outcome": "no",
-   "detail": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+   "detail": "Unsupported: Unsupported: overwrite: replacing the schema of a column-mapped table; DROP TABLE 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/dr_45495698816_1_dropcol' and create it again"
   },
   {
    "key": "rename_column",
    "group": "schema",
    "question": "RENAME COLUMN, column-mapped table",
    "outcome": "no",
-   "detail": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+   "detail": "Unsupported: Unsupported: overwrite: replacing the schema of a column-mapped table; DROP TABLE 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/dr_45495698816_1_renamecol' and create it again"
   },
   {
    "key": "type_widening",
    "group": "schema",
    "question": "int -> long, type widening on",
    "outcome": "no",
-   "detail": "a table with type widening on could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+   "detail": "a table with type widening on could not be created and seeded: DeltaError: DeltaError: Kernel: Generic delta kernel error: Error parsing property 'delta.enableTypeWidening':'true'"
   },
   {
    "key": "set_property",
    "group": "schema",
    "question": "set a table property",
-   "outcome": "no",
-   "detail": "ParserException: ParserException: Parser Error: syntax error at or near \"TBLPROPERTIES\" LINE 1: ALTER TABLE lake._bench_delta.dr_45139688818_1_prop SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true') ^^^^^^^^^^^^^"
+   "outcome": "supported",
+   "detail": "configuration {'delta.checkpointInterval': '10', 'delta.enableChangeDataFeed': 'true'}"
   },
   {
    "key": "write_after_schema_change",
    "group": "schema",
    "question": "ADD COLUMN, then INSERT",
    "outcome": "supported",
-   "detail": "ADD COLUMN w, then INSERT: DuckDB reads [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 400)]; duckrun agrees; log: CREATE TABLE > WRITE > WRITE > WRITE"
+   "detail": "ADD COLUMN w, then INSERT: DuckDB reads [(1, 10, None), (2, 20, None), (3, 30, None), (4, 40, 400)]; duckrun agrees; log: CREATE TABLE > WRITE > ADD COLUMN > WRITE"
   },
   {
    "key": "file_pruning",
@@ -265,8 +265,8 @@
    "key": "time_travel_timestamp",
    "group": "read",
    "question": "time travel by timestamp",
-   "outcome": "no",
-   "detail": "BinderException: BinderException: Binder Error: Catalog type does not support time travel"
+   "outcome": "supported",
+   "detail": "as of 2026-11-24 22:10:03 UTC reads the 3 seeded rows (the table has 5)"
   },
   {
    "key": "history",
@@ -280,7 +280,7 @@
    "group": "read",
    "question": "max(id), count(*) with every data file deleted",
    "outcome": "no",
-   "detail": "max(id), count(*) fails with all 4 data files deleted, so it opens them: IOException: IOException: IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/dr_45139688818_1_stats/part-00000-773657d5-30b9-4847-b10e-3ff9a3d4ab93-c000.snappy.parquet' failed with code 'BlobNotFound', Reason Phrase: 'The specified blob does not exist.', Message: ''"
+   "detail": "max(id), count(*) fails with all 4 data files deleted, so it opens them: IOException: IOException: IO Error: AzureStorageFileSystem open file 'abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onelake.dfs.fabric.microsoft.com/ac303243-4441-4885-9e7d-f4f5e7af194c/Tables/_bench_delta/dr_45495698816_1_stats/part-00000-c273242b-1da1-4b52-977b-4917ff91fb4e-c000.snappy.parquet' failed with code 'BlobNotFound', Reason Phrase: 'The specified blob does not exist.', Message: ''"
   },
   {
    "key": "describe_detail",
@@ -315,49 +315,49 @@
    "group": "create",
    "question": "VARIANT column: write, DuckDB reads it",
    "outcome": "no",
-   "detail": "ConversionException: ConversionException: Conversion Error: VARIANT(OBJECT(a)) is missing key 'metadata' to 'STRUCT(metadata BLOB, \"value\" BLOB)'"
+   "detail": "Unsupported: Unsupported: create table: column 'x' is VARIANT, which Delta has no type for; cast it (VARCHAR, BIGINT, DECIMAL, TIMESTAMPTZ, ...)"
   },
   {
    "key": "check_constraint",
    "group": "write",
    "question": "INSERT past a CHECK constraint",
-   "outcome": "supported",
-   "detail": "refused: DeltaError: DeltaError: Generic DeltaTable error: External error: Invalid data found: 1 rows failed validation check. Preview of invalid data: +----+----+ | id | v | +----+----+ | 5 | -1 | +----+----+"
+   "outcome": "no",
+   "detail": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM delta_scan('abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   },
   {
    "key": "change_data_feed",
    "group": "read",
    "question": "change data feed",
    "outcome": "no",
-   "detail": "the table this asks for could not be created and seeded: CatalogException: CatalogException: Catalog Error: WITH clause is not supported for tables in a duckdb catalog"
+   "detail": "Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files)"
   },
   {
    "key": "optimize",
    "group": "maintenance",
    "question": "OPTIMIZE (compaction)",
-   "outcome": "supported",
-   "detail": "4 data files into 1; OPTIMIZE: DuckDB reads [(1, 10), (2, 20), (3, 30), (11, 110), (12, 120), (13, 130), (21, 210), (22, 220), (23, 230), (31, 310), (32, 320), (33, 330)]; duckrun agrees; log: WRITE > WRITE > WRITE > WRITE > OPTIMIZE"
+   "outcome": "no",
+   "detail": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM delta_scan('abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   },
   {
    "key": "zorder",
    "group": "maintenance",
    "question": "OPTIMIZE ... ZORDER BY",
    "outcome": "no",
-   "detail": "ParserException: ParserException: Parser Error: syntax error at or near \"OPTIMIZE\" LINE 1: OPTIMIZE lake._bench_delta.dr_45139688818_1_zorder ZORDER... ^^^^^^^^"
+   "detail": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM delta_scan('abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   },
   {
    "key": "liquid_clustering",
    "group": "maintenance",
    "question": "CLUSTER BY: clustering columns in the log",
    "outcome": "no",
-   "detail": "ParserException: ParserException: Parser Error: syntax error at or near \"CLUSTER\" LINE 1: ... table \"__duckrun_empty_2ccfa97e008e\" (id BIGINT, v BIGINT) CLUSTER BY (id) ^^^^^^^"
+   "detail": "ValueError: ValueError: conn.sql() can't write a Delta table from this SQL. Use CREATE TABLE \u2026 AS SELECT to create or overwrite, INSERT / UPDATE / DELETE / MERGE against a discovered table, INSERT INTO t REPLACE WHERE <pred> \u2026 to overwrite a slice, or VACUUM t to compact."
   },
   {
    "key": "vacuum",
    "group": "maintenance",
    "question": "VACUUM",
-   "outcome": "no-op",
-   "detail": "returned success; the 1 file(s) the overwrite removed are still in storage"
+   "outcome": "no",
+   "detail": "a Delta table written by delta-rs could not be opened: IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM delta_scan('abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   },
   {
    "key": "checkpoint",
@@ -370,11 +370,11 @@
    "key": "convert_to_delta",
    "group": "maintenance",
    "question": "CONVERT TO DELTA, Parquet files in place",
-   "outcome": "supported",
-   "detail": "a _delta_log over the files in place; DuckDB reads [(1, 10), (2, 20), (3, 30)]"
+   "outcome": "no",
+   "detail": "IOException: IOException: IO Error: DeltaKernel EmptyLogError (49): No table version found. LINE 1: ...\".\"_bench_delta\".\"fx_fxrcm_45495698816_1\" AS SELECT * FROM delta_scan('abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   }
  ],
- "run": "45142300738",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45142300738",
- "date": "2026-11-23"
+ "run": "45495698816",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45495698816",
+ "date": "2026-11-24"
 }
