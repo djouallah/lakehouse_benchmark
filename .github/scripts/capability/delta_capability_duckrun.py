@@ -2,10 +2,11 @@
 
 duckrun (`duckrun.connect`, its notebook API) is DuckDB SQL over Delta tables: DuckDB reads them
 through `delta_scan` views and plans every statement, and the writes -- CREATE TABLE, CTAS,
-INSERT, UPDATE, DELETE, MERGE, ALTER TABLE ... ADD/DROP/RENAME COLUMN, DROP TABLE, VACUUM -- are
-committed by delta-rs. So this column is DuckDB's spelling throughout, plus duckrun's own Delta
-extensions where it has one (`INSERT INTO t REPLACE WHERE`, `VACUUM t` as the compaction,
-`DESCRIBE DETAIL / HISTORY`, `delta_scan(..., version => N)` for time travel).
+INSERT, UPDATE, DELETE, MERGE, TRUNCATE, ALTER TABLE ... ADD/DROP/RENAME COLUMN and SET
+TBLPROPERTIES, DROP TABLE, OPTIMIZE, VACUUM -- are committed by delta-rs. So this column is
+DuckDB's spelling throughout (`AT (VERSION => n)` time travel, `WITH (...)` table properties), plus
+duckrun's own Delta extensions where it has one (`INSERT INTO t REPLACE WHERE` for the overwrites,
+`DESCRIBE DETAIL / HISTORY`).
 
 The session is opened at Tables/ with discovery limited to the probe schema, as catalog `lake`;
 a table another writer creates is seen after `conn.refresh()`, which is register_sql here. The
@@ -79,10 +80,6 @@ class DuckrunDelta(DeltaProbe):
     def ref(self, name: str) -> str:
         return self.where.get(name, f"{CATALOG}.{NAMESPACE}.{name}")
 
-    def _uri_of(self, t: str) -> str:
-        """The storage location of a table this column names (for delta_scan time travel)."""
-        return self.oracle.uri(t.rsplit(".", 1)[-1])
-
     def select(self, pairs) -> str:
         values = ", ".join(f"({i}, {v})" for i, v in pairs)
         return (
@@ -103,17 +100,6 @@ class DuckrunDelta(DeltaProbe):
         self, name, columns, *, partition=None, props=None, cluster=None, if_not_exists=False
     ):
         ine = "IF NOT EXISTS " if if_not_exists else ""
-        if partition and not (props or cluster):
-            # duckrun partitions in a CTAS (DuckDB's `PARTITIONED BY ... AS`), not on a column
-            # list: an empty partitioned table is a CTAS of no rows.
-            typed = ", ".join(
-                f"CAST(NULL AS {kind}) AS {col}"
-                for col, kind in (part.split(" ", 1) for part in columns.split(", "))
-            )
-            return [
-                f"CREATE TABLE {ine}{self.ref(name)} PARTITIONED BY ({', '.join(partition)}) "
-                f"AS SELECT {typed} WHERE false"
-            ]
         part = f" PARTITIONED BY ({', '.join(partition)})" if partition else ""
         clus = f" CLUSTER BY ({', '.join(cluster)})" if cluster else ""
         with_ = ""
@@ -162,19 +148,10 @@ class DuckrunDelta(DeltaProbe):
         return f"ALTER TABLE {t} ALTER COLUMN c TYPE BIGINT"
 
     def version_sql(self, t, version):
-        return (
-            f"SELECT id, v FROM delta_scan('{self._uri_of(t)}', version => {version}) ORDER BY id"
-        )
+        return f"SELECT id, v FROM {t} AT (VERSION => {version}) ORDER BY id"
 
     def timestamp_sql(self, t, at):
         return f"SELECT id, v FROM {t} AT (TIMESTAMP => TIMESTAMPTZ '{at}+00') ORDER BY id"
-
-    def optimize_sql(self, t):
-        # duckrun's compaction is `VACUUM <table>`: compact the small files, then vacuum.
-        return f"VACUUM {t}"
-
-    def vacuum_sql(self, t):
-        return f"VACUUM {t}"
 
     def full_sql(self, name):
         return [self._refresh()], f"{CATALOG}.{NAMESPACE}.{name}"
