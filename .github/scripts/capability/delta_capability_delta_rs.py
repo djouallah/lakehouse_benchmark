@@ -305,14 +305,14 @@ class DeltaRs(DeltaProbe):
             ),
         )
 
-    def _merge(self, t, source, on: str, insert: dict) -> Op:
+    def _merge(self, t, source, on: str, insert: dict, col: str = "v") -> Op:
         def run_() -> None:
             (
                 self.dt(t)
                 .merge(
                     source, on, source_alias="s", target_alias="tg", commit_properties=self.commit()
                 )
-                .when_matched_update({"v": "s.v"})
+                .when_matched_update({col: "s.v"})
                 .when_not_matched_insert(insert)
                 .execute()
             )
@@ -323,8 +323,8 @@ class DeltaRs(DeltaProbe):
             run_,
         )
 
-    def merge_sql(self, t, source):
-        return self._merge(t, source, "tg.id = s.id", {"id": "s.id", "v": "s.v"})
+    def merge_sql(self, t, source, col="v"):
+        return self._merge(t, source, "tg.id = s.id", {"id": "s.id", col: "s.v"}, col)
 
     def merge_dated_sql(self, t, source, since):
         on = f"tg.id = s.id AND tg.d = s.d AND tg.d >= CAST('{since}' AS DATE)"

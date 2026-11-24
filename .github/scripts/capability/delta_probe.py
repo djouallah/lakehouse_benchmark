@@ -221,11 +221,12 @@ class DeltaProbe:
     def update_sql(self, t: str, assign: str, where: str) -> str:
         return f"UPDATE {t} SET {assign} WHERE {where}"
 
-    def merge_sql(self, t: str, source: str) -> str:
+    def merge_sql(self, t: str, source: str, col: str = "v") -> str:
+        """Upsert of `source`'s (id, v) rows; `col` is the target's value column (a renamed one)."""
         return (
             f"MERGE INTO {t} AS tg USING ({source}) AS s ON tg.id = s.id "
-            "WHEN MATCHED THEN UPDATE SET v = s.v "
-            "WHEN NOT MATCHED THEN INSERT (id, v) VALUES (s.id, s.v)"
+            f"WHEN MATCHED THEN UPDATE SET {col} = s.v "
+            f"WHEN NOT MATCHED THEN INSERT (id, {col}) VALUES (s.id, s.v)"
         )
 
     def select_dated(self, rows) -> str:
@@ -1021,6 +1022,21 @@ class DeltaProbe:
                 "ALTER TABLE {t} RENAME COLUMN v TO v2",
             ],
         ),
+        "cdf": (
+            "spark_change_data_feed_v1",
+            "changeDataFeed",
+            "id, v",
+            [(i, i * 10) for i in range(1, 20)] + [(20, 201)],
+            "(id BIGINT, v BIGINT)",
+            # Writer 7, so the feature is named in the log (the legacy writer 4 lists none).
+            "'delta.enableChangeDataFeed' = 'true', "
+            "'delta.minReaderVersion' = '1', 'delta.minWriterVersion' = '7'",
+            [
+                "INSERT INTO {t} SELECT id, id * 10 FROM range(1, 21)",
+                # A row-level change, so the fixture carries Spark's own change files.
+                "UPDATE {t} SET v = 201 WHERE id = 20",
+            ],
+        ),
         "tw": (
             "spark_type_widening_v1",
             "typeWidening",
@@ -1082,6 +1098,105 @@ class DeltaProbe:
     def read_type_widening(self) -> str:
         """A table Spark wrote with INT widened to BIGINT and a value past INT, read back."""
         return self._read_spark_fixture("tw")
+
+    def _write_spark_fixture(self, key: str) -> str:
+        """INSERT, UPDATE, DELETE and MERGE, in that order, into a byte-for-byte copy of a table
+        Spark wrote (so the shared fixture stays as Spark left it). The UPDATE and DELETE hit rows
+        in Spark's own data file -- for the deletion-vector fixture, the file that carries the
+        vector. DuckDB decides, reading the copy's log afresh."""
+        folder, feature, cols, rows, *_ = self.FIXTURES[key]
+        where = self.oracle.fixture_relative(folder)
+        if not self.oracle.has_log(where):
+            if self.CLIENT != "spark":
+                raise Skip("Spark has not written the fixture table yet")
+            self._spark_fixture(key)
+        if feature not in set(self.oracle.features_at(where)):
+            raise Broken(f"the fixture has features {self.oracle.features_at(where)}")
+        name = self._claim(f"fxw{key}")
+        self.oracle.copy_table(where, name)
+        try:
+            self.run_all(self.register_sql(name))
+        except Refused as exc:
+            raise Refused(f"the copy of Spark's table could not be opened: {exc}") from None
+        idc, col = (c.strip() for c in cols.split(","))
+        t = self.ref(name)
+        expected = dict(rows)
+        steps = [
+            ("INSERT", self.insert_sql(t, [(100, 1000)], cols=(idc, col)), {100: 1000}, []),
+            ("UPDATE", self.update_sql(t, f"{col} = -1", f"{idc} = 5"), {5: -1}, []),
+            ("DELETE", self.delete_sql(t, f"{idc} = 6"), {}, [6]),
+            (
+                "MERGE",
+                self.merge_sql(t, self.select([(7, -7), (101, 1010)]), col),
+                {7: -7, 101: 1010},
+                [],
+            ),
+        ]
+        done = []
+        for what, statement, sets, drops in steps:
+            try:
+                self.sql(statement)
+            except Refused as exc:
+                ok = f" ({', '.join(done)} worked)" if done else ""
+                raise Refused(f"{what}{ok}: {exc}") from None
+            expected.update(sets)
+            for k in drops:
+                expected.pop(k, None)
+            done.append(what)
+        want = sorted(expected.items())
+        found = self.oracle.rows(name, (idc, col))
+        if found != want:
+            shown = found if isinstance(found, str) else found[:6]
+            raise NoOp(
+                f"INSERT, UPDATE, DELETE and MERGE returned success; DuckDB reads {shown}..., "
+                f"expected {want[:6]}..."
+            )
+        return (
+            f"INSERT, UPDATE, DELETE and MERGE into a copy of Spark's table: DuckDB reads all "
+            f"{len(found)} rows right; table features {self.oracle.features(name)}"
+        )
+
+    def write_spark_deletion_vectors(self) -> str:
+        """Writes into a table Spark wrote with a deletion vector, rows in the vector's file."""
+        return self._write_spark_fixture("dv")
+
+    def write_spark_column_mapping(self) -> str:
+        """Writes into a table Spark wrote with column mapping (id) and a renamed column."""
+        return self._write_spark_fixture("cm")
+
+    def write_spark_change_data_feed(self) -> str:
+        """Writes into a table Spark wrote with change data feed on: a commit that rewrites files
+        must carry change files, or the feed reads every carried-over row as deleted + re-added."""
+        found = self._write_spark_fixture("cdf")
+        name = self.name("fxwcdf")
+        engine = [v for v, who in enumerate(self.oracle.commit_authors(name)) if who == "engine"]
+        # Spark's own commits are copied too; only the engine's, after the copy, are asked.
+        mine = [v for v in engine if v > self._fixture_versions("cdf")]
+        missing = [
+            v
+            for v in mine
+            if self.oracle.actions(name, "remove", v) and not self.oracle.actions(name, "cdc", v)
+        ]
+        if missing:
+            raise NoOp(
+                f"{found}; but version(s) {missing} rewrote files with no change files, so the "
+                f"change data feed is wrong"
+            )
+        return found
+
+    def _fixture_versions(self, key: str) -> int:
+        """The last version Spark committed to the fixture (the copy starts there)."""
+        folder = self.FIXTURES[key][0]
+        paths = self.oracle.fs().get_paths(
+            f"{self.oracle.fixture_relative(folder)}/_delta_log", recursive=False
+        )
+        import re
+
+        return max(
+            int(leaf.split(".")[0])
+            for leaf in (p.name.rsplit("/", 1)[-1] for p in paths)
+            if re.fullmatch(r"\d{20}\.json", leaf)
+        )
 
     def variant(self) -> str:
         """A VARIANT column written by the engine: the log must carry the variantType feature,
@@ -1431,6 +1546,21 @@ PROBES = [
     ("read", "a Spark table with deletion vectors", "read_deletion_vectors"),
     ("read", "a Spark table with column mapping (a renamed column)", "read_column_mapping"),
     ("read", "a Spark table with type widening (INT widened to BIGINT)", "read_type_widening"),
+    (
+        "write",
+        "INSERT/UPDATE/DELETE/MERGE into a Spark table with deletion vectors",
+        "write_spark_deletion_vectors",
+    ),
+    (
+        "write",
+        "INSERT/UPDATE/DELETE/MERGE into a Spark table with column mapping",
+        "write_spark_column_mapping",
+    ),
+    (
+        "write",
+        "INSERT/UPDATE/DELETE/MERGE into a Spark table with change data feed",
+        "write_spark_change_data_feed",
+    ),
     ("create", "VARIANT column: write, DuckDB reads it", "variant"),
     ("write", "INSERT past a CHECK constraint", "check_constraint"),
     ("read", "change data feed", "change_data_feed"),

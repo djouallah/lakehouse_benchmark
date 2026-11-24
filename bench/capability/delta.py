@@ -347,6 +347,19 @@ class DeltaOracle:
             buffer.getvalue(), overwrite=True
         )
 
+    def copy_table(self, src_relative: str, name: str) -> None:
+        """Every file of the table at `src_relative` -- log, data, deletion vectors, change files
+        -- byte for byte, as probe table `name`. A Delta log holds relative paths, so the copy is
+        the same table: what a write probe changes is the copy, never a shared fixture."""
+        dest = self.relative(name)
+        for p in self.fs().get_paths(src_relative, recursive=True):
+            if p.is_directory:
+                continue
+            rel = p.name[len(src_relative) :].lstrip("/")
+            self.fs().get_file_client(f"{dest}/{rel}").upload_data(
+                self._read(p.name), overwrite=True
+            )
+
     def purge_path(self, relative: str) -> None:
         self.fs().get_directory_client(relative).delete_directory()
 
