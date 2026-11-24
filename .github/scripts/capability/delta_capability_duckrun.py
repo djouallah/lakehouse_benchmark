@@ -117,9 +117,11 @@ class DuckrunDelta(DeltaProbe):
         if uri is None:
             # A table delta-rs wrote under the session's schema: re-discover it.
             return [self._refresh()]
-        view = f"fx_{name}"
+        # A TEMP view: one in the session's schema is taken for a table there, and every later
+        # conn.refresh() fails rebuilding it (run 45495698816).
+        view = f"temp.main.fx_{name}"
         self.where[name] = view
-        return [f"CREATE OR REPLACE VIEW {view} AS SELECT * FROM delta_scan('{uri}')"]
+        return [f"CREATE OR REPLACE TEMP VIEW fx_{name} AS SELECT * FROM delta_scan('{uri}')"]
 
     def generated_sql(self, name):
         return [
