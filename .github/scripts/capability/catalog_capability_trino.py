@@ -304,6 +304,8 @@ class TrinoCapability:
                 "iceberg.rest-catalog.case-insensitive-name-matching": "true",
                 "iceberg.rest-catalog.server-assigned-table-location-enabled": "true",
                 "iceberg.expire-snapshots.min-retention": "0s",
+                # add_files is off by default ("add_files procedure is disabled").
+                "iceberg.add-files-procedure.enabled": "true",
                 # extra_properties takes only the keys listed here.
                 "iceberg.allowed-extra-properties": "*",
                 **trino.storage_properties(),
