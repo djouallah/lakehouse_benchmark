@@ -109,7 +109,7 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(deltalake|duckdb|duckrun|polars|pyarrow|pysail|pyspark|trino)=' || true
+          pip list --format=freeze | grep -Ei '^(deltalake|duckdb|duckrun|polars|polars-deltalake|pyarrow|pysail|pyspark|trino)=' || true
 
       - uses: actions/setup-java@v5
         if: matrix.client == 'spark'

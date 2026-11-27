@@ -1,13 +1,14 @@
 """What Polars can do writing Delta tables into OneLake, through its Python API.
 
 Polars has no SQL over Delta tables, so like the delta-rs column each row is asked with the Polars
-call that does what the SQL engines' statement does: `pl.scan_delta` for every read (Polars' own
-reader: deletion vectors, file and partition pruning, time travel by version or timestamp),
+call that does what the SQL engines' statement does: polars-deltalake's `scan_delta` and `read_cdf`
+for every read (a Polars I/O plugin on delta-kernel-rs, which reads deletion vectors,
+column mapping and the change data feed; Polars' built-in `pl.scan_delta` refuses column mapping),
 `DataFrame.write_delta` for every write (Polars' native Parquet sink for a plain append or
 overwrite, deltalake under it for options the sink does not take), and `write_delta(mode="merge")`
-for MERGE. Where Polars has no call -- DELETE, UPDATE, ALTER, OPTIMIZE, VACUUM, history, the change
-data feed -- the probe makes the call that would be it (`pl.delete_delta`, as Polars has
-`pl.delete_iceberg`), so the `no` is Python's own words.
+for MERGE. Where Polars has no call -- DELETE, UPDATE, ALTER, OPTIMIZE, VACUUM, history -- the
+probe makes the call that would be it (`pl.delete_delta`, as Polars has `pl.delete_iceberg`), so
+the `no` is Python's own words.
 
 EVERY CHECK IS THE SQL ENGINES': this class only swaps the delta-rs column's calls (each an `Op`)
 for Polars', so DuckDB reads the rows back and the _delta_log is read for the rest.
@@ -44,10 +45,15 @@ class PolarsDelta(DeltaRs):
     # == the client ==========================================================================
 
     def start(self) -> str:
+        from importlib.metadata import version
+
         import deltalake
         import polars as pl
 
-        return f"polars {pl.__version__} (deltalake {deltalake.__version__})"
+        return (
+            f"polars {pl.__version__} + polars-deltalake {version('polars-deltalake')} "
+            f"(deltalake {deltalake.__version__})"
+        )
 
     def execute(self, statement) -> list[tuple]:
         if not isinstance(statement, Op):
@@ -56,11 +62,11 @@ class PolarsDelta(DeltaRs):
         return found if isinstance(found, list) else []
 
     def _scan(self, t: str, version=None):
-        import polars as pl
+        """Every read: polars-deltalake's scan_delta. It time-travels by version number only, so
+        a timestamp is its TypeError."""
+        from polars_deltalake import scan_delta
 
-        return pl.scan_delta(
-            t, version=version, storage_options=self.so(), credential_provider=None
-        )
+        return scan_delta(t, version=version, storage_options=self.so())
 
     def _write(self, t: str, data, mode: str, options: dict | None = None):
         import polars as pl
@@ -124,7 +130,9 @@ class PolarsDelta(DeltaRs):
             found = lf.select(names).collect().rows()
             return sorted(found) if order else found
 
-        return Op(f"scan_delta({_short(t)}).filter({where!r}).select({names})", run_)
+        return Op(
+            f"polars_deltalake.scan_delta({_short(t)}).filter({where!r}).select({names})", run_
+        )
 
     def sum_sql(self, t, where=None):
         import polars as pl
@@ -135,7 +143,9 @@ class PolarsDelta(DeltaRs):
                 lf = lf.filter(pl.sql_expr(where))
             return lf.select(pl.col("v").sum()).collect().rows()
 
-        return Op(f"scan_delta({_short(t)}).filter({where!r}).select(sum(v))", run_)
+        return Op(
+            f"polars_deltalake.scan_delta({_short(t)}).filter({where!r}).select(sum(v))", run_
+        )
 
     def create_sql(
         self, name, columns, *, partition=None, props=None, cluster=None, if_not_exists=False
@@ -172,7 +182,7 @@ class PolarsDelta(DeltaRs):
         self.where[name] = where
         return [
             Op(
-                f"scan_delta({_short(where)}).collect_schema()",
+                f"polars_deltalake.scan_delta({_short(where)}).collect_schema()",
                 lambda: self._scan(where).collect_schema() and None,
             )
         ]
@@ -258,14 +268,14 @@ class PolarsDelta(DeltaRs):
 
     def version_sql(self, t, version):
         return Op(
-            f"scan_delta({_short(t)}, version={version})",
+            f"polars_deltalake.scan_delta({_short(t)}, version={version})",
             lambda: sorted(self._scan(t, version).select("id", "v").collect().rows()),
         )
 
     def timestamp_sql(self, t, at):
         when = dt.datetime.fromisoformat(at).replace(tzinfo=dt.UTC)
         return Op(
-            f"scan_delta({_short(t)}, version={at!r} UTC)",
+            f"polars_deltalake.scan_delta({_short(t)}, version={at!r} UTC)",
             lambda: sorted(self._scan(t, when).select("id", "v").collect().rows()),
         )
 
@@ -273,7 +283,16 @@ class PolarsDelta(DeltaRs):
         return self._missing("delta_history", self.ref(name))
 
     def changes_sql(self, name, since):
-        return self._missing("scan_delta_cdf", self.ref(name), since)
+        from polars_deltalake import read_cdf
+
+        t = self.ref(name)
+
+        def run_() -> list[tuple]:
+            found = read_cdf(t, start_version=since, storage_options=self.so())
+            rows = found.select("id", "v", "_change_type").rows()
+            return sorted(rows, key=lambda r: (r[0], str(r[2])))
+
+        return Op(f"polars_deltalake.read_cdf({_short(t)}, start_version={since})", run_)
 
     def optimize_sql(self, t):
         return self._missing("optimize_delta", t)
@@ -291,7 +310,10 @@ class PolarsDelta(DeltaRs):
     def full_sql(self, name):
         ident = f"lake.{NAMESPACE}.{name}"
         return [
-            Op(f"scan_delta({ident!r}).collect()", lambda: self._scan(ident).collect() and None)
+            Op(
+                f"polars_deltalake.scan_delta({ident!r}).collect()",
+                lambda: self._scan(ident).collect() and None,
+            )
         ], ident
 
     def schema_create_sql(self, schema, if_not_exists=False):
@@ -315,7 +337,7 @@ class PolarsDelta(DeltaRs):
         import polars as pl
 
         return Op(
-            f"scan_delta({_short(t)}).select(max(id), len())",
+            f"polars_deltalake.scan_delta({_short(t)}).select(max(id), len())",
             lambda: self._scan(t).select(pl.col("id").max(), pl.len()).collect().rows(),
         )
 

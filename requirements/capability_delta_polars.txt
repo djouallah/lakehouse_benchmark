@@ -1,6 +1,9 @@
-# The Polars column: Polars' own Delta API (scan_delta, write_delta with its native Parquet sink,
-# write_delta(mode="merge")). 2.2.0 (2026-11-24) is the first release that writes Delta with the
-# native sink (pola-rs/polars#30721) and reads deletion vectors in escaped partition paths (#30454).
+# The Polars column: Polars' own Delta API for writes (write_delta with its native Parquet sink,
+# write_delta(mode="merge")), polars-deltalake for reads. 2.2.0 (2026-11-24) is the first release
+# that writes Delta with the native sink (pola-rs/polars#30721).
+# polars-deltalake (ion-elgreco/polars-deltalake) is a Polars I/O plugin on delta-kernel-rs: it reads
+# column mapping, which Polars' built-in scan_delta refuses (#30204), and the change data feed.
 -r capability_delta_catalog.txt
 deltalake>=1.7.0
 polars==2.2.0
+polars-deltalake==1.3.2
