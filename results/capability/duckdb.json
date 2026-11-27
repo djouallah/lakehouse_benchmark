@@ -7,7 +7,7 @@
    "group": "session",
    "question": "DuckDB attaches the REST catalog",
    "outcome": "supported",
-   "detail": "DuckDB v2.0.1 (azure bf93a0af8f, httpfs f71cfdb4bf, iceberg f979b5b28a); 36 namespace(s), _bench_capability listed"
+   "detail": "DuckDB v2.0.1 (azure bf93a0af8f, httpfs f71cfdb4bf, iceberg f979b5b28a); 42 namespace(s), _bench_capability listed"
   },
   {
    "key": "namespace_existing",
@@ -21,7 +21,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_44741451292_1_base`; field ids [1, 2], format-version 2"
+   "detail": "created at the catalog's location `\u2026/Tables/_bench_capability/dk_45920209093_1_base`; field ids [1, 2], format-version 2"
   },
   {
    "key": "create_if_not_exists",
@@ -344,9 +344,16 @@
    "question": "DROP SCHEMA (namespace)",
    "outcome": "supported",
    "detail": "the empty namespace is gone"
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "iceberg_remove_orphan_files",
+   "outcome": "no",
+   "detail": "Catalog Error: Table Function with name iceberg_remove_orphan_files does not exist! Did you mean \"iceberg_schema_properties\"?"
   }
  ],
- "run": "44741451292",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
- "date": "2026-11-20"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }

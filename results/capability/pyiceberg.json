@@ -295,9 +295,23 @@
    "question": "upsert v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "maintenance.expire_snapshots().older_than(now)",
+   "outcome": "supported",
+   "detail": "history 3 -> 1 snapshot(s)"
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "maintenance.remove_orphan_files",
+   "outcome": "no",
+   "detail": "AttributeError: AttributeError: 'MaintenanceTable' object has no attribute 'remove_orphan_files'"
   }
  ],
- "run": "44977237059",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44977237059",
- "date": "2026-11-22"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }

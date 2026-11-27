@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE ENGINE = ICEBERG (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_44741451292_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/db_45920209093_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -302,9 +302,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "no",
    "detail": "error: final [(1, 10), (2, 20), (3, 30)]; commits [none]; raised Refused: Refused: OperationalError: (1105, 'Unimplemented. Code: 1002, Text = table db_44680562433_1_race_update, engine type iceberg, does not support UPDATE.')"
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "VACUUM TABLE (remove orphan files)",
+   "outcome": "no",
+   "detail": "OperationalError: (1105, 'StorageOther. Code: 4000, Text = Invalid table engine, only fuse table is supported.')"
   }
  ],
- "run": "44741451292",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
- "date": "2026-11-20"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }

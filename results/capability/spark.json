@@ -351,9 +351,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "CALL system.remove_orphan_files",
+   "outcome": "no",
+   "detail": "IllegalArgumentException: Cannot remove orphan files with an interval less than 24 hours. Executing this procedure with a short interval may corrupt the table if other operations are happening at the same time. If you are absolutely confident that no concurrent operations will be affected by removing orphan files with such a short interval, you can use the Action API to remove orphan files with an arbitrary interval."
   }
  ],
- "run": "44741451292",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
- "date": "2026-11-20"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }

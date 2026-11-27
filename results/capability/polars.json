@@ -295,9 +295,23 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "expire_snapshots",
+   "group": "maintenance",
+   "question": "CALL system.expire_snapshots",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: unknown procedure 'lake.system.expire_snapshots' in CALL; supported: add_files, rewrite_data_files, rewrite_manifests In the SQL statement: CALL lake.system.expire_snapshots(table => '_bench_capability.pl_45920209093_1_expire', older_than =..."
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "CALL system.remove_orphan_files",
+   "outcome": "no",
+   "detail": "SQLInterfaceError: SQLInterfaceError: unknown procedure 'lake.system.remove_orphan_files' in CALL; supported: add_files, rewrite_data_files, rewrite_manifests In the SQL statement: CALL lake.system.remove_orphan_files(table => '_bench_capability.pl_45920209093_1_orphans', older_th..."
   }
  ],
- "run": "45495771999",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45495771999",
- "date": "2026-11-24"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }

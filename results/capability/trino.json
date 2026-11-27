@@ -14,7 +14,7 @@
    "group": "create",
    "question": "CREATE TABLE (the catalog assigns the location)",
    "outcome": "supported",
-   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_45822980058_1_base`"
+   "detail": "field ids [1, 2], format-version 2, at the catalog's location `\u2026/Tables/_bench_capability/tr_45920209093_1_base`"
   },
   {
    "key": "create_if_not_exists",
@@ -302,9 +302,16 @@
    "question": "UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "EXECUTE remove_orphan_files",
+   "outcome": "supported",
+   "detail": "the unreferenced file is gone from storage: pyiceberg reads [(1, 10), (2, 20), (3, 30)]; Trino agrees"
   }
  ],
- "run": "45822980058",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45822980058",
- "date": "2026-11-26"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }

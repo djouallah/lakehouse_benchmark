@@ -7,7 +7,7 @@
    "group": "session",
    "question": "chDB attaches the catalog (DataLakeCatalog, catalog_type 'onelake')",
    "outcome": "supported",
-   "detail": "chdb 4.5.1; 613 catalog table(s) listed"
+   "detail": "chdb 4.5.1; 671 catalog table(s) listed"
   },
   {
    "key": "create_table",
@@ -252,7 +252,7 @@
    "group": "maintenance",
    "question": "ALTER TABLE ... EXECUTE expire_snapshots",
    "outcome": "no",
-   "detail": "ChdbError: Code: 736. DB::Exception: Iceberg catalog commit of the snapshot removal failed for table _bench_capability.ch_44680562433_1_expire: DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/namespaces/_bench_capability/tables/ch_44680562433_1_expire. HTTP status code: 400 'Bad Request', body length: 81 bytes, body: '{\"error\":{\"message\":\"Malformed request\",\"type\":\"BadRequestException\",\"code\":400}}'. (DATALAKE_DATABASE_ERROR)"
+   "detail": "ChdbError: Code: 736. DB::Exception: Iceberg catalog commit of the snapshot removal failed for table _bench_capability.ch_45920209093_1_expire: DB::HTTPException: Received error from remote server https://onelake.table.fabric.microsoft.com/iceberg/v1/1c52481c-0523-4a5a-bbde-fdc932bd77c2/ac303243-4441-4885-9e7d-f4f5e7af194c/namespaces/_bench_capability/tables/ch_45920209093_1_expire. HTTP status code: 400 'Bad Request', body length: 81 bytes, body: '{\"error\":{\"message\":\"Malformed request\",\"type\":\"BadRequestException\",\"code\":400}}'. (DATALAKE_DATABASE_ERROR)"
   },
   {
    "key": "compaction",
@@ -323,9 +323,16 @@
    "question": "ALTER TABLE ... UPDATE v = v + 1 on id 2; B appends",
    "outcome": "supported",
    "detail": "retried: final [(1, 10), (2, 21), (3, 30), (4, 40)]; commits [409, 200]"
+  },
+  {
+   "key": "remove_orphan_files",
+   "group": "maintenance",
+   "question": "remove orphan files (Spark's CALL; no statement)",
+   "outcome": "no",
+   "detail": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (.): .remove_orphan_files(table => '_bench_capability.ch_45920209093_1_orphans', older_than => TIMESTAMP '2026-11-27 01:14:59'). Expected one of: token, Comma, FROM, PREWHERE, WHERE, GROUP BY, WITH, HAVING, WINDOW, QUALIFY, ORDER BY, LIMIT, OFFSET, FETCH, SETTINGS, end of query. (SYNTAX_ERROR)"
   }
  ],
- "run": "44741451292",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/44741451292",
- "date": "2026-11-20"
+ "run": "45920209093",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "date": "2026-11-27"
 }
