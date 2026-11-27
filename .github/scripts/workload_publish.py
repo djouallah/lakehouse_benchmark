@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from bench.report import leak_check
-from bench.workload.config import BENCH_ENGINE, ENGINES
+from bench.workload.config import BENCH_ENGINE, DELTA_ENGINES, ENGINES
 
 REPO = Path(__file__).resolve().parents[2]
 RESULTS = REPO / "results" / "workload"
@@ -171,17 +171,18 @@ def page_data(
 
 def summary(legs: dict[str, dict]) -> str:
     lines = [
-        "## dbt workload (Iceberg)",
+        "## dbt workload",
         "",
-        "| leg | status | files/run | build s | peak RSS MB | spill MB | files behind "
-        "| models ok |",
-        "|---|---|---:|---:|---:|---:|---:|---:|",
+        "| leg | format | status | files/run | build s | peak RSS MB | spill MB "
+        "| files behind | models ok |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for engine, leg in legs.items():
         c = counts(leg)
         behind = files_behind(leg)
+        fmt = "Delta" if leg.get("engine", engine) in DELTA_ENGINES else "Iceberg"
         lines.append(
-            f"| {engine} | {leg['status']} | {leg.get('process_limit', '')} "
+            f"| {engine} | {fmt} | {leg['status']} | {leg.get('process_limit', '')} "
             f"| {leg.get('build_seconds', '')} "
             f"| {leg.get('peak_rss_mb', '')} | {leg.get('peak_spill_mb', '')} "
             f"| {'' if behind is None else behind} "
