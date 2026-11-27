@@ -19,5 +19,5 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install polars==2.2.0 deltalake==1.7.0
+      - run: pip install polars==2.2.0 deltalake==1.7.0 "dbt-polars @ git+https://github.com/djouallah/dbt-polars@5f8e11aa95c1bce8fc180b3ef985b6ea79e7080f"
       - run: python .github/scripts/tmp/polars_delta_ts_repro.py
