@@ -511,8 +511,8 @@ Largest scale each engine completes, cold, every statement answered:
   list ([PR #30047](https://github.com/pola-rs/polars/pull/30047), on main) instead of a
   `UNION ALL` per file, which holds every file at once ([#30029](https://github.com/pola-rs/polars/issues/30029), fixed on main 2026-10-20 by [PR #30056](https://github.com/pola-rs/polars/pull/30056), one multi-file scan for such a union);
   and a dbt-polars fix for a composite-key merge that built one pyiceberg predicate per row
-  ([dbt-polars#45](https://github.com/datamindedbe/incubator-dbt-polars/issues/45), fix
-  [PR #46](https://github.com/datamindedbe/incubator-dbt-polars/pull/46), open). The MERGE is
+  ([dbt-polars#45](https://github.com/datamindedbe/dbt-polars/issues/45), run from a fork with
+  [PR #46](https://github.com/datamindedbe/dbt-polars/pull/46) until [PR #49](https://github.com/datamindedbe/dbt-polars/pull/49) fixed it in 0.5.0). The MERGE is
   dbt-polars', not Polars': overwrite the matched keys and append, in one pyiceberg commit.
 - **The best ETL engine by mean.** It streams CSV through `sink_batches` into pyiceberg and loads
   1000 files in ~471 s on average (455–480 s), against DuckDB's ~497 s (414–561 s). That was

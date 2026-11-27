@@ -62,7 +62,7 @@ def test_issue_links_that_left_the_dbt_rows_are_still_on_the_page():
     """The Bug reports tab is built from the links on this page; none may drop off."""
     for link in (
         "https://github.com/StarRocks/starrocks/pull/66975",
-        "https://github.com/datamindedbe/incubator-dbt-polars/issues/32",
+        "https://github.com/datamindedbe/dbt-polars/issues/32",
         "https://github.com/lakehq/sail/pull/2571",
         "https://github.com/pola-rs/polars/issues/30074",
         "https://github.com/duckdb/duckdb/issues/27503",

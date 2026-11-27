@@ -1,8 +1,9 @@
-# The polars leg: dbt-polars over a pyiceberg REST catalog. fabric-dbt-examples'
-# requirements/polars.txt at the commit in workload/SOURCE:
-#   * dbt-polars 0.5.0 from PyPI (since 2026-10-25; upstream main, and a fork before that, until then):
-#     its PR #49 prunes a key with more than 200 values on min/max (pyiceberg ignores a larger
-#     In(), so every data file was read) and reads a candidate file's key columns before the rest
+# The polars leg: dbt-polars over a pyiceberg REST catalog. Started from fabric-dbt-examples'
+# requirements/polars.txt at the commit in workload/SOURCE; since then:
+#   * dbt-polars 0.6.0 from PyPI (since 2026-11-27; 0.5.0 from 2026-10-25; upstream main, and a
+#     fork before that). Since 0.5.0 its PR #49 prunes a key with more than 200 values on min/max
+#     (pyiceberg ignores a larger In(), so every data file was read) and reads a candidate file's
+#     key columns before the rest
 #   * Polars 2.1.0 (2026-10-25), the first release with everything below; until then main builds
 #     by tmp_polars_main.yml, the last d02c62175a, which 2.1.0 contains:
 #   * Polars main 4426a548fd (one SQL read_csv() over a file list, pola-rs/polars#30047,
@@ -16,9 +17,9 @@
 #     (#30280) and the streaming window node out of core (#30282)
 #   * since 2026-11-07 main builds, as every Polars leg (the last 808af73add), until 2.2.0
 #   * since 2026-11-25 Polars 2.2.0 (2026-11-24), which contains them
-dbt-polars[iceberg]==0.5.0
+dbt-polars[iceberg]==0.6.0
 # Its Azure storage catalog, at the same version (it pins dbt-polars==<version>): the landing files as dbt sources (external.location).
-dbt-polars-catalog-azure==0.5.0
+dbt-polars-catalog-azure==0.6.0
 polars[iceberg]==2.2.0
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
 azure-identity>=1.19
