@@ -111,9 +111,6 @@ class RaceProxy:
         self.updates: dict[tuple[str, str], list[list[str]]] = {}
         # Every commit's requirements per table, as sent (commit_requirements).
         self.requirements: dict[tuple[str, str], list[list[dict]]] = {}
-        # Every commit request in full, with the status and body that came back: what a probe
-        # prints when it needs to show the catalog exactly what an engine sent.
-        self.exchanges: dict[tuple[str, str], list[dict]] = {}
         self.injected: dict[tuple[str, str], str] = {}
         # Every request: (method, path without the query, status, the current-snapshot-id a
         # loadTable answered with), for tracing an engine.
@@ -230,14 +227,6 @@ class RaceProxy:
                         )
                         proxy.updates.setdefault(key, []).append(actions.get(key, []))
                         proxy.requirements.setdefault(key, []).append(asserted.get(key, []))
-                        proxy.exchanges.setdefault(key, []).append(
-                            {
-                                "path": self.path.split("?")[0],
-                                "request": json.loads(body or b"{}"),
-                                "status": status,
-                                "response": out[:4000].decode("utf-8", "replace"),
-                            }
-                        )
                 self.send_response(status)
                 for k, v in out_headers:
                     if k.lower() not in _HOP_BY_HOP:

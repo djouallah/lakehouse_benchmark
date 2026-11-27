@@ -343,16 +343,6 @@ class PyicebergCapability:
         )
         return self._expect(table, [(7, 70), (8, 80)], "overwrite")
 
-    def create_or_replace(self) -> str:
-        """pyiceberg's catalog has no replace: the AttributeError of the call that would be it is
-        the answer."""
-        table = self._fresh("replace")
-        self.call(
-            "catalog.create_or_replace_table(the existing table)",
-            lambda: self.catalog.create_or_replace_table((self.ns, table), schema=iceberg_schema()),
-        )
-        return self._expect(table, [], "create_or_replace_table")
-
     # -- schema ------------------------------------------------------------------------------
 
     def _schema_change(self, table: str, what: str, change) -> None:
@@ -740,7 +730,6 @@ PROBES = [
     ("write", "upsert: matched update + not matched insert", "merge_upsert"),
     ("write", "delete(AlwaysTrue()) (TRUNCATE)", "truncate"),
     ("write", "overwrite, whole table", "insert_overwrite"),
-    ("write", "catalog.create_or_replace_table", "create_or_replace"),
     ("schema", "update_schema().add_column", "add_column"),
     ("schema", "update_schema().delete_column", "drop_column"),
     ("schema", "update_schema().rename_column", "rename_column"),

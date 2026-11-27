@@ -580,16 +580,6 @@ def stage_orphan(tbl) -> str:
     return path
 
 
-def print_exchanges(proxy, ns: str, table: str, tag: str) -> None:
-    """Every commit the proxy saw for the table, in full, one JSON line each, prefixed
-    `COMMIT-CAPTURE <tag>`: what an engine sent the catalog and what came back, for replaying
-    against the catalog by hand."""
-    import json
-
-    for exchange in proxy.exchanges.get((ns, table), []):
-        print(f"COMMIT-CAPTURE {tag} {json.dumps(exchange)}", flush=True)
-
-
 def utc_now() -> str:
     """Now, UTC, as a SQL timestamp literal's text: "older than now" for the clean-up probes."""
     from datetime import datetime

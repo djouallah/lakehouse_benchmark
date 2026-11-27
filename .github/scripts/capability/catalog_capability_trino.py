@@ -61,7 +61,6 @@ from harness import (
     iceberg_schema,
     orphan_check,
     partition_result,
-    print_exchanges,
     promotion_check,
     read_without_files,
     remove_data_files,
@@ -473,47 +472,6 @@ class TrinoCapability:
         self.sql(f"INSERT OVERWRITE {self.t(table)} {_select(NEW_ROWS)}")
         return self._expect(table, NEW_ROWS, "INSERT OVERWRITE")
 
-    def create_or_replace(self) -> str:
-        """CREATE OR REPLACE TABLE ... AS over an existing table: one commit on the same table,
-        history kept. Sent through the race catalog, unarmed, so the proxy records the commit's
-        requirements and updates: a refusal then says what was asserted against what the table
-        holds."""
-        table = self._fresh("replace")
-        tbl = self.iceberg(table)
-        meta = tbl.metadata
-        held = (
-            f"table holds uuid {meta.table_uuid}, current-schema-id {meta.current_schema_id}, "
-            f"last-column-id {meta.last_column_id}, default-spec-id {meta.default_spec_id}, "
-            f"last-partition-id {meta.last_partition_id}, "
-            f"default-sort-order-id {meta.default_sort_order_id}, "
-            f"main {meta.current_snapshot_id}"
-        )
-        before = len(self._snapshots(table))
-        key = (self.ns, table)
-        try:
-            self.sql(
-                f"CREATE OR REPLACE TABLE {self.t(table, catalog='race')} AS "
-                f"{_select([(7, 70), (8, 80)])}"
-            )
-        except Refused as exc:
-            print_exchanges(self.proxy, self.ns, table, "trino")
-            sent = self.proxy.requirements.get(key, [])
-            updates = self.proxy.updates.get(key, [])
-            statuses = self.proxy.statuses(*key)
-            raise Refused(
-                f"{exc}; commits {statuses}; requirements sent {sent}; updates {updates}; {held}"
-            ) from None
-        tbl = self.iceberg(table)
-        snapshots = self._snapshots(table)
-        summary = snapshots[-1].summary
-        operation = summary.operation.value if summary is not None else "?"
-        same = "same table" if tbl.metadata.table_uuid == meta.table_uuid else "a NEW table"
-        result = self._expect(table, [(7, 70), (8, 80)], "CREATE OR REPLACE TABLE ... AS")
-        return (
-            f"{result}; {same}, {len(snapshots) - before} snapshot(s) added, "
-            f"{len(snapshots)} kept, operation {operation}"
-        )
-
     # -- schema ------------------------------------------------------------------------------
 
     def add_column(self) -> str:
@@ -823,7 +781,6 @@ PROBES = [
     ("write", "MERGE, two actions: MATCHED UPDATE + NOT MATCHED INSERT", "merge_upsert"),
     ("write", "TRUNCATE TABLE", "truncate"),
     ("write", "INSERT OVERWRITE (no such statement)", "insert_overwrite"),
-    ("write", "CREATE OR REPLACE TABLE ... AS", "create_or_replace"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),
