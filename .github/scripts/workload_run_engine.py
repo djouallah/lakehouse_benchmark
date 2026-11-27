@@ -219,12 +219,21 @@ class PeakRss:
         return total
 
     def _sample(self) -> None:
+        # A heartbeat every 15 s while a node runs: a runner killed for memory writes no part,
+        # and the log's last lines are then the only record of how its memory grew.
+        ticks = 0
         while not self._stop.wait(0.5):
             rss, free = self._rss(), shutil.disk_usage("/").free
             self.peak = max(self.peak, rss)
             self._lowest_free = min(self._lowest_free, free)
             self._node_peak = max(self._node_peak, rss)
             self._node_lowest_free = min(self._node_lowest_free, free)
+            ticks += 1
+            if self._node and ticks % 30 == 0:
+                scrub.safe_print(
+                    f"  rss {rss / 2**20:,.0f} MB, spill {(self._node_free0 - free) / 2**20:,.0f} MB"
+                    f" ({self._node.split('.')[-1]})"
+                )
 
     def node_start(self, unique_id: str) -> None:
         self._node = unique_id

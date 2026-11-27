@@ -7,17 +7,12 @@
 
      The files are chosen at parse time -- dbt-polars has no SQL hooks -- by the same query
      the DuckDB pre-hooks run, NEWEST FIRST, capped at process_limit. See
-     macros/polars_read_csv.sql.
-
-     On Delta (polars_delta) the batch is collected before delta-rs' merge (streamed_exec off),
-     so delta-rs prunes the target on the batch's key statistics instead of joining the whole
-     table; an Iceberg merge ignores write_options it has no parameter for. --#}
+     macros/polars_read_csv.sql. --#}
 {%- set spec = aemo_spec('scada') -%}
 {{ config(
     materialized='incremental',
     incremental_strategy='merge',
-    unique_key=spec['unique_key'],
-    write_options={'streamed_exec': false}
+    unique_key=spec['unique_key']
 ) }}
 
 -- depends_on: {{ source('landing', 'csv_raw_archive_log') }}
