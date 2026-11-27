@@ -1100,10 +1100,13 @@ class DeltaProbe:
         return self._read_spark_fixture("tw")
 
     def _write_spark_fixture(self, key: str) -> str:
-        """INSERT, UPDATE, DELETE and MERGE, in that order, into a byte-for-byte copy of a table
-        Spark wrote (so the shared fixture stays as Spark left it). The UPDATE and DELETE hit rows
-        in Spark's own data file -- for the deletion-vector fixture, the file that carries the
-        vector. DuckDB decides, reading the copy's log afresh."""
+        """INSERT, UPDATE, DELETE and MERGE, each into its own byte-for-byte copy of a table Spark
+        wrote (so the shared fixture stays as Spark left it). Each gets a fresh copy because the
+        first statement that rewrites Spark's data file also drops its deletion vector: in one
+        shared copy, only the first of UPDATE, DELETE and MERGE would meet the vector. Every one
+        hits a row in Spark's own data file -- for the deletion-vector fixture, the file that
+        carries the vector. DuckDB decides, reading each copy's log afresh. The copies that took
+        their statement are kept in self.fixture_copies, for the change-data-feed check."""
         folder, feature, cols, rows, *_ = self.FIXTURES[key]
         where = self.oracle.fixture_relative(folder)
         if not self.oracle.has_log(where):
@@ -1112,48 +1115,57 @@ class DeltaProbe:
             self._spark_fixture(key)
         if feature not in set(self.oracle.features_at(where)):
             raise Broken(f"the fixture has features {self.oracle.features_at(where)}")
-        name = self._claim(f"fxw{key}")
-        self.oracle.copy_table(where, name)
-        try:
-            self.run_all(self.register_sql(name))
-        except Refused as exc:
-            raise Refused(f"the copy of Spark's table could not be opened: {exc}") from None
         idc, col = (c.strip() for c in cols.split(","))
-        t = self.ref(name)
-        expected = dict(rows)
         steps = [
-            ("INSERT", self.insert_sql(t, [(100, 1000)], cols=(idc, col)), {100: 1000}, []),
-            ("UPDATE", self.update_sql(t, f"{col} = -1", f"{idc} = 5"), {5: -1}, []),
-            ("DELETE", self.delete_sql(t, f"{idc} = 6"), {}, [6]),
+            ("INSERT", lambda t: self.insert_sql(t, [(100, 1000)], cols=(idc, col)), {100: 1000}),
+            ("UPDATE", lambda t: self.update_sql(t, f"{col} = -1", f"{idc} = 5"), {5: -1}),
+            ("DELETE", lambda t: self.delete_sql(t, f"{idc} = 6"), {6: None}),
             (
                 "MERGE",
-                self.merge_sql(t, self.select([(7, -7), (101, 1010)]), col),
+                lambda t: self.merge_sql(t, self.select([(7, -7), (101, 1010)]), col),
                 {7: -7, 101: 1010},
-                [],
             ),
         ]
-        done = []
-        for what, statement, sets, drops in steps:
+        self.fixture_copies: list[str] = []
+        done, refused, wrong = [], [], []
+        features = None
+        for what, statement, changes in steps:
+            name = self._claim(f"fxw{key}_{what.lower()}")
+            self.oracle.copy_table(where, name)
             try:
-                self.sql(statement)
+                self.run_all(self.register_sql(name))
             except Refused as exc:
-                ok = f" ({', '.join(done)} worked)" if done else ""
-                raise Refused(f"{what}{ok}: {exc}") from None
-            expected.update(sets)
-            for k in drops:
-                expected.pop(k, None)
+                raise Refused(f"the copy of Spark's table could not be opened: {exc}") from None
+            try:
+                self.sql(statement(self.ref(name)))
+            except Refused as exc:
+                refused.append(f"{what}: {exc}")
+                continue
+            expected = dict(rows)
+            for k, v in changes.items():
+                if v is None:
+                    expected.pop(k, None)
+                else:
+                    expected[k] = v
+            want = sorted(expected.items())
+            found = self.oracle.rows(name, (idc, col))
+            if found != want:
+                shown = found if isinstance(found, str) else found[:6]
+                wrong.append(
+                    f"{what} returned success; DuckDB reads {shown}..., expected {want[:6]}..."
+                )
+                continue
             done.append(what)
-        want = sorted(expected.items())
-        found = self.oracle.rows(name, (idc, col))
-        if found != want:
-            shown = found if isinstance(found, str) else found[:6]
-            raise NoOp(
-                f"INSERT, UPDATE, DELETE and MERGE returned success; DuckDB reads {shown}..., "
-                f"expected {want[:6]}..."
-            )
+            self.fixture_copies.append(name)
+            features = self.oracle.features(name)
+        worked = f" ({', '.join(done)} worked)" if done else ""
+        if refused:
+            raise Refused("; ".join(refused) + worked)
+        if wrong:
+            raise NoOp("; ".join(wrong) + worked)
         return (
-            f"INSERT, UPDATE, DELETE and MERGE into a copy of Spark's table: DuckDB reads all "
-            f"{len(found)} rows right; table features {self.oracle.features(name)}"
+            f"INSERT, UPDATE, DELETE and MERGE, each into its own copy of Spark's table: DuckDB "
+            f"reads every row right; table features {features}"
         )
 
     def write_spark_deletion_vectors(self) -> str:
@@ -1168,18 +1180,22 @@ class DeltaProbe:
         """Writes into a table Spark wrote with change data feed on: a commit that rewrites files
         must carry change files, or the feed reads every carried-over row as deleted + re-added."""
         found = self._write_spark_fixture("cdf")
-        name = self.name("fxwcdf")
-        engine = [v for v, who in enumerate(self.oracle.commit_authors(name)) if who == "engine"]
         # Spark's own commits are copied too; only the engine's, after the copy, are asked.
-        mine = [v for v in engine if v > self._fixture_versions("cdf")]
-        missing = [
-            v
-            for v in mine
-            if self.oracle.actions(name, "remove", v) and not self.oracle.actions(name, "cdc", v)
-        ]
+        since = self._fixture_versions("cdf")
+        missing = []
+        for name in self.fixture_copies:
+            authors = self.oracle.commit_authors(name)
+            for v, who in enumerate(authors):
+                if (
+                    who == "engine"
+                    and v > since
+                    and self.oracle.actions(name, "remove", v)
+                    and not self.oracle.actions(name, "cdc", v)
+                ):
+                    missing.append(f"{name.rsplit('_', 1)[-1].upper()} (version {v})")
         if missing:
             raise NoOp(
-                f"{found}; but version(s) {missing} rewrote files with no change files, so the "
+                f"{found}; but {', '.join(missing)} rewrote files with no change files, so the "
                 f"change data feed is wrong"
             )
         return found
