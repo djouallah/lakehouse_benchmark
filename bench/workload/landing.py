@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import io
 import os
+import shutil
 import tempfile
 import time
 import urllib.error
@@ -29,7 +30,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 
-from bench import onelake, scrub
+from bench import scrub
 from bench.workload.config import WorkloadConfig
 
 LOG = "csv_raw_archive_log.parquet"
@@ -66,6 +67,8 @@ class Lake:
     """The landing root in OneLake, as an upload/download pair over the ADLS client."""
 
     def __init__(self, cfg: WorkloadConfig):
+        from bench import onelake  # late: the local landing needs no ADLS client
+
         self.fs = onelake.file_system(cfg)
         self.root = cfg.files_relative
 
@@ -90,12 +93,40 @@ class Lake:
         return True
 
 
+class LocalLake:
+    """The same landing layout in a local directory: duckrun's release gate (its
+    workload_gate.yml) lands here and runs the dbt project on runner disk, touching no lakehouse."""
+
+    def __init__(self, root: str):
+        self.root = root
+
+    def _path(self, rel: str) -> str:
+        return os.path.join(self.root, *rel.split("/"))
+
+    def exists(self, rel: str) -> bool:
+        return os.path.exists(self._path(rel))
+
+    def put(self, local: str, rel: str, overwrite: bool) -> bool:
+        dest = self._path(rel)
+        if not overwrite and os.path.exists(dest):
+            return False
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copyfile(local, dest)
+        return True
+
+    def get(self, rel: str, local: str) -> bool:
+        if not self.exists(rel):
+            return False
+        shutil.copyfile(self._path(rel), local)
+        return True
+
+
 def download_aemo(
-    cfg: WorkloadConfig, download_limit: int, daily_download_limit: int
+    cfg: WorkloadConfig | None, download_limit: int, daily_download_limit: int, lake=None
 ) -> dict[str, int]:
     import duckdb
 
-    lake = Lake(cfg)
+    lake = lake if lake is not None else Lake(cfg)
     session = duckdb.connect()
     session.sql("INSTALL httpfs; LOAD httpfs; INSTALL json; LOAD json;")
     batch_size, max_workers = 7, 8
