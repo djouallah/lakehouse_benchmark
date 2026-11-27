@@ -80,10 +80,12 @@ def test_one_table_format_tab_with_iceberg_and_delta():
     assert maintenance == [
         "Compaction",
         "Rewrite manifests",
-        "Add existing Parquet files",
         "Expire snapshots",
         "Remove orphan files (VACUUM)",
     ]
+    # Bringing existing Parquet into a table is a write, not maintenance, in both grids.
+    writes = [r["label"] for r in cap["rows"] if r["group"] == "Writes"]
+    assert "Add existing Parquet files" in writes
 
 
 def test_both_formats_share_their_groups_and_basic_is_the_mvp():

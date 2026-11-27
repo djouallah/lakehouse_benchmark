@@ -56,6 +56,7 @@ TABLE = [
     ("Writes", "CREATE OR REPLACE TABLE AS SELECT", "create_or_replace"),
     ("Writes", "TRUNCATE", "truncate"),
     ("Writes", "Overwrite one partition", "overwrite_partition"),
+    ("Writes", "Convert Parquet files to Delta", "convert_to_delta"),
     ("Writes", "DELETE writes deletion vectors", "deletion_vectors"),
     ("Writes", "CHECK constraint: a violating INSERT is refused", "check_constraint"),
     ("Writes", "Concurrent writer: DELETE loses nothing", "race_delete"),
@@ -104,7 +105,6 @@ TABLE = [
     ("Maintenance", "CLUSTER BY", "liquid_clustering"),
     ("Maintenance", "VACUUM", "vacuum"),
     ("Maintenance", "Checkpoint written", "checkpoint"),
-    ("Maintenance", "Convert Parquet files to Delta", "convert_to_delta"),
 ]
 ROWS = [(label, key) for _, label, key in TABLE]
 GROUPS: dict[str, list[str]] = {}

@@ -277,6 +277,7 @@ GROUPS = {
         "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
         "TRUNCATE",
+        "Add existing Parquet files",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",
     ],
@@ -316,7 +317,6 @@ GROUPS = {
     "Maintenance": [
         "Compaction",
         "Rewrite manifests",
-        "Add existing Parquet files",
         "Expire snapshots",
         "Remove orphan files (VACUUM)",
     ],

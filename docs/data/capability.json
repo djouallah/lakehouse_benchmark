@@ -523,6 +523,46 @@
   },
   {
    "group": "Writes",
+   "label": "Add existing Parquet files",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "supported"
+    },
+    "polars_iceberg": {
+     "o": "supported"
+    },
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "pyiceberg": {
+     "o": "supported"
+    },
+    "iceberg_go": {
+     "o": "supported"
+    },
+    "starrocks_iceberg": {
+     "o": "no-op",
+     "n": "add_files returned success; expected [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], pyiceberg reads pyiceberg could not read it: ValueError: Parquet file does not have field-ids and the Iceberg table does not have 'sche…"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "Catalog Error: Table Function with name iceberg_add_files does not exist! Did you mean \"iceberg_files\"?"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (.): .add_files(table => '_bench_capability.ch_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onel…"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, \"SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:12\\n /\\n1 / CALL system.add_files(table => '_bench_capability.db_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523…"
+    }
+   }
+  },
+  {
+   "group": "Writes",
    "label": "Concurrent writer: DELETE loses nothing",
    "cells": {
     "lakesail_iceberg": {
@@ -1609,46 +1649,6 @@
     "databend_iceberg": {
      "o": "no",
      "n": "OperationalError: (1105, \"Unimplemented. Code: 1002, Text = The operation 'compact_segments' is not supported for the table 'db_44680562433_1_manifests', which is using the 'iceberg' engine..\")"
-    }
-   }
-  },
-  {
-   "group": "Maintenance",
-   "label": "Add existing Parquet files",
-   "cells": {
-    "lakesail_iceberg": {
-     "o": "supported"
-    },
-    "polars_iceberg": {
-     "o": "supported"
-    },
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "supported"
-    },
-    "pyiceberg": {
-     "o": "supported"
-    },
-    "iceberg_go": {
-     "o": "supported"
-    },
-    "starrocks_iceberg": {
-     "o": "no-op",
-     "n": "add_files returned success; expected [(1, 10), (2, 20), (3, 30), (7, 70), (8, 80)], pyiceberg reads pyiceberg could not read it: ValueError: Parquet file does not have field-ids and the Iceberg table does not have 'sche…"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "Catalog Error: Table Function with name iceberg_add_files does not exist! Did you mean \"iceberg_files\"?"
-    },
-    "chdb_iceberg": {
-     "o": "no",
-     "n": "ChdbError: Code: 62. DB::Exception: Syntax error: failed at position 12 (.): .add_files(table => '_bench_capability.ch_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2@onel…"
-    },
-    "databend_iceberg": {
-     "o": "no",
-     "n": "OperationalError: (1105, \"SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:12\\n /\\n1 / CALL system.add_files(table => '_bench_capability.db_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523…"
     }
    }
   },

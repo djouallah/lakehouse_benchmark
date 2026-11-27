@@ -398,6 +398,33 @@
   },
   {
    "group": "Writes",
+   "label": "Convert Parquet files to Delta",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: IllegalArgumentException: invalid argument: found CONVERT at 0:7 expected something else, ';', statement, or end of input"
+    },
+    "duckrun": {
+     "o": "supported"
+    },
+    "delta_rs": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELE…"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TO\" LINE 1: CONVERT TO DELTA parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^"
+    }
+   }
+  },
+  {
+   "group": "Writes",
    "label": "DELETE writes deletion vectors",
    "cells": {
     "pyspark_iceberg": {
@@ -1417,33 +1444,6 @@
     },
     "duckdb_iceberg": {
      "o": "supported"
-    }
-   }
-  },
-  {
-   "group": "Maintenance",
-   "label": "Convert Parquet files to Delta",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "supported"
-    },
-    "lakesail_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: IllegalArgumentException: invalid argument: found CONVERT at 0:7 expected something else, ';', statement, or end of input"
-    },
-    "duckrun": {
-     "o": "supported"
-    },
-    "delta_rs": {
-     "o": "supported"
-    },
-    "trino_iceberg": {
-     "o": "no",
-     "n": "TrinoUserError: TrinoUserError: TrinoUserError(type=USER_ERROR, name=SYNTAX_ERROR, message=\"line 1:1: mismatched input 'CONVERT'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELE…"
-    },
-    "duckdb_iceberg": {
-     "o": "no",
-     "n": "RuntimeError: RuntimeError: Parser Error: syntax error at or near \"TO\" LINE 1: CONVERT TO DELTA parquet.`abfss://1c52481c-0523-4a5a-bbde-fdc932bd77c2... ^^"
     }
    }
   }
