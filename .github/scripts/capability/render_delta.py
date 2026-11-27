@@ -22,7 +22,8 @@ from render_readme import _one_line, cell, load
 # delta-rs writing (delta_capability_duckrun.py).
 ENGINES = ("spark", "sail", "trino", "duckdb", "delta_rs", "duckrun", "polars")
 # The site's engine keys: the same as the Iceberg grid's, so each engine keeps its one label and
-# colour across the site (bench/charts.py, docs/index.html).
+# colour across the site (bench/charts.py, docs/index.html). Polars is the exception: SQL on
+# Iceberg, its Python API on Delta, so its Delta column is polars_delta, labelled "Polars (API)".
 SITE_KEY = {
     "spark": "pyspark_iceberg",
     "sail": "lakesail_iceberg",
@@ -30,7 +31,7 @@ SITE_KEY = {
     "duckdb": "duckdb_iceberg",
     "delta_rs": "delta_rs",
     "duckrun": "duckrun",
-    "polars": "polars_iceberg",
+    "polars": "polars_delta",
 }
 
 # (group, row label, probe key): every engine is asked every row under the same key
