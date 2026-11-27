@@ -54,6 +54,7 @@ from harness import (
     iceberg_schema,
     orphan_check,
     partition_result,
+    print_exchanges,
     promotion_check,
     read_without_files,
     remove_data_files,
@@ -471,7 +472,14 @@ class SparkCapability:
         holding only the new rows. A drop and a fresh create is not a replace."""
         table = self._fresh("replace")
         uuid = self.iceberg(table).metadata.table_uuid
-        self.sql(f"CREATE OR REPLACE TABLE {self.t(table)} USING iceberg AS {_select(NEW_ROWS)}")
+        # Through the `race` catalog, unarmed: the proxy keeps the commit Spark sent, in full.
+        try:
+            self.sql(
+                f"CREATE OR REPLACE TABLE race.`{self.ns}`.`{table}` USING iceberg AS "
+                f"{_select(NEW_ROWS)}"
+            )
+        finally:
+            print_exchanges(self.proxy, self.ns, table, "spark")
         result = self._expect(table, NEW_ROWS, "CREATE OR REPLACE TABLE ... AS")
         if self.iceberg(table).metadata.table_uuid != uuid:
             raise Refused(f"{result}, but as a NEW table: dropped and re-created, not replaced")

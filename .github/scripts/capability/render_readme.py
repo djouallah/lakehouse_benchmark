@@ -105,6 +105,10 @@ ROWS = [
         },
     ),
     ("TRUNCATE", {e: ["truncate"] for e in FULL_SQL}),
+    # The same table (its uuid kept) holding only the new rows, in one commit; a drop and a fresh
+    # create is a no. Spark's and Trino's commits are printed in full (COMMIT-CAPTURE in the
+    # run log), to replay against the catalog.
+    ("CREATE OR REPLACE TABLE ... AS", {e: ["create_or_replace"] for e in ENGINES}),
     (
         "Partitioned table",
         {
@@ -276,6 +280,7 @@ GROUPS = {
         "UPDATE",
         "MERGE with two actions (UPDATE + INSERT)",
         "INSERT OVERWRITE, whole table",
+        "CREATE OR REPLACE TABLE ... AS",
         "TRUNCATE",
         "Concurrent writer: DELETE loses nothing",
         "Concurrent writer: UPDATE loses nothing",

@@ -285,6 +285,9 @@ class IcebergGoCapability(PyicebergCapability):
         )
         return self._expect(table, [(7, 70), (8, 80)], "OverwriteTable")
 
+    def create_or_replace(self) -> str:
+        raise no_call("replace-table")
+
     def update(self) -> str:
         raise no_call("row update or upsert")
 
@@ -573,6 +576,7 @@ PROBES = [
     ("write", "AppendTable", "insert_into"),
     ("write", "AppendTable of a scan of the table", "insert_select"),
     ("write", "Delete(filter)", "delete_from"),
+    ("write", "replace a table (CREATE OR REPLACE TABLE ... AS)", "create_or_replace"),
     ("write", "update rows (UPDATE)", "update"),
     ("write", "upsert: matched update + not matched insert", "merge_upsert"),
     ("write", "Delete(AlwaysTrue) (TRUNCATE)", "truncate"),

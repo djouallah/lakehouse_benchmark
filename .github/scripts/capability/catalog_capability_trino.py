@@ -61,6 +61,7 @@ from harness import (
     iceberg_schema,
     orphan_check,
     partition_result,
+    print_exchanges,
     promotion_check,
     read_without_files,
     remove_data_files,
@@ -495,6 +496,7 @@ class TrinoCapability:
                 f"{_select([(7, 70), (8, 80)])}"
             )
         except Refused as exc:
+            print_exchanges(self.proxy, self.ns, table, "trino")
             sent = self.proxy.requirements.get(key, [])
             updates = self.proxy.updates.get(key, [])
             statuses = self.proxy.statuses(*key)
