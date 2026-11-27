@@ -1,0 +1,55 @@
+name: tmp onelake expire check
+
+# TEMPORARY: what iceberg-go's, pyiceberg's and a plain remove-snapshots commit send the OneLake
+# REST catalog for expire_snapshots, and what comes back (.github/scripts/tmp/onelake_expire_check.py).
+# Deleted once known.
+on:
+  workflow_dispatch:
+    inputs:
+      trials:
+        description: Fresh tables per client.
+        type: string
+        default: "3"
+
+concurrency:
+  group: onelake
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONUNBUFFERED: "1"
+      FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+      FABRIC_LAKEHOUSE_ID: ${{ secrets.FABRIC_LAKEHOUSE_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TRIALS: ${{ inputs.trials }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+      - run: pip install -r requirements/capability_iceberg_go.txt
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: .github/scripts/capability/iceberg_go/go.mod
+          cache-dependency-path: .github/scripts/capability/iceberg_go/go.mod
+      - working-directory: .github/scripts/capability/iceberg_go
+        run: |
+          go mod tidy && go build -o "$RUNNER_TEMP/iceberg-go-probe" .
+          echo "IGO_PROBE=$RUNNER_TEMP/iceberg-go-probe" >> "$GITHUB_ENV"
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - run: python .github/scripts/tmp/onelake_expire_check.py
