@@ -605,6 +605,66 @@ def orphan_check(tbl, path: str) -> str:
     return "the unreferenced file is gone from storage"
 
 
+# An engine that refuses to remove a file younger than 24 hours (Spark's RemoveOrphanFiles
+# procedure, StarRocks' minimum retention) is asked about a file staged by an earlier run: one
+# table per engine that stays between runs, its staged file's path and time in a table property.
+AGED_TABLE = "aged_orphans_{engine}"
+AGED_PROPERTY = "bench.aged-orphan"
+AGED_MIN_SECONDS = 24 * 3600 + 600  # the engines' 24 hours, and 10 minutes for the clocks
+
+
+def _stage_aged(tbl) -> None:
+    import time
+
+    import pyarrow.parquet as pq
+
+    at = int(time.time())
+    path = f"{tbl.location().rstrip('/')}/data/orphan-aged-{at}.parquet"
+    with tbl.io.new_output(path).create(overwrite=True) as out:
+        pq.write_table(rows(ADD_FILES_ROWS), out)
+    with tbl.transaction() as txn:
+        txn.set_properties({AGED_PROPERTY: f"{path}|{at}"})
+
+
+def aged_orphan(catalog, ns: str, engine: str, seed: list[tuple]) -> tuple[str, str, float]:
+    """(table, path, age in seconds) of the unreferenced file an earlier run staged in this
+    engine's aged table, once it is 24 hours old. Until then, Skip; with none staged (the
+    first run, or the last one removed it), stage one and Skip."""
+    import time
+
+    table = AGED_TABLE.format(engine=engine)
+    if not catalog.table_exists((ns, table)):
+        catalog.create_table((ns, table), schema=iceberg_schema()).append(rows(seed))
+    tbl = catalog.load_table((ns, table))
+    path, _, at = tbl.properties.get(AGED_PROPERTY, "").rpartition("|")
+    if path and at and tbl.io.new_input(path).exists():
+        age = time.time() - float(at)
+        if age >= AGED_MIN_SECONDS:
+            return table, path, age
+        raise Skip(
+            f"the unreferenced file in {table} is {age / 3600:.1f} h old; this engine removes "
+            "only files older than 24 h, so it is asked by a run 24 h after the staging one"
+        )
+    _stage_aged(tbl)
+    raise Skip(
+        f"staged an unreferenced file in {table}; this engine removes only files older than "
+        "24 h, so it is asked by a run 24 h from now"
+    )
+
+
+def restage_aged(catalog, ns: str, table: str) -> None:
+    """After an engine was asked: a new unreferenced file, for the next run 24 hours on."""
+    _stage_aged(catalog.load_table((ns, table)))
+
+
+def aged_cutoff(engine_now, age: float) -> str:
+    """A timestamp literal, in the engine's own clock and zone, just after the staged file was
+    written: the file is older than it, and it is 24 hours before the engine's now."""
+    from datetime import timedelta
+
+    return (engine_now - timedelta(seconds=age - 300)).strftime("%Y-%m-%d %H:%M:%S")
+
+
 STATS_FILES = [[(i, i * 10) for i in range(base + 1, base + 4)] for base in (0, 10, 20, 30)]
 PRUNE_ID = 22
 PRUNE_EXPECTED = [(220,)]

@@ -48,6 +48,8 @@ from harness import (
     Refused,
     Report,
     Skip,
+    aged_cutoff,
+    aged_orphan,
     any_wanted,
     asked,
     evolution_check,
@@ -58,13 +60,12 @@ from harness import (
     promotion_check,
     read_without_files,
     remove_data_files,
+    restage_aged,
     rows,
-    stage_orphan,
     stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
-    utc_now,
     verdict,
     wanted,
     write_stats_files,
@@ -658,14 +659,20 @@ class SparkCapability:
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
     def remove_orphan_files(self) -> str:
-        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
-        table = self._fresh("orphans")
-        path = stage_orphan(self.iceberg(table))
-        self.sql(
-            f"CALL {CATALOG}.system.remove_orphan_files(table => '{self.ident(table)}', "
-            f"older_than => TIMESTAMP '{utc_now()}')"
-        )
-        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+        """Delete a file no snapshot references; the rows stay. Iceberg's procedure refuses an
+        `older_than` under 24 hours ("may corrupt the table if other operations are writing"),
+        so the file is one an earlier run staged (harness.aged_orphan)."""
+        table, path, age = aged_orphan(self.pyiceberg(), self.ns, "spark", SEED)
+        cutoff = aged_cutoff(self.sql("SELECT current_timestamp()")[0][0], age)
+        try:
+            self.sql(
+                f"CALL {CATALOG}.system.remove_orphan_files(table => '{self.ident(table)}', "
+                f"older_than => TIMESTAMP '{cutoff}')"
+            )
+            gone = orphan_check(self.iceberg(table), path)
+            return self._expect(table, SEED, f"{gone} ({age / 3600:.0f} h old)")
+        finally:
+            restage_aged(self.pyiceberg(), self.ns, table)
 
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
