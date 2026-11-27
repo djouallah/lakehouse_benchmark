@@ -17,10 +17,10 @@ from pathlib import Path
 from render_readme import _one_line, cell, load
 
 # The engines with a SQL path that writes Delta. An engine whose docs say it only reads Delta, or
-# whose SQL has no Delta write, has no column. delta-rs is the one library, asked through its
-# Python API (delta_capability_delta_rs.py); duckrun is DuckDB SQL with delta-rs writing
-# (delta_capability_duckrun.py).
-ENGINES = ("spark", "sail", "trino", "duckdb", "delta_rs", "duckrun")
+# whose SQL has no Delta write, has no column. delta-rs and Polars are asked through their Python
+# API (delta_capability_delta_rs.py, delta_capability_polars.py); duckrun is DuckDB SQL with
+# delta-rs writing (delta_capability_duckrun.py).
+ENGINES = ("spark", "sail", "trino", "duckdb", "delta_rs", "duckrun", "polars")
 # The site's engine keys: the same as the Iceberg grid's, so each engine keeps its one label and
 # colour across the site (bench/charts.py, docs/index.html).
 SITE_KEY = {
@@ -30,12 +30,13 @@ SITE_KEY = {
     "duckdb": "duckdb_iceberg",
     "delta_rs": "delta_rs",
     "duckrun": "duckrun",
+    "polars": "polars_iceberg",
 }
 
 # (group, row label, probe key): every engine is asked every row under the same key
 # (delta_probe.PROBES). The groups are the Iceberg grid's, so the two formats read side by side,
-# plus Tables written by Spark: reading and writing a table Spark wrote with its Delta features turned on
-# (their own group so Writes fits a 1080p screen, tests/test_layout.py);
+# plus Tables written by Spark: reading and writing a table Spark wrote with its Delta features
+# turned on (their own group so Writes fits a 1080p screen, tests/test_layout.py);
 # Basic is the minimum to use the format at all: create, read, append, append safely.
 TABLE = [
     ("Basic", "CREATE TABLE at a path", "create_table"),

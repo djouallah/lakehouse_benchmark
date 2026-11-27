@@ -1,7 +1,7 @@
 name: delta support
 
-# WHAT EACH ENGINE CAN DO writing Delta tables into OneLake, in SQL (delta-rs through its Python
-# API): the site's Delta support tab.
+# WHAT EACH ENGINE CAN DO writing Delta tables into OneLake, in SQL (delta-rs and Polars through
+# their Python API): the site's Delta support tab.
 #
 #   plan  ->  ask (one job per client, one at a time)  ->  publish (only when asked)
 #
@@ -20,14 +20,15 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,sail,trino,duckdb,delta_rs,duckrun
+          - spark,sail,trino,duckdb,delta_rs,duckrun,polars
           - spark
           - sail
           - trino
           - duckdb
           - delta_rs
           - duckrun
-        default: spark,sail,trino,duckdb,delta_rs,duckrun
+          - polars
+        default: spark,sail,trino,duckdb,delta_rs,duckrun,polars
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -57,7 +58,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,sail,trino,duckdb,delta_rs,duckrun' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,sail,trino,duckdb,delta_rs,duckrun,polars' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -71,6 +72,7 @@ jobs:
       || matrix.client == 'duckdb' && 'DuckDB'
       || matrix.client == 'delta_rs' && 'delta-rs (API)'
       || matrix.client == 'duckrun' && 'duckrun'
+      || matrix.client == 'polars' && 'Polars (API)'
       || matrix.client }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -107,7 +109,7 @@ jobs:
       - name: Install ${{ matrix.client }}
         run: |
           pip install -r "$REQS"
-          pip list --format=freeze | grep -Ei '^(deltalake|duckdb|duckrun|pyarrow|pysail|pyspark|trino)=' || true
+          pip list --format=freeze | grep -Ei '^(deltalake|duckdb|duckrun|polars|pyarrow|pysail|pyspark|trino)=' || true
 
       - uses: actions/setup-java@v5
         if: matrix.client == 'spark'
