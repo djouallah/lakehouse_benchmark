@@ -33,7 +33,9 @@ SITE_KEY = {
 }
 
 # (group, row label, probe key): every engine is asked every row under the same key
-# (delta_probe.PROBES). The groups are the Iceberg grid's, so the two formats read side by side;
+# (delta_probe.PROBES). The groups are the Iceberg grid's, so the two formats read side by side,
+# plus Spark tables: reading and writing a table Spark wrote with its Delta features turned on
+# (their own group so Writes fits a 1080p screen, tests/test_layout.py);
 # Basic is the minimum to use the format at all: create, read, append, append safely.
 TABLE = [
     ("Basic", "CREATE TABLE at a path", "create_table"),
@@ -58,9 +60,6 @@ TABLE = [
     ("Writes", "CHECK constraint: a violating INSERT is refused", "check_constraint"),
     ("Writes", "Concurrent writer: DELETE loses nothing", "race_delete"),
     ("Writes", "Concurrent writer: UPDATE loses nothing", "race_update"),
-    ("Writes", "Write into a Spark table with deletion vectors", "write_spark_deletion_vectors"),
-    ("Writes", "Write into a Spark table with column mapping", "write_spark_column_mapping"),
-    ("Writes", "Write into a Spark table with change data feed", "write_spark_change_data_feed"),
     ("Catalog", "Register a Delta table as catalog.schema.table", "full_identifier"),
     ("Catalog", "CREATE SCHEMA at a folder", "schema_create"),
     ("Catalog", "DROP SCHEMA removes the folder", "schema_drop"),
@@ -85,10 +84,21 @@ TABLE = [
     ("Reads & history", "Time travel by timestamp", "time_travel_timestamp"),
     ("Reads & history", "Table history", "history"),
     ("Reads & history", "DESCRIBE DETAIL", "describe_detail"),
-    ("Reads & history", "Read a Spark table with deletion vectors", "read_deletion_vectors"),
-    ("Reads & history", "Read a Spark table with column mapping", "read_column_mapping"),
-    ("Reads & history", "Read a Spark table with type widening", "read_type_widening"),
     ("Reads & history", "Change data feed", "change_data_feed"),
+    ("Spark tables", "Read a Spark table with deletion vectors", "read_deletion_vectors"),
+    ("Spark tables", "Read a Spark table with column mapping", "read_column_mapping"),
+    ("Spark tables", "Read a Spark table with type widening", "read_type_widening"),
+    (
+        "Spark tables",
+        "Write into a Spark table with deletion vectors",
+        "write_spark_deletion_vectors",
+    ),
+    ("Spark tables", "Write into a Spark table with column mapping", "write_spark_column_mapping"),
+    (
+        "Spark tables",
+        "Write into a Spark table with change data feed",
+        "write_spark_change_data_feed",
+    ),
     ("Maintenance", "OPTIMIZE (compaction)", "optimize"),
     ("Maintenance", "OPTIMIZE ... ZORDER BY", "zorder"),
     ("Maintenance", "CLUSTER BY", "liquid_clustering"),

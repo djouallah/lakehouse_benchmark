@@ -44,6 +44,7 @@
   "Partitions & types",
   "Schema",
   "Reads & history",
+  "Spark tables",
   "Maintenance"
  ],
  "rows": [
@@ -493,80 +494,6 @@
     "duckdb_iceberg": {
      "o": "no",
      "n": "10 DuckDB UPDATE(s) failed: RuntimeError: RuntimeError: Binder Error: Can only update base table"
-    }
-   }
-  },
-  {
-   "group": "Writes",
-   "label": "Write into a Spark table with deletion vectors",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "skipped"
-    },
-    "lakesail_iceberg": {
-     "o": "skipped"
-    },
-    "duckrun": {
-     "o": "no",
-     "n": "UPDATE (INSERT worked): Unsupported: Unsupported: update: 1 file(s) it rewrites carry a deletion vector (the commit API cannot remove a file that has one); rewrite the table once with CREATE OR REPLACE TABLE t AS SELECT…"
-    },
-    "delta_rs": {
-     "o": "skipped"
-    },
-    "trino_iceberg": {
-     "o": "skipped"
-    },
-    "duckdb_iceberg": {
-     "o": "skipped"
-    }
-   }
-  },
-  {
-   "group": "Writes",
-   "label": "Write into a Spark table with column mapping",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "skipped"
-    },
-    "lakesail_iceberg": {
-     "o": "skipped"
-    },
-    "duckrun": {
-     "o": "supported"
-    },
-    "delta_rs": {
-     "o": "skipped"
-    },
-    "trino_iceberg": {
-     "o": "skipped"
-    },
-    "duckdb_iceberg": {
-     "o": "skipped"
-    }
-   }
-  },
-  {
-   "group": "Writes",
-   "label": "Write into a Spark table with change data feed",
-   "cells": {
-    "pyspark_iceberg": {
-     "o": "skipped"
-    },
-    "lakesail_iceberg": {
-     "o": "skipped"
-    },
-    "duckrun": {
-     "o": "no",
-     "n": "UPDATE (INSERT worked): Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or …"
-    },
-    "delta_rs": {
-     "o": "skipped"
-    },
-    "trino_iceberg": {
-     "o": "skipped"
-    },
-    "duckdb_iceberg": {
-     "o": "skipped"
     }
    }
   },
@@ -1188,6 +1115,33 @@
   },
   {
    "group": "Reads & history",
+   "label": "Change data feed",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "supported"
+    },
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "UnsupportedOperationException: UnsupportedOperationException: unknown table function: table_changes"
+    },
+    "duckrun": {
+     "o": "no",
+     "n": "Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole …"
+    },
+    "delta_rs": {
+     "o": "supported"
+    },
+    "trino_iceberg": {
+     "o": "supported"
+    },
+    "duckdb_iceberg": {
+     "o": "no",
+     "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+    }
+   }
+  },
+  {
+   "group": "Spark tables",
    "label": "Read a Spark table with deletion vectors",
    "cells": {
     "pyspark_iceberg": {
@@ -1211,7 +1165,7 @@
    }
   },
   {
-   "group": "Reads & history",
+   "group": "Spark tables",
    "label": "Read a Spark table with column mapping",
    "cells": {
     "pyspark_iceberg": {
@@ -1235,7 +1189,7 @@
    }
   },
   {
-   "group": "Reads & history",
+   "group": "Spark tables",
    "label": "Read a Spark table with type widening",
    "cells": {
     "pyspark_iceberg": {
@@ -1261,29 +1215,76 @@
    }
   },
   {
-   "group": "Reads & history",
-   "label": "Change data feed",
+   "group": "Spark tables",
+   "label": "Write into a Spark table with deletion vectors",
    "cells": {
     "pyspark_iceberg": {
-     "o": "supported"
+     "o": "skipped"
     },
     "lakesail_iceberg": {
-     "o": "no",
-     "n": "UnsupportedOperationException: UnsupportedOperationException: unknown table function: table_changes"
+     "o": "skipped"
     },
     "duckrun": {
      "o": "no",
-     "n": "Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole …"
+     "n": "UPDATE (INSERT worked): Unsupported: Unsupported: update: 1 file(s) it rewrites carry a deletion vector (the commit API cannot remove a file that has one); rewrite the table once with CREATE OR REPLACE TABLE t AS SELECT…"
     },
     "delta_rs": {
-     "o": "supported"
+     "o": "skipped"
     },
     "trino_iceberg": {
-     "o": "supported"
+     "o": "skipped"
     },
     "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Spark tables",
+   "label": "Write into a Spark table with column mapping",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "duckrun": {
+     "o": "supported"
+    },
+    "delta_rs": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    }
+   }
+  },
+  {
+   "group": "Spark tables",
+   "label": "Write into a Spark table with change data feed",
+   "cells": {
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "duckrun": {
      "o": "no",
-     "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+     "n": "UPDATE (INSERT worked): Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or …"
+    },
+    "delta_rs": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
     }
    }
   },

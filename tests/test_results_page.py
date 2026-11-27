@@ -88,13 +88,16 @@ def test_one_table_format_tab_with_iceberg_and_delta():
 
 def test_both_formats_share_their_groups_and_basic_is_the_mvp():
     """Basic, the first group, is the minimum to use a format: attach, create, read, append,
-    append safely. CTAS and changing existing rows are Writes."""
+    append safely. CTAS and changing existing rows are Writes. Delta has every Iceberg group, in the
+    same order, plus Spark tables: Delta is still mostly written by Spark, so reading and writing a
+    table Spark wrote with its features on is a group of its own."""
     import json
 
     data = Path(__file__).parent.parent / "docs" / "data"
     cap = json.loads((data / "capability.json").read_text(encoding="utf-8"))
     delta = json.loads((data / "delta.json").read_text(encoding="utf-8"))
-    assert cap["groups"] == delta["groups"]
+    assert [g for g in delta["groups"] if g in cap["groups"]] == cap["groups"]
+    assert set(delta["groups"]) - set(cap["groups"]) == {"Spark tables"}
     assert cap["groups"][0] == "Basic"
     assert [r["label"] for r in cap["rows"] if r["group"] == "Basic"] == [
         "Attach the REST catalog",
