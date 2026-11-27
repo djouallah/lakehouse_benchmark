@@ -2,44 +2,44 @@
  "engines": {
   "pyspark_iceberg": {
    "version": "4.2.1 + delta-spark_4.2_2.13:4.4.1",
-   "run": "45944235114",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   },
   "lakesail_iceberg": {
    "version": "0.7.3+main86da637b4f",
-   "run": "45944235114",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   },
   "duckrun": {
    "version": "duckrun 0.6.2 (duckdb 2.0.1, deltalake 1.7.0)",
-   "run": "45944235114",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   },
   "delta_rs": {
    "version": "deltalake 1.7.0 (delta-rs py-1.7.0)",
-   "run": "45944235114",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
-   "run": "45944235114",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   },
   "polars_delta": {
    "version": "polars 2.2.0 + polars-deltalake 1.3.2 (deltalake 1.7.0)",
-   "run": "45944512317",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944512317",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   },
   "duckdb_iceberg": {
    "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
-   "run": "45944235114",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
+   "run": "45948154814",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45948154814",
    "date": "2026-11-27"
   }
  },
@@ -1311,7 +1311,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole …"
+     "n": "CatalogException: CatalogException: Catalog Error: Table Function with name table_changes does not exist! Did you mean \"delta_scan\"?"
     },
     "delta_rs": {
      "o": "supported"
@@ -1321,11 +1321,11 @@
     },
     "polars_delta": {
      "o": "no",
-     "n": "AttributeError: AttributeError: module 'polars' has no attribute 'update_delta'"
+     "n": "RuntimeError: RuntimeError: failed to build TableChanges: No table version found."
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "RuntimeError: RuntimeError: Binder Error: Can only update base table"
+     "n": "RuntimeError: RuntimeError: Catalog Error: Table Function with name table_changes does not exist! Did you mean \"delta_scan\"? LINE 1: SELECT id, v, _change_type FROM table_changes('dk_45948154814_1_cdf', 1) ORDER BY id, …"
     }
    }
   },
