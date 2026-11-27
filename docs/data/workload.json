@@ -1,7 +1,7 @@
 {
-  "run_id": "46001949797",
-  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/46001949797",
-  "finished": "2026-11-27T13:28:16Z",
+  "run_id": "46019365493",
+  "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/46019365493",
+  "finished": "2026-11-27T15:25:14Z",
   "dag": {
     "csv_raw_archive_log": {
       "materialized": "source",
@@ -11,12 +11,24 @@
         "A dbt source on every engine, read where it lands: no model copies it. `source()` compiles to `read_parquet()` on DuckDB (dbt-duckdb's `external_location`), a scan of `external.location` through an Azure storage catalog over OneLake Files on Polars, the Hive external table on Trino, and a global temp view registered at run start on Spark."
       ]
     },
-    "fct_price_today": {
+    "fct_price": {
       "materialized": "incremental",
       "parents": [
         "csv_raw_archive_log"
       ],
-      "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+      "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
+      "differences": [
+        "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+        "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+        "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
+      ]
+    },
+    "fct_scada": {
+      "materialized": "incremental",
+      "parents": [
+        "csv_raw_archive_log"
+      ],
+      "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
       "differences": [
         "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
         "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
@@ -40,30 +52,6 @@
         "Merge on (date, time, DUID) on every engine."
       ]
     },
-    "fct_scada": {
-      "materialized": "incremental",
-      "parents": [
-        "csv_raw_archive_log"
-      ],
-      "description": "AEMO DUNIT record from the daily archive files \u2014 all 53 source columns.",
-      "differences": [
-        "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
-        "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
-        "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
-      ]
-    },
-    "fct_price": {
-      "materialized": "incremental",
-      "parents": [
-        "csv_raw_archive_log"
-      ],
-      "description": "AEMO DREGION record from the daily archive files \u2014 all 130 source columns.",
-      "differences": [
-        "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
-        "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
-        "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
-      ]
-    },
     "fct_scada_today": {
       "materialized": "incremental",
       "parents": [
@@ -75,6 +63,18 @@
         "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
         "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino.",
         "`SCADAVALUE <> 0` needs a cast first: Spark compares a string with 0 as an INT, which dropped every reading between -1 and 1."
+      ]
+    },
+    "fct_price_today": {
+      "materialized": "incremental",
+      "parents": [
+        "csv_raw_archive_log"
+      ],
+      "description": "Intraday DISPATCHIS regional prices, landed every 5 minutes.",
+      "differences": [
+        "Reading this run's CSVs: `read_csv()` over the file list on DuckDB (a `SET VARIABLE` pre-hook) and Polars (picked at parse time: dbt-polars has no hooks); a csv temp view staged into an Iceberg table on Spark (`MERGE` refuses the non-deterministic `input_file_name()`); a Hive external table on Trino, files picked on `\"$path\"`, `NULLIF` for Hive's empty strings.",
+        "Incremental: the same `merge` on the natural key on every engine, update on match. A merge's commit is checked against the snapshot it read, so two concurrent runs cannot insert a file twice.",
+        "Timestamps: `CAST(... AS TIMESTAMPTZ)` on DuckDB and Polars; `to_timestamp(..., 'yyyy/MM/dd HH:mm:ss')` on Spark, whose `CAST` returns NULL for the slashes; `date_parse()` on Trino."
       ]
     },
     "dim_duid": {
@@ -94,11 +94,11 @@
     "duckrun": {
       "target": "duckrun",
       "status": "success",
-      "build_seconds": 1318.353,
-      "peak_rss_mb": 10248,
-      "peak_spill_mb": 18404,
+      "build_seconds": 1133.172,
+      "peak_rss_mb": 10149,
+      "peak_spill_mb": 16451,
       "process_limit": 360,
-      "files_behind": 943,
+      "files_behind": 583,
       "models": 6,
       "models_ok": 6,
       "versions": {
@@ -110,71 +110,33 @@
       },
       "adapter": "duckrun 0.6.3",
       "model_seconds": {
-        "dim_duid": 17.673,
-        "fct_price": 261.987,
-        "fct_price_today": 27.123,
-        "fct_scada": 850.74,
-        "fct_scada_today": 20.86,
-        "fct_summary": 126.256
+        "dim_duid": 29.123,
+        "fct_price": 35.291,
+        "fct_price_today": 25.066,
+        "fct_scada": 803.48,
+        "fct_scada_today": 41.908,
+        "fct_summary": 183.96
       },
       "model_rows": {
-        "fct_price_today": 4860,
-        "fct_summary": 118529542,
-        "fct_scada": 299611841,
         "fct_price": 4821605,
-        "fct_scada_today": 292579,
+        "fct_scada": 334661594,
+        "fct_summary": 132337520,
+        "fct_scada_today": 294054,
+        "fct_price_today": 4890,
         "dim_duid": 691
       },
       "model_mw": {
-        "fct_summary": "13357077310.82963"
+        "fct_summary": "15434237516.88873"
       },
       "model_files": {
-        "fct_price_today": 972,
-        "fct_scada": 2245,
         "fct_price": 3188,
-        "fct_scada_today": 972
+        "fct_scada": 2605,
+        "fct_scada_today": 978,
+        "fct_price_today": 978
       },
       "model_config": {
         "csv_raw_archive_log": {
           "materialized": "source"
-        },
-        "fct_price_today": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "REGIONID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/duckdb/marts/fct_price_today.sql",
-          "sql_lines": 39
-        },
-        "fct_summary": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "date",
-            "time",
-            "DUID"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/duckdb/marts/fct_summary.sql",
-          "sql_lines": 87
-        },
-        "fct_scada": {
-          "materialized": "incremental",
-          "strategy": "merge",
-          "unique_key": [
-            "file",
-            "DUID",
-            "SETTLEMENTDATE",
-            "INTERVENTION"
-          ],
-          "merge_clauses": false,
-          "path": "models/aemo/duckdb/marts/fct_scada.sql",
-          "sql_lines": 42
         },
         "fct_price": {
           "materialized": "incremental",
@@ -189,6 +151,31 @@
           "path": "models/aemo/duckdb/marts/fct_price.sql",
           "sql_lines": 42
         },
+        "fct_scada": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "DUID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_scada.sql",
+          "sql_lines": 42
+        },
+        "fct_summary": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "date",
+            "time",
+            "DUID"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_summary.sql",
+          "sql_lines": 87
+        },
         "fct_scada_today": {
           "materialized": "incremental",
           "strategy": "merge",
@@ -200,6 +187,19 @@
           "merge_clauses": false,
           "path": "models/aemo/duckdb/marts/fct_scada_today.sql",
           "sql_lines": 38
+        },
+        "fct_price_today": {
+          "materialized": "incremental",
+          "strategy": "merge",
+          "unique_key": [
+            "file",
+            "REGIONID",
+            "SETTLEMENTDATE",
+            "INTERVENTION"
+          ],
+          "merge_clauses": false,
+          "path": "models/aemo/duckdb/marts/fct_price_today.sql",
+          "sql_lines": 39
         },
         "dim_duid": {
           "materialized": "incremental",
@@ -214,19 +214,19 @@
       },
       "error": "",
       "last_ok": {
-        "run_id": "46001949797",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/46001949797",
-        "finished": "2026-11-27T13:17:52Z"
+        "run_id": "46019365493",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/46019365493",
+        "finished": "2026-11-27T15:15:10Z"
       }
     },
     "polars_delta": {
       "target": "polars_delta",
       "status": "success",
-      "build_seconds": 432.269,
-      "peak_rss_mb": 10482,
-      "peak_spill_mb": 2271,
+      "build_seconds": 340.216,
+      "peak_rss_mb": 10650,
+      "peak_spill_mb": 1997,
       "process_limit": 360,
-      "files_behind": 1348,
+      "files_behind": 988,
       "models": 6,
       "models_ok": 6,
       "versions": {
@@ -239,29 +239,29 @@
       },
       "adapter": "dbt-polars 0.6.0",
       "model_seconds": {
-        "dim_duid": 9.16,
-        "fct_price": 6.732,
-        "fct_price_today": 2.371,
-        "fct_scada": 309.108,
-        "fct_scada_today": 12.729,
-        "fct_summary": 80.794
+        "dim_duid": 7.744,
+        "fct_price": 16.205,
+        "fct_price_today": 14.215,
+        "fct_scada": 213.331,
+        "fct_scada_today": 11.638,
+        "fct_summary": 64.435
       },
       "model_rows": {
-        "fct_price_today": 4860,
-        "fct_summary": 101641329,
-        "fct_scada": 258025889,
+        "fct_price_today": 4890,
+        "fct_summary": 116771732,
+        "fct_scada": 295324918,
         "fct_price": 4821605,
-        "fct_scada_today": 292579,
+        "fct_scada_today": 294054,
         "dim_duid": 691
       },
       "model_mw": {
-        "fct_summary": "11043824950.99908"
+        "fct_summary": "13116119229.32945"
       },
       "model_files": {
-        "fct_price_today": 972,
-        "fct_scada": 1840,
+        "fct_price_today": 978,
+        "fct_scada": 2200,
         "fct_price": 3188,
-        "fct_scada_today": 972
+        "fct_scada_today": 978
       },
       "model_config": {
         "csv_raw_archive_log": {
@@ -343,9 +343,9 @@
       },
       "error": "",
       "last_ok": {
-        "run_id": "46001949797",
-        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/46001949797",
-        "finished": "2026-11-27T13:28:16Z"
+        "run_id": "46019365493",
+        "run_url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/46019365493",
+        "finished": "2026-11-27T15:25:14Z"
       }
     },
     "duckdb_iceberg": {
