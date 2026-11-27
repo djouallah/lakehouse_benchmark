@@ -75,6 +75,8 @@ from bench.capability.engines.duckdb_iceberg import CATALOG, attach, connect
 from bench.capability.engines.duckdb_iceberg import version as duckdb_version
 from bench.config import ICEBERG_ENDPOINT, Config, azure_transport
 
+# What INSERT OVERWRITE and CREATE OR REPLACE TABLE ... AS leave in the table.
+NEW_ROWS = [(7, 70), (8, 80)]
 SEED = [(1, 10), (2, 20), (3, 30)]
 SEED_SELECT = "SELECT * FROM (VALUES (1::BIGINT, 10::BIGINT), (2, 20), (3, 30)) AS s(id, v)"
 
@@ -522,6 +524,20 @@ class DuckDBCapability:
         )
         return self._expect(table, [(7, 70), (8, 80)], "INSERT OVERWRITE")
 
+    def create_or_replace(self) -> str:
+        """CREATE OR REPLACE TABLE ... AS over an existing table: the same table (its uuid kept),
+        holding only the new rows. A drop and a fresh create is not a replace."""
+        table = self._fresh("replace")
+        uuid = self.iceberg(table).metadata.table_uuid
+        self.sql(
+            f"CREATE OR REPLACE TABLE {self.t(table)} AS "
+            "SELECT * FROM (VALUES (7::BIGINT, 70::BIGINT), (8, 80)) AS s(id, v)"
+        )
+        result = self._expect(table, NEW_ROWS, "CREATE OR REPLACE TABLE ... AS")
+        if self.iceberg(table).metadata.table_uuid != uuid:
+            raise Refused(f"{result}, but as a NEW table: dropped and re-created, not replaced")
+        return f"{result}; same table"
+
     # -- probes: schema ----------------------------------------------------------------------
 
     def add_column(self) -> str:
@@ -827,6 +843,7 @@ PROBES = [
     ("write", "MERGE, three actions: UPDATE + INSERT + BY SOURCE DELETE", "merge_three"),
     ("write", "TRUNCATE", "truncate"),
     ("write", "INSERT OVERWRITE, whole table", "insert_overwrite"),
+    ("write", "CREATE OR REPLACE TABLE ... AS", "create_or_replace"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),

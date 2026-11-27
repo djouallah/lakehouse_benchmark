@@ -76,6 +76,8 @@ from bench.capability.race import RaceProxy
 from bench.config import Config
 
 CATALOG = "onelake"
+# What INSERT OVERWRITE and CREATE OR REPLACE TABLE ... AS leave in the table.
+NEW_ROWS = [(7, 70), (8, 80)]
 SEED = [(1, 10), (2, 20), (3, 30)]
 # The merge-on-read rows Sail is asked; Spark writes both modes, copy-on-write by default.
 MOR = (
@@ -464,6 +466,17 @@ class SparkCapability:
         result = self._expect(table, [(7, 70), (8, 80)], "INSERT OVERWRITE")
         return f"{result}; {len(snapshots) - before} snapshot(s), operation {operation}"
 
+    def create_or_replace(self) -> str:
+        """CREATE OR REPLACE TABLE ... AS over an existing table: the same table (its uuid kept),
+        holding only the new rows. A drop and a fresh create is not a replace."""
+        table = self._fresh("replace")
+        uuid = self.iceberg(table).metadata.table_uuid
+        self.sql(f"CREATE OR REPLACE TABLE {self.t(table)} USING iceberg AS {_select(NEW_ROWS)}")
+        result = self._expect(table, NEW_ROWS, "CREATE OR REPLACE TABLE ... AS")
+        if self.iceberg(table).metadata.table_uuid != uuid:
+            raise Refused(f"{result}, but as a NEW table: dropped and re-created, not replaced")
+        return f"{result}; same table"
+
     # -- schema ------------------------------------------------------------------------------
 
     def add_column(self) -> str:
@@ -817,6 +830,7 @@ PROBES = [
     ("write", "MERGE ... WHEN MATCHED THEN DELETE, merge-on-read table", "merge_delete_mor"),
     ("write", "TRUNCATE TABLE", "truncate"),
     ("write", "INSERT OVERWRITE, whole table", "insert_overwrite"),
+    ("write", "CREATE OR REPLACE TABLE ... AS", "create_or_replace"),
     ("schema", "ALTER TABLE ADD COLUMN", "add_column"),
     ("schema", "ALTER TABLE DROP COLUMN", "drop_column"),
     ("schema", "ALTER TABLE RENAME COLUMN", "rename_column"),

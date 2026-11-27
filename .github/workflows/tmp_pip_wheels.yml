@@ -1,0 +1,35 @@
+name: tmp pip wheels
+
+# The laptop's PyPI mirror lags the real registry by ~10 days. This downloads the named packages'
+# wheels on a runner, for the laptop's Python (Windows, CPython 3.12), as an artifact:
+#   gh run download <id> -n wheels
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: Space-separated pip requirements, e.g. "duckdb==2.0.1 deltalake==1.7.0".
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - env:
+          PACKAGES: ${{ inputs.packages }}
+        run: |
+          # shellcheck disable=SC2086
+          pip download --no-deps --only-binary=:all: --platform win_amd64 --python-version 3.12 \
+            --implementation cp -d wheels $PACKAGES
+          ls -l wheels
+      - uses: actions/upload-artifact@v6
+        with:
+          name: wheels
+          path: wheels/*.whl
