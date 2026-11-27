@@ -175,7 +175,7 @@ def main() -> int:
             tbl.append(rows(SEED))
             tbl = catalog.load_table((NAMESPACE, name))
             ctx = {"current": tbl.metadata.current_snapshot_id}
-            body = java_replace(tbl.metadata.table_uuid, staged_snapshot(tbl))
+            body = java_replace(str(tbl.metadata.table_uuid), staged_snapshot(tbl))
             change(body, ctx)
             status, answer = rest.commit(name, copy.deepcopy(body))
             after = catalog.load_table((NAMESPACE, name))
