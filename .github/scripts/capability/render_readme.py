@@ -179,7 +179,7 @@ ROWS = [
     ("Expire snapshots", {e: ["expire_snapshots"] for e in ENGINES}),
     # A Parquet file in the table's data directory that no snapshot references
     # (harness.stage_orphan): gone from storage after, and the rows unchanged.
-    ("Remove orphan files", {e: ["remove_orphan_files"] for e in ENGINES}),
+    ("Remove orphan files (VACUUM)", {e: ["remove_orphan_files"] for e in ENGINES}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
     ("Create tag", {e: ["create_tag"] for e in FULL_SQL}),
     (
@@ -318,7 +318,7 @@ GROUPS = {
         "Rewrite manifests",
         "Add existing Parquet files",
         "Expire snapshots",
-        "Remove orphan files",
+        "Remove orphan files (VACUUM)",
     ],
 }
 # The site's engine keys, which are lakehouse_benchmark's.

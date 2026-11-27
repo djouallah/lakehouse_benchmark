@@ -82,7 +82,7 @@ def test_one_table_format_tab_with_iceberg_and_delta():
         "Rewrite manifests",
         "Add existing Parquet files",
         "Expire snapshots",
-        "Remove orphan files",
+        "Remove orphan files (VACUUM)",
     ]
 
 
