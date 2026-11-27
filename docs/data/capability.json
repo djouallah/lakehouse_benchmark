@@ -14,8 +14,8 @@
   },
   "pyspark_iceberg": {
    "version": "4.1.4 + iceberg Apache Iceberg 1.12.0 (commit 212aa894e919ff9fdf89160da4aadcbe6858ac01)",
-   "run": "45920209093",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+   "run": "45928710980",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45928710980",
    "date": "2026-11-27"
   },
   "trino_iceberg": {
@@ -1710,8 +1710,8 @@
      "n": "SQLInterfaceError: SQLInterfaceError: unknown procedure 'lake.system.remove_orphan_files' in CALL; supported: add_files, rewrite_data_files, rewrite_manifests In the SQL statement: CALL lake.system.remove_orphan_files(t…"
     },
     "pyspark_iceberg": {
-     "o": "no",
-     "n": "IllegalArgumentException: Cannot remove orphan files with an interval less than 24 hours. Executing this procedure with a short interval may corrupt the table if other operations are happening at the same time. If you a…"
+     "o": "skipped",
+     "n": "the unreferenced file in aged_orphans_spark is 0.5 h old; this engine removes only files older than 24 h, so it is asked by a run 24 h after the staging one"
     },
     "trino_iceberg": {
      "o": "supported"

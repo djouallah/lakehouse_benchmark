@@ -356,11 +356,11 @@
    "key": "remove_orphan_files",
    "group": "maintenance",
    "question": "CALL system.remove_orphan_files",
-   "outcome": "no",
-   "detail": "IllegalArgumentException: Cannot remove orphan files with an interval less than 24 hours. Executing this procedure with a short interval may corrupt the table if other operations are happening at the same time. If you are absolutely confident that no concurrent operations will be affected by removing orphan files with such a short interval, you can use the Action API to remove orphan files with an arbitrary interval."
+   "outcome": "skipped",
+   "detail": "the unreferenced file in aged_orphans_spark is 0.5 h old; this engine removes only files older than 24 h, so it is asked by a run 24 h after the staging one"
   }
  ],
- "run": "45920209093",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45920209093",
+ "run": "45928710980",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45928710980",
  "date": "2026-11-27"
 }
