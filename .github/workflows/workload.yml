@@ -1,9 +1,10 @@
 name: dbt workload
 
 # THE "MY WORKLOAD" TEST: the fabric-dbt-examples dbt project (workload/, see workload/SOURCE),
-# run by bench on its own engines and auth, Iceberg only.
+# run by bench on its own engines and auth: five legs on Iceberg, two on Delta.
 #
-#   land  ->  dbt-Iceberg (matrix: duckdb, polars, gluten, trino, sail; one at a time)  ->  grade
+#   land  ->  dbt (matrix: duckdb, polars, gluten, trino, sail on Iceberg;
+#                  duckrun, polars_delta on Delta; one at a time)  ->  grade
 #
 # ON A SCHEDULE, DAILY, NEVER RESET: new AEMO files land every run and each engine folds
 # process_limit of them into its own tables, which only grow. The Real workload tab shows how far
@@ -22,9 +23,9 @@ on:
   workflow_dispatch:
     inputs:
       engines:
-        description: Comma-separated dbt targets (duckdb, polars, gluten, trino, sail).
+        description: Comma-separated dbt targets (duckdb, polars, gluten, trino, sail, duckrun, polars_delta).
         type: string
-        default: duckdb,polars,gluten,trino,sail
+        default: duckdb,polars,gluten,trino,sail,duckrun,polars_delta
       process_limit:
         description: Files each fact model folds per run, newest first, the same for every engine. A backlog converges over runs.
         type: string
@@ -92,7 +93,7 @@ jobs:
       - id: plan
         run: |
           ENGINES="${{ inputs.engines }}"
-          [ -n "$ENGINES" ] || ENGINES=duckdb,polars,gluten,trino,sail
+          [ -n "$ENGINES" ] || ENGINES=duckdb,polars,gluten,trino,sail,duckrun,polars_delta
           ENGINES=$(printf '%s' "$ENGINES" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "engines=$ENGINES" >> "$GITHUB_OUTPUT"
@@ -129,7 +130,7 @@ jobs:
           RESET_TABLES: ${{ inputs.reset_tables }}
         run: python .github/scripts/workload_reset.py
 
-  dbt-Iceberg:
+  dbt:
     needs: [land, reset]
     # Runs after reset, or without it when reset was not asked for (skipped is fine, failed is not).
     if: ${{ !cancelled() && needs.land.result == 'success' && needs.reset.result != 'failure' }}
@@ -139,6 +140,8 @@ jobs:
       || matrix.engine == 'gluten' && '🚀 dbt-spark on Gluten/Velox'
       || matrix.engine == 'trino' && '🐰 dbt-trino'
       || matrix.engine == 'sail' && '⛵ dbt-spark on LakeSail'
+      || matrix.engine == 'duckrun' && '🦆 duckrun (Delta)'
+      || matrix.engine == 'polars_delta' && '🐻‍❄️ dbt-polars (Delta)'
       || matrix.engine }}
     runs-on: ubuntu-latest
     # The OneLake bearer is baked into the profile (DuckDB's ATTACH, pyiceberg's catalog) and
@@ -194,7 +197,7 @@ jobs:
       - name: Install ${{ matrix.engine }}
         run: |
           pip install -r "requirements/workload_${BENCH_ENGINE}.txt"
-          pip list --format=freeze | grep -Ei '^(dbt-|duckdb|polars|pyspark|pyiceberg)' || true
+          pip list --format=freeze | grep -Ei '^(dbt-|duckdb|duckrun|deltalake|polars|pyspark|pyiceberg)' || true
 
       # The profile's bearer comes from bench.auth (OIDC), but dbt-polars' TESTS read the tables
       # back through pyiceberg's ADLS FileIO with no credential of its own, which falls back to
@@ -232,6 +235,14 @@ jobs:
           echo "TMPDIR=/mnt/sail_spill" >> "$GITHUB_ENV"
           echo "SAIL_RUNTIME__TEMPORARY_FILES__MAX_SIZE=$((90 * 1024 ** 3))" >> "$GITHUB_ENV"
 
+      # delta-rs' MERGE spills through DataFusion to the OS temp dir, as Sail does, and /tmp has a
+      # quota (Sail's merge hit "Disk quota exceeded"): the Delta legs' temp files go to /mnt too.
+      - name: The Delta legs' temp dir on /mnt
+        if: matrix.engine == 'duckrun' || matrix.engine == 'polars_delta'
+        run: |
+          sudo mkdir -p /mnt/delta_spill && sudo chown "$USER" /mnt/delta_spill
+          echo "TMPDIR=/mnt/delta_spill" >> "$GITHUB_ENV"
+
       # The official image bench/trino.py pins, pulled before the build.
       - name: Pull the Trino image
         if: matrix.engine == 'trino'
@@ -265,7 +276,7 @@ jobs:
           if-no-files-found: warn
 
   grade:
-    needs: [land, dbt-Iceberg]
+    needs: [land, dbt]
     if: ${{ !cancelled() && needs.land.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -4,7 +4,8 @@
 reset=true, never on the schedule: after a reset every leg starts from empty over the same
 landing. It is not a
 full refresh and nothing passes --full-refresh: the runs after it are ordinary incremental runs,
-merges included. The landing zone (Files/dbt) is untouched.
+merges included. The landing zone (Files/dbt) is untouched. The Iceberg legs only: the Delta
+legs' tables (duckrun, polars_delta) are folders under Tables/, outside the catalog.
 
 RESET_TABLES (workload.yml's reset_tables), e.g. "duckdb.fct_summary": only those tables, as
 engine.table. A dropped model is rebuilt from the facts on its engine's next run (2026-10-23:
@@ -16,7 +17,8 @@ from __future__ import annotations
 import os
 
 from bench import auth, scrub
-from bench.workload.config import ENGINES, WorkloadConfig
+from bench.workload.config import ICEBERG_ENGINES as ENGINES
+from bench.workload.config import WorkloadConfig
 
 LAYERS = ("landing", "mart")
 

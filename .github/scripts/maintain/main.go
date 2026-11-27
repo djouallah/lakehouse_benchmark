@@ -57,9 +57,10 @@ const (
 )
 
 // dbt_<engine>_<layer>; dbt's own scratch relations (Spark's <model>__stage_<id>, Trino's
-// <model>__dbt_tmp_<id>) are left alone.
+// <model>__dbt_tmp_<id>) are left alone. The Iceberg legs only, by name: the Delta legs (duckrun,
+// polars_delta) write folders under Tables/ that the catalog may list but this job must not commit to.
 var (
-	namespaceRe = regexp.MustCompile(`^dbt_([a-z0-9]+)_(landing|mart)$`)
+	namespaceRe = regexp.MustCompile(`^dbt_(duckdb|polars|gluten|trino|sail)_(landing|mart)$`)
 	scratch     = []string{"__stage", "__dbt_tmp"}
 )
 

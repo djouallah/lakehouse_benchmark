@@ -1,0 +1,9 @@
+# The duckrun leg: duckrun's dbt adapter (type: duckrun), dbt-duckdb running the duckdb tree's
+# DuckDB SQL, delta-rs writing Delta under the lakehouse's Tables/. The PyPI release; its [dbt]
+# extra brings dbt-duckdb, and duckrun sets its own duckdb and deltalake floors, so neither is
+# pinned here.
+duckrun[dbt]>=0.6.1
+# bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
+azure-identity>=1.19
+# workload_run_engine.py's peak RSS sampler.
+psutil>=6

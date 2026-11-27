@@ -1,7 +1,7 @@
 """Run the dbt workload on ONE engine and write its part: `python workload_run_engine.py parts`.
 
 The engine is BENCH_ENGINE, a target in workload/profiles.yml: duckdb, polars, gluten, trino or
-sail.
+sail on Iceberg, duckrun or polars_delta on Delta.
 
     1. mint the OneLake bearer and hand it to the profile through the environment
     2. gluten only: start bench's Gluten/Velox SparkSession (the ETL's writing variant, so the
@@ -59,6 +59,16 @@ PACKAGES = {
     "gluten": ("dbt-core", "dbt-spark", "pyspark"),
     "trino": ("dbt-core", "dbt-trino", "trino"),
     "sail": ("dbt-core", "dbt-spark", "pysail", "pyspark-client"),
+    # duckrun is its own dbt adapter (type: duckrun), built on dbt-duckdb, writing through delta-rs.
+    "duckrun": ("dbt-core", "duckrun", "dbt-duckdb", "duckdb", "deltalake"),
+    "polars_delta": (
+        "dbt-core",
+        "dbt-polars",
+        "dbt-polars-catalog-fabric",
+        "dbt-polars-catalog-azure",
+        "polars",
+        "deltalake",
+    ),
 }
 
 # The Hive EXTERNAL tables the trino tree reads the landing zone through (workload/macros/
@@ -386,7 +396,7 @@ def main(parts: Path) -> int:
     os.environ["process_limit"] = str(part["process_limit"])  # noqa: SIM112
     os.environ.setdefault("DUCKDB_TEMP_DIR", "/tmp/duckdb_spill")
     os.makedirs(os.environ["DUCKDB_TEMP_DIR"], exist_ok=True)
-    if engine == "polars":
+    if engine in ("polars", "polars_delta"):
         # Polars SQL's read_csv()/read_parquet() take no credentials: OneLake only through this.
         os.environ["AZURE_STORAGE_TOKEN"] = token
 

@@ -72,8 +72,11 @@ def model_config(leg: dict) -> dict[str, dict]:
 
 
 def adapter(versions: dict[str, str]) -> str:
-    """The leg's dbt adapter and its version, e.g. "dbt-duckdb 1.10.1"."""
-    name = next((k for k in versions if k.startswith("dbt-") and k != "dbt-core"), "")
+    """The leg's dbt adapter and its version, e.g. "dbt-duckdb 1.10.1". duckrun is an adapter
+    without the dbt- prefix, listed before the dbt-duckdb it is built on."""
+    name = next(
+        (k for k in versions if k == "duckrun" or k.startswith("dbt-") and k != "dbt-core"), ""
+    )
     return f"{name} {versions[name]}".strip() if name else ""
 
 

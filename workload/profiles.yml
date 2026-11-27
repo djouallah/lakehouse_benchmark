@@ -65,6 +65,49 @@ aemo_electricity:
               use_fabric_endpoint: "true"
               bearer_token: "{{ env_var('ONELAKE_TOKEN') }}"
 
+    # dbt-polars on Delta: the polars tree, the same SQL, its tables written as Delta into the
+    # lakehouse (Tables/<schema>/<model>) by dbt-polars' Fabric catalog. Named `onelake` like the
+    # Iceberg leg's catalog, so the models' database is the same. The catalog takes its storage
+    # token from azure-identity's default chain (the runner's azure/login) and renews it itself.
+    polars_delta:
+      type: polars
+      database: onelake
+      schema: mart
+      threads: 1
+      catalogs:
+        - name: onelake
+          type: fabric
+          schema: mart
+          workspace: "{{ env_var('FABRIC_WORKSPACE_ID') }}"
+          lakehouse: "{{ env_var('FABRIC_LAKEHOUSE_ID') }}"
+          default_table_format: delta
+        - name: landing
+          type: azure
+          schema: landing
+          account_name: onelake
+          container: "{{ env_var('FILES_CONTAINER') }}"
+          prefix: "{{ env_var('FILES_PREFIX') }}"
+          credentials:
+            storage_options:
+              use_fabric_endpoint: "true"
+              bearer_token: "{{ env_var('ONELAKE_TOKEN') }}"
+
+    # duckrun: the duckdb tree, the same DuckDB SQL, written as Delta by delta-rs to
+    # <Tables>/<schema>/<model>. No storage_options: duckrun acquires the OneLake token itself
+    # (GitHub OIDC on the runner), renews it near expiry, and creates the DuckDB Azure secret the
+    # models' reads of Files/ use. Settings as the duckdb leg: one thread, a fixed memory cap, the
+    # spill on /mnt.
+    duckrun:
+      type: duckrun
+      schema: mart
+      root_path: "{{ env_var('ONELAKE_TABLES_PATH') }}"
+      threads: 1
+      settings:
+        preserve_insertion_order: false
+      config_options:
+        temp_directory: "{{ env_var('DUCKDB_TEMP_DIR', '/tmp/duckdb_spill') }}"
+        memory_limit: "{{ env_var('DUCKDB_MEMORY_LIMIT', '9GB') }}"
+
     # The SparkSession is built BEFORE dbt starts (workload_run_engine.py: bench's Gluten session,
     # Iceberg REST catalog `onelake` as spark.sql.defaultCatalog); `method: session` picks it up
     # with getOrCreate().

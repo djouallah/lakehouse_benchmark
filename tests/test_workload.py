@@ -14,8 +14,10 @@ from bench.workload.config import BENCH_ENGINE, ENGINES
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "workload"
-# The model tree each engine runs: gluten and sail share the Spark SQL tree.
-TREE = {e: {"gluten": "spark", "sail": "spark"}.get(e, e) for e in ENGINES}
+# The model tree each engine runs: gluten and sail share the Spark SQL tree, and the Delta legs
+# run their engine's: duckrun the duckdb tree, polars_delta the polars tree.
+SHARED = {"gluten": "spark", "sail": "spark", "duckrun": "duckdb", "polars_delta": "polars"}
+TREE = {e: SHARED.get(e, e) for e in ENGINES}
 TREES = sorted(set(TREE.values()))
 
 
@@ -387,3 +389,18 @@ def test_the_builds_do_not_test_and_maintenance_publishes_the_tests():
     assert (got["tests"], got["tests_ok"]) == (2, 1)
     assert got["not_passed"] == {"assert_fct_scada_grain": "fail"}
     assert maintain.test_results(None) == {}
+
+
+def test_the_catalog_jobs_skip_the_delta_legs():
+    """Reset, table maintenance and its daily dbt tests go through the Iceberg REST catalog; the
+    Delta legs' tables are folders under Tables/ that those jobs must not touch."""
+    from bench.workload.config import DELTA_ENGINES, ICEBERG_ENGINES
+
+    assert set(ICEBERG_ENGINES) | set(DELTA_ENGINES) == set(ENGINES)
+    assert not set(ICEBERG_ENGINES) & set(DELTA_ENGINES)
+    go = (ROOT / ".github" / "scripts" / "maintain" / "main.go").read_text(encoding="utf-8")
+    legs = re.search(r"\^dbt_\(([a-z_|]+)\)_\(landing\|mart\)\$", go).group(1).split("|")
+    assert sorted(legs) == sorted(ICEBERG_ENGINES)
+    for script in ("workload_test.py", "workload_reset.py"):
+        text = (ROOT / ".github" / "scripts" / script).read_text(encoding="utf-8")
+        assert "ICEBERG_ENGINES" in text, script

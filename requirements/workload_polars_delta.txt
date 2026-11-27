@@ -1,0 +1,12 @@
+# The polars_delta leg: the polars leg's stack, Delta instead of Iceberg. dbt-polars' Fabric
+# catalog writes Delta into the lakehouse (sink_delta for a full build, a delta-rs MERGE for an
+# incremental); the Azure storage catalog reads the landing files as sources, as on the polars
+# leg. 0.6.0 (2026-11-24), the latest release; deltalake comes with dbt-polars' polars[deltalake].
+dbt-polars[fabric,azure]==0.6.0
+dbt-polars-catalog-fabric==0.6.0
+dbt-polars-catalog-azure==0.6.0
+polars==2.2.0
+# bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
+azure-identity>=1.19
+# workload_run_engine.py's peak RSS sampler.
+psutil>=6

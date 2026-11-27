@@ -13,8 +13,15 @@ from dataclasses import dataclass
 from bench.config import ICEBERG_ENDPOINT, Config
 
 # The dbt targets, in run order. Same names as workload/profiles.yml and the model trees under
-# workload/models/aemo/, except gluten and sail, which share the `spark` tree.
-ENGINES = ("duckdb", "polars", "gluten", "trino", "sail")
+# workload/models/aemo/, except the legs that share a tree: gluten and sail the `spark` one,
+# duckrun the `duckdb` one (DuckDB SQL, Delta out), polars_delta the `polars` one.
+ENGINES = ("duckdb", "polars", "gluten", "trino", "sail", "duckrun", "polars_delta")
+
+# The legs that write Delta, not Iceberg: their tables are folders under the lakehouse's Tables/,
+# outside the Iceberg REST catalog, so the catalog-side jobs (reset, table maintenance and its
+# daily dbt tests) leave them out. duckrun compacts and vacuums on its own writes.
+DELTA_ENGINES = ("duckrun", "polars_delta")
+ICEBERG_ENGINES = tuple(e for e in ENGINES if e not in DELTA_ENGINES)
 
 # bench's engine id for each target, so labels and colours match the rest of the page once it is
 # shown there.
@@ -24,6 +31,8 @@ BENCH_ENGINE = {
     "gluten": "pyspark_gluten_iceberg",
     "trino": "trino_iceberg",
     "sail": "lakesail_iceberg",
+    "duckrun": "duckrun",
+    "polars_delta": "polars_delta",
 }
 
 
@@ -53,6 +62,11 @@ class WorkloadConfig(Config):
         return f"{self.base_path}/{FILES_DIR}"
 
     @property
+    def tables_abfss(self) -> str:
+        """The lakehouse's Tables/, where the Delta legs write <schema>/<model>."""
+        return f"{self.base_path}/Tables"
+
+    @property
     def estimated_gib(self) -> float:
         """What an engine sizes its memory against (bench's Sail engine, the sail leg: zstd spill
         files past half its 10 GiB pool). Not an SF: the workload's tables only grow -- fct_scada
@@ -74,6 +88,9 @@ class WorkloadConfig(Config):
             # dbt-polars' storage catalog over the same root (profiles.yml `landing`).
             "FILES_CONTAINER": self.workspace_id,
             "FILES_PREFIX": self.files_relative,
+            # duckrun's root_path. polars_delta's Fabric catalog takes the workspace and lakehouse
+            # ids, FABRIC_WORKSPACE_ID / FABRIC_LAKEHOUSE_ID, from the job's environment.
+            "ONELAKE_TABLES_PATH": self.tables_abfss,
         }
 
     @classmethod

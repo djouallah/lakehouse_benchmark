@@ -16,6 +16,7 @@
   --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
   --pandas_iceberg: #932601; --databend_iceberg: #99a7f9;
   --pyiceberg: #6b7280; --delta_rs: #57534e; --duckrun: #0f766e; --iceberg_go: #0a8fb3;
+  --polars_delta: #0b6b4f;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -26,6 +27,7 @@
     --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
     --pandas_iceberg: #8d4e10; --databend_iceberg: #4f58b1;
     --pyiceberg: #9ca3af; --delta_rs: #a8a29e; --duckrun: #2dd4bf; --iceberg_go: #38bdf8;
+    --polars_delta: #5fd3a7;
   }
 }
 * { box-sizing: border-box; }
@@ -987,6 +989,7 @@ const DBT_ADAPTER_URL = {
   "dbt-duckdb": "https://github.com/duckdb/dbt-duckdb",
   "dbt-polars": "https://github.com/datamindedbe/incubator-dbt-polars",
   "dbt-polars-catalog-azure": "https://github.com/datamindedbe/incubator-dbt-polars",
+  "dbt-polars-catalog-fabric": "https://github.com/datamindedbe/incubator-dbt-polars",
   "dbt-spark": "https://github.com/dbt-labs/dbt-adapters/tree/main/dbt-spark",
   "dbt-trino": "https://github.com/starburstdata/dbt-trino",
   "duckrun": "https://github.com/djouallah/duckrun",  // an adapter without the dbt- prefix, on dbt-duckdb
@@ -1279,10 +1282,12 @@ function dagLayout(dag) {
   return { W, H, NW, NH, pos };
 }
 
-// The Real workload tab: engines by maturity, not speed. The Spark leg runs on Gluten/Velox, so it is named
-// that, not "Spark", which would read as vanilla Spark.
-const WORKLOAD_ORDER = [GLUTEN, "trino_iceberg", "duckdb_iceberg", "polars_iceberg", "lakesail_iceberg"];
-const wlName = e => LABEL[e] ?? e;
+// The Real workload tab: engines by maturity, not speed, the Delta legs last. The Spark leg runs on Gluten/Velox,
+// so it is named that, not "Spark", which would read as vanilla Spark. The Delta legs say so in their name: every
+// other leg writes Iceberg.
+const WORKLOAD_ORDER = [GLUTEN, "trino_iceberg", "duckdb_iceberg", "polars_iceberg", "lakesail_iceberg", "duckrun", "polars_delta"];
+const WL_NAME = { duckrun: "duckrun (Delta)", polars_delta: "Polars (Delta)" };
+const wlName = e => WL_NAME[e] ?? LABEL[e] ?? e;
 
 function renderRealWorkload() {
   const sec = $(REAL_WORKLOAD.id), w = data.workload;
@@ -1443,7 +1448,7 @@ function openModel(w, runs, n, at) {
       <p class="d">Landed: ${LANDED.gb} GB of AEMO CSV files, measured ${LANDED.date} (<a href="${LANDED.run}">run</a>), not live.</p>
       <p class="d">One dbt project, <a href="${WORKLOAD_CODE}">in this repo</a>: AEMO CSV files in OneLake,
         ${Object.values(w.dag).filter(d => d.materialized !== "source").length} models, incremental with <code>MERGE</code>, ${Math.max(0, ...Object.values(data.maintenance?.tests?.legs ?? {}).map(t => t.tests ?? 0)) || ""} tests once a day,
-        Iceberg tables out. Once a day, never reset: each engine folds the next batch into its own tables.
+        Iceberg tables out, Delta on the duckrun and Polars (Delta) legs. Once a day, never reset: each engine folds the next batch into its own tables.
         <a href="${w.run_url}">Run ${w.run_id}</a>, ${(w.finished || "").slice(0, 10)}.</p>`
       : `<table><thead><tr><th>Engine</th><th>Builds it by</th><th class="n">Rows</th>${hasMw ? `<th class="n">SUM(mw)</th>` : ""}</tr></thead>
     <tbody>${lines}</tbody></table>`}${diffs}`;

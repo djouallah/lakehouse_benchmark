@@ -22,7 +22,7 @@ from pathlib import Path
 
 from bench import auth, scrub
 from bench.report import leak_check
-from bench.workload.config import BENCH_ENGINE, ENGINES, WorkloadConfig
+from bench.workload.config import BENCH_ENGINE, ICEBERG_ENGINES, WorkloadConfig
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workload_run_engine import PROJECT, Dbt, PeakRss, node_timings, versions  # noqa: E402
@@ -44,7 +44,9 @@ def main(out: Path) -> int:
     dbt = Dbt("duckdb")
     failed = False
     try:
-        for leg in ENGINES:
+        # The Iceberg legs: the duckdb target reads them through the REST catalog. The Delta legs'
+        # tables are outside it.
+        for leg in ICEBERG_ENGINES:
             # A fresh bearer per leg: the profile bakes it into DuckDB's ATTACH at connect.
             os.environ.update(cfg.dbt_env(auth.onelake_token(fresh=True)))
             os.environ["WORKLOAD_LEG"] = leg
