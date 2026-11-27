@@ -379,9 +379,30 @@
    "question": "a Spark table with type widening (INT widened to BIGINT)",
    "outcome": "no",
    "detail": "DeltaError: DeltaError: External error: Transaction failed: Unsupported table features required: [TypeWidening]"
+  },
+  {
+   "key": "write_spark_deletion_vectors",
+   "group": "write",
+   "question": "INSERT/UPDATE/DELETE/MERGE into a Spark table with deletion vectors",
+   "outcome": "supported",
+   "detail": "INSERT, UPDATE, DELETE and MERGE into a copy of Spark's table: DuckDB reads all 20 rows right; table features ['appendOnly', 'deletionVectors', 'invariants']"
+  },
+  {
+   "key": "write_spark_column_mapping",
+   "group": "write",
+   "question": "INSERT/UPDATE/DELETE/MERGE into a Spark table with column mapping",
+   "outcome": "supported",
+   "detail": "INSERT, UPDATE, DELETE and MERGE into a copy of Spark's table: DuckDB reads all 21 rows right; table features ['columnMapping']"
+  },
+  {
+   "key": "write_spark_change_data_feed",
+   "group": "write",
+   "question": "INSERT/UPDATE/DELETE/MERGE into a Spark table with change data feed",
+   "outcome": "supported",
+   "detail": "INSERT, UPDATE, DELETE and MERGE into a copy of Spark's table: DuckDB reads all 21 rows right; table features ['changeDataFeed']"
   }
  ],
- "run": "45112202866",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45112202866",
- "date": "2026-11-23"
+ "run": "45936807343",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+ "date": "2026-11-27"
 }
