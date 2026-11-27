@@ -2,14 +2,12 @@
 # catalog writes Delta into the lakehouse (sink_delta for a full build, a delta-rs MERGE for an
 # incremental); the Azure storage catalog reads the landing files as sources, as on the polars
 # leg. deltalake comes with dbt-polars' polars[deltalake].
-#   * since 2026-11-27 a fork build (0.6.0 + dbt-polars#68): a merge whose source keys are not in
-#     the table appends the source, pinned to the version it probed (duckrun's insert route);
-#     otherwise delta-rs merges, the source streamed, with spill caps (duckrun 0.5's defaults).
-#     delta-rs' merge alone failed fct_scada at 100 files: "Resources exhausted ... HashJoinInput"
-#     with the caps (45955113227), the runner killed without them (45951929663)
-dbt-polars[fabric,azure] @ git+https://github.com/djouallah/dbt-polars@b7cc7db378efc13dd6e8a6c16e285df39716aece
-dbt-polars-catalog-fabric @ git+https://github.com/djouallah/dbt-polars@b7cc7db378efc13dd6e8a6c16e285df39716aece#subdirectory=catalogs/dbt-polars-catalog-fabric
-dbt-polars-catalog-azure @ git+https://github.com/djouallah/dbt-polars@b7cc7db378efc13dd6e8a6c16e285df39716aece#subdirectory=catalogs/dbt-polars-catalog-azure
+#   * since 2026-11-27 a fork build (0.6.0 + dbt-polars#68): a merge whose keys are all new is an
+#     append pinned to the version it checked; delta-rs' merge ran fct_scada out of memory at 100
+#     files (45951929663, 45955113227)
+dbt-polars[fabric,azure] @ git+https://github.com/djouallah/dbt-polars@d907c5f51eb383144c8b071ae00981f7d4f33459
+dbt-polars-catalog-fabric @ git+https://github.com/djouallah/dbt-polars@d907c5f51eb383144c8b071ae00981f7d4f33459#subdirectory=catalogs/dbt-polars-catalog-fabric
+dbt-polars-catalog-azure @ git+https://github.com/djouallah/dbt-polars@d907c5f51eb383144c8b071ae00981f7d4f33459#subdirectory=catalogs/dbt-polars-catalog-azure
 polars==2.2.0
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
 azure-identity>=1.19
