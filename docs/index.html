@@ -660,16 +660,16 @@ const DBT = { id: "dbt", title: "dbt adapters" };  // the adapters the Real work
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
 const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, DBT, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
-// a lake table works and how an engine does less work, what it supports; then writes, simple (CSVs into one table)
-// and real (the dbt workload), and the complex reads last. Bug reports and About are header links.
+// a lake table works and how an engine does less work, what it supports; then the complex reads, the simple write
+// (CSVs into one table), the dbt adapters and the real write (the dbt workload). Bug reports and About are header links.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] },  // the state is in the catalog; skip files, then a good join order
   { id: "features", title: "Table format support", subs: [CAPABILITY, DELTA] },  // one grid per format, same groups
+  { id: "read", title: "Complex read", subs: [SUITES[1]] },  // TPC-DS-like
   { id: "write", title: "Simple write", subs: [SUITES[0]] },  // CSVs into one Iceberg table
-  { id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },
   { id: "dbt", title: "dbt adapters", subs: [DBT] },  // the adapters behind the Real workload
-  { id: "read", title: "Complex read", subs: [SUITES[1]] },  // TPC-DS-like, last
+  { id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },  // last
   { id: "about", title: "About", subs: [ABOUT], bar: false },  // a header link, not a tab
   { id: "bugs", title: "Bug reports", subs: [REPORTS], bar: false },  // a header link, next to About
 ];
