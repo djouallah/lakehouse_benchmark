@@ -52,16 +52,19 @@ from harness import (
     evolution_check,
     evolve_spec,
     iceberg_schema,
+    orphan_check,
     partition_result,
     promotion_check,
     promotion_schema,
     read_without_files,
     remove_data_files,
     rows,
+    stage_orphan,
     stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
+    utc_now,
     verdict,
     wanted,
     write_stats_files,
@@ -510,6 +513,30 @@ class PolarsCapability:
         self.sql(f"CALL {CATALOG}.system.add_files('{self.ns}.{table}', 'parquet.`{folder}`')")
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
+    def expire_snapshots(self) -> str:
+        table = self._fresh("expire")
+        self.iceberg(table).append(rows([(4, 40)]))
+        self.iceberg(table).append(rows([(5, 50)]))
+        before = len(self._snapshots(table))
+        self.sql(
+            f"CALL {CATALOG}.system.expire_snapshots(table => '{self.ns}.{table}', "
+            f"older_than => TIMESTAMP '{utc_now()}', retain_last => 1)"
+        )
+        after = len(self._snapshots(table))
+        if after >= before:
+            raise NoOp(f"returned success and history went {before} -> {after}")
+        return f"history {before} -> {after} snapshot(s)"
+
+    def remove_orphan_files(self) -> str:
+        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
+        table = self._fresh("orphans")
+        path = stage_orphan(self.iceberg(table))
+        self.sql(
+            f"CALL {CATALOG}.system.remove_orphan_files(table => '{self.ns}.{table}', "
+            f"older_than => TIMESTAMP '{utc_now()}')"
+        )
+        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.iceberg(table).append(rows([(4, 40)]))
@@ -661,6 +688,8 @@ PROBES = [
     ("maintenance", "CALL system.rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "CALL system.rewrite_manifests", "rewrite_manifests"),
     ("maintenance", "CALL system.add_files", "add_files"),
+    ("maintenance", "CALL system.expire_snapshots", "expire_snapshots"),
+    ("maintenance", "CALL system.remove_orphan_files", "remove_orphan_files"),
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),

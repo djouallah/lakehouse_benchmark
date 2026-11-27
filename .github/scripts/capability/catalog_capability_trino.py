@@ -10,7 +10,8 @@ settings the probes need and the benchmark's catalog does not carry:
   * `iceberg.rest-catalog.server-assigned-table-location-enabled` (Trino 484, trinodb/trino#30438):
     Trino sends no location and the catalog assigns it, so a CREATE TABLE or CTAS is not staged.
     Without it every create is staged, and the catalog refuses the commit that finishes it.
-  * `iceberg.expire-snapshots.min-retention = 0s`, so expire_snapshots may expire anything.
+  * `iceberg.expire-snapshots.min-retention = 0s`, so expire_snapshots may expire anything, and
+    `iceberg.remove-orphan-files.min-retention = 0s`, so remove_orphan_files takes a new file.
 
 No file cache, so a probe that deletes data files from storage is never answered from local disk.
 Every session writes with extended statistics off: Trino's default puts Puffin statistics into
@@ -58,11 +59,13 @@ from harness import (
     evolution_check,
     evolve_spec,
     iceberg_schema,
+    orphan_check,
     partition_result,
     promotion_check,
     read_without_files,
     remove_data_files,
     rows,
+    stage_orphan,
     stage_parquet,
     transform_case,
     truncate_kind,
@@ -304,6 +307,7 @@ class TrinoCapability:
                 "iceberg.rest-catalog.case-insensitive-name-matching": "true",
                 "iceberg.rest-catalog.server-assigned-table-location-enabled": "true",
                 "iceberg.expire-snapshots.min-retention": "0s",
+                "iceberg.remove-orphan-files.min-retention": "0s",
                 # add_files is off by default ("add_files procedure is disabled").
                 "iceberg.add-files-procedure.enabled": "true",
                 # extra_properties takes only the keys listed here.
@@ -650,6 +654,15 @@ class TrinoCapability:
         )
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
+    def remove_orphan_files(self) -> str:
+        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
+        table = self._fresh("orphans")
+        path = stage_orphan(self.iceberg(table))
+        self.sql(
+            f"ALTER TABLE {self.t(table)} EXECUTE remove_orphan_files(retention_threshold => '0s')"
+        )
+        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
@@ -786,6 +799,7 @@ PROBES = [
     ("maintenance", "EXECUTE optimize (compaction)", "rewrite_data_files"),
     ("maintenance", "EXECUTE optimize_manifests", "rewrite_manifests"),
     ("maintenance", "EXECUTE add_files", "add_files"),
+    ("maintenance", "EXECUTE remove_orphan_files", "remove_orphan_files"),
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),

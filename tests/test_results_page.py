@@ -77,7 +77,13 @@ def test_one_table_format_tab_with_iceberg_and_delta():
     cap_path = Path(__file__).parent.parent / "docs" / "data" / "capability.json"
     cap = json.loads(cap_path.read_text(encoding="utf-8"))
     maintenance = [r["label"] for r in cap["rows"] if r["group"] == "Maintenance"]
-    assert maintenance == ["Compaction", "Rewrite manifests", "Add existing Parquet files"]
+    assert maintenance == [
+        "Compaction",
+        "Rewrite manifests",
+        "Add existing Parquet files",
+        "Expire snapshots",
+        "Remove orphan files",
+    ]
 
 
 def test_both_formats_share_their_groups_and_basic_is_the_mvp():
@@ -124,11 +130,30 @@ def test_file_pruning_and_query_plans_are_under_lakehouse():
     assert 'id: "work"' not in rows("GROUPS")
 
 
-def test_simple_write_real_workload_write_then_complex_read_are_the_last_top_tabs():
+def test_simple_write_real_workload_write_dbt_adapters_then_complex_read_are_the_last_top_tabs():
     bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
-    assert bar[-3].startswith('{ id: "write", title: "Simple write", subs: [SUITES[0]] },')
-    assert bar[-2] == '{ id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },'
+    assert bar[-4].startswith('{ id: "write", title: "Simple write", subs: [SUITES[0]] },')
+    assert bar[-3] == '{ id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },'
+    assert bar[-2].startswith('{ id: "dbt", title: "dbt adapters", subs: [DBT] },')
     assert bar[-1].startswith('{ id: "read", title: "Complex read", subs: [SUITES[1]] },')
+
+
+def test_every_dbt_adapter_a_workload_leg_runs_has_a_link():
+    import json
+    import re
+
+    data = Path(__file__).parent.parent / "docs" / "data" / "workload.json"
+    legs = json.loads(data.read_text(encoding="utf-8"))["legs"]
+    used = {
+        p
+        for leg in legs.values()
+        for p in leg["versions"]
+        if p == "duckrun" or (p.startswith("dbt-") and p != "dbt-core")
+    }
+    block = PAGE[PAGE.index("const DBT_ADAPTER_URL = {") :]
+    linked = set(re.findall(r'"((?:dbt-|duckrun)[\w-]*)":', block[: block.index("};")]))
+    assert used and used <= linked, used - linked
+    assert '<section class="cap rows" id="dbt" hidden></section>' in PAGE
 
 
 def test_bug_reports_is_a_header_link_next_to_about():

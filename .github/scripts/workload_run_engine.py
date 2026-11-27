@@ -55,7 +55,7 @@ PROJECT = REPO / "workload"
 # What the part records as the stack, per leg: the adapter and the engine under it.
 PACKAGES = {
     "duckdb": ("dbt-core", "dbt-duckdb", "duckdb"),
-    "polars": ("dbt-core", "dbt-polars", "polars", "pyiceberg"),
+    "polars": ("dbt-core", "dbt-polars", "dbt-polars-catalog-azure", "polars", "pyiceberg"),
     "gluten": ("dbt-core", "dbt-spark", "pyspark"),
     "trino": ("dbt-core", "dbt-trino", "trino"),
     "sail": ("dbt-core", "dbt-spark", "pysail", "pyspark-client"),

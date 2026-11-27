@@ -49,11 +49,13 @@ from harness import (
     evolution_check,
     evolve_spec,
     iceberg_schema,
+    orphan_check,
     partition_result,
     promotion_check,
     read_without_files,
     remove_data_files,
     rows,
+    stage_orphan,
     stage_parquet,
     transform_case,
     truncate_kind,
@@ -591,6 +593,13 @@ class DatabendCapability:
         )
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
+    def remove_orphan_files(self) -> str:
+        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
+        table = self._fresh("orphans")
+        path = stage_orphan(self.iceberg(table))
+        self.sql(f"VACUUM TABLE {self.t2(table)}")
+        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
@@ -733,6 +742,7 @@ PROBES = [
     ("maintenance", "OPTIMIZE TABLE COMPACT (compaction)", "rewrite_data_files"),
     ("maintenance", "OPTIMIZE TABLE COMPACT SEGMENT (rewrite manifests)", "rewrite_manifests"),
     ("maintenance", "add files (Spark's CALL; no statement)", "add_files"),
+    ("maintenance", "VACUUM TABLE (remove orphan files)", "remove_orphan_files"),
     ("catalog", "CREATE DATABASE (namespace)", "namespace_create"),
     ("catalog", "DROP DATABASE (namespace)", "namespace_drop"),
     ("catalog", "CREATE DATABASE IF NOT EXISTS, existing namespace", "namespace_existing"),

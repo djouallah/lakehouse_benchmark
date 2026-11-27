@@ -1512,6 +1512,79 @@
      "n": "OperationalError: (1105, \"SyntaxException. Code: 1005, Text = error: \\n --> SQL:1:12\\n /\\n1 / CALL system.add_files(table => '_bench_capability.db_44680562433_1_addfiles', source_table => 'parquet.`abfss://1c52481c-0523…"
     }
    }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Expire snapshots",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "no",
+     "n": "IllegalArgumentException: invalid argument: Procedure arguments must be foldable constants: Internal error: invoke should not be called on a simplified timestamp_now() function. This issue was likely caused by a bug in …"
+    },
+    "polars_iceberg": {
+     "o": "skipped"
+    },
+    "pyspark_iceberg": {
+     "o": "no",
+     "n": "Py4JJavaError: An error occurred while calling o149.sql. : org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request at org.apache.iceberg.rest.ErrorHandlers$DefaultErrorHandler.accept(Erro…"
+    },
+    "trino_iceberg": {
+     "o": "no",
+     "n": "org.apache.iceberg.exceptions.BadRequestException: Malformed request: Malformed request"
+    },
+    "pyiceberg": {
+     "o": "skipped"
+    },
+    "starrocks_iceberg": {
+     "o": "no",
+     "n": "ProgrammingError: (1064, 'Malformed request: Malformed request')"
+    },
+    "duckdb_iceberg": {
+     "o": "no-op",
+     "n": "returned success and history is still 3 snapshot(s)"
+    },
+    "chdb_iceberg": {
+     "o": "no",
+     "n": "400 Malformed request"
+    },
+    "databend_iceberg": {
+     "o": "no",
+     "n": "OperationalError: (1105, 'StorageOther. Code: 4000, Text = Invalid table engine, only fuse table is supported.')"
+    }
+   }
+  },
+  {
+   "group": "Maintenance",
+   "label": "Remove orphan files",
+   "cells": {
+    "lakesail_iceberg": {
+     "o": "skipped"
+    },
+    "polars_iceberg": {
+     "o": "skipped"
+    },
+    "pyspark_iceberg": {
+     "o": "skipped"
+    },
+    "trino_iceberg": {
+     "o": "skipped"
+    },
+    "pyiceberg": {
+     "o": "skipped"
+    },
+    "starrocks_iceberg": {
+     "o": "skipped"
+    },
+    "duckdb_iceberg": {
+     "o": "skipped"
+    },
+    "chdb_iceberg": {
+     "o": "skipped"
+    },
+    "databend_iceberg": {
+     "o": "skipped"
+    }
+   }
   }
  ]
 }

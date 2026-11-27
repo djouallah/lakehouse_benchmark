@@ -5,7 +5,7 @@ name: iceberg support
 #   plan  ->  ask (one job per client, one at a time)  ->  publish (only when asked)
 #
 # Each client's probe script creates its own tables under _bench_capability, sends one operation
-# per probe through the engine (pyiceberg: one call of its Python API), and checks the effect through pyiceberg. The concurrency rows put
+# per probe through the engine (pyiceberg, iceberg-go: one call of their API), and checks the effect through pyiceberg. The concurrency rows put
 # a second writer's commit between the engine's read and its commit (bench/capability/race.py).
 #
 # `publish` is the SINGLE WRITER of results/capability/ and docs/data/capability.json.
@@ -20,8 +20,8 @@ on:
         description: Which clients to ask.
         type: choice
         options:
-          - spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,duckdb_isolation
-          - spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg
+          - spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,iceberg_go,duckdb_isolation
+          - spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,iceberg_go
           - spark
           - trino
           - polars
@@ -31,8 +31,9 @@ on:
           - databend
           - starrocks
           - pyiceberg
+          - iceberg_go
           - duckdb_isolation
-        default: spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,duckdb_isolation
+        default: spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,iceberg_go,duckdb_isolation
       keep:
         description: Leave the probe tables behind, to inspect them in Fabric.
         type: boolean
@@ -62,7 +63,7 @@ jobs:
     steps:
       - id: plan
         run: |
-          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,duckdb_isolation' }}" \
+          CLIENTS=$(printf '%s' "${{ inputs.clients || 'spark,trino,polars,duckdb,sail,chdb,databend,starrocks,pyiceberg,iceberg_go,duckdb_isolation' }}" \
             | jq -Rc 'split(",") | map(sub("^\\s+";"") | sub("\\s+$";"")) | map(select(length > 0))')
           echo "clients=$CLIENTS" >> "$GITHUB_OUTPUT"
           echo "clients: $CLIENTS"
@@ -79,6 +80,7 @@ jobs:
       || matrix.client == 'databend' && 'Databend'
       || matrix.client == 'starrocks' && 'StarRocks'
       || matrix.client == 'pyiceberg' && 'pyiceberg (API)'
+      || matrix.client == 'iceberg_go' && 'iceberg-go (API)'
       || matrix.client == 'duckdb_isolation' && 'DuckDB isolation and transactions'
       || matrix.client }}
     runs-on: ubuntu-latest
@@ -138,6 +140,20 @@ jobs:
             ~/.ivy2.5.2
             ~/.m2/repository
           key: ivy-spark41-iceberg112-azure-v1
+
+      # iceberg-go is a Go program, one op per run (catalog_capability_iceberg_go.py), on the
+      # iceberg-go table maintenance pins.
+      - uses: actions/setup-go@v6
+        if: matrix.client == 'iceberg_go'
+        with:
+          go-version-file: .github/scripts/capability/iceberg_go/go.mod
+          cache-dependency-path: .github/scripts/capability/iceberg_go/go.mod
+      - name: Build the iceberg-go probe
+        if: matrix.client == 'iceberg_go'
+        working-directory: .github/scripts/capability/iceberg_go
+        run: |
+          go mod tidy && go build -o "$RUNNER_TEMP/iceberg-go-probe" .
+          echo "IGO_PROBE=$RUNNER_TEMP/iceberg-go-probe" >> "$GITHUB_ENV"
 
       # Databend is a container, the stock nightly image (bench/databend.py).
       - name: Pull the Databend image

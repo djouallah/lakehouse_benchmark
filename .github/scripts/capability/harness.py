@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import UTC
 
 from bench import scrub
 
@@ -561,6 +562,37 @@ def stage_parquet(tbl) -> str:
     with tbl.io.new_output(f"{folder}/part-0.parquet").create(overwrite=True) as out:
         pq.write_table(rows(ADD_FILES_ROWS), out)
     return folder
+
+
+def stage_orphan(tbl) -> str:
+    """One Parquet file in the table's data directory that no snapshot or metadata file
+    references, what remove orphan files is for (a writer that died before its commit leaves
+    these). Returns its path; the probe waits a moment so "older than now" includes it."""
+    import time
+    import uuid
+
+    import pyarrow.parquet as pq
+
+    path = f"{tbl.location().rstrip('/')}/data/orphan-{uuid.uuid4().hex[:8]}.parquet"
+    with tbl.io.new_output(path).create(overwrite=True) as out:
+        pq.write_table(rows(ADD_FILES_ROWS), out)
+    time.sleep(3)
+    return path
+
+
+def utc_now() -> str:
+    """Now, UTC, as a SQL timestamp literal's text: "older than now" for the clean-up probes."""
+    from datetime import datetime
+
+    return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def orphan_check(tbl, path: str) -> str:
+    """After the engine's remove orphan files: the staged file is gone from storage (read from
+    storage, not from what the statement returned). The caller then checks the rows."""
+    if tbl.io.new_input(path).exists():
+        raise NoOp("returned success and the unreferenced file is still in storage")
+    return "the unreferenced file is gone from storage"
 
 
 STATS_FILES = [[(i, i * 10) for i in range(base + 1, base + 4)] for base in (0, 10, 20, 30)]

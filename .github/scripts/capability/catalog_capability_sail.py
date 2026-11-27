@@ -46,15 +46,18 @@ from harness import (
     evolution_check,
     evolve_spec,
     iceberg_schema,
+    orphan_check,
     partition_result,
     promotion_check,
     read_without_files,
     remove_data_files,
     rows,
+    stage_orphan,
     stage_parquet,
     transform_case,
     truncate_kind,
     type_result,
+    utc_now,
     verdict,
     wanted,
     write_stats_files,
@@ -633,6 +636,16 @@ class SailCapability:
         self.sql(f"CALL {CATALOG}.system.add_files('{self.ident(table)}', 'parquet.`{folder}`')")
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
+    def remove_orphan_files(self) -> str:
+        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
+        table = self._fresh("orphans")
+        path = stage_orphan(self.iceberg(table))
+        self.sql(
+            f"CALL {CATALOG}.system.remove_orphan_files(table => '{self.ident(table)}', "
+            f"older_than => TIMESTAMP '{utc_now()}')"
+        )
+        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} {_select([(4, 40)])}")
@@ -773,6 +786,7 @@ PROBES = [
     ("maintenance", "CALL system.rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "CALL system.rewrite_manifests", "rewrite_manifests"),
     ("maintenance", "CALL system.add_files", "add_files"),
+    ("maintenance", "CALL system.remove_orphan_files", "remove_orphan_files"),
     ("catalog", "CREATE SCHEMA (namespace)", "namespace_create"),
     ("catalog", "DROP SCHEMA (namespace)", "namespace_drop"),
     ("catalog", "CREATE SCHEMA IF NOT EXISTS, existing namespace", "namespace_existing"),

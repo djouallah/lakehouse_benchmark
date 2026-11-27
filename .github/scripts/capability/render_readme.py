@@ -20,8 +20,9 @@ from pathlib import Path
 # Every engine with a probe. The site's columns are NOT this order: site_matrix sorts them by
 # supported cells, most first, and a tie keeps the order here.
 # Every engine is asked in SQL, Polars included (its SQLContext with register_catalog): no engine is
-# credited for a library call beside its SQL. pyiceberg is the one library, a column of its own,
-# asked through its Python API (catalog_capability_pyiceberg.py).
+# credited for a library call beside its SQL. pyiceberg and iceberg-go are the libraries, columns
+# of their own, asked through their API (catalog_capability_pyiceberg.py and _iceberg_go.py).
+# iceberg-go is what table maintenance runs on (.github/scripts/maintain).
 ENGINES = (
     "spark",
     "sail",
@@ -32,10 +33,21 @@ ENGINES = (
     "chdb",
     "databend",
     "pyiceberg",
+    "iceberg_go",
 )
 SQL = ENGINES
 # The engines asked the DDL and row-level probes that chDB has no statement for.
-FULL_SQL = ("spark", "trino", "duckdb", "sail", "polars", "databend", "starrocks", "pyiceberg")
+FULL_SQL = (
+    "spark",
+    "trino",
+    "duckdb",
+    "sail",
+    "polars",
+    "databend",
+    "starrocks",
+    "pyiceberg",
+    "iceberg_go",
+)
 
 # (row label, {engine: probe keys}); an engine missing from the dict has no such operation.
 ROWS = [
@@ -164,6 +176,10 @@ ROWS = [
     ("Compaction", {e: ["rewrite_data_files"] for e in FULL_SQL}),
     ("Rewrite manifests", {e: ["rewrite_manifests"] for e in SQL}),
     ("Add existing Parquet files", {e: ["add_files"] for e in SQL}),
+    ("Expire snapshots", {e: ["expire_snapshots"] for e in ENGINES}),
+    # A Parquet file in the table's data directory that no snapshot references
+    # (harness.stage_orphan): gone from storage after, and the rows unchanged.
+    ("Remove orphan files", {e: ["remove_orphan_files"] for e in ENGINES}),
     ("Create branch", {e: ["create_branch"] for e in SQL}),
     ("Create tag", {e: ["create_tag"] for e in FULL_SQL}),
     (
@@ -238,6 +254,8 @@ CHDB = {
 for _label, _sources in ROWS:
     if _label in CHDB:
         _sources["chdb"] = CHDB[_label]
+    # iceberg-go's probes are pyiceberg's, by the same keys (IcebergGoCapability subclasses it).
+    _sources.setdefault("iceberg_go", _sources["pyiceberg"])
 
 # THE SITE'S GRID (docs/data/capability.json, the Iceberg support tab): every row of ROWS, grouped.
 GROUPS = {
@@ -295,7 +313,13 @@ GROUPS = {
         "Create branch",
         "Create tag",
     ],
-    "Maintenance": ["Compaction", "Rewrite manifests", "Add existing Parquet files"],
+    "Maintenance": [
+        "Compaction",
+        "Rewrite manifests",
+        "Add existing Parquet files",
+        "Expire snapshots",
+        "Remove orphan files",
+    ],
 }
 # The site's engine keys, which are lakehouse_benchmark's.
 SITE_KEY = {
@@ -308,6 +332,7 @@ SITE_KEY = {
     "sail": "lakesail_iceberg",
     "chdb": "chdb_iceberg",
     "pyiceberg": "pyiceberg",
+    "iceberg_go": "iceberg_go",
 }
 
 # Worst first: the cell shows the worst outcome among the row's probes.

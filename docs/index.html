@@ -15,7 +15,7 @@
   --lakesail_iceberg: #eda100; --daft_iceberg: #8a5cd1; --pyspark_iceberg: #d6468f;
   --pyspark_gluten_iceberg: #a8642a; --starrocks_iceberg: #980067; --trino_iceberg: #3c0fd9;
   --pandas_iceberg: #932601; --databend_iceberg: #99a7f9;
-  --pyiceberg: #6b7280; --delta_rs: #57534e; --duckrun: #0f766e;
+  --pyiceberg: #6b7280; --delta_rs: #57534e; --duckrun: #0f766e; --iceberg_go: #0a8fb3;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -25,7 +25,7 @@
     --lakesail_iceberg: #c98500; --daft_iceberg: #9b6ee0; --pyspark_iceberg: #e05a9c;
     --pyspark_gluten_iceberg: #c07a3a; --starrocks_iceberg: #a0268b; --trino_iceberg: #5c43ff;
     --pandas_iceberg: #8d4e10; --databend_iceberg: #4f58b1;
-    --pyiceberg: #9ca3af; --delta_rs: #a8a29e; --duckrun: #2dd4bf;
+    --pyiceberg: #9ca3af; --delta_rs: #a8a29e; --duckrun: #2dd4bf; --iceberg_go: #38bdf8;
   }
 }
 * { box-sizing: border-box; }
@@ -537,6 +537,7 @@ main .tiles > a { color: inherit; }
       <a href="https://github.com/djouallah/lakehouse_benchmark">repo</a>.</p>
   </section>
   <section class="cap rows" id="engines" hidden></section>
+  <section class="cap rows" id="dbt" hidden></section>
 
 </main>
 <div class="tip" id="tip"></div>
@@ -553,8 +554,8 @@ const LABEL = {         // bench/charts.py LABEL
   lakesail_iceberg: "LakeSail", daft_iceberg: "Daft", pyspark_iceberg: "Spark-OSS",
   pyspark_gluten_iceberg: "Gluten/Velox", starrocks_iceberg: "StarRocks", trino_iceberg: "Trino",
   pandas_iceberg: "Pandas", databend_iceberg: "Databend",
-  // bench/charts.py API_LABEL: libraries asked through their Python API, in the format support grids only.
-  pyiceberg: "pyiceberg (API)", delta_rs: "delta-rs (API)", duckrun: "duckrun",
+  // bench/charts.py API_LABEL: libraries asked through their API (Python; iceberg-go's Go), in the format support grids only.
+  pyiceberg: "pyiceberg (API)", iceberg_go: "iceberg-go (API)", delta_rs: "delta-rs (API)", duckrun: "duckrun",
 };
 const GLUTEN = "pyspark_gluten_iceberg";
 const SUITES = [
@@ -653,8 +654,9 @@ const OVERVIEW = { id: "overview", title: "Overview" };
 const REAL_WORKLOAD = { id: "workload", title: "Real workload write", json: "data/workload.json" };
 const MAINTENANCE = { json: "data/maintenance.json" };  // table_maintenance.yml, shown on the Real workload tab
 const PRUNING = { id: "pruning", title: "File pruning" };
+const DBT = { id: "dbt", title: "dbt adapters" };  // the adapters the Real workload legs run, from workload.json
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
-const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
+const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, DBT, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
 // a lake table works and how an engine does less work, what it supports; then writes, simple (CSVs into one table)
 // and real (the dbt workload), and the complex reads last. Bug reports and About are header links.
@@ -664,6 +666,7 @@ const GROUPS = [
   { id: "features", title: "Table format support", subs: [CAPABILITY, DELTA] },  // one grid per format, same groups
   { id: "write", title: "Simple write", subs: [SUITES[0]] },  // CSVs into one Iceberg table
   { id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },
+  { id: "dbt", title: "dbt adapters", subs: [DBT] },  // the adapters behind the Real workload
   { id: "read", title: "Complex read", subs: [SUITES[1]] },  // TPC-DS-like, last
   { id: "about", title: "About", subs: [ABOUT], bar: false },  // a header link, not a tab
   { id: "bugs", title: "Bug reports", subs: [REPORTS], bar: false },  // a header link, next to About
@@ -713,6 +716,7 @@ function render() {
   if (page === TIMELINE) { renderTimeline(); return; }
   if (page === OVERVIEW) { renderOverview(); return; }
   if (page === REAL_WORKLOAD) { renderRealWorkload(); return; }
+  if (page === DBT) { renderDbt(); return; }
   if (page === ARCH) { renderArch(); return; }
   if (page === ANATOMY) { renderAnatomy(); return; }
   if (page === PRUNING) { renderPruning(); return; }
@@ -974,6 +978,43 @@ function renderEngines() {
   };
   $("engines").innerHTML = table(ENGINE_ROWS);
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
+}
+
+// THE dbt ADAPTERS TAB: every dbt package the Real workload legs run, from each leg's `versions` in
+// workload.json (workload_run_engine.py PACKAGES), so a version moves with the next run. One row per package;
+// the legs that run it and the dbt-core under it. A package with no link here still shows, unlinked.
+const DBT_ADAPTER_URL = {
+  "dbt-duckdb": "https://github.com/duckdb/dbt-duckdb",
+  "dbt-polars": "https://github.com/datamindedbe/incubator-dbt-polars",
+  "dbt-polars-catalog-azure": "https://github.com/datamindedbe/incubator-dbt-polars",
+  "dbt-spark": "https://github.com/dbt-labs/dbt-adapters/tree/main/dbt-spark",
+  "dbt-trino": "https://github.com/starburstdata/dbt-trino",
+  "duckrun": "https://github.com/djouallah/duckrun",  // an adapter without the dbt- prefix, on dbt-duckdb
+};
+const isDbtAdapter = pkg => pkg in DBT_ADAPTER_URL || (pkg.startsWith("dbt-") && pkg !== "dbt-core");
+function renderDbt() {
+  const legs = data.workload?.legs;
+  if (!legs) { $("dbt").innerHTML = `<p class="d">${loaded ? "No workload results." : "Loading…"}</p>`; return; }
+  const byPkg = new Map();
+  for (const [engine, leg] of Object.entries(legs)) {
+    for (const [pkg, version] of Object.entries(leg.versions ?? {})) {
+      if (!isDbtAdapter(pkg)) continue;
+      const r = byPkg.get(pkg) ?? { pkg, versions: new Set(), engines: [], core: new Set() };
+      if (version) r.versions.add(version);
+      r.engines.push(engine);
+      if (leg.versions["dbt-core"]) r.core.add(leg.versions["dbt-core"]);
+      byPkg.set(pkg, r);
+    }
+  }
+  const list = set => esc([...set].join(", "));
+  $("dbt").innerHTML = `
+    <div class="wrap"><table><thead><tr><th>Adapter</th><th>Version</th><th>Real workload leg</th><th>dbt-core</th></tr></thead><tbody>${[...byPkg.values()].map(r => `
+      <tr style="--c: var(--${r.engines[0]}, var(--ink-3))">
+        <td class="e"><i class="sw"></i>${DBT_ADAPTER_URL[r.pkg] ? `<a href="${DBT_ADAPTER_URL[r.pkg]}">${esc(r.pkg)}</a>` : esc(r.pkg)}</td>
+        <td class="n">${list(r.versions)}</td>
+        <td class="n">${r.engines.map(e => esc(LABEL[e] ?? e)).join(", ")}</td>
+        <td class="n">${list(r.core)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
 }
 
 // THE LAKEHOUSE TAB'S TIMELINE: how we got here, as in the talk. Three lines that run side by side to today, not
@@ -2341,7 +2382,7 @@ function fromHash() {
   if (h === "maintenance") h = CAPABILITY.id;  // Maintenance is a group of the Iceberg grid
   if (h === "iceberg-overview") h = CAPABILITY.id;  // Overview is now the first chip of each format
   if (h === "delta-overview" || h === "delta-features") h = DELTA.id;  // the Delta support tab's old pages
-  if (h === "dbt" || h === "scorecard") h = REAL_WORKLOAD.id;  // the dbt tab and the Scorecard became the Real workload tab
+  if (h === "scorecard") h = REAL_WORKLOAD.id;  // the Scorecard became the Real workload tab
   if (h === "catalogs") h = OVERVIEW.id;  // the Lakehouse tab's old name
   if (h === "tpch") h = "tpcds";  // TPC-H-like, retired 2026-11-07
   if (h === "work") h = PRUNING.id;  // the Less work tab, now under Lakehouse

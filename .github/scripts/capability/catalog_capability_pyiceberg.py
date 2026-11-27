@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import UTC
 
 from harness import (
     ADD_FILES_ROWS,
@@ -44,12 +45,14 @@ from harness import (
     evolution_check,
     evolve_spec,
     iceberg_schema,
+    orphan_check,
     partition_result,
     promotion_check,
     promotion_schema,
     read_without_files,
     remove_data_files,
     rows,
+    stage_orphan,
     stage_parquet,
     transform_arrow,
     transform_case,
@@ -565,6 +568,38 @@ class PyicebergCapability:
         )
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
+    def expire_snapshots(self) -> str:
+        """maintenance.expire_snapshots().older_than(now): the current snapshot is protected."""
+        from datetime import datetime
+
+        table = self._fresh("expire")
+        self.iceberg(table).append(rows([(4, 40)]))
+        self.iceberg(table).append(rows([(5, 50)]))
+        before = len(self._snapshots(table))
+        self.call(
+            "maintenance.expire_snapshots().older_than(now).commit()",
+            lambda: (
+                self.iceberg(table)
+                .maintenance.expire_snapshots()
+                .older_than(datetime.now(UTC))
+                .commit()
+            ),
+        )
+        after = len(self._snapshots(table))
+        if after >= before:
+            raise NoOp(f"returned and history went {before} -> {after}")
+        return f"history {before} -> {after} snapshot(s)"
+
+    def remove_orphan_files(self) -> str:
+        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
+        table = self._fresh("orphans")
+        path = stage_orphan(self.iceberg(table))
+        self.call(
+            "maintenance.remove_orphan_files()",
+            lambda: self.iceberg(table).maintenance.remove_orphan_files(),
+        )
+        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+
     # -- catalog -----------------------------------------------------------------------------
 
     def namespace_create(self) -> str:
@@ -712,6 +747,8 @@ PROBES = [
     ("maintenance", "compaction", "rewrite_data_files"),
     ("maintenance", "rewrite manifests", "rewrite_manifests"),
     ("maintenance", "add_files", "add_files"),
+    ("maintenance", "maintenance.expire_snapshots().older_than(now)", "expire_snapshots"),
+    ("maintenance", "maintenance.remove_orphan_files", "remove_orphan_files"),
     ("catalog", "catalog.create_namespace", "namespace_create"),
     ("catalog", "catalog.drop_namespace", "namespace_drop"),
     ("catalog", "create_namespace_if_not_exists, existing namespace", "namespace_existing"),

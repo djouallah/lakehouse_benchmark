@@ -54,11 +54,13 @@ from harness import (
     asked,
     evolution_check,
     iceberg_schema,
+    orphan_check,
     partition_result,
     promotion_check,
     read_without_files,
     remove_data_files,
     rows,
+    stage_orphan,
     stage_parquet,
     transform_case,
     truncate_kind,
@@ -691,6 +693,13 @@ class DuckDBCapability:
         self.sql(f"CALL iceberg_add_files({self._name_arg(table)}, '{folder}')")
         return self._expect(table, sorted(SEED + ADD_FILES_ROWS), "add_files")
 
+    def remove_orphan_files(self) -> str:
+        """Delete a file no snapshot references (harness.stage_orphan); the rows stay."""
+        table = self._fresh("orphans")
+        path = stage_orphan(self.iceberg(table))
+        self.sql(f"CALL iceberg_remove_orphan_files({self._name_arg(table)})")
+        return self._expect(table, SEED, orphan_check(self.iceberg(table), path))
+
     def rewrite_manifests(self) -> str:
         table = self._fresh("manifests")
         self.sql(f"INSERT INTO {self.t(table)} VALUES (4, 40)")
@@ -837,6 +846,7 @@ PROBES = [
     ("maintenance", "iceberg_rewrite_data_files (compaction)", "rewrite_data_files"),
     ("maintenance", "iceberg_rewrite_manifests", "rewrite_manifests"),
     ("maintenance", "iceberg_add_files", "add_files"),
+    ("maintenance", "iceberg_remove_orphan_files", "remove_orphan_files"),
     ("catalog", "DROP TABLE", "drop_table"),
     (
         "catalog",

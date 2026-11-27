@@ -92,8 +92,19 @@ LABEL = {
 # apart from the engines. Each appears in one grid only, so the two never sit side by side.
 API_LABEL = {
     "pyiceberg": "pyiceberg (API)",
+    "iceberg_go": "iceberg-go (API)",
     "delta_rs": "delta-rs (API)",
     "duckrun": "duckrun",
 }
-API_LIGHT = {"pyiceberg": "#6b7280", "delta_rs": "#57534e", "duckrun": "#0f766e"}
-API_DARK = {"pyiceberg": "#9ca3af", "delta_rs": "#a8a29e", "duckrun": "#2dd4bf"}
+API_LIGHT = {
+    "pyiceberg": "#6b7280",
+    "iceberg_go": "#0a8fb3",
+    "delta_rs": "#57534e",
+    "duckrun": "#0f766e",
+}
+API_DARK = {
+    "pyiceberg": "#9ca3af",
+    "iceberg_go": "#38bdf8",
+    "delta_rs": "#a8a29e",
+    "duckrun": "#2dd4bf",
+}
