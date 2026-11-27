@@ -315,21 +315,21 @@
    "group": "write",
    "question": "INSERT/UPDATE/DELETE/MERGE into a Spark table with deletion vectors",
    "outcome": "no",
-   "detail": "UPDATE (INSERT worked): Unsupported: Unsupported: update: 1 file(s) it rewrites carry a deletion vector (the commit API cannot remove a file that has one); rewrite the table once with CREATE OR REPLACE TABLE t AS SELECT * FROM t, which writes it without deletion vectors"
+   "detail": "UPDATE: Unsupported: Unsupported: update: 1 file(s) it rewrites carry a deletion vector (the commit API cannot remove a file that has one); rewrite the table once with CREATE OR REPLACE TABLE t AS SELECT * FROM t, which writes it without deletion vectors (INSERT, DELETE, MERGE worked)"
   },
   {
    "key": "write_spark_column_mapping",
    "group": "write",
    "question": "INSERT/UPDATE/DELETE/MERGE into a Spark table with column mapping",
    "outcome": "supported",
-   "detail": "INSERT, UPDATE, DELETE and MERGE into a copy of Spark's table: DuckDB reads all 21 rows right; table features ['columnMapping']"
+   "detail": "INSERT, UPDATE, DELETE and MERGE, each into its own copy of Spark's table: DuckDB reads every row right; table features ['columnMapping']"
   },
   {
    "key": "write_spark_change_data_feed",
    "group": "write",
    "question": "INSERT/UPDATE/DELETE/MERGE into a Spark table with change data feed",
    "outcome": "no",
-   "detail": "UPDATE (INSERT worked): Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole with CREATE OR REPLACE TABLE, which change data feed accepts"
+   "detail": "UPDATE: Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole with CREATE OR REPLACE TABLE, which change data feed accepts; DELETE: Unsupported: Unsupported: delete: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole with CREATE OR REPLACE TABLE, which change data feed accepts; MERGE: Unsupported: Unsupported: merge: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the table whole with CREATE OR REPLACE TABLE, which change data feed accepts (INSERT worked)"
   },
   {
    "key": "variant",
@@ -395,7 +395,7 @@
    "detail": "a _delta_log over the files in place; DuckDB reads [(1, 10), (2, 20), (3, 30)]"
   }
  ],
- "run": "45936807343",
- "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+ "run": "45944235114",
+ "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
  "date": "2026-11-27"
 }

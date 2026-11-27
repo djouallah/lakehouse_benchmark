@@ -2,44 +2,44 @@
  "engines": {
   "pyspark_iceberg": {
    "version": "4.2.1 + delta-spark_4.2_2.13:4.4.1",
-   "run": "45938262617",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45938262617",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   },
   "lakesail_iceberg": {
    "version": "0.7.3+main86da637b4f",
-   "run": "45936807343",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   },
   "duckrun": {
    "version": "duckrun 0.6.2 (duckdb 2.0.1, deltalake 1.7.0)",
-   "run": "45936807343",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   },
   "delta_rs": {
    "version": "deltalake 1.7.0 (delta-rs py-1.7.0)",
-   "run": "45936807343",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   },
   "trino_iceberg": {
    "version": "484 (trinodb/trino:484)",
-   "run": "45936807343",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   },
   "polars_delta": {
    "version": "polars 2.2.0 (deltalake 1.7.0)",
-   "run": "45938298102",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45938298102",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   },
   "duckdb_iceberg": {
    "version": "v2.0.1 (azure bf93a0af8f, delta f41762b37b)",
-   "run": "45936807343",
-   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45936807343",
+   "run": "45944235114",
+   "url": "https://github.com/djouallah/lakehouse_benchmark/actions/runs/45944235114",
    "date": "2026-11-27"
   }
  },
@@ -1425,7 +1425,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): Unsupported: Unsupported: update: 1 file(s) it rewrites carry a deletion vector (the commit API cannot remove a file that has one); rewrite the table once with CREATE OR REPLACE TABLE t AS SELECT…"
+     "n": "UPDATE: Unsupported: Unsupported: update: 1 file(s) it rewrites carry a deletion vector (the commit API cannot remove a file that has one); rewrite the table once with CREATE OR REPLACE TABLE t AS SELECT * FROM t, which…"
     },
     "delta_rs": {
      "o": "supported"
@@ -1435,11 +1435,11 @@
     },
     "polars_delta": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): AttributeError: AttributeError: module 'polars' has no attribute 'update_delta'"
+     "n": "UPDATE: AttributeError: AttributeError: module 'polars' has no attribute 'update_delta'; DELETE: AttributeError: AttributeError: module 'polars' has no attribute 'delete_delta' (INSERT, MERGE worked)"
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): RuntimeError: RuntimeError: Binder Error: Can only update base table"
+     "n": "UPDATE: RuntimeError: RuntimeError: Binder Error: Can only update base table; DELETE: RuntimeError: RuntimeError: Binder Error: Can only delete from base table; MERGE: RuntimeError: RuntimeError: Binder Error: Can only …"
     }
    }
   },
@@ -1468,7 +1468,7 @@
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): RuntimeError: RuntimeError: Binder Error: Can only update base table"
+     "n": "UPDATE: RuntimeError: RuntimeError: Binder Error: Can only update base table; DELETE: RuntimeError: RuntimeError: Binder Error: Can only delete from base table; MERGE: RuntimeError: RuntimeError: Binder Error: Can only …"
     }
    }
   },
@@ -1484,7 +1484,7 @@
     },
     "duckrun": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or …"
+     "n": "UPDATE: Unsupported: Unsupported: update: change data feed (the commit API cannot write the change files); turn it off first (ALTER TABLE t SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'false')) or rewrite the tabl…"
     },
     "delta_rs": {
      "o": "supported"
@@ -1494,11 +1494,11 @@
     },
     "polars_delta": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): AttributeError: AttributeError: module 'polars' has no attribute 'update_delta'"
+     "n": "UPDATE: AttributeError: AttributeError: module 'polars' has no attribute 'update_delta'; DELETE: AttributeError: AttributeError: module 'polars' has no attribute 'delete_delta' (INSERT, MERGE worked)"
     },
     "duckdb_iceberg": {
      "o": "no",
-     "n": "UPDATE (INSERT worked): RuntimeError: RuntimeError: Binder Error: Can only update base table"
+     "n": "UPDATE: RuntimeError: RuntimeError: Binder Error: Can only update base table; DELETE: RuntimeError: RuntimeError: Binder Error: Can only delete from base table; MERGE: RuntimeError: RuntimeError: Binder Error: Can only …"
     }
    }
   },
