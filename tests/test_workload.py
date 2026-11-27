@@ -146,7 +146,7 @@ def test_page_data_carries_the_dag_and_each_legs_models():
 
 
 def test_every_model_says_where_the_engines_sql_differs():
-    """The Real workload panel reads each model's meta.differences from the shared patch files."""
+    """The In production panel reads each model's meta.differences from the shared patch files."""
     import yaml
 
     names = set()

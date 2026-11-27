@@ -3,7 +3,7 @@
         dbt run-operation files_behind --target <engine>
         {"files_behind": 0}
 
-     The Real workload tab reads it (how far each leg has got). It used to be
+     The In production tab reads it (how far each leg has got). It used to be
      the assert_all_daily_files_processed_* tests' warning count; the tests now run once a day in
      table maintenance (workload_test.py), so the count is its own query. The larger of fct_scada's
      and fct_price's, as before. EXCEPT rather than NOT IN: a plain set difference every engine

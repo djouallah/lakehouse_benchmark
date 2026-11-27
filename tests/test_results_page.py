@@ -48,9 +48,9 @@ def test_the_lakehouse_is_the_first_tab_and_the_landing_page():
 
 
 def test_the_real_workload_tab_reads_the_measured_workload():
-    """The Real workload tab draws the latest run: a card per leg and dbt's own DAG."""
+    """The In production tab draws the latest run: a card per leg and dbt's own DAG."""
     assert (
-        'const REAL_WORKLOAD = { id: "workload", title: "Real workload write", '
+        'const REAL_WORKLOAD = { id: "workload", title: "In production", '
         'json: "data/workload.json" };' in PAGE
     )
     assert "const { W, H, NW, NH, pos } = dagLayout(w.dag);" in PAGE
@@ -130,12 +130,12 @@ def test_file_pruning_and_query_plans_are_under_lakehouse():
     assert 'id: "work"' not in rows("GROUPS")
 
 
-def test_simple_write_real_workload_write_dbt_adapters_then_complex_read_are_the_last_top_tabs():
+def test_complex_read_simple_write_dbt_adapters_then_in_production_are_the_last_top_tabs():
     bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
-    assert bar[-4].startswith('{ id: "write", title: "Simple write", subs: [SUITES[0]] },')
-    assert bar[-3] == '{ id: "summary", title: "Real workload write", subs: [REAL_WORKLOAD] },'
+    assert bar[-4].startswith('{ id: "read", title: "Complex read", subs: [SUITES[1]] },')
+    assert bar[-3].startswith('{ id: "write", title: "Simple write", subs: [SUITES[0]] },')
     assert bar[-2].startswith('{ id: "dbt", title: "dbt adapters", subs: [DBT] },')
-    assert bar[-1].startswith('{ id: "read", title: "Complex read", subs: [SUITES[1]] },')
+    assert bar[-1].startswith('{ id: "summary", title: "In production", subs: [REAL_WORKLOAD] },')
 
 
 def test_every_dbt_adapter_a_workload_leg_runs_has_a_link():

@@ -7,7 +7,7 @@ name: dbt workload
 #                  duckrun, polars_delta on Delta; one at a time)  ->  grade
 #
 # ON A SCHEDULE, DAILY, NEVER RESET: new AEMO files land every run and each engine folds
-# process_limit of them into its own tables, which only grow. The Real workload tab shows how far
+# process_limit of them into its own tables, which only grow. The In production tab shows how far
 # each engine has got -- files behind, peak RSS -- and an engine whose runner dies (out of memory)
 # stays on the page as "died", carried forward from the last run (workload_publish.py).
 #
@@ -51,7 +51,7 @@ on:
         type: string
         default: ""
       publish:
-        description: Commit results/workload/<run>.json and the Real workload tab's data (docs/data/workload.json). Off leaves the artifacts and touches nothing. Scheduled runs always publish.
+        description: Commit results/workload/<run>.json and the In production tab's data (docs/data/workload.json). Off leaves the artifacts and touches nothing. Scheduled runs always publish.
         type: boolean
         default: false
 

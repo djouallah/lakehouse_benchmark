@@ -815,7 +815,7 @@ that is both coordinator and worker, driven over Trino's HTTP protocol (`bench/t
 - **ETL:** a Hive external table over `Files/csv`, then one `INSERT ... SELECT` into the Iceberg
   table, one commit (c8bb84b). 1000 files in 892 s.
 
-## The dbt workload test (the Real workload tab)
+## The dbt workload test (the In production tab)
 
 **Now (2026-10-20):** it runs every 2 hours on a schedule (every hour since 2026-10-23, all five engines), never resets, lands up to 360 new daily
 AEMO files a run, and each engine folds its largest proven batch into its own tables, which only
@@ -947,7 +947,7 @@ so they share one history. First all-green run:
   reads the CSVs and the archive log through Hive EXTERNAL tables, as the Trino ETL does, and has
   no views and no rename (`views_enabled: false`, `on_table_exists: drop`). It lands within 1e-13
   of Spark on the sums: its DOUBLE to DECIMAL cast breaks ties like Spark's.
-- The Real workload tab (it was the Scorecard) reads `docs/data/workload.json`. The bar is three
+- The In production tab (it was the Scorecard) reads `docs/data/workload.json`. The bar is three
   checks: dbt runs the project, the source file name is kept, the tables are Iceberg. Same result
   and build time are shown, the time as a bonus.
 - **dbt-polars tests need `azure/login`.** They read through pyiceberg's ADLS FileIO with no

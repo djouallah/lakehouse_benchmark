@@ -17,7 +17,7 @@
 //
 // The record (per table: before/after counts and each step's result or its exact error) is
 // rewritten after every table, so a job killed by its timeout still leaves what it did.
-// workload_maintain.py publish turns it into the step summary and the Real workload tab's data.
+// workload_maintain.py publish turns it into the step summary and the In production tab's data.
 // Never fails on a table; exits 1 only when every attempted table errored.
 package main
 

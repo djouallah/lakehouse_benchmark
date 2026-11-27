@@ -2,7 +2,7 @@
 
 Always: the per-leg table, to stdout and the job summary.
 --write: results/workload/<run_id>.json, the run's immutable record, and docs/data/workload.json,
-         the page's copy of the latest state (the Real workload tab), keyed by bench engine id.
+         the page's copy of the latest state (the In production tab), keyed by bench engine id.
          An engine this run asked for (WORKLOAD_ENGINES) that left no part had its runner killed
          -- the out-of-memory case, exit 143, nothing uploaded -- and stays on the page as
          "died", carried forward from the previous page data with its last good run. An engine
@@ -113,7 +113,7 @@ def files_behind(leg: dict) -> int | None:
 def page_data(
     legs: dict[str, dict], previous: dict | None = None, asked: list[str] | None = None
 ) -> dict:
-    """The latest state as the Real workload tab reads it: one entry per bench engine id.
+    """The latest state as the In production tab reads it: one entry per bench engine id.
 
     `previous` is the page data before this run, `asked` the engines this run was given."""
     previous = previous or {}

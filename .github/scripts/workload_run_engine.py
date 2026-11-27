@@ -321,7 +321,7 @@ def model_dag() -> dict[str, dict]:
     """The project's DAG as dbt itself published it (target/manifest.json): every enabled model,
     the models it reads, and how this leg builds it -- materialization, incremental strategy and
     key, the model file and its size -- plus the description and the `meta.differences` notes the
-    shared patch files give it. The Real workload tab draws it and opens it on a click."""
+    shared patch files give it. The In production tab draws it and opens it on a click."""
     path = PROJECT / "target" / "manifest.json"
     if not path.exists():
         return {}
@@ -450,7 +450,7 @@ def main(parts: Path) -> int:
             if event.info.name.startswith("JinjaLog"):
                 logged.append(event.info.msg)
 
-        # Rows per model, for the Real workload tab's DAG. Best-effort: a count that fails is a
+        # Rows per model, for the In production tab's DAG. Best-effort: a count that fails is a
         # missing number on the page, never a failed leg. Counted on a failed leg too: its tables
         # are still there, and one failed model must not hide the others from the page.
         if dbt.run("run-operation", "model_row_counts", callbacks=[keep_log])[0]:

@@ -4,13 +4,13 @@
         {"model_rows": {"fct_summary": 3086181, ...}, "model_files": {"fct_scada": 1295, ...}}
 
      model_files: the distinct source files each fact holds (its `file` column), i.e. how many
-     files that engine has processed. The Real workload tab shows fct_scada's on each card.
+     files that engine has processed. The In production tab shows fct_scada's on each card.
 
      model_mw: fct_summary's SUM(mw), as exact decimal text: the same rows give the same sum on
      every engine since mw is DECIMAL(18,5) (LEARNING.md, "Why the decimals differ in the last
      place"); the model's panel shows it beside the row count.
 
-     The Real workload tab writes them on the DAG's nodes. A model whose relation this session
+     The In production tab writes them on the DAG's nodes. A model whose relation this session
      cannot see -- the duckdb leg's archive log is a view in DuckDB's in-memory catalog, gone once
      the build's process ends -- is left out rather than counted as zero. --#}
 {% macro model_row_counts() %}

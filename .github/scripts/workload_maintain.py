@@ -5,7 +5,7 @@
 before/after counts and each step's result or its exact error. workload_test.py runs the dbt tests
 on every leg and writes the tests record; it goes into the same files under "tests". This prints
 the step summary, and with --write writes results/maintenance/<run_id>.json plus
-docs/data/maintenance.json, the Real workload tab's copy. table_maintenance.yml's commit loop
+docs/data/maintenance.json, the In production tab's copy. table_maintenance.yml's commit loop
 re-runs it after every reset onto main.
 """
 
@@ -76,7 +76,7 @@ def test_results(tests: dict | None) -> dict:
 
 
 def page_data(record: dict) -> dict:
-    """The latest run as the Real workload tab reads it, keyed by bench engine id."""
+    """The latest run as the In production tab reads it, keyed by bench engine id."""
     engines = {}
     for engine in ENGINES:
         entries = [t for t in record["tables"] if t["engine"] == engine]
