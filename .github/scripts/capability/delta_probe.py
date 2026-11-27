@@ -1382,9 +1382,16 @@ class DeltaProbe:
         return f"{len(found)} rows, one per commit"
 
     def change_data_feed(self) -> str:
-        name = self._fresh("cdf", props={"delta.enableChangeDataFeed": "true"})
+        """Reads the change feed only: delta-rs writes the table with the feed on and makes the
+        UPDATE, so an engine without UPDATE (its own row) is still asked to read the feed."""
+        name = self._claim("cdf")
+        self.oracle.write(name, SEED, configuration={"delta.enableChangeDataFeed": "true"})
         since = self.oracle.latest(name) + 1
-        self.sql(self.update_sql(self.ref(name), "v = 999", "id = 1"))
+        self.oracle.update(name, {"v": "999"}, "id = 1")
+        try:
+            self.run_all(self.register_sql(name))
+        except Refused as exc:
+            raise Refused(f"a Delta table written by delta-rs could not be opened: {exc}") from None
         found = self.sql(self.changes_sql(name, since))
         kinds = sorted({str(r[-1]) for r in found})
         if not {"update_preimage", "update_postimage"} <= set(kinds):

@@ -137,8 +137,9 @@ class DeltaOracle:
         fields = json.loads(meta["schemaString"])["fields"]
         return {f["name"]: _type(f["type"]) for f in fields}
 
-    def write(self, name: str, pairs, mode: str = "append") -> None:
-        """Rows (id, v) written by delta-rs: the seed and the stats files every engine reads."""
+    def write(self, name: str, pairs, mode: str = "append", configuration=None) -> None:
+        """Rows (id, v) written by delta-rs: the seed and the stats files every engine reads.
+        `configuration` sets table properties on the commit that creates the table."""
         import pyarrow as pa
         from deltalake import write_deltalake
 
@@ -154,6 +155,13 @@ class DeltaOracle:
             mode=mode,
             storage_options=self.storage_options(),
             commit_properties=_oracle_commit(),
+            **({"configuration": configuration} if configuration else {}),
+        )
+
+    def update(self, name: str, updates: dict[str, str], predicate: str) -> None:
+        """An UPDATE by delta-rs, for a probe that asks the engine only to read its effect."""
+        self.table_rs(name).update(
+            updates=updates, predicate=predicate, commit_properties=_oracle_commit()
         )
 
     def write_dated(self, name: str, rows) -> None:
