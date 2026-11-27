@@ -1,0 +1,23 @@
+name: temporary polars delta timestamp repro
+
+# TEMPORARY: .github/scripts/tmp/polars_delta_ts_repro.py on Polars 2.2.0, to confirm whether
+# scan_delta skips a sub-millisecond timestamp under the max sink_delta truncates. Local files,
+# no OneLake, no secrets. Deleted once the issue is drafted.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install polars==2.2.0 deltalake==1.7.0
+      - run: python .github/scripts/tmp/polars_delta_ts_repro.py
