@@ -12,13 +12,18 @@ import polars as pl
 
 print(f"polars {pl.__version__}, deltalake {deltalake.__version__}")
 path = os.path.join(tempfile.mkdtemp(), "t")
+schema = {"at": pl.Datetime("us", "UTC"), "v": pl.Int64}
+first = datetime(2026, 1, 1, tzinfo=timezone.utc)
 at = datetime(2026, 1, 2, 3, 4, 5, 678901, tzinfo=timezone.utc)
-pl.LazyFrame({"at": [at]}, schema={"at": pl.Datetime("us", "UTC")}).sink_delta(path)
+# Two files, as an incremental table has: a first build, then an append.
+pl.LazyFrame({"at": [first], "v": [1]}, schema=schema).sink_delta(path)
+pl.LazyFrame({"at": [at], "v": [2]}, schema=schema).sink_delta(path, mode="append")
 
-log = os.path.join(path, "_delta_log", "00000000000000000000.json")
-with open(log) as f:
-    adds = [json.loads(line)["add"] for line in f if '"add"' in line]
-print("stats:", adds[0]["stats"])
+for version in (0, 1):
+    log = os.path.join(path, "_delta_log", f"{version:020d}.json")
+    with open(log) as f:
+        adds = [json.loads(line)["add"] for line in f if '"add"' in line]
+    print(f"stats v{version}:", adds[0]["stats"])
 
 for name, frame in [
     ("scan_delta, at == value", pl.scan_delta(path).filter(pl.col("at") == at)),
