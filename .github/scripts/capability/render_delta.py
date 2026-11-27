@@ -34,7 +34,7 @@ SITE_KEY = {
 
 # (group, row label, probe key): every engine is asked every row under the same key
 # (delta_probe.PROBES). The groups are the Iceberg grid's, so the two formats read side by side,
-# plus Spark tables: reading and writing a table Spark wrote with its Delta features turned on
+# plus Tables written by Spark: reading and writing a table Spark wrote with its Delta features turned on
 # (their own group so Writes fits a 1080p screen, tests/test_layout.py);
 # Basic is the minimum to use the format at all: create, read, append, append safely.
 TABLE = [
@@ -86,20 +86,12 @@ TABLE = [
     ("Reads & history", "Table history", "history"),
     ("Reads & history", "DESCRIBE DETAIL", "describe_detail"),
     ("Reads & history", "Change data feed", "change_data_feed"),
-    ("Spark tables", "Read a Spark table with deletion vectors", "read_deletion_vectors"),
-    ("Spark tables", "Read a Spark table with column mapping", "read_column_mapping"),
-    ("Spark tables", "Read a Spark table with type widening", "read_type_widening"),
-    (
-        "Spark tables",
-        "Write into a Spark table with deletion vectors",
-        "write_spark_deletion_vectors",
-    ),
-    ("Spark tables", "Write into a Spark table with column mapping", "write_spark_column_mapping"),
-    (
-        "Spark tables",
-        "Write into a Spark table with change data feed",
-        "write_spark_change_data_feed",
-    ),
+    ("Tables written by Spark", "Read, deletion vectors on", "read_deletion_vectors"),
+    ("Tables written by Spark", "Read, column mapping on", "read_column_mapping"),
+    ("Tables written by Spark", "Read, type widening on", "read_type_widening"),
+    ("Tables written by Spark", "Write, deletion vectors on", "write_spark_deletion_vectors"),
+    ("Tables written by Spark", "Write, column mapping on", "write_spark_column_mapping"),
+    ("Tables written by Spark", "Write, change data feed on", "write_spark_change_data_feed"),
     ("Maintenance", "OPTIMIZE (compaction)", "optimize"),
     ("Maintenance", "OPTIMIZE ... ZORDER BY", "zorder"),
     ("Maintenance", "CLUSTER BY", "liquid_clustering"),
