@@ -179,6 +179,8 @@ header { display: flex; flex-wrap: wrap; justify-content: space-between; align-i
 #dbt .intro { color: var(--ink-2); margin: 12px 0; max-width: 72ch; }
 #dbt .intro b { color: var(--ink); }
 #dbt .d { color: var(--ink-3); font-size: 13px; margin: 10px 0 0; }
+#dbt tbody.ref th { text-align: left; padding: 22px 0 8px; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+#dbt tbody.ref th a { color: var(--accent); text-transform: none; letter-spacing: 0; }
 .rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
@@ -1003,6 +1005,18 @@ const DBT_STRATEGIES = {
   "dbt-spark": ["append", "merge", "insert_overwrite", "microbatch"],
   "dbt-trino": ["append", "merge", "delete+insert", "microbatch"],
 };
+// Microsoft's official Fabric adapters: not run in the bench (no leg), listed for reference. They write Delta in a
+// Fabric Warehouse and a Fabric Lakehouse; djouallah/fabric-medallion-dbt runs the same AEMO models on both. Version:
+// the latest release, checked 2026-11-28. Strategies from its source at that tag: dbt-fabric fabric_adapter.py
+// valid_incremental_strategies, dbt-fabricspark validate.sql (merge, delete+insert, insert_overwrite and microbatch
+// on Delta only).
+const DBT_FABRIC = [
+  { pkg: "dbt-fabric", url: "https://github.com/microsoft/dbt-fabric", version: "1.12.0", engine: "Fabric Warehouse",
+    strategies: ["append", "merge", "delete+insert", "microbatch"] },
+  { pkg: "dbt-fabricspark", url: "https://github.com/microsoft/dbt-fabricspark", version: "1.13.14", engine: "Fabric Spark",
+    strategies: ["append", "merge", "delete+insert", "insert_overwrite", "microbatch"] },
+];
+const DBT_MEDALLION = "https://github.com/djouallah/fabric-medallion-dbt";
 const DELTA_LEGS = new Set(["duckrun", "polars_delta"]);  // every other leg writes Iceberg
 const DBT_ENGINE = { duckrun: "DuckDB", polars_delta: "Polars" };  // the engine under the Delta legs' adapters
 function renderDbt() {
@@ -1034,9 +1048,18 @@ function renderDbt() {
         <td class="n">${list(r.formats)}</td>
         <td class="n">${strategies(r)}</td>
         <td class="n">${list(r.core)}</td>
+      </tr>`).join("")}</tbody>
+      <tbody class="ref"><tr><th colspan="6">Not in the bench: Microsoft's Fabric adapters, for reference (<a href="${DBT_MEDALLION}">a project on both</a>)</th></tr>${DBT_FABRIC.map(r => `
+      <tr style="--c: var(--ink-3)">
+        <td class="e"><i class="sw"></i><a href="${r.url}">${esc(r.pkg)}</a></td>
+        <td class="n">${esc(r.version)}</td>
+        <td class="n">${esc(r.engine)}</td>
+        <td class="n">Delta</td>
+        <td class="n">${r.strategies.map(esc).join(", ")}</td>
+        <td class="n"></td>
       </tr>`).join("")}</tbody></table></div>
-    <p class="d">In bold, the strategy the project uses. The packages an adapter brings with it, duckrun's dbt-duckdb
-      and dbt-polars' storage catalogs, are not listed.</p>`;
+    <p class="d">In bold, the strategy the bench's project uses. The packages an adapter brings with it, duckrun's
+      dbt-duckdb and dbt-polars' storage catalogs, are not listed.</p>`;
 }
 
 // THE LAKEHOUSE TAB'S TIMELINE: how we got here, as in the talk. Three lines that run side by side to today, not
