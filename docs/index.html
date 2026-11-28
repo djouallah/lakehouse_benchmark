@@ -164,7 +164,6 @@ header { display: flex; flex-wrap: wrap; justify-content: space-between; align-i
 .rank .val b { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
 .rank .stack i:hover, .rank .stack i:focus { filter: brightness(1.12); outline: none; }
 .rank .stack i:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* dbt: one row per engine, one mark for how far its dbt adapter goes with Iceberg. */
 .cap .excellent .m { background: var(--yes); }
 .cap .good .m { border: 2px solid var(--yes); background: linear-gradient(90deg, var(--yes) 50%, transparent 50%); }
 .cap .partial .m { border: 2px solid var(--noop); }
@@ -172,11 +171,14 @@ header { display: flex; flex-wrap: wrap; justify-content: space-between; align-i
 .cap .none .m::before, .cap .none .m::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 2px; background: var(--no); border-radius: 1px; }
 .cap .none .m::before { transform: translate(-50%, -50%) rotate(45deg); }
 .cap .none .m::after { transform: translate(-50%, -50%) rotate(-45deg); }
-/* Engines and dbt: plain tables, one row per engine. */
+/* Engines and dbt: plain tables, one row per engine (dbt: per adapter). */
 .rows table { min-width: 0; }
 #engines table { min-width: 900px; }
 #engines { margin-top: 12px; }
 #engines td { padding-top: 5px; padding-bottom: 5px; font-size: 13px; line-height: 1.35; }
+#dbt .intro { color: var(--ink-2); margin: 12px 0; max-width: 72ch; }
+#dbt .intro b { color: var(--ink); }
+#dbt .d { color: var(--ink-3); font-size: 13px; margin: 10px 0 0; }
 .rows thead th { text-align: left; padding: 0 12px 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .rows td { padding: 9px 12px 9px 0; vertical-align: top; font-size: 14px; border-top: 1px solid var(--track); }
 .rows td.e { font-weight: 700; white-space: nowrap; }
@@ -653,19 +655,19 @@ const OVERVIEW = { id: "overview", title: "Overview" };
 const REAL_WORKLOAD = { id: "workload", title: "In production", json: "data/workload.json" };
 const MAINTENANCE = { json: "data/maintenance.json" };  // table_maintenance.yml: the daily dbt test count on the In production tab
 const PRUNING = { id: "pruning", title: "File pruning" };
-const DBT = { id: "dbt", title: "dbt adapters" };  // the adapters the In production legs run, from workload.json
+const DBT = { id: "dbt", title: "dbt" };  // the adapters the In production legs run, from workload.json
 const REPORTS = { id: "reports", title: "Bug reports", json: "data/reports.json" };
 const PAGES = [TIMELINE, OVERVIEW, REAL_WORKLOAD, DBT, ARCH, ANATOMY, PRUNING, PLANS, CAPABILITY, DELTA, REPORTS, ABOUT, ENGINES];  // sections of their own, no bar chart
 // The top tabs and their pill sub-tabs, in the order of the story: the premise (any engine, one catalog) and how
-// a lake table works and how an engine does less work, what it supports; then the complex reads, the simple write
-// (CSVs into one table), the dbt adapters and the real write (the dbt workload). Bug reports and About are header links.
+// a lake table works and how an engine does less work, what it supports; then the complex reads, the writes (CSVs
+// into one table, then dbt, the way it is done in practice) and the real write (the dbt workload). Bug reports and
+// About are header links.
 // state.suite is always a sub (a suite or a page); a group with one sub has no pills.
 const GROUPS = [
   { id: "lakehouse", title: "Lakehouse", subs: [TIMELINE, OVERVIEW, ARCH, ANATOMY, PRUNING, PLANS, ENGINES] },  // the state is in the catalog; skip files, then a good join order
   { id: "features", title: "Table format support", subs: [CAPABILITY, DELTA] },  // one grid per format, same groups
   { id: "read", title: "Complex read", subs: [SUITES[1]] },  // TPC-DS-like
-  { id: "write", title: "Simple write", subs: [SUITES[0]] },  // CSVs into one Iceberg table
-  { id: "dbt", title: "dbt adapters", subs: [DBT] },  // the adapters behind In production
+  { id: "write", title: "Write", subs: [SUITES[0], DBT] },  // CSVs into one Iceberg table, then the dbt adapters behind In production
   { id: "summary", title: "In production", subs: [REAL_WORKLOAD] },  // last
   { id: "about", title: "About", subs: [ABOUT], bar: false },  // a header link, not a tab
   { id: "bugs", title: "Bug reports", subs: [REPORTS], bar: false },  // a header link, next to About
@@ -979,42 +981,62 @@ function renderEngines() {
   for (const th of $("engines").querySelectorAll("th[data-note]")) noteTip(th, th.dataset.note, ENGINE_NOTES[th.dataset.note]);
 }
 
-// THE dbt ADAPTERS TAB: every dbt package the In production legs run, from each leg's `versions` in
-// workload.json (workload_run_engine.py PACKAGES), so a version moves with the next run. One row per package;
-// the legs that run it and the dbt-core under it. A package with no link here still shows, unlinked.
+// THE WRITE TAB'S dbt PAGE: the dbt adapter each In production leg runs, one row per adapter, from each leg's
+// `adapter` and `versions` in workload.json (workload_publish.py adapter(), workload_run_engine.py PACKAGES), so a
+// version moves with the next run. The packages under an adapter (duckrun's dbt-duckdb, dbt-polars' catalogs) are
+// not adapters and get no row. An adapter with no link here still shows, unlinked.
 const DBT_ADAPTER_URL = {
   "dbt-duckdb": "https://github.com/duckdb/dbt-duckdb",
   "dbt-polars": "https://github.com/datamindedbe/dbt-polars",
-  "dbt-polars-catalog-azure": "https://github.com/datamindedbe/dbt-polars",
-  "dbt-polars-catalog-fabric": "https://github.com/datamindedbe/dbt-polars",
   "dbt-spark": "https://github.com/dbt-labs/dbt-adapters/tree/main/dbt-spark",
   "dbt-trino": "https://github.com/starburstdata/dbt-trino",
   "duckrun": "https://github.com/djouallah/duckrun",  // an adapter without the dbt- prefix, on dbt-duckdb
 };
-const isDbtAdapter = pkg => pkg in DBT_ADAPTER_URL || (pkg.startsWith("dbt-") && pkg !== "dbt-core");
+// The incremental strategies each adapter accepts, from its source at the version the legs run: dbt-duckdb 1.11.1
+// valid_incremental_strategies (merge and microbatch from DuckDB 1.4), dbt-spark's validate.sql (merge on Delta,
+// Iceberg or Hudi only), dbt-trino v1.12.0 valid_incremental_strategies, dbt-polars v0.6.0 _incremental_write,
+// duckrun v0.6.3 materializations/incremental.sql.
+const DBT_STRATEGIES = {
+  "duckrun": ["append", "insert", "merge", "delete+insert", "microbatch"],
+  "dbt-duckdb": ["append", "merge", "delete+insert", "microbatch"],
+  "dbt-polars": ["append", "merge", "delete+insert", "microbatch"],
+  "dbt-spark": ["append", "merge", "insert_overwrite", "microbatch"],
+  "dbt-trino": ["append", "merge", "delete+insert", "microbatch"],
+};
+const DELTA_LEGS = new Set(["duckrun", "polars_delta"]);  // every other leg writes Iceberg
+const DBT_ENGINE = { duckrun: "DuckDB", polars_delta: "Polars" };  // the engine under the Delta legs' adapters
 function renderDbt() {
   const legs = data.workload?.legs;
   if (!legs) { $("dbt").innerHTML = `<p class="d">${loaded ? "No workload results." : "Loading…"}</p>`; return; }
-  const byPkg = new Map();
-  for (const [engine, leg] of Object.entries(legs)) {
-    for (const [pkg, version] of Object.entries(leg.versions ?? {})) {
-      if (!isDbtAdapter(pkg)) continue;
-      const r = byPkg.get(pkg) ?? { pkg, versions: new Set(), engines: [], core: new Set() };
-      if (version) r.versions.add(version);
-      r.engines.push(engine);
-      if (leg.versions["dbt-core"]) r.core.add(leg.versions["dbt-core"]);
-      byPkg.set(pkg, r);
-    }
+  const byAdapter = new Map();
+  for (const engine of WORKLOAD_ORDER.filter(e => legs[e]).concat(Object.keys(legs).filter(e => !WORKLOAD_ORDER.includes(e)))) {
+    const leg = legs[engine], [pkg] = (leg.adapter ?? "").split(" ");
+    if (!pkg) continue;
+    const r = byAdapter.get(pkg) ?? { pkg, versions: new Set(), engines: [], formats: new Set(), core: new Set(), used: new Set() };
+    if (leg.versions?.[pkg]) r.versions.add(leg.versions[pkg]);
+    if (leg.versions?.["dbt-core"]) r.core.add(leg.versions["dbt-core"]);
+    r.engines.push(engine);
+    r.formats.add(DELTA_LEGS.has(engine) ? "Delta" : "Iceberg");
+    for (const m of Object.values(leg.model_config ?? {})) if (m.strategy) r.used.add(m.strategy);
+    byAdapter.set(pkg, r);
   }
   const list = set => esc([...set].join(", "));
+  const strategies = r => (DBT_STRATEGIES[r.pkg] ?? [...r.used]).map(s => r.used.has(s) ? `<b>${esc(s)}</b>` : esc(s)).join(", ");
   $("dbt").innerHTML = `
-    <div class="wrap"><table><thead><tr><th>Adapter</th><th>Version</th><th>In production leg</th><th>dbt-core</th></tr></thead><tbody>${[...byPkg.values()].map(r => `
+    <p class="intro">In practice, writes run as a dbt project. dbt does not write: it turns each model into the engine's
+      SQL, here a <b>merge</b> on a unique key, and the engine writes. dbt-polars and duckrun are the exception: Python
+      adapters that write the table themselves, through Polars, pyiceberg or delta-rs.</p>
+    <div class="wrap"><table><thead><tr><th>Adapter</th><th>Version</th><th>Engine</th><th>Table format</th><th>Incremental strategies</th><th>dbt-core</th></tr></thead><tbody>${[...byAdapter.values()].map(r => `
       <tr style="--c: var(--${r.engines[0]}, var(--ink-3))">
         <td class="e"><i class="sw"></i>${DBT_ADAPTER_URL[r.pkg] ? `<a href="${DBT_ADAPTER_URL[r.pkg]}">${esc(r.pkg)}</a>` : esc(r.pkg)}</td>
         <td class="n">${list(r.versions)}</td>
-        <td class="n">${r.engines.map(e => esc(LABEL[e] ?? e)).join(", ")}</td>
+        <td class="n">${[...new Set(r.engines.map(e => DBT_ENGINE[e] ?? LABEL[e] ?? e))].map(esc).join(", ")}</td>
+        <td class="n">${list(r.formats)}</td>
+        <td class="n">${strategies(r)}</td>
         <td class="n">${list(r.core)}</td>
-      </tr>`).join("")}</tbody></table></div>`;
+      </tr>`).join("")}</tbody></table></div>
+    <p class="d">In bold, the strategy the project uses. The packages an adapter brings with it, duckrun's dbt-duckdb
+      and dbt-polars' storage catalogs, are not listed.</p>`;
 }
 
 // THE LAKEHOUSE TAB'S TIMELINE: how we got here, as in the talk. Three lines that run side by side to today, not

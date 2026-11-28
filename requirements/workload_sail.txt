@@ -3,6 +3,10 @@
 # dbt-spark WITHOUT the [session] extra: it would pull pyspark, and Sail needs pyspark-client and
 # never pyspark (requirements/lakesail_iceberg.txt). Session mode imports pyspark at run time only.
 dbt-spark
+# dbt-core held to the stable line the other legs run: dbt-spark asks for dbt-core>=1.8.0rc1, and a
+# pre-release in a specifier lets pip take dbt-core's betas (1.13.0b1 on the Spark legs, 1.12.7 on
+# the others). Raise the bound when dbt-core 1.13.0 is out.
+dbt-core<1.13
 azure-identity>=1.19
 psutil>=6
 # Sail main (lakehq/sail@86da637b4f, 2026-11-20, tmp_sail_main.yml) until a release after 0.7.3:

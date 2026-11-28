@@ -2,6 +2,10 @@
 # reading every leg's tables, Iceberg and Delta. pyspark 4.1, the pin Iceberg 1.12.0's runtime and
 # delta-spark_4.1_2.13 4.4.1 are both built for (bench/workload/spark_reader.py).
 dbt-spark
+# dbt-core held to the stable line the other legs run: dbt-spark asks for dbt-core>=1.8.0rc1, and a
+# pre-release in a specifier lets pip take dbt-core's betas (1.13.0b1 on the Spark legs, 1.12.7 on
+# the others). Raise the bound when dbt-core 1.13.0 is out.
+dbt-core<1.13
 pyspark>=4.1,<4.2
 azure-identity>=1.19
 psutil>=6

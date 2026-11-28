@@ -135,29 +135,25 @@ def test_file_pruning_and_query_plans_are_under_lakehouse():
     assert 'id: "work"' not in rows("GROUPS")
 
 
-def test_complex_read_simple_write_dbt_adapters_then_in_production_are_the_last_top_tabs():
+def test_complex_read_write_then_in_production_are_the_last_top_tabs():
+    """Write: the simple write first, then dbt, the way writes run in practice."""
     bar = [line.strip() for line in rows("GROUPS").split("\n") if "bar: false" not in line]
-    assert bar[-4].startswith('{ id: "read", title: "Complex read", subs: [SUITES[1]] },')
-    assert bar[-3].startswith('{ id: "write", title: "Simple write", subs: [SUITES[0]] },')
-    assert bar[-2].startswith('{ id: "dbt", title: "dbt adapters", subs: [DBT] },')
+    assert bar[-3].startswith('{ id: "read", title: "Complex read", subs: [SUITES[1]] },')
+    assert bar[-2].startswith('{ id: "write", title: "Write", subs: [SUITES[0], DBT] },')
     assert bar[-1].startswith('{ id: "summary", title: "In production", subs: [REAL_WORKLOAD] },')
 
 
-def test_every_dbt_adapter_a_workload_leg_runs_has_a_link():
+def test_every_dbt_adapter_a_workload_leg_runs_has_a_link_and_its_strategies():
     import json
     import re
 
     data = Path(__file__).parent.parent / "docs" / "data" / "workload.json"
     legs = json.loads(data.read_text(encoding="utf-8"))["legs"]
-    used = {
-        p
-        for leg in legs.values()
-        for p in leg["versions"]
-        if p == "duckrun" or (p.startswith("dbt-") and p != "dbt-core")
-    }
-    block = PAGE[PAGE.index("const DBT_ADAPTER_URL = {") :]
-    linked = set(re.findall(r'"((?:dbt-|duckrun)[\w-]*)":', block[: block.index("};")]))
-    assert used and used <= linked, used - linked
+    used = {leg["adapter"].split(" ")[0] for leg in legs.values() if leg.get("adapter")}
+    for name in ("DBT_ADAPTER_URL", "DBT_STRATEGIES"):
+        block = PAGE[PAGE.index(f"const {name} = {{") :]
+        listed = set(re.findall(r'"((?:dbt-|duckrun)[\w-]*)":', block[: block.index("};")]))
+        assert used and used <= listed, (name, used - listed)
     assert '<section class="cap rows" id="dbt" hidden></section>' in PAGE
 
 
