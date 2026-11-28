@@ -32,7 +32,8 @@ if appended.height:
     print(appended.select("path", "size_bytes", "num_records").head(3))
     for key in KEYS:
         if f"min.{key}" in appended.columns:
-            print(key, "min/max of first file:", appended[f"min.{key}"][0], appended[f"max.{key}"][0])
+            lo, hi = appended[f"min.{key}"][0], appended[f"max.{key}"][0]
+            print(key, "min/max of first file:", lo, hi)
 
 lf = pl.scan_delta(uri, storage_options=opts)
 rows = lf.select(pl.len()).collect(engine="streaming").item()
@@ -43,10 +44,13 @@ dupes = (
     .select(pl.len().alias("keys"), (pl.col("len") - 1).sum().alias("extra_rows"))
     .collect(engine="streaming")
 )
-print(f"rows {rows:,}; duplicated keys {dupes['keys'][0]:,}, extra rows {dupes['extra_rows'][0] or 0:,}")
+extra = dupes["extra_rows"][0] or 0
+print(f"rows {rows:,}; duplicated keys {dupes['keys'][0]:,}, extra rows {extra:,}")
 per_file = lf.group_by("file").len().collect(engine="streaming")
-print(f"distinct files {per_file.height:,}; rows per file min/median/max "
-      f"{per_file['len'].min():,}/{int(per_file['len'].median()):,}/{per_file['len'].max():,}")
+print(
+    f"distinct files {per_file.height:,}; rows per file min/median/max "
+    f"{per_file['len'].min():,}/{int(per_file['len'].median()):,}/{per_file['len'].max():,}"
+)
 if os.environ.get("GITHUB_STEP_SUMMARY"):
     with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
         f.write(

@@ -91,8 +91,8 @@ def test_one_table_format_tab_with_iceberg_and_delta():
 def test_both_formats_share_their_groups_and_basic_is_the_mvp():
     """Basic, the first group, is the minimum to use a format: attach, create, read, append,
     append safely. CTAS and changing existing rows are Writes. Delta has every Iceberg group, in the
-    same order, plus Tables written by Spark: Delta is still mostly written by Spark, so reading and writing a
-    table Spark wrote with its features on is a group of its own."""
+    same order, plus Tables written by Spark: Delta is still mostly written by Spark, so reading
+    and writing a table Spark wrote with its features on is a group of its own."""
     import json
 
     data = Path(__file__).parent.parent / "docs" / "data"

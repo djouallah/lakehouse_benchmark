@@ -232,8 +232,9 @@ class PeakRss:
             self._node_lowest_free = min(self._node_lowest_free, free)
             ticks += 1
             if self._node and ticks % 30 == 0:
+                spill = (self._node_free0 - free) / 2**20
                 scrub.safe_print(
-                    f"  rss {rss / 2**20:,.0f} MB, spill {(self._node_free0 - free) / 2**20:,.0f} MB"
+                    f"  rss {rss / 2**20:,.0f} MB, spill {spill:,.0f} MB"
                     f" ({self._node.split('.')[-1]})"
                 )
 
