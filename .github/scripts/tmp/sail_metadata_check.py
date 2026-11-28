@@ -73,7 +73,12 @@ targets = []
 for ns in sail:
     for ident in rest(f"{base}namespaces/{ns}/tables")["identifiers"]:
         targets.append((ns, ident["name"]))
-targets.append(("dbt_duckdb_mart", "fct_summary"))  # a leg DuckDB 2.0.1 reads fine
+# The same table on the legs DuckDB 2.0.1 reads fine, and the namespace probes use.
+targets += [(f"dbt_{leg}_landing", "fct_price") for leg in ("duckdb", "polars", "gluten", "trino")]
+targets += [
+    ("_bench_probe", ident["name"])
+    for ident in rest(f"{base}namespaces/_bench_probe/tables")["identifiers"]
+][:3]
 
 for ns, name in targets:
     safe_print(f"\n===== {ns}.{name}")
@@ -95,6 +100,8 @@ for ns, name in targets:
     except Exception as e:  # noqa: BLE001
         safe_print("current file read failed:", type(e).__name__, e)
     log = meta.get("metadata-log", [])
+    if not log:
+        continue
     safe_print(f"metadata-log: {len(log)} entries")
     # The first, the last 5, and a spread between, to see where the value changed.
     picks = sorted(
