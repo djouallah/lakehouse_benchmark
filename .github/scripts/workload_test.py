@@ -4,9 +4,13 @@ table_maintenance.yml runs it beside the compaction. The hourly builds no longer
 (workload_run_engine.py): the tests re-checked all history every hour, and the grain test alone
 took 1,053 s of Trino's 1,431 s build (run 40050741886).
 
-One engine checks every leg: the duckdb target's tests, pointed at each leg's tables in turn by
-WORKLOAD_LEG (workload/macros/generate_schema_name.sql reads it), so dbt_trino_landing.fct_scada
-is tested by the same SQL as dbt_duckdb_landing.fct_scada. No Spark, Trino or Sail to start.
+One reader checks every leg, Iceberg and Delta: stock Spark, the reference implementation
+(bench/workload/spark_reader.py), running the spark tree's tests on the `spark` target, pointed at
+each leg's tables in turn by WORKLOAD_LEG (workload/macros/generate_schema_name.sql reads it). So
+dbt_trino_landing.fct_scada is tested by the same SQL as dbt_duckrun_landing.fct_scada. Until
+2026-11-28 the reader was DuckDB, on the Iceberg legs only: DuckDB 2.0.1 refuses the Sail leg's
+tables (lakehq/sail#3124), and it cannot reach the Delta legs' tables, which are outside the REST
+catalog.
 
 The record, per leg: every test node with its status, seconds, message, and peak RSS and spill.
 workload_maintain.py publishes it beside the maintenance record.
@@ -22,35 +26,39 @@ from pathlib import Path
 
 from bench import auth, scrub
 from bench.report import leak_check
-from bench.workload.config import BENCH_ENGINE, ICEBERG_ENGINES, WorkloadConfig
+from bench.workload.config import BENCH_ENGINE, DELTA_ENGINES, ENGINES, WorkloadConfig
+from bench.workload.spark_reader import SparkReader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workload_run_engine import PROJECT, Dbt, PeakRss, node_timings, versions  # noqa: E402
 
 
 def main(out: Path) -> int:
-    os.environ["BENCH_ENGINE"] = "duckdb"
+    os.environ["BENCH_ENGINE"] = "spark"
     cfg = WorkloadConfig.from_env()
     record = {
         "run_id": cfg.run_id,
         "run_url": cfg.run_url,
         "started": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "tester": versions("duckdb"),
+        "tester": {},
         "legs": {},
     }
-    os.environ.setdefault("DUCKDB_TEMP_DIR", "/tmp/duckdb_spill")
-    os.makedirs(os.environ["DUCKDB_TEMP_DIR"], exist_ok=True)
     os.chdir(PROJECT)
-    dbt = Dbt("duckdb")
+    dbt = Dbt("spark")
+    reader = SparkReader(cfg)
     failed = False
     try:
-        # The Iceberg legs: the duckdb target reads them through the REST catalog. The Delta legs'
-        # tables are outside it.
-        for leg in ICEBERG_ENGINES:
-            # A fresh bearer per leg: the profile bakes it into DuckDB's ATTACH at connect.
-            os.environ.update(cfg.dbt_env(auth.onelake_token(fresh=True)))
+        reader.setup()
+        record["tester"] = {**versions("spark"), "spark": reader.version}
+        for leg in ENGINES:
+            # The REST catalog's bearer is fixed for the session: restart on a fresh one when it
+            # has under 15 minutes left (PysparkIceberg.refresh). Delta tables are re-registered
+            # per leg, so a restart loses nothing.
+            reader.refresh()
+            os.environ.update(cfg.dbt_env(auth.onelake_token()))
             os.environ["WORKLOAD_LEG"] = leg
-            with PeakRss("duckdb") as rss:
+            reader.use_leg(leg, leg in DELTA_ENGINES, cfg.tables_abfss)
+            with PeakRss("spark") as rss:
                 ok, seconds = dbt.run("test", callbacks=[rss.on_event])
             nodes = [n for n in node_timings(rss.nodes) if n["node"].startswith("test.")]
             record["legs"][BENCH_ENGINE[leg]] = {
@@ -66,6 +74,7 @@ def main(out: Path) -> int:
             failed |= not ok
     finally:
         os.environ.pop("WORKLOAD_LEG", None)
+        reader.close()
         record["finished"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         out.write_text(scrub.scrub(json.dumps(record, indent=2)) + "\n", encoding="utf-8")
         leak_check([out])

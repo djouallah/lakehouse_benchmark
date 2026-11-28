@@ -118,6 +118,16 @@ aemo_electricity:
       schema: mart
       threads: 1
 
+    # Stock Spark, the daily tests' reader of every leg (.github/scripts/workload_test.py): the
+    # session bench/workload/spark_reader.py builds before dbt starts, Iceberg's `onelake` and
+    # Delta's `spark_catalog` in it; `method: session` picks it up with getOrCreate().
+    spark:
+      type: spark
+      method: session
+      host: localhost
+      schema: mart
+      threads: 1
+
     # Sail's in-process Spark Connect server, which workload_run_engine.py starts before dbt (bench's
     # Sail session, the OneLake catalog its default); SPARK_REMOTE points `method: session`'s
     # getOrCreate() at it.

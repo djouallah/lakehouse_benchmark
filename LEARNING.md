@@ -878,8 +878,13 @@ engine on the page as "died", with its last good run.
   DUID, mw, price); same table, a fraction of the writes. The spark tree also resolved each fact's
   file list twice (one `NOT IN` over the whole fact per pre-hook); it is one hook now.
 - **The tests left the hourly build, 2026-10-24.** As in analytics-as-code, they run once a
-  day in table maintenance: DuckDB runs the duckdb tree's tests against every leg's tables
-  (`workload_test.py`, `WORKLOAD_LEG` in generate_schema_name). Rows, files processed and
+  day in table maintenance: one reader runs the same tests against every leg's tables
+  (`workload_test.py`, `WORKLOAD_LEG` in generate_schema_name). DuckDB until 2026-11-28, on the
+  Iceberg legs only; since then stock Spark 4.1, the reference reader, with Iceberg's REST catalog
+  and Delta's catalog in one session (`bench/workload/spark_reader.py`), so the Delta legs are
+  tested too. DuckDB 2.0.1 refused every Sail table: OneLake writes `last-partition-id: -1` for a
+  createTable with no partition-spec, which is how Sail creates an unpartitioned table
+  (lakehq/sail#3124). Rows, files processed and
   SUM(mw) stay hourly; files behind is its own query now
   (`macros/files_behind.sql`), no longer the files-processed tests' warning count.
 - **The leg's peak memory is often a test, not a merge.** Run 40050741886, caught-up legs:

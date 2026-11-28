@@ -59,6 +59,8 @@ PACKAGES = {
     "gluten": ("dbt-core", "dbt-spark", "pyspark"),
     "trino": ("dbt-core", "dbt-trino", "trino"),
     "sail": ("dbt-core", "dbt-spark", "pysail", "pyspark-client"),
+    # Not a leg: stock Spark, the daily tests' reader of every leg (workload_test.py).
+    "spark": ("dbt-core", "dbt-spark", "pyspark"),
     # duckrun is its own dbt adapter (type: duckrun), built on dbt-duckdb, writing through delta-rs.
     "duckrun": ("dbt-core", "duckrun", "dbt-duckdb", "duckdb", "deltalake"),
     "polars_delta": (

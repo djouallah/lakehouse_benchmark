@@ -392,8 +392,8 @@ def test_the_builds_do_not_test_and_maintenance_publishes_the_tests():
 
 
 def test_the_catalog_jobs_skip_the_delta_legs():
-    """Reset, table maintenance and its daily dbt tests go through the Iceberg REST catalog; the
-    Delta legs' tables are folders under Tables/ that those jobs must not touch."""
+    """Reset and table maintenance go through the Iceberg REST catalog; the Delta legs' tables are
+    folders under Tables/ that those jobs must not touch."""
     from bench.workload.config import DELTA_ENGINES, ICEBERG_ENGINES
 
     assert set(ICEBERG_ENGINES) | set(DELTA_ENGINES) == set(ENGINES)
@@ -401,6 +401,17 @@ def test_the_catalog_jobs_skip_the_delta_legs():
     go = (ROOT / ".github" / "scripts" / "maintain" / "main.go").read_text(encoding="utf-8")
     legs = re.search(r"\^dbt_\(([a-z_|]+)\)_\(landing\|mart\)\$", go).group(1).split("|")
     assert sorted(legs) == sorted(ICEBERG_ENGINES)
-    for script in ("workload_test.py", "workload_reset.py"):
-        text = (ROOT / ".github" / "scripts" / script).read_text(encoding="utf-8")
-        assert "ICEBERG_ENGINES" in text, script
+    text = (ROOT / ".github" / "scripts" / "workload_reset.py").read_text(encoding="utf-8")
+    assert "ICEBERG_ENGINES" in text
+
+
+def test_the_daily_tests_read_every_leg_with_spark():
+    """workload_test.py tests every leg, Iceberg and Delta, with one stock Spark session on the
+    `spark` target, which runs the spark tree's tests."""
+    text = (ROOT / ".github" / "scripts" / "workload_test.py").read_text(encoding="utf-8")
+    assert "for leg in ENGINES:" in text
+    assert "SparkReader" in text and 'Dbt("spark")' in text
+    profiles = (PROJECT / "profiles.yml").read_text(encoding="utf-8")
+    assert re.search(r"^    spark:\n      type: spark\n      method: session\n", profiles, re.M)
+    project = (PROJECT / "dbt_project.yml").read_text(encoding="utf-8")
+    assert project.count("'gluten', 'sail', 'spark'") == 2  # the spark model and test trees
