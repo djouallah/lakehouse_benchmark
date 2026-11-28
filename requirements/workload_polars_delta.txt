@@ -2,18 +2,15 @@
 # catalog writes Delta into the lakehouse (sink_delta for a full build, a delta-rs MERGE for an
 # incremental); the Azure storage catalog reads the landing files as sources, as on the polars
 # leg. deltalake comes with dbt-polars' polars[deltalake].
-#   * since 2026-11-27 a fork build (0.6.0 + dbt-polars#68): the merge takes the model result
-#     lazily; when its keys are all new, Polars sinks the files, their stats are the ones Polars'
-#     Delta sink writes (a timestamp max rounded up), and delta-rs only commits them, pinned to
-#     the version checked. delta-rs' merge ran fct_scada out of memory at 100 files
-#     (45951929663, 45955113227); the append of a collected batch at 360 (45962428757)
-#   * since 2026-11-28 the fork's main (055974c): before the semi-join that checks the keys are
-#     new (it holds the table's keys in memory and ran fct_scada's oldest 360 files out of
-#     memory: 46052329819, 46066260250, 46078952213), one key column whose source values are
-#     none of the table's (fct_scada's `file`) proves it in a streaming scan of that column
-dbt-polars[fabric,azure] @ git+https://github.com/djouallah/dbt-polars@055974c9cb0fbaeea04b6aea84d75ef57520b6d3
-dbt-polars-catalog-fabric @ git+https://github.com/djouallah/dbt-polars@055974c9cb0fbaeea04b6aea84d75ef57520b6d3#subdirectory=catalogs/dbt-polars-catalog-fabric
-dbt-polars-catalog-azure @ git+https://github.com/djouallah/dbt-polars@055974c9cb0fbaeea04b6aea84d75ef57520b6d3#subdirectory=catalogs/dbt-polars-catalog-azure
+#
+# THE RELEASE, NOT A FORK. A delta-rs merge holds the whole batch in memory (pola-rs/polars#31191):
+# on the 360-file backlog batches fct_scada ran out of memory (45955113227 with streamed_exec off,
+# 46052329819 and later), and a fork build that appends a batch it proves all new caught the leg up
+# (2026-11-27..28, djouallah/dbt-polars 055974c; PR datamindedbe/dbt-polars#70, closed). Caught up,
+# the daily batch is about one file, which the release merges. A backlog or a reset needs #31191.
+dbt-polars[fabric,azure]==0.6.0
+dbt-polars-catalog-fabric==0.6.0
+dbt-polars-catalog-azure==0.6.0
 polars==2.2.0
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
 azure-identity>=1.19
