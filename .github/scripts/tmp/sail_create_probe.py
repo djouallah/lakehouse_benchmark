@@ -1,11 +1,11 @@
-"""TEMPORARY: does Sail main (86da637b4f) still create an Iceberg table whose metadata has
-last-partition-id -1, which DuckDB 2.0.1 refuses? Every Sail workload table carries -1 since it
-was created on 2026-10-21/22; every other leg's carries 999 (tmp/sail_metadata_check.py, run
-46092514546).
+"""TEMPORARY: where the last-partition-id -1 on every Sail table comes from (DuckDB 2.0.1 refuses
+it; every other leg's tables carry 999 -- tmp/sail_metadata_check.py, run 46092514546).
 
-Creates three small unpartitioned tables in _bench_probe the ways the dbt-sail leg can (CREATE +
-INSERT, CTAS, CREATE OR REPLACE AS on an existing table), reads each one's last-partition-id from
-the REST catalog and from the stored metadata file, and drops them. Deleted once reported."""
+Sail main (86da637b4f) still creates tables with -1 (run 46094202665, CREATE + INSERT and CTAS).
+Its createTable request leaves `partition-spec` out for an unpartitioned table, where pyiceberg and
+Spark send an empty spec. This sends OneLake's REST catalog the same createTable twice, raw: with
+`partition-spec: {"spec-id": 0, "fields": []}` and without it, reads each table's
+last-partition-id, and drops both. Deleted once reported."""
 
 from __future__ import annotations
 
@@ -15,8 +15,7 @@ import urllib.parse
 import urllib.request
 
 from bench import auth
-from bench.capability.engines.lakesail_iceberg import LakesailIceberg
-from bench.config import ICEBERG_ENDPOINT, ONELAKE_DFS, Config
+from bench.config import ICEBERG_ENDPOINT, Config
 from bench.scrub import safe_print
 
 cfg = Config.from_env()
@@ -25,56 +24,47 @@ NS = "_bench_probe"
 RUN = os.environ.get("GITHUB_RUN_ID", "local")
 
 
-def get(url: str) -> bytes:
+def call(method: str, url: str, body: dict | None = None) -> dict:
+    data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(
-        url, headers={"Authorization": f"Bearer {token}", "x-ms-version": "2023-11-03"}
+        url,
+        data=data,
+        method=method,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
     )
     with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+        raw = r.read()
+    return json.loads(raw) if raw else {}
 
 
-prefix = (
-    json.loads(get(f"{ICEBERG_ENDPOINT}/v1/config?warehouse={urllib.parse.quote(cfg.warehouse)}"))
-    .get("overrides", {})
-    .get("prefix", "")
-)
-base = f"{ICEBERG_ENDPOINT}/v1/{prefix}/" if prefix else f"{ICEBERG_ENDPOINT}/v1/"
-
-
-def report(table: str, how: str) -> None:
-    loaded = json.loads(get(f"{base}namespaces/{NS}/tables/{table}"))
-    meta = loaded["metadata"]
-    parsed = urllib.parse.urlparse(loaded["metadata-location"])
-    ws = parsed.netloc.split("@", 1)[0]
-    on_disk = json.loads(get(f"https://{ONELAKE_DFS}/{ws}{parsed.path}"))
-    safe_print(
-        f"{how}: REST last-partition-id={meta.get('last-partition-id')}"
-        f" stored={on_disk.get('last-partition-id')}"
-        f" specs={json.dumps(meta.get('partition-specs'))}"
-        f" format-version={meta.get('format-version')}"
-    )
-
-
-engine = LakesailIceberg(cfg)
-engine.setup()
-spark = engine.session
-names = [f"sail_lpid_{RUN}_{i}" for i in range(3)]
+q = urllib.parse.quote(cfg.warehouse)
+prefix = call("GET", f"{ICEBERG_ENDPOINT}/v1/config?warehouse={q}").get("overrides", {})
+prefix = prefix.get("prefix", "")
+tables = f"{ICEBERG_ENDPOINT}/v1/{prefix + '/' if prefix else ''}namespaces/{NS}/tables"
+schema = {
+    "type": "struct",
+    "schema-id": 0,
+    "fields": [
+        {"id": 1, "name": "id", "required": False, "type": "int"},
+        {"id": 2, "name": "s", "required": False, "type": "string"},
+    ],
+}
+cases = {
+    f"lpid_{RUN}_with_spec": {"partition-spec": {"spec-id": 0, "fields": []}},
+    f"lpid_{RUN}_no_spec": {},
+}
 try:
-    a, b, c = (f"onelake.{NS}.{n}" for n in names)
-    spark.sql(f"CREATE TABLE {a} (id INT, s STRING) USING iceberg").collect()
-    spark.sql(f"INSERT INTO {a} VALUES (1, 'x')").collect()
-    report(names[0], "CREATE TABLE + INSERT")
-
-    spark.sql(f"CREATE TABLE {b} USING iceberg AS SELECT 1 AS id, 'x' AS s").collect()
-    report(names[1], "CTAS")
-
-    spark.sql(f"CREATE TABLE {c} (id INT, s STRING) USING iceberg").collect()
-    spark.sql(f"CREATE OR REPLACE TABLE {c} USING iceberg AS SELECT 2 AS id, 'y' AS s").collect()
-    report(names[2], "CREATE, then CREATE OR REPLACE AS")
+    for name, extra in cases.items():
+        body = {"name": name, "schema": schema, "stage-create": False, **extra}
+        meta = call("POST", tables, body)["metadata"]
+        safe_print(
+            f"{'with' if extra else 'without'} partition-spec:"
+            f" last-partition-id={meta.get('last-partition-id')}"
+            f" specs={json.dumps(meta.get('partition-specs'))}"
+        )
 finally:
-    for n in names:
+    for name in cases:
         try:
-            spark.sql(f"DROP TABLE IF EXISTS onelake.{NS}.{n}").collect()
+            call("DELETE", f"{tables}/{name}?purgeRequested=true")
         except Exception as e:  # noqa: BLE001
-            safe_print(f"drop {n} failed:", type(e).__name__, e)
-    engine.close()
+            safe_print(f"drop {name} failed:", type(e).__name__, e)
