@@ -7,9 +7,13 @@
 #     Delta sink writes (a timestamp max rounded up), and delta-rs only commits them, pinned to
 #     the version checked. delta-rs' merge ran fct_scada out of memory at 100 files
 #     (45951929663, 45955113227); the append of a collected batch at 360 (45962428757)
-dbt-polars[fabric,azure] @ git+https://github.com/djouallah/dbt-polars@381c6ad870e8d4d5488f977b9774be89d637c1ff
-dbt-polars-catalog-fabric @ git+https://github.com/djouallah/dbt-polars@381c6ad870e8d4d5488f977b9774be89d637c1ff#subdirectory=catalogs/dbt-polars-catalog-fabric
-dbt-polars-catalog-azure @ git+https://github.com/djouallah/dbt-polars@381c6ad870e8d4d5488f977b9774be89d637c1ff#subdirectory=catalogs/dbt-polars-catalog-azure
+#   * since 2026-11-28 the fork's main (e6533d0): before the semi-join that checks the keys are
+#     new (it holds the table's keys in memory and ran fct_scada's oldest 360 files out of
+#     memory: 46052329819, 46066260250, 46078952213), one key column whose source values are
+#     none of the table's (fct_scada's `file`) proves it in a streaming scan of that column
+dbt-polars[fabric,azure] @ git+https://github.com/djouallah/dbt-polars@e6533d00e1ce6591c4ce8efa6ef848db34656ed2
+dbt-polars-catalog-fabric @ git+https://github.com/djouallah/dbt-polars@e6533d00e1ce6591c4ce8efa6ef848db34656ed2#subdirectory=catalogs/dbt-polars-catalog-fabric
+dbt-polars-catalog-azure @ git+https://github.com/djouallah/dbt-polars@e6533d00e1ce6591c4ce8efa6ef848db34656ed2#subdirectory=catalogs/dbt-polars-catalog-azure
 polars==2.2.0
 # bench.auth (the OIDC credential that mints ONELAKE_TOKEN).
 azure-identity>=1.19
